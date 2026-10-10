@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+data/_shots/
+data/*.bak
+node_modules/
+# 调试/中间产物，不进仓库
+data/_c_*.js
+data/_live*.js
+data/_repo*.js
+data/_chk.js
+data/_runid.txt
+data/_wfid.txt
+data/_wf_remote.yml
+_workflow_paste.txt

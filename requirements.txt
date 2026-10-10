@@ -1,0 +1,7 @@
+# 抓取链路依赖（不装 Playwright —— 它只在 scripts/mobile_check.py 用，
+# 而移动端布局测试不在每日抓取链路里，装了纯属浪费 CI 时间）
+requests>=2.31
+lxml>=5.0
+lxml_html_clean>=0.1
+pymupdf>=1.24
+urllib3>=2.0

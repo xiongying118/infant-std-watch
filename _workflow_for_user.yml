@@ -1,0 +1,100 @@
+name: 每日官方标准检查
+
+on:
+  schedule:
+    - cron: '7 1 * * *'
+  workflow_dispatch:
+    inputs:
+      deploy_only:
+        description: '只重新部署，跳过抓取（约 1 分钟）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-std-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: pip install -r requirements.txt
+      - name: 跳过抓取（只部署模式）
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_only == true }}
+        run: echo "只部署模式：跳过抓取，直接部署。"
+      - name: 记录抓取前的基线
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.deploy_only }}
+        run: |
+          if [ -f prototype/data.js ]; then
+            cp prototype/data.js /tmp/data_before.js
+          fi
+      - name: 跑抓取管线
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.deploy_only }}
+        env:
+          STDWATCH_FETCH_BUDGET_S: "1200"
+        run: |
+          set -o pipefail
+          python scripts/daily_check.py 2>&1 | tee /tmp/check.log
+      - name: 上传抓取日志
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.deploy_only }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-check-log
+          path: /tmp/check.log
+          retention-days: 30
+      - name: 条数合理性检查
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.deploy_only }}
+        run: |
+          python scripts/sanity_guard.py --before-file /tmp/data_before.js
+      - name: 上传站点产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          name: github-pages
+          path: prototype
+      - name: 提交并推送数据
+        id: commit
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.deploy_only }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet -- prototype/data.js; then
+            echo "官方今日无变更。" >> "$GITHUB_STEP_SUMMARY"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prototype/data.js
+          git commit -m "chore(data): 每日抓取"
+          if ! git push; then
+            echo "::error::数据已生成但推送失败，本次不部署。"
+            exit 1
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    if: needs.check.result == 'success'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,14 @@
+﻿源ID,源名称,机构,入口URL,接口方式,库类型,覆盖内容,检索词配额,实测耗时,是否提供全文下载,接入状态,备注
+SRC-05,食品安全国家标准数据检索平台,国家食品安全风险评估中心,https://sppt.cfsa.net.cn:8086/db,POST /db?task=indexSearch,标准文本 num_tn=99,食品安全国家标准全库 含现行版本,40,50s,否,已接入,★主力源 官方仅在线预览 不提供直下 不存PDF
+SRC-05,食品安全国家标准数据检索平台,国家食品安全风险评估中心,https://sppt.cfsa.net.cn:8086/db,POST /db?task=indexSearch,标准勘误 num_tn=4,勘误记录 含改前改后原文,全量1次,3s,否,已接入,★最易漏 不改标准号 按标准号监控发现不了
+SRC-05,食品安全国家标准数据检索平台,国家食品安全风险评估中心,https://sppt.cfsa.net.cn:8086/db,POST /db?task=indexSearch,发布公告 num_tn=1,标准发布公告 含修改单数量,全量1次,2s,否,已接入,权威发布节点 能拿到等N项标准与M项修改单
+SRC-02,国家标准全文公开系统,国家标准化管理委员会,https://openstd.samr.gov.cn,GET /bzgk/std/std_list + /bzgk/gb/newGbInfo,国标,1994-2000年老国标与作废版本,12,24s,部分,是,已接入,老国标归档用 现行食安国标不在此库
+SRC-01,全国标准信息公共服务平台,国家市场监督管理总局,https://std.samr.gov.cn,GET /gb/search/gbQueryPage,国标,行标QB 团标 企标 统一平台,10,20s,否,已接入,已找到未文档化JSON接口 检索词不能带空格
+SRC-10,ISO 标准官方页,国际标准化组织,https://www.iso.org,单标准页按需,单标准,ISO 22000 ISO9001 ISO17025,按需,-,否,已接入,版权受限 download_allowed 永久False 只给阅读与购买渠道
+SRC-03,国家卫健委 食品安全标准,国家卫生健康委员会,https://www.nhc.gov.cn,—,公告列表,食品安全国家标准发布公告,0,—,否,已停用,HTTP 412 反爬 $_ts混淆JS 需执行JS 已由SRC-05公告库替代
+SRC-06,市场监管总局 公告,国家市场监督管理总局,https://www.samr.gov.cn,GET /api-gateway/jpaas-publish-server/front/page/build/unit,法定主动公开内容,BJS补充检验方法 生产许可审查细则 标签标识问答,全量1次,3s,否,已接入,★parseType官方拼写是bulidstatic 必须先GET栏目页建会话 不建会话返回空html不报错
+SRC-07,工信部 行业公告,工业和信息化部,https://www.miit.gov.cn,GET /api-gateway/jpaas-publish-server/front/page/build/unit,部级公告 通告 通知,轻工与乳制品相关部级文件,全量1次,5s,否,已接入,⚠仅部级公告入口 QB行标元数据在标准委库但列表接口未找到 当前常为0条属正常
+SRC-08,全国团体标准信息平台,国家标准化管理委员会,https://www.ttbz.org.cn,POST /cms-proxy/ms/portal/standardInfo/getPortalStandardList,团体标准,T/CAB T/CITS T/CIQA等团标,4,15s,否,已接入,★必须form编码用JSON会静默忽略过滤条件 团标仅作参考不作判定依据
+SRC-09,认监委 认证认可公告,国家认证认可监督管理委员会,https://www.cnca.gov.cn,公告列表,公告,FSSC ISO22000 HACCP 认证规则,0,-,否,未接入,认证规则变更影响体系文件
+SRC-11,FSSC 官方方案页,Food Safety Certification Corporation,https://www.fssc.com/,公告页,公告,FSSC 22000 方案版本,0,-,否,未接入,方案文本以官方发布为准
+SRC-12,国家食品安全风险评估中心 公告,国家食品安全风险评估中心,https://www.cfsa.net.cn,公告列表,公告,标准立项与征求意见,0,-,否,未接入,征求意见稿不作为判定依据 仅作预告

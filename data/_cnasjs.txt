@@ -1,0 +1,29 @@
+[
+  {no:"CNAS-CL01-A001:2022", title:"检测和校准实验室能力认可准则在微生物检测领域的应用说明", kind:"CL", kindName:"认可准则", pub:"2022-12-26", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_7687a14d2585467488a995da9074aa88.html"},
+  {no:"CNAS-CL01-A002:2020", title:"检测和校准实验室能力认可准则在化学检测领域的应用说明", kind:"CL", kindName:"认可准则", pub:"2020-12-18", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_8688f3a11fb7404ba643467d17187ea1.html"},
+  {no:"CNAS-CL01-G001:2024", title:"检测和校准实验室能力认可准则的应用要求", kind:"CL", kindName:"认可准则", pub:"2024-07-03", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_72245f37cbac480697079c8cf78d8b4b.html"},
+  {no:"CNAS-CL01-G003:2021", title:"测量不确定度的要求（2023-1-1第一次修订）", kind:"CL", kindName:"认可准则", pub:"2023-01-09", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_69a6ecdcb8634b33ab6acbb6c335f56f.html"},
+  {no:"CNAS-CL01-G005:2018", title:"检测和校准实验室能力认可准则在非固定场所检测活动中的应用说明", kind:"CL", kindName:"认可准则", pub:"2018-03-01", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_e8a801dc7a2e43c8bd97b772740dc3c0.html"},
+  {no:"CNAS-CL01:2018", title:"检测和校准实验室能力认可准则（2019-2-20第一次修订）", kind:"CL", kindName:"认可准则", pub:"2021-01-13", url:"https://www.cnas.org.cn/rkgf/sysrk/jbrkzz/art/2024/art_db59dc4ccd6b43858080beacbd6b0dee.html"},
+  {no:"CNAS-RL01:2025", title:"实验室认可规则", kind:"RL", kindName:"认可规则", pub:"2025-06-30", url:"https://www.cnas.org.cn/rkgf/sysrk/rkgz/zygz/art/2024/art_3c3b608317c74ecb97f881569c1ad63f.html"},
+  {no:"CNAS-R01:2023", title:"认可标识使用和认可状态声明规则", kind:"R", kindName:"通用规则", pub:"2023-04-26", url:"https://www.cnas.org.cn/rkgf/sysrk/rkgz/tygz/art/2024/art_896350422.html"},
+  {no:"CNAS-R02:2023", title:"公正性和保密规则", kind:"R", kindName:"通用规则", pub:"2023-04-26", url:"https://www.cnas.org.cn/rkgf/sysrk/rkgz/tygz/art/2024/art_151797721.html"},
+  {no:"CNAS-R03:2026", title:"申诉、投诉和争议处理规则", kind:"R", kindName:"通用规则", pub:"2026-09-28", url:"https://www.cnas.org.cn/rkgf/sysrk/rkgz/tygz/art/2026/art_1942140788.html"},
+  {no:"CNAS-GL001:2018", title:"实验室认可指南", kind:"GL", kindName:"认可指南", pub:"2018-03-01", url:"https://www.cnas.org.cn/rkgf/sysrk/rkzn/art/2024/art_1e580cb6a001450d93075703597a09db.html"},
+  {no:"CNAS-GL006:2019", title:"化学分析中不确定度的评估指南", kind:"GL", kindName:"认可指南", pub:"2019-04-09", url:"https://www.cnas.org.cn/rkgf/sysrk/rkzn/art/2024/art_d5e92e012a6745f5a788ead6a78a0afa.html"},
+  {no:"CNAS-GL009:2018", title:"材料理化检验测量不确定度评估指南及实例", kind:"GL", kindName:"认可指南", pub:"2018-03-01", url:"https://www.cnas.org.cn/rkgf/sysrk/rkzn/art/2024/art_030aecd80e8448f4b9f31d0e943b2972.html"},
+  {no:"CNAS-EL-03:2023", title:"检测和校准实验室认可能力范围表述说明", kind:"EL", kindName:"认可说明", pub:"2023-08-01", url:"https://www.cnas.org.cn/rkgf/sysrk/rksm/art/2024/art_1196bbc422da4662ae445e6b07a294d3.html"},
+  {no:"CNAS-EL-06:2013", title:"食品检测领域认可能力范围表述说明", kind:"EL", kindName:"认可说明", pub:"2015-06-03", url:"https://www.cnas.org.cn/rkgf/sysrk/rksm/art/2024/art_eab0cbe3898b4e65b2dd467135bbe307.html"},
+  {no:"CNAS-EL-15:2020", title:"检测和校准实验室认可受理要求的说明（2021年7月1日第一次修订）", kind:"EL", kindName:"认可说明", pub:"2021-06-25", url:"https://www.cnas.org.cn/rkgf/sysrk/rksm/art/2024/art_6d4c21bcec9441d8822e6166378ff1c9.html"},
+  {no:"CNAS-TRL-010:2019", title:"测量不确定度在符合性判定中的应用", kind:"TRL", kindName:"技术报告", pub:"2019-04-04", url:"https://www.cnas.org.cn/rkgf/sysrk/jsbg/art/2024/art_3514e6c3fe2e493386fb9346ebf8196f.html"},
+  {no:"CNAS-TRL-011:2020", title:"轻工产品化学分析方法确认和验证指南", kind:"TRL", kindName:"技术报告", pub:"2020-05-09", url:"https://www.cnas.org.cn/rkgf/sysrk/jsbg/art/2024/art_90e83815ad1c4f888cabd91a8c2badd8.html"}
+]
+@@KINDS@@
+[
+  {k:"CL", name:"认可准则", desc:"实验室该达到什么能力（17025 的中文实施 + 各领域应用说明）"},
+  {k:"RL", name:"认可规则", desc:"评审流程、能力验证、收费等规则性文件"},
+  {k:"R", name:"通用规则", desc:"标识使用、公正性与保密、申诉投诉"},
+  {k:"GL", name:"认可指南", desc:"不确定度评定、能力验证统计等操作指南"},
+  {k:"EL", name:"认可说明", desc:"受理要求与能力范围表述（申请认可时能力表怎么写）"},
+  {k:"TRL", name:"技术报告", desc:"专题技术报告与实例"}
+]

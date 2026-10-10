@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 脚本资源不缓存。GitHub Pages 的 CDN 对 .js 有较强缓存，
+     2026-10-06出现过「代码已部署、用户看到的还是旧版」的情况，
+     导致我误以为修复没生效。这行让浏览器每次都取最新。 -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>检验方法卡片 · 婴配品控</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --line:#e3e6ea; --line2:#eef0f3;
+    --txt:#16191d; --dim:#6b727a; --dim2:#8b929a;
+    --ok:#0a7c42; --okbg:#e7f5ed; --warn:#8a6100; --warnbg:#fff4d6;
+    --dead:#a4262c; --deadbg:#fdeced; --soon:#9a5b00; --soonbg:#fff2e0;
+    --acc:#1a6dcc; --accbg:#eaf2fd; --new:#7b3fa0; --newbg:#f5edfa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font:15px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+  header{background:var(--card);border-bottom:1px solid var(--line);padding:18px 24px;position:sticky;top:0;z-index:20}
+  .hd{max-width:1360px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  h1{margin:0;font-size:19px}
+  .sub{color:var(--dim);font-size:12.5px;margin-top:2px}
+  .back{color:var(--acc);text-decoration:none;font-size:13px}
+
+  .wrap{max-width:1360px;margin:0 auto;padding:18px 24px 70px}
+  /* 经验层诊断条：只在"有数据但一屏都看不到内容"时出现。
+     目的是让人一眼分清两种情况——
+       A. 这个地址下确实没录过（去录入页）
+       B. 录过了，但 key 和当前卡片对不上（数据是旧版本留下的）
+     这两种情况表面看都是"只有计数没有内容"，但处理方式完全不同。 */
+  .diag{background:#fff8e6;border:1px solid #f0d68a;border-radius:8px;
+    padding:10px 13px;font-size:12.5px;line-height:1.75;color:#6a5200;margin-bottom:10px}
+  .diag b{color:#8a6100}
+  .diag code{background:#fff;border:1px solid #ecd9a0;border-radius:4px;
+    padding:0 4px;color:#8a6100}
+  .diag .acts{margin-top:7px;display:flex;gap:8px;flex-wrap:wrap}
+  .diag button{font:12px inherit;border:1px solid #d9b84a;background:#fffdf5;
+    color:#8a6100;border-radius:5px;padding:4px 10px;cursor:pointer}
+  .diag button:hover{background:#fff5d6}
+
+  .bar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:16px}
+  .tb{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:5px 12px;
+      font-size:13px;cursor:pointer;color:var(--dim);font-family:inherit}
+  .tb:hover{border-color:#c6cbd1}
+  .tb.on{background:var(--txt);color:#fff;border-color:var(--txt)}
+  .tb i{font-style:normal;opacity:.55;margin-left:3px;font-size:11.5px}
+  #q{margin-left:auto;min-width:240px;padding:8px 12px;border:1px solid var(--line);
+     border-radius:7px;font-size:14px;font-family:inherit}
+  #cnt{width:100%;color:var(--dim2);font-size:12.5px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:11px;overflow:hidden;
+        display:flex;flex-direction:column}
+  .ch{padding:14px 16px 11px;border-bottom:1px solid var(--line2)}
+  .ct{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+  .ct code{font:600 13.5px/1.4 ui-monospace,Consolas,monospace;color:var(--acc)}
+  h3{margin:0 0 7px;font-size:14.5px;font-weight:600;line-height:1.5}
+  .cbd{display:flex;gap:5px;flex-wrap:wrap}
+  .bd{font-size:11px;padding:2px 8px;border-radius:10px;background:#eef0f3;color:var(--dim)}
+  .bd-nut{background:var(--accbg);color:#1257ad;font-weight:600}
+  .st{font-style:normal;font-size:11px;padding:2px 8px;border-radius:10px}
+  .st-valid{background:var(--okbg);color:var(--ok)}
+  .st-dead{background:var(--deadbg);color:var(--dead)}
+  .st-soon{background:var(--soonbg);color:var(--soon)}
+
+  /* ★ 双视角切换 —— 同一份内容，新人展开、老员工折叠 ★ */
+  .views{display:flex;gap:0;border-bottom:1px solid var(--line2);background:#fafbfc}
+  .vw{flex:1;text-align:center;padding:8px 4px;font-size:12.5px;cursor:pointer;
+     color:var(--dim2);border-bottom:2px solid transparent;user-select:none;transition:.12s}
+  .vw.on{color:var(--txt);background:var(--card);border-bottom-color:var(--acc);font-weight:600}
+  .vw:hover{color:var(--txt)}
+  .vb{padding:13px 16px;flex:1;display:flex;flex-direction:column;gap:11px}
+  .vb.hide{display:none}
+
+  /* 新人视角：为什么 / 是什么 / 怎么办 */
+  .why{background:var(--newbg);border:1px solid #e6d9f0;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.7}
+  .why b{color:var(--new)}
+  /* 步骤列表：用 grid 而不是 flex。
+     flex 会把每一个子元素都变成独立的 flex item ——
+     段落里的 <b> 会被拆成单独一列，出现
+     「锡 ， 属 脂 | 类检测」这种字被拆散的排版（2026-10-06 用户截图）。
+     grid + 单个 span 包裹，让 <b> 回到正常行内流。 */
+  .steps{counter-reset:s;display:grid;gap:8px}
+  .stp{display:grid;grid-template-columns:18px 1fr;gap:9px;
+    font-size:13px;line-height:1.7;align-items:start}
+  .stp::before{counter-increment:s;content:counter(s);
+    width:18px;height:18px;
+    background:var(--acc);color:#fff;border-radius:50%;font-size:11px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;margin-top:3px}
+  /* 序号右边的正文：普通行内盒，<b> 不会再被拆开 */
+  .stp > span{min-width:0}
+  .stp b{color:var(--txt)}
+
+  /* 老员工视角：只给要点 */
+  .kv{display:flex;gap:9px;font-size:13px;line-height:1.65}
+  .kk{color:var(--dim);min-width:66px;flex-shrink:0;font-size:12.5px}
+  .kvv{flex:1}
+  .alert{background:var(--warnbg);border:1px solid #f0e0b0;border-radius:7px;
+         padding:9px 11px;font-size:12.5px;line-height:1.65;color:#6b4d00}
+
+  .meta{padding:0 16px 12px;display:flex;flex-direction:column;gap:0}
+  .meta>div{display:flex;gap:9px;padding:4px 0;border-bottom:1px dashed var(--line2);font-size:12.5px}
+  .meta dt{color:var(--dim2);min-width:64px;flex-shrink:0}
+  .meta dd{margin:0;flex:1}
+
+  /* 试剂表 */
+  .rxtab{border:1px solid var(--line2);border-radius:7px;overflow:hidden;background:#fcfcfd}
+  .rxh2{background:#f4f6f8;padding:6px 11px;font-size:12px;color:var(--dim);font-weight:600;
+        border-bottom:1px solid var(--line2)}
+  .rxtab table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed}
+  .rxtab th:nth-child(1),.rxtab td:nth-child(1){width:30%}
+  .rxtab th:nth-child(3),.rxtab td:nth-child(3){width:22%}
+  .rxtab th{text-align:left;padding:5px 11px;color:var(--dim2);font-weight:500;
+            border-bottom:1px solid var(--line2);font-size:11.5px}
+  .rxtab td{padding:6px 11px;border-bottom:1px solid var(--line2);vertical-align:top;line-height:1.6}
+  .rxtab tr:last-child td{border-bottom:0}
+  .rxtab td:nth-child(2){color:var(--txt)}
+  .muted{color:#b8bdc3;font-style:normal}
+  .sib{padding:0 16px 12px;font-size:12.5px}
+  .sib summary{cursor:pointer;color:var(--acc);outline:none}
+  .sib ul{margin:6px 0 0;padding-left:16px;color:var(--dim);line-height:1.7}
+  .sib code{color:var(--acc);font-size:12px}
+  .src{display:block;padding:9px 16px;border-top:1px solid var(--line2);
+       color:var(--acc);text-decoration:none;font-size:12.5px;background:#fafbfc}
+  .empty{color:var(--dim);text-align:center;padding:50px}
+  footer{margin-top:26px;padding:15px;background:var(--card);border:1px solid var(--line);
+         border-radius:9px;color:var(--dim);font-size:12.5px;line-height:1.85}
+  footer b{color:var(--txt)}
+  kbd{background:#eef0f3;border:1px solid #dcdfe3;border-radius:4px;padding:1px 5px;
+      font:11.5px ui-monospace,monospace}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div>
+      <h1>检验方法卡片</h1>
+      <div class="sub">同一份知识 · 新人看"为什么"，老手看"要点"</div>
+    </div>
+    <a class="back" href="card-editor.html">✎ 录入经验</a>
+    <a class="back" href="index.html">← 标准雷达</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="diag" id="diag" hidden></div>
+  <div class="bar">
+    <div id="types" style="display:flex;gap:7px;flex-wrap:wrap"></div>
+    <input id="q" type="search" placeholder="搜编号 / 名称 / 营养素 / 引用组">
+    <div id="cnt"></div>
+  </div>
+  <div class="grid" id="cards"></div>
+
+  <footer>
+    <b>怎么用这张卡</b>：每张卡有两个视角，点卡片上的标签切换。<br>
+    <b>新人视角</b>回答三个问题——<b>为什么用这个方法</b>、<b>它到底在测什么</b>、
+    <b>我该怎么做</b>。看懂了再去翻标准原文，才是真的懂。<br>
+    <b>老手视角</b>只有一行：换个方法、替代关系、官方入口。熟手不需要被科普。<br><br>
+    <b>合规说明</b>：本工具只存标准<b>元数据</b>与<b>本实验室自撰的经验</b>，
+    不存储、不分发标准正文。标准内容请通过卡片底部的官方链接在线查阅。
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script src="cards-data.js?v=20261006b"></script>
+<script src="cards.js?v=20261006b"></script>
+</body>
+</html>
