@@ -75,7 +75,6 @@ window.STDWATCH_DATA = {
   {no:"T/ZZB 3145-2023",title:"婴幼儿及儿童用针织拼接床上套件",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2023-08-10",imp:"2023-09-10",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/wz7ysunnunmh6hb0yo8kmlchbyl7vk4",dl:false,chg:"",why:"",acts:[]},
   {no:"总局公告 2026-09-20",title:"婴幼儿配方食品标签标识问答",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-09-20",imp:"2026-09-20",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/tssps/art/2026/art_943fcb4bef9045fc8324ee226ee4e5dc.html",dl:false,chg:"",why:"",acts:[]},
   {no:"总局公告 2026-09-28",title:"市场监管总局关于发布《蔬菜水果中三唑磷的快速检测  胶体金免疫层析法》等13项食品快速检测方法的公告",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-09-28",imp:"2026-09-28",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/spcjs/art/2026/art_721205f6c1a247ffbff1daa4c7a5eb98.html",dl:false,chg:"",why:"",acts:[]},
-  {no:"总局公告 2026-10-10",title:"《中华人民共和国食品安全法（修订草案征求意见稿）》答记者问",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-10-10",imp:"2026-10-10",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/xwxcs/art/2026/art_46740d9d9477462fa0e38a2096127c35.html",dl:false,chg:"",why:"",acts:[]},
   {no:"总局公告 2026年第34号",title:"市场监管总局关于发布《特定全营养配方食品临床试验技术指导原则  肌肉衰减症》等3个文件的公告",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-09-30",imp:"2026-09-30",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/tssps/art/2026/art_e02ccddfeb194573a6f082770992628c.html",dl:false,chg:"",why:"",acts:[]},
   {no:"总局公告 市监稽发〔2026〕117 号",title:"市场监管总局办公厅关于发布食品中非法添加沃诺雷生及其系列衍生物、托拉塞米及其系列衍生物有毒有害认定意见及相关执法检验方法的通知",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-09-29",imp:"2026-09-29",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/zfjcs/art/2026/art_7d69b8f296dc415994925182be87d8c5.html",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 13432-2013",title:"食品安全国家标准 预包装特殊膳食用食品标签",cat:"assoc",sub:"关联 · 标签与标识",status:"现行有效",impState:"已实施",newer:"",pub:"2013-12-26",imp:"2015-07-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
@@ -283,14 +282,14 @@ window.STDWATCH_DATA = {
   {no:"GB 5009.4-2016",title:"食品安全国家标准 食品中灰分的测定",cat:"test",sub:"营养成分 · 灰分",status:"现行有效",impState:"已实施",newer:"",pub:"2016-08-31",imp:"2017-03-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.245-2016",title:"食品安全国家标准 食品中聚葡萄糖的测定",cat:"test",sub:"营养成分 · 糖类",status:"现行有效",impState:"已实施",newer:"",pub:"2016-08-31",imp:"2017-03-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.258-2016",title:"食品安全国家标准食品中棉子糖的测定",cat:"test",sub:"营养成分 · 糖类",status:"现行有效",impState:"已实施",newer:"",pub:"2016-08-31",imp:"2017-03-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
-  {no:"GB 5009.276-2016",title:"食品安全国家标准 食品中葡萄糖酸-德尔塔-内酯的测定",cat:"test",sub:"营养成分 · 糖类",status:"现行有效",impState:"已实施",newer:"",pub:"2016-12-23",imp:"2017-06-23",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
+  {no:"GB 5009.276-2016",title:"食品安全国家标准 食品中葡萄糖酸-β-内酯的测定",cat:"test",sub:"营养成分 · 糖类",status:"现行有效",impState:"已实施",newer:"",pub:"2016-12-23",imp:"2017-06-23",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.279-2016",title:"食品安全国家标准 食品中木糖醇、山梨醇、麦芽糖醇、赤藓糖醇的测定",cat:"test",sub:"营养成分 · 糖类",status:"现行有效",impState:"已实施",newer:"",pub:"2016-12-23",imp:"2017-06-23",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.298-2023",title:"食品安全国家标准 食品中三氯蔗糖(蔗糖素)的测定",cat:"test",sub:"营养成分 · 糖类",status:"现行有效",impState:"已实施",newer:"",pub:"2023-09-06",imp:"2024-03-06",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.7-2016",title:"食品安全国家标准 食品中还原糖的测定",cat:"test",sub:"营养成分 · 糖类",status:"现行有效",impState:"已实施",newer:"",pub:"2016-08-31",imp:"2017-03-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.8-2023",title:"食品安全国家标准 食品中果糖、葡萄糖、蔗糖、麦芽糖、乳糖的测定",cat:"test",sub:"营养成分 · 糖类",status:"现行有效",impState:"已实施",newer:"",pub:"2023-09-06",imp:"2024-03-06",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.9-2023",title:"食品安全国家标准 食品中淀粉的测定",cat:"test",sub:"营养成分 · 糖类",status:"现行有效",impState:"已实施",newer:"",pub:"2023-09-06",imp:"2024-03-06",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.248-2016",title:"食品安全国家标准 食品中叶黄素的测定",cat:"test",sub:"营养成分 · 维生素与胡萝卜素",status:"现行有效",impState:"已实施",newer:"",pub:"2016-08-31",imp:"2017-03-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
-  {no:"GB 5009.292-2023",title:"食品安全国家标准 食品中贝塔 -阿朴-8'-胡萝卜素醛的测定",cat:"test",sub:"营养成分 · 维生素与胡萝卜素",status:"现行有效",impState:"已实施",newer:"",pub:"2023-09-06",imp:"2024-03-06",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
+  {no:"GB 5009.292-2023",title:"食品安全国家标准 食品中β -阿朴-8'-胡萝卜素醛的测定",cat:"test",sub:"营养成分 · 维生素与胡萝卜素",status:"现行有效",impState:"已实施",newer:"",pub:"2023-09-06",imp:"2024-03-06",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.308-2025",title:"食品安全国家标准 食品中抗坏血酸棕榈酸酯的测定",cat:"test",sub:"营养成分 · 维生素与胡萝卜素",status:"现行有效",impState:"已实施",newer:"",pub:"2025-09-02",imp:"2026-03-02",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.83-2016",title:"食品安全国家标准 食品中胡萝卜素的测定",cat:"test",sub:"营养成分 · 维生素与胡萝卜素",status:"现行有效",impState:"已实施",newer:"",pub:"2016-12-23",imp:"2017-06-23",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.86-2025",title:"食品安全国家标准 食品中抗坏血酸的测定",cat:"test",sub:"营养成分 · 维生素与胡萝卜素",status:"现行有效",impState:"已实施",newer:"",pub:"2025-09-02",imp:"2026-03-02",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
@@ -304,7 +303,7 @@ window.STDWATCH_DATA = {
   {no:"GB 5413.36-2026",title:"食品安全国家标准 特殊膳食用食品中脂肪酸和反式脂肪酸的测定",cat:"test",sub:"营养成分 · 脂肪与脂肪酸",status:"现行有效",impState:"即将实施",newer:"",pub:"2026-08-18",imp:"2027-08-18",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.255-2016",title:"食品安全国家标准 食品中果聚糖的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2016-08-31",imp:"2017-03-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.289-2023",title:"食品安全国家标准 食品中低聚半乳糖的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2023-09-06",imp:"2024-03-06",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
-  {no:"GB 5009.303-2025",title:"食品安全国家标准 食品中酵母贝塔-葡聚糖的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2025-03-16",imp:"2025-09-16",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
+  {no:"GB 5009.303-2025",title:"食品安全国家标准 食品中酵母β-葡聚糖的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2025-03-16",imp:"2025-09-16",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.88-2023",title:"食品安全国家标准 食品中膳食纤维的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2023-09-06",imp:"2024-03-06",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5413.6-2010",title:"食品安全国家标准 婴幼儿食品和乳品中不溶性膳食纤维的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2010-03-26",imp:"2010-06-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.5-2025",title:"食品安全国家标准 食品中蛋白质的测定",cat:"test",sub:"营养成分 · 蛋白质",status:"现行有效",impState:"已实施",newer:"",pub:"2025-03-16",imp:"2025-09-16",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=index",dl:false,chg:"",why:"",acts:[]},
@@ -372,136 +371,136 @@ window.STDWATCH_DATA = {
   {
     g:"蛋白质与基础成分",
     items:[
-      {no:"GB 5009.5-2025", title:"食品安全国家标准 食品中蛋白质的测定", imp:"2025-09-16", pub:"2025-03-16", validity:"现行有效", impState:"已实施", impDesc:"已于 2025-09-16 实施（395 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"蛋白质", alts:"", altsSoon:"", olds:"GB 5009.224-2016、GB 5009.5-2010、GB 5009.5-2016"},
-      {no:"GB 5009.6-2025", title:"食品安全国家标准 食品中脂肪的测定", imp:"2026-03-02", pub:"2025-09-02", validity:"现行有效", impState:"已实施", impDesc:"已于 2026-03-02 实施（228 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"脂肪", alts:"", altsSoon:"", olds:"GB 5009.6-2016、GB 5413.3-2010"},
-      {no:"GB 5009.3-2016", title:"食品安全国家标准 食品中水分的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3516 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"水分", alts:"GB 5009.238-2016、GB 5009.236-2016", altsSoon:"", olds:"GB 5009.3-2010"},
-      {no:"GB 5009.4-2016", title:"食品安全国家标准 食品中灰分的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3516 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"灰分", alts:"", altsSoon:"", olds:"GB 5009.4-2010"},
-      {no:"GB 5009.168-2016", title:"食品安全国家标准 食品中脂肪酸的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"脂肪酸", alts:"", altsSoon:"GB 5009.168-2026（还有 306 天实施（2027-08-18））；GB 5413.36-2026（还有 306 天实施（2027-08-18））", olds:"GB 5413.27-2010"},
+      {no:"GB 5009.5-2025", title:"食品安全国家标准 食品中蛋白质的测定", imp:"2025-09-16", pub:"2025-03-16", validity:"现行有效", impState:"已实施", impDesc:"已于 2025-09-16 实施（396 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"蛋白质", alts:"", altsSoon:"", olds:"GB 5009.224-2016、GB 5009.5-2010、GB 5009.5-2016"},
+      {no:"GB 5009.6-2025", title:"食品安全国家标准 食品中脂肪的测定", imp:"2026-03-02", pub:"2025-09-02", validity:"现行有效", impState:"已实施", impDesc:"已于 2026-03-02 实施（229 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"脂肪", alts:"", altsSoon:"", olds:"GB 5009.6-2016、GB 5413.3-2010"},
+      {no:"GB 5009.3-2016", title:"食品安全国家标准 食品中水分的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3517 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"水分", alts:"GB 5009.238-2016、GB 5009.236-2016", altsSoon:"", olds:"GB 5009.3-2010"},
+      {no:"GB 5009.4-2016", title:"食品安全国家标准 食品中灰分的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3517 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"灰分", alts:"", altsSoon:"", olds:"GB 5009.4-2010"},
+      {no:"GB 5009.168-2016", title:"食品安全国家标准 食品中脂肪酸的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"脂肪酸", alts:"", altsSoon:"GB 5009.168-2026（还有 305 天实施（2027-08-18））；GB 5413.36-2026（还有 305 天实施（2027-08-18））", olds:"GB 5413.27-2010"},
     ]
   },
   {
     g:"矿物质",
     items:[
-      {no:"GB 5009.92-2016", title:"食品安全国家标准 食品中钙的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"钙", alts:"", altsSoon:"", olds:"GB 5009.120-2016"},
-      {no:"GB 5009.90-2016", title:"食品安全国家标准 食品中铁的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"铁", alts:"", altsSoon:"", olds:"GB 5009.249-2016"},
-      {no:"GB 5009.14-2017", title:"食品安全国家标准  食品中锌的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3297 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"锌", alts:"", altsSoon:"", olds:""},
-      {no:"GB 5009.93-2017", title:"食品安全国家标准 食品中硒的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3297 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"硒", alts:"", altsSoon:"", olds:"GB 5009.93-2010"},
-      {no:"GB 5009.267-2020", title:"食品安全国家标准 食品中碘的测定", imp:"2021-03-11", pub:"2020-09-11", validity:"现行有效", impState:"已实施", impDesc:"已于 2021-03-11 实施（2045 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"碘", alts:"", altsSoon:"", olds:"GB 5009.267-2016、GB 5413.23-2010"},
-      {no:"GB 5009.241-2017", title:"食品安全国家标准  食品中镁的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3297 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"镁", alts:"", altsSoon:"", olds:""},
-      {no:"GB 5009.242-2017", title:"食品安全国家标准 食品中锰的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3297 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"锰", alts:"", altsSoon:"", olds:""},
-      {no:"GB 5009.13-2017", title:"食品安全国家标准  食品中铜的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3297 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"铜", alts:"", altsSoon:"", olds:"GB 5009.260-2016"},
-      {no:"GB 5009.91-2017", title:"食品安全国家标准  食品中钾、钠的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3297 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"钾钠", alts:"", altsSoon:"", olds:""},
-      {no:"GB 5009.87-2016", title:"食品安全国家标准 食品中磷的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"磷", alts:"", altsSoon:"", olds:"GB 5413.22-2010"},
-      {no:"GB 5009.44-2016", title:"食品安全国家标准 食品中氯化物的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3516 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"氯化物", alts:"", altsSoon:"", olds:""},
+      {no:"GB 5009.92-2016", title:"食品安全国家标准 食品中钙的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"钙", alts:"", altsSoon:"", olds:"GB 5009.120-2016"},
+      {no:"GB 5009.90-2016", title:"食品安全国家标准 食品中铁的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"铁", alts:"", altsSoon:"", olds:"GB 5009.249-2016"},
+      {no:"GB 5009.14-2017", title:"食品安全国家标准  食品中锌的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3298 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"锌", alts:"", altsSoon:"", olds:""},
+      {no:"GB 5009.93-2017", title:"食品安全国家标准 食品中硒的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3298 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"硒", alts:"", altsSoon:"", olds:"GB 5009.93-2010"},
+      {no:"GB 5009.267-2020", title:"食品安全国家标准 食品中碘的测定", imp:"2021-03-11", pub:"2020-09-11", validity:"现行有效", impState:"已实施", impDesc:"已于 2021-03-11 实施（2046 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"碘", alts:"", altsSoon:"", olds:"GB 5009.267-2016、GB 5413.23-2010"},
+      {no:"GB 5009.241-2017", title:"食品安全国家标准  食品中镁的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3298 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"镁", alts:"", altsSoon:"", olds:""},
+      {no:"GB 5009.242-2017", title:"食品安全国家标准 食品中锰的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3298 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"锰", alts:"", altsSoon:"", olds:""},
+      {no:"GB 5009.13-2017", title:"食品安全国家标准  食品中铜的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3298 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"铜", alts:"", altsSoon:"", olds:"GB 5009.260-2016"},
+      {no:"GB 5009.91-2017", title:"食品安全国家标准  食品中钾、钠的测定", imp:"2017-10-06", pub:"2017-04-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-10-06 实施（3298 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"钾钠", alts:"", altsSoon:"", olds:""},
+      {no:"GB 5009.87-2016", title:"食品安全国家标准 食品中磷的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"磷", alts:"", altsSoon:"", olds:"GB 5413.22-2010"},
+      {no:"GB 5009.44-2016", title:"食品安全国家标准 食品中氯化物的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3517 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"氯化物", alts:"", altsSoon:"", olds:""},
     ]
   },
   {
     g:"维生素",
     items:[
-      {no:"GB 5009.82-2016", title:"食品安全国家标准 食品中维生素A、D、E的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素A", alts:"", altsSoon:"", olds:"GB 5413.9-2010"},
-      {no:"GB 5009.296-2023", title:"食品安全国家标准 食品中维生素D的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素D", alts:"", altsSoon:"", olds:""},
-      {no:"GB 5009.84-2016", title:"食品安全国家标准 食品中维生素B1的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3516 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素B1", alts:"", altsSoon:"", olds:"GB 5413.11-2010"},
-      {no:"GB 5009.85-2016", title:"食品安全国家标准 食品中维生素B2的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素B2", alts:"", altsSoon:"", olds:"GB 5413.12-2010"},
-      {no:"GB 5009.154-2023", title:"食品安全国家标准 食品中维生素B6的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素B6", alts:"", altsSoon:"", olds:"GB 5009.154-2016、GB 5413.13-2010"},
-      {no:"GB 5009.285-2022", title:"食品安全国家标准 食品中维生素B12的测定", imp:"2022-12-30", pub:"2022-06-30", validity:"现行有效", impState:"已实施", impDesc:"已于 2022-12-30 实施（1386 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素B12", alts:"", altsSoon:"", olds:"GB 5413.14-2010"},
-      {no:"GB 5009.86-2025", title:"食品安全国家标准 食品中抗坏血酸的测定", imp:"2026-03-02", pub:"2025-09-02", validity:"现行有效", impState:"已实施", impDesc:"已于 2026-03-02 实施（228 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素C", alts:"", altsSoon:"", olds:"GB 5009.86-2016、GB 5413.18-2010"},
-      {no:"GB 5009.158-2016", title:"食品安全国家标准 食品中维生素K1的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素K1", alts:"", altsSoon:"", olds:"GB 5413.10-2010"},
-      {no:"GB 5009.290-2023", title:"食品安全国家标准 食品中维生素K2的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素K2", alts:"", altsSoon:"", olds:""},
-      {no:"GB 5009.89-2023", title:"食品安全国家标准 食品中烟酸和烟酰胺的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"烟酸", alts:"", altsSoon:"", olds:"GB 5009.89-2016、GB 5413.15-2010"},
-      {no:"GB 5009.210-2023", title:"食品安全国家标准 食品中泛酸的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"泛酸", alts:"", altsSoon:"", olds:"GB 5009.210-2016、GB 5413.17-2010"},
-      {no:"GB 5009.211-2022", title:"食品安全国家标准 食品中叶酸的测定", imp:"2022-12-30", pub:"2022-06-30", validity:"现行有效", impState:"已实施", impDesc:"已于 2022-12-30 实施（1386 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"叶酸", alts:"", altsSoon:"", olds:"GB 5009.211-2014、GB 5413.16-2010"},
-      {no:"GB 5009.259-2023", title:"食品安全国家标准 食品中生物素的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"生物素", alts:"", altsSoon:"", olds:"GB 5009.259-2016、GB 5413.19-2010"},
+      {no:"GB 5009.82-2016", title:"食品安全国家标准 食品中维生素A、D、E的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素A", alts:"", altsSoon:"", olds:"GB 5413.9-2010"},
+      {no:"GB 5009.296-2023", title:"食品安全国家标准 食品中维生素D的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素D", alts:"", altsSoon:"", olds:""},
+      {no:"GB 5009.84-2016", title:"食品安全国家标准 食品中维生素B1的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3517 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素B1", alts:"", altsSoon:"", olds:"GB 5413.11-2010"},
+      {no:"GB 5009.85-2016", title:"食品安全国家标准 食品中维生素B2的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素B2", alts:"", altsSoon:"", olds:"GB 5413.12-2010"},
+      {no:"GB 5009.154-2023", title:"食品安全国家标准 食品中维生素B6的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素B6", alts:"", altsSoon:"", olds:"GB 5009.154-2016、GB 5413.13-2010"},
+      {no:"GB 5009.285-2022", title:"食品安全国家标准 食品中维生素B12的测定", imp:"2022-12-30", pub:"2022-06-30", validity:"现行有效", impState:"已实施", impDesc:"已于 2022-12-30 实施（1387 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素B12", alts:"", altsSoon:"", olds:"GB 5413.14-2010"},
+      {no:"GB 5009.86-2025", title:"食品安全国家标准 食品中抗坏血酸的测定", imp:"2026-03-02", pub:"2025-09-02", validity:"现行有效", impState:"已实施", impDesc:"已于 2026-03-02 实施（229 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素C", alts:"", altsSoon:"", olds:"GB 5009.86-2016、GB 5413.18-2010"},
+      {no:"GB 5009.158-2016", title:"食品安全国家标准 食品中维生素K1的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素K1", alts:"", altsSoon:"", olds:"GB 5413.10-2010"},
+      {no:"GB 5009.290-2023", title:"食品安全国家标准 食品中维生素K2的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"维生素K2", alts:"", altsSoon:"", olds:""},
+      {no:"GB 5009.89-2023", title:"食品安全国家标准 食品中烟酸和烟酰胺的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"烟酸", alts:"", altsSoon:"", olds:"GB 5009.89-2016、GB 5413.15-2010"},
+      {no:"GB 5009.210-2023", title:"食品安全国家标准 食品中泛酸的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"泛酸", alts:"", altsSoon:"", olds:"GB 5009.210-2016、GB 5413.17-2010"},
+      {no:"GB 5009.211-2022", title:"食品安全国家标准 食品中叶酸的测定", imp:"2022-12-30", pub:"2022-06-30", validity:"现行有效", impState:"已实施", impDesc:"已于 2022-12-30 实施（1387 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"叶酸", alts:"", altsSoon:"", olds:"GB 5009.211-2014、GB 5413.16-2010"},
+      {no:"GB 5009.259-2023", title:"食品安全国家标准 食品中生物素的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"生物素", alts:"", altsSoon:"", olds:"GB 5009.259-2016、GB 5413.19-2010"},
     ]
   },
   {
     g:"婴配特殊成分",
     items:[
-      {no:"GB 5009.169-2016", title:"食品安全国家标准 食品中牛磺酸的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3516 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"牛磺酸", alts:"", altsSoon:"", olds:"GB 5413.26-2010"},
-      {no:"GB 5009.270-2023", title:"食品安全国家标准 食品中肌醇的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"肌醇", alts:"", altsSoon:"", olds:"GB 5009.270-2016、GB 5413.25-2010"},
-      {no:"GB 5413.20-2022", title:"食品安全国家标准 婴幼儿食品和乳品中胆碱的测定", imp:"2022-12-30", pub:"2022-06-30", validity:"现行有效", impState:"已实施", impDesc:"已于 2022-12-30 实施（1386 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"胆碱", alts:"", altsSoon:"", olds:"GB 5413.20-2013"},
-      {no:"GB 5009.300-2025", title:"食品安全国家标准 食品中左旋肉碱的测定", imp:"2025-09-16", pub:"2025-03-16", validity:"现行有效", impState:"已实施", impDesc:"已于 2025-09-16 实施（395 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"左旋肉碱", alts:"", altsSoon:"", olds:"GB 29989-2013"},
-      {no:"GB 5009.183-2025", title:"食品安全国家标准 食品中脲酶的测定", imp:"2025-09-16", pub:"2025-03-16", validity:"现行有效", impState:"已实施", impDesc:"已于 2025-09-16 实施（395 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"脲酶", alts:"", altsSoon:"", olds:"GB 5413.31-2013"},
-      {no:"GB 5413.30-2016", title:"食品安全国家标准 乳和乳制品杂质度的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"杂质度", alts:"", altsSoon:"", olds:"GB 5413.30-2010"},
-      {no:"GB 5009.299-2024", title:"食品安全国家标准 食品中乳铁蛋白的测定", imp:"2024-08-08", pub:"2024-02-08", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-08-08 实施（799 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"乳铁蛋白", alts:"", altsSoon:"", olds:""},
-      {no:"GB 5009.289-2023", title:"食品安全国家标准 食品中低聚半乳糖的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"低聚半乳糖", alts:"", altsSoon:"", olds:""},
+      {no:"GB 5009.169-2016", title:"食品安全国家标准 食品中牛磺酸的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3517 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"牛磺酸", alts:"", altsSoon:"", olds:"GB 5413.26-2010"},
+      {no:"GB 5009.270-2023", title:"食品安全国家标准 食品中肌醇的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"肌醇", alts:"", altsSoon:"", olds:"GB 5009.270-2016、GB 5413.25-2010"},
+      {no:"GB 5413.20-2022", title:"食品安全国家标准 婴幼儿食品和乳品中胆碱的测定", imp:"2022-12-30", pub:"2022-06-30", validity:"现行有效", impState:"已实施", impDesc:"已于 2022-12-30 实施（1387 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"胆碱", alts:"", altsSoon:"", olds:"GB 5413.20-2013"},
+      {no:"GB 5009.300-2025", title:"食品安全国家标准 食品中左旋肉碱的测定", imp:"2025-09-16", pub:"2025-03-16", validity:"现行有效", impState:"已实施", impDesc:"已于 2025-09-16 实施（396 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"左旋肉碱", alts:"", altsSoon:"", olds:"GB 29989-2013"},
+      {no:"GB 5009.183-2025", title:"食品安全国家标准 食品中脲酶的测定", imp:"2025-09-16", pub:"2025-03-16", validity:"现行有效", impState:"已实施", impDesc:"已于 2025-09-16 实施（396 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"脲酶", alts:"", altsSoon:"", olds:"GB 5413.31-2013"},
+      {no:"GB 5413.30-2016", title:"食品安全国家标准 乳和乳制品杂质度的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"杂质度", alts:"", altsSoon:"", olds:"GB 5413.30-2010"},
+      {no:"GB 5009.299-2024", title:"食品安全国家标准 食品中乳铁蛋白的测定", imp:"2024-08-08", pub:"2024-02-08", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-08-08 实施（800 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"乳铁蛋白", alts:"", altsSoon:"", olds:""},
+      {no:"GB 5009.289-2023", title:"食品安全国家标准 食品中低聚半乳糖的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"低聚半乳糖", alts:"", altsSoon:"", olds:""},
     ]
   },
   {
     g:"糖类",
     items:[
-      {no:"GB 5009.8-2023", title:"食品安全国家标准 食品中果糖、葡萄糖、蔗糖、麦芽糖、乳糖的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"糖类", alts:"", altsSoon:"", olds:"GB 5009.8-2016、GB 5413.5-2010"},
-      {no:"GB 5009.7-2016", title:"食品安全国家标准 食品中还原糖的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3516 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"还原糖", alts:"", altsSoon:"", olds:""},
+      {no:"GB 5009.8-2023", title:"食品安全国家标准 食品中果糖、葡萄糖、蔗糖、麦芽糖、乳糖的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"糖类", alts:"", altsSoon:"", olds:"GB 5009.8-2016、GB 5413.5-2010"},
+      {no:"GB 5009.7-2016", title:"食品安全国家标准 食品中还原糖的测定", imp:"2017-03-01", pub:"2016-08-31", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-03-01 实施（3517 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"还原糖", alts:"", altsSoon:"", olds:""},
     ]
   },
   {
     g:"脂肪酸与反式脂肪酸",
     items:[
-      {no:"GB 5009.168-2016", title:"食品安全国家标准 食品中脂肪酸的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"脂肪酸", alts:"", altsSoon:"GB 5009.168-2026（还有 306 天实施（2027-08-18））；GB 5413.36-2026（还有 306 天实施（2027-08-18））", olds:"GB 5413.27-2010"},
-      {no:"GB 5413.36-2010", title:"食品安全国家标准 婴幼儿食品和乳品中反式脂肪酸的测定", imp:"2010-06-01", pub:"2010-03-26", validity:"现行有效", impState:"已实施", impDesc:"已于 2010-06-01 实施（5981 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"反式脂肪酸", alts:"GB 5009.257-2016", altsSoon:"", olds:""},
+      {no:"GB 5009.168-2016", title:"食品安全国家标准 食品中脂肪酸的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"脂肪酸", alts:"", altsSoon:"GB 5009.168-2026（还有 305 天实施（2027-08-18））；GB 5413.36-2026（还有 305 天实施（2027-08-18））", olds:"GB 5413.27-2010"},
+      {no:"GB 5413.36-2010", title:"食品安全国家标准 婴幼儿食品和乳品中反式脂肪酸的测定", imp:"2010-06-01", pub:"2010-03-26", validity:"现行有效", impState:"已实施", impDesc:"已于 2010-06-01 实施（5982 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"反式脂肪酸", alts:"GB 5009.257-2016", altsSoon:"", olds:""},
     ]
   },
   {
     g:"油脂氧化指标",
     items:[
-      {no:"GB 5009.229-2025", title:"食品安全国家标准 食品中酸价的测定", imp:"2025-09-16", pub:"2025-03-16", validity:"现行有效", impState:"已实施", impDesc:"已于 2025-09-16 实施（395 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"酸价", alts:"", altsSoon:"", olds:"GB 5009.229-2016"},
-      {no:"GB 5009.227-2023", title:"食品安全国家标准 食品中过氧化值的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"过氧化值", alts:"", altsSoon:"", olds:"GB 5009.227-2016"},
+      {no:"GB 5009.229-2025", title:"食品安全国家标准 食品中酸价的测定", imp:"2025-09-16", pub:"2025-03-16", validity:"现行有效", impState:"已实施", impDesc:"已于 2025-09-16 实施（396 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"酸价", alts:"", altsSoon:"", olds:"GB 5009.229-2016"},
+      {no:"GB 5009.227-2023", title:"食品安全国家标准 食品中过氧化值的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"过氧化值", alts:"", altsSoon:"", olds:"GB 5009.227-2016"},
     ]
   },
   {
     g:"污染物检测",
     items:[
-      {no:"GB 5009.33-2025", title:"食品安全国家标准 食品中亚硝酸盐与硝酸盐的测定", imp:"2026-03-02", pub:"2025-09-02", validity:"现行有效", impState:"已实施", impDesc:"已于 2026-03-02 实施（228 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"亚硝酸盐与硝酸盐", alts:"", altsSoon:"", olds:"GB 5009.33-2010、GB 5009.33-2016、GB/T 5009.33-2003"},
-      {no:"GB 5009.22-2016", title:"食品安全国家标准 食品中黄曲霉毒素B族和G族的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"黄曲霉毒素B族和G族", alts:"", altsSoon:"GB 5009.22-2026（还有 125 天实施（2027-02-18））", olds:""},
-      {no:"GB 5009.24-2016", title:"食品安全国家标准 食品中黄曲霉毒素M族的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"黄曲霉毒素M族", alts:"", altsSoon:"GB 5009.24-2026（还有 125 天实施（2027-02-18））", olds:"GB 5009.24-2010、GB 5413.37-2010"},
-      {no:"GB/T 22388-2008", title:"原料乳与乳制品中三聚氰胺检测方法", imp:"2008-10-07", pub:"2008-10-07", validity:"现行有效", impState:"已实施", impDesc:"已于 2008-10-07 实施（6583 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"三聚氰胺", alts:"GB/T 22400-2008", altsSoon:"", olds:""},
+      {no:"GB 5009.33-2025", title:"食品安全国家标准 食品中亚硝酸盐与硝酸盐的测定", imp:"2026-03-02", pub:"2025-09-02", validity:"现行有效", impState:"已实施", impDesc:"已于 2026-03-02 实施（229 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"亚硝酸盐与硝酸盐", alts:"", altsSoon:"", olds:"GB 5009.33-2010、GB 5009.33-2016、GB/T 5009.33-2003"},
+      {no:"GB 5009.22-2016", title:"食品安全国家标准 食品中黄曲霉毒素B族和G族的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"黄曲霉毒素B族和G族", alts:"", altsSoon:"GB 5009.22-2026（还有 124 天实施（2027-02-18））", olds:""},
+      {no:"GB 5009.24-2016", title:"食品安全国家标准 食品中黄曲霉毒素M族的测定", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"黄曲霉毒素M族", alts:"", altsSoon:"GB 5009.24-2026（还有 124 天实施（2027-02-18））", olds:"GB 5009.24-2010、GB 5413.37-2010"},
+      {no:"GB/T 22388-2008", title:"原料乳与乳制品中三聚氰胺检测方法", imp:"2008-10-07", pub:"2008-10-07", validity:"现行有效", impState:"已实施", impDesc:"已于 2008-10-07 实施（6584 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"三聚氰胺", alts:"GB/T 22400-2008", altsSoon:"", olds:""},
     ]
   },
   {
     g:"微生物",
     items:[
-      {no:"GB 4789.2-2022", title:"食品安全国家标准 食品微生物学检验 菌落总数测定", imp:"2022-12-30", pub:"2022-06-30", validity:"现行有效", impState:"已实施", impDesc:"已于 2022-12-30 实施（1386 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"菌落总数", alts:"", altsSoon:"", olds:"GB 4789.2-2010、GB 4789.2-2016"},
-      {no:"GB 4789.3-2025", title:"食品安全国家标准 食品微生物学检验 大肠菌群计数", imp:"2025-09-16", pub:"2025-03-16", validity:"现行有效", impState:"已实施", impDesc:"已于 2025-09-16 实施（395 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"大肠菌群", alts:"", altsSoon:"", olds:"GB 4789.3-2010、GB 4789.3-2016、GB 4789.39-2013"},
-      {no:"GB 4789.10-2016", title:"食品安全国家标准 食品微生物学检验 金黄色葡萄球菌检验", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3402 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"金黄色葡萄球菌", alts:"", altsSoon:"", olds:"GB 4789.10-2010"},
-      {no:"GB 4789.26-2023", title:"食品安全国家标准 食品微生物学检验 商业无菌检验", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"商业无菌", alts:"", altsSoon:"", olds:"GB 4789.26-2013"},
+      {no:"GB 4789.2-2022", title:"食品安全国家标准 食品微生物学检验 菌落总数测定", imp:"2022-12-30", pub:"2022-06-30", validity:"现行有效", impState:"已实施", impDesc:"已于 2022-12-30 实施（1387 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"菌落总数", alts:"", altsSoon:"", olds:"GB 4789.2-2010、GB 4789.2-2016"},
+      {no:"GB 4789.3-2025", title:"食品安全国家标准 食品微生物学检验 大肠菌群计数", imp:"2025-09-16", pub:"2025-03-16", validity:"现行有效", impState:"已实施", impDesc:"已于 2025-09-16 实施（396 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"大肠菌群", alts:"", altsSoon:"", olds:"GB 4789.3-2010、GB 4789.3-2016、GB 4789.39-2013"},
+      {no:"GB 4789.10-2016", title:"食品安全国家标准 食品微生物学检验 金黄色葡萄球菌检验", imp:"2017-06-23", pub:"2016-12-23", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-06-23 实施（3403 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"金黄色葡萄球菌", alts:"", altsSoon:"", olds:"GB 4789.10-2010"},
+      {no:"GB 4789.26-2023", title:"食品安全国家标准 食品微生物学检验 商业无菌检验", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"商业无菌", alts:"", altsSoon:"", olds:"GB 4789.26-2013"},
     ]
   },
   {
     g:"限量与强化",
     items:[
-      {no:"GB 2762-2025", title:"食品安全国家标准 食品中污染物限量", imp:"2026-09-02", pub:"2025-09-02", validity:"现行有效", impState:"已实施", impDesc:"已于 2026-09-02 实施（44 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"污染物限量", alts:"", altsSoon:"", olds:"GB 2762-2012、GB 2762-2017、GB 2762-2022"},
-      {no:"GB 2761-2017", title:"食品安全国家标准 食品中真菌毒素限量", imp:"2017-09-17", pub:"2017-03-17", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-09-17 实施（3316 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"真菌毒素限量", alts:"", altsSoon:"", olds:"GB 2761-2011"},
-      {no:"GB 14880-2012", title:"食品安全国家标准 食品营养强化剂使用标准", imp:"2013-01-01", pub:"2012-03-15", validity:"现行有效", impState:"已实施", impDesc:"已于 2013-01-01 实施（5036 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"营养强化剂", alts:"", altsSoon:"", olds:""},
-      {no:"GB 29921-2021", title:"食品安全国家标准 预包装食品中致病菌限量", imp:"2021-11-22", pub:"2021-09-07", validity:"现行有效", impState:"已实施", impDesc:"已于 2021-11-22 实施（1789 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"致病菌限量", alts:"", altsSoon:"", olds:"GB 29921-2013"},
+      {no:"GB 2762-2025", title:"食品安全国家标准 食品中污染物限量", imp:"2026-09-02", pub:"2025-09-02", validity:"现行有效", impState:"已实施", impDesc:"已于 2026-09-02 实施（45 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"污染物限量", alts:"", altsSoon:"", olds:"GB 2762-2012、GB 2762-2017、GB 2762-2022"},
+      {no:"GB 2761-2017", title:"食品安全国家标准 食品中真菌毒素限量", imp:"2017-09-17", pub:"2017-03-17", validity:"现行有效", impState:"已实施", impDesc:"已于 2017-09-17 实施（3317 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"真菌毒素限量", alts:"", altsSoon:"", olds:"GB 2761-2011"},
+      {no:"GB 14880-2012", title:"食品安全国家标准 食品营养强化剂使用标准", imp:"2013-01-01", pub:"2012-03-15", validity:"现行有效", impState:"已实施", impDesc:"已于 2013-01-01 实施（5037 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"营养强化剂", alts:"", altsSoon:"", olds:""},
+      {no:"GB 29921-2021", title:"食品安全国家标准 预包装食品中致病菌限量", imp:"2021-11-22", pub:"2021-09-07", validity:"现行有效", impState:"已实施", impDesc:"已于 2021-11-22 实施（1790 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"致病菌限量", alts:"", altsSoon:"", olds:"GB 29921-2013"},
     ]
   },
   {
     g:"污染物元素检测",
     items:[
-      {no:"GB 5009.12-2023", title:"食品安全国家标准 食品中铅的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"铅", alts:"", altsSoon:"", olds:"GB 5009.12-2010、GB 5009.12-2017、GB 5009.75-2014"},
-      {no:"GB 5009.16-2023", title:"食品安全国家标准 食品中锡的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（954 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"锡", alts:"", altsSoon:"", olds:"GB 5009.16-2014、GB 5009.215-2016"},
+      {no:"GB 5009.12-2023", title:"食品安全国家标准 食品中铅的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"铅", alts:"", altsSoon:"", olds:"GB 5009.12-2010、GB 5009.12-2017、GB 5009.75-2014"},
+      {no:"GB 5009.16-2023", title:"食品安全国家标准 食品中锡的测定", imp:"2024-03-06", pub:"2023-09-06", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-03-06 实施（955 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"锡", alts:"", altsSoon:"", olds:"GB 5009.16-2014、GB 5009.215-2016"},
     ]
   },
   {
     g:"致病菌限量检测",
     items:[
-      {no:"GB 4789.40-2024", title:"食品安全国家标准 食品微生物学检验 克罗诺杆菌检验", imp:"2024-08-08", pub:"2024-02-08", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-08-08 实施（799 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"克罗诺杆菌", alts:"", altsSoon:"", olds:"GB 4789.40-2010、GB 4789.40-2016"},
-      {no:"GB 4789.14-2014", title:"食品安全国家标准 蜡样芽孢杆菌检验", imp:"2015-05-01", pub:"2014-12-01", validity:"现行有效", impState:"已实施", impDesc:"已于 2015-05-01 实施（4186 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"蜡样芽胞杆菌", alts:"", altsSoon:"", olds:""},
-      {no:"GB 4789.4-2024", title:"食品安全国家标准 食品微生物学检验 沙门氏菌检验", imp:"2024-08-08", pub:"2024-02-08", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-08-08 实施（799 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"沙门氏菌", alts:"", altsSoon:"", olds:"GB 4789.31-2013、GB 4789.4-2010、GB 4789.4-2016"},
+      {no:"GB 4789.40-2024", title:"食品安全国家标准 食品微生物学检验 克罗诺杆菌检验", imp:"2024-08-08", pub:"2024-02-08", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-08-08 实施（800 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"克罗诺杆菌", alts:"", altsSoon:"", olds:"GB 4789.40-2010、GB 4789.40-2016"},
+      {no:"GB 4789.14-2014", title:"食品安全国家标准 蜡样芽孢杆菌检验", imp:"2015-05-01", pub:"2014-12-01", validity:"现行有效", impState:"已实施", impDesc:"已于 2015-05-01 实施（4187 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"蜡样芽胞杆菌", alts:"", altsSoon:"", olds:""},
+      {no:"GB 4789.4-2024", title:"食品安全国家标准 食品微生物学检验 沙门氏菌检验", imp:"2024-08-08", pub:"2024-02-08", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-08-08 实施（800 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"沙门氏菌", alts:"", altsSoon:"", olds:"GB 4789.31-2013、GB 4789.4-2010、GB 4789.4-2016"},
     ]
   },
   {
     g:"计量与包装",
     items:[
-      {no:"JJF 1070-2023", title:"定量包装商品净含量计量检验规则", imp:"2024-10-12", pub:"2023-10-12", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-10-12 实施（734 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"净含量", alts:"", altsSoon:"", olds:"JJF 1070-2000、JJF 1070-2005、JJF 1070.1-2011"},
+      {no:"JJF 1070-2023", title:"定量包装商品净含量计量检验规则", imp:"2024-10-12", pub:"2023-10-12", validity:"现行有效", impState:"已实施", impDesc:"已于 2024-10-12 实施（735 天前）", reason:"同号与同检测对象下均无更新的已实施版本", subject:"净含量", alts:"", altsSoon:"", olds:"JJF 1070-2000、JJF 1070-2005、JJF 1070.1-2011"},
     ]
   }
 ],
   /* ---- SOONPOOL ---- */
   SOONPOOL: [
-  {no:"GB 5009.22-2026", d:125, imp:"2027-02-18", so:"黄曲霉毒素B族和G族"},
-  {no:"GB 5009.24-2026", d:125, imp:"2027-02-18", so:"黄曲霉毒素M族"},
-  {no:"GB 5009.168-2026", d:306, imp:"2027-08-18", so:"脂肪酸"},
-  {no:"GB 5413.36-2026", d:306, imp:"2027-08-18", so:"脂肪酸"},
+  {no:"GB 5009.22-2026", d:124, imp:"2027-02-18", so:"黄曲霉毒素B族和G族"},
+  {no:"GB 5009.24-2026", d:124, imp:"2027-02-18", so:"黄曲霉毒素M族"},
+  {no:"GB 5009.168-2026", d:305, imp:"2027-08-18", so:"脂肪酸"},
+  {no:"GB 5413.36-2026", d:305, imp:"2027-08-18", so:"脂肪酸"},
 ],
   /* ---- ERATA ---- */
   ERATA: [
@@ -654,25 +653,25 @@ window.STDWATCH_DATA = {
   /* ---- RUNSTATE ---- */
   RUNSTATE: {
   schedule:"每日 09:07",
-  lastRun:"2026-10-16 09:34",
-  lastRunDetail:"0.0 小时前",
-  nextRun:"2026-10-17 09:07",
+  lastRun:"2026-10-17 09:28",
+  lastRunDetail:"0.4 小时前",
+  nextRun:"2026-10-18 09:07",
   everRan:true,
   healthy:true,
   sources:[
-  {code:"SRC-01", file:"SRC-01_latest.json", count:3, mtime:"2026-10-16 09:32"},
-  {code:"SRC-02", file:"SRC-02_latest.json", count:7, mtime:"2026-10-16 09:34"},
-  {code:"SRC-05", file:"SRC-05_latest.json", count:373, mtime:"2026-10-16 09:34"},
-  {code:"SRC-06", file:"SRC-06_latest.json", count:5, mtime:"2026-10-16 09:32"},
-  {code:"SRC-07", file:"SRC-07_latest.json", count:0, mtime:"2026-10-16 09:28"},
-  {code:"SRC-08", file:"SRC-08_latest.json", count:56, mtime:"2026-10-16 09:32"},
-  {code:"SRC-11", file:"SRC-11_latest.json", count:98, mtime:"2026-10-16 09:33"}
+  {code:"SRC-01", file:"SRC-01_latest.json", count:3, mtime:"2026-10-17 09:28"},
+  {code:"SRC-02", file:"SRC-02_latest.json", count:7, mtime:"2026-10-17 09:28"},
+  {code:"SRC-05", file:"SRC-05_latest.json", count:373, mtime:"2026-10-17 09:28"},
+  {code:"SRC-06", file:"SRC-06_latest.json", count:4, mtime:"2026-10-17 09:28"},
+  {code:"SRC-07", file:"SRC-07_latest.json", count:0, mtime:"2026-10-17 09:28"},
+  {code:"SRC-08", file:"SRC-08_latest.json", count:56, mtime:"2026-10-17 09:28"},
+  {code:"SRC-11", file:"SRC-11_latest.json", count:98, mtime:"2026-10-17 09:28"}
   ],
   extras:[
-  {label:"公告", file:"notice_latest.json", count:56, mtime:"2026-10-16 09:33"},
-  {label:"勘误与修改单", file:"erata_latest.json", count:176, mtime:"2026-10-16 09:33"}
+  {label:"公告", file:"notice_latest.json", count:56, mtime:"2026-10-17 09:28"},
+  {label:"勘误与修改单", file:"erata_latest.json", count:176, mtime:"2026-10-17 09:28"}
   ],
-  logs:[["2026-10-16 09:34:31","ok","[SRC-05] 食品安全国家标准数据检索平台 抓取 373 条"],["2026-10-16 09:34:30","ok","[SRC-02] 国家标准全文公开系统 openstd 抓取 7 条"],["2026-10-16 09:33:58","ok","[勘误] 收录 176 条标准勘误 / 修改单"],["2026-10-16 09:33:26","ok","[公告] 收录 56 条发布公告"],["2026-10-16 09:33:23","ok","[SRC-11] CNAS 实验室认可规范 抓取 98 条（非国标，标准委不收录）"],["2026-10-16 09:32:46","ok","[SRC-08] 全国团体标准 抓取 56 条（仅作参考）"],["2026-10-16 09:32:18","ok","[SRC-06] 市场监管总局公告 抓取 5 条（BJS 补充检验方法等）"],["2026-10-16 09:32:14","ok","[SRC-01] 全国标准信息公共服务平台 gbQueryPage 抓取 3 条"],["2026-10-16 09:28:58","ok","[SRC-07] 工信部行业公告 抓取 0 条（该源常为 0，属正常）"]]
+  logs:[["2026-10-17 09:28:18","ok","[勘误] 收录 176 条标准勘误 / 修改单"],["2026-10-17 09:28:18","ok","[公告] 收录 56 条发布公告"],["2026-10-17 09:28:18","ok","[SRC-11] CNAS 实验室认可规范 抓取 98 条（非国标，标准委不收录）"],["2026-10-17 09:28:18","ok","[SRC-08] 全国团体标准 抓取 56 条（仅作参考）"],["2026-10-17 09:28:18","ok","[SRC-07] 工信部行业公告 抓取 0 条（该源常为 0，属正常）"],["2026-10-17 09:28:18","ok","[SRC-06] 市场监管总局公告 抓取 4 条（BJS 补充检验方法等）"],["2026-10-17 09:28:18","ok","[SRC-05] 食品安全国家标准数据检索平台 抓取 373 条"],["2026-10-17 09:28:18","ok","[SRC-02] 国家标准全文公开系统 openstd 抓取 7 条"],["2026-10-17 09:28:18","ok","[SRC-01] 全国标准信息公共服务平台 gbQueryPage 抓取 3 条"]]
 },
   /* ---- CNASDOCS ---- */
   CNASDOCS: [
