@@ -1,0 +1,3840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ★ 缓存控制：改过index.html 之后必须让浏览器真的重新取 ★
+     踩过（2026-10-06）：GitHub Pages 与 CDN 都会缓存 html，
+     部署成功、Actions 绿灯，但用户看到的还是旧版，
+     反复排查「代码明明改了」。
+     index.html 漏了 —— 两个页面不一致，等于首页永远缓存。
+     改动 index.html 时务必一起确认这三行还在。 -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>食品质量与安全管理系统 · 婴配标准变更提醒</title>
+<style>
+:root{
+  --bg:#f5f6f8; --panel:#ffffff; --line:#e4e7ec; --line2:#eef1f5;
+  --ink:#1a1d23; --ink2:#4a5160; --ink3:#8b93a3;
+  --brand:#1f5fd6; --brand-soft:#eaf1fd;
+  --high:#d92d20; --high-soft:#fdeceb;
+  --mid:#c77700; --mid-soft:#fdf3e2;
+  --low:#3b7a57; --low-soft:#eaf4ee;
+  --radius:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+  background:var(--bg); color:var(--ink); font-size:14px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--brand);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* 布局 */
+.app{display:flex;min-height:100vh}
+.side{
+  /* ★ 212 → 244px ★
+     窄侧栏里「认可规范（CNAS）」「工作安全分析 (JSA)」放不下，
+     文字被 .tx 的 ellipsis 截掉（用户截图：「认可规范（CN…」「工作安全分析 (J…」）。
+     244px 能容纳最长的一条，同时侧栏仍占桌面宽度不到 1/5。 */
+  width:244px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+}
+.brand{padding:18px 18px 14px;border-bottom:1px solid var(--line2)}
+.brand h1{font-size:15px;font-weight:600;letter-spacing:.2px}
+.brand p{font-size:12px;color:var(--ink3);margin-top:3px}
+
+/* ★★ 居中的品牌头（2026-10-22 用户要求）★★
+   原来标题只在左侧栏顶部，太角落了。检测员打开第一眼看不到系统叫什么。
+   现在在页头放一个居中的品牌区：徽标 + 系统名 + 副标题，
+   视觉上把「这是什么系统」放在第一屏正中。 */
+.topbrand{
+  display:flex;align-items:center;justify-content:center;gap:13px;
+  padding:15px 24px 14px;
+  background:
+    linear-gradient(180deg,rgba(37,99,235,.06),rgba(37,99,235,0)),
+    var(--panel);
+  border-bottom:1px solid var(--line2);
+  text-align:left;
+}
+.topbrand .logo{
+  width:38px;height:38px;flex:0 0 38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  background:linear-gradient(135deg,#2563eb,#0ea5e9);
+  box-shadow:0 3px 10px rgba(37,99,235,.28);
+}
+.topbrand .tt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.topbrand h1{
+  margin:0;font-size:19px;font-weight:700;letter-spacing:.6px;
+  color:var(--ink);line-height:1.25;
+}
+.topbrand p{
+  margin:0;font-size:12px;color:var(--ink3);letter-spacing:.3px;
+}
+@media(max-width:720px){
+  .topbrand{padding:12px 14px;gap:10px}
+  .topbrand .logo{width:32px;height:32px;flex:0 0 32px;font-size:17px}
+  .topbrand h1{font-size:16px}
+  .topbrand p{font-size:11px}
+}
+.nav{padding:10px 10px;flex:1;overflow-y:auto}
+.nav-label{font-size:11px;color:var(--ink3);padding:10px 8px 5px;letter-spacing:.5px}
+.nav a{
+  display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:6px;
+  color:var(--ink2);font-size:13.5px;margin-bottom:2px;position:relative;
+}
+.nav a:hover{background:var(--line2);text-decoration:none}
+.nav a.on{background:var(--brand-soft);color:var(--brand);font-weight:600}
+.nav a .ic{width:16px;text-align:center;opacity:.85;flex:0 0 16px}
+/* ★ 导航文字不折行 ★
+   「工作安全分析 (JSA)」这种长名，在 flex 里会换行，
+   换行后徽标被挤到右边只剩一条竖条（截图里那个红色药丸）。
+   → 文字放进 .tx 容器，单行 + 省略号；徽标 flex:0 0 auto 永不压缩。 */
+.nav a .tx{
+  flex:1 1 auto;min-width:0;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+/* 副标题：括号内容放下面一行（用户 2026-10-22 要求） */
+.nav a .tx .sub{
+  display:block;font-size:11px;font-weight:400;line-height:1.4;
+  color:var(--ink3);margin-top:1px;letter-spacing:.2px;
+}
+.nav a.on .tx .sub{color:var(--brand);opacity:.72}
+.badge{
+  margin-left:auto;background:var(--high);color:#fff;font-size:11px;font-weight:600;
+  min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;
+  justify-content:center;padding:0 5px;line-height:1;
+  flex:0 0 auto;white-space:nowrap;
+}
+.side-foot{padding:12px 16px;border-top:1px solid var(--line2);font-size:11px;color:var(--ink3);line-height:1.5}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{
+  background:var(--panel);border-bottom:1px solid var(--line);padding:12px 24px;
+  display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20;
+}
+.top h2{font-size:16px;font-weight:600}
+.top .sp{flex:1}
+.search{
+  display:flex;align-items:center;gap:7px;background:var(--bg);border:1px solid var(--line);
+  /* ★ 原来是 width:280px —— 375px 屏宽减去顶栏内边距后放不下，
+     搜索框会撑破顶栏把「7 条待处理」按钮挤出屏幕。
+     改成 max-width + flex：桌面仍是 280px，窄屏自动收窄。 */
+  border-radius:6px;padding:6px 10px;
+  max-width:280px;min-width:0;flex:0 1 280px;
+}
+.search input{border:0;background:transparent;outline:none;font-size:13px;width:100%;font-family:inherit}
+.view{padding:22px 24px 60px;max-width:1180px}
+.view.hide{display:none}
+
+/* 通用块 */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px}
+.card-h{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.card-h h3{font-size:14.5px;font-weight:600}
+.card-h .sp{flex:1}
+.muted{color:var(--ink3);font-size:12.5px}
+.sect-note{font-size:12.5px;color:var(--ink3);margin:-6px 0 14px}
+
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:960px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g2{grid-template-columns:1fr}}
+
+/* KPI */
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.kpi .k{font-size:12px;color:var(--ink3)}
+.kpi .v{font-size:26px;font-weight:600;letter-spacing:-.5px;margin-top:2px}
+.kpi .d{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.kpi.hi .v{color:var(--high)}
+
+/* 徽标 */
+.tag{
+  display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:4px;
+  font-weight:500;white-space:nowrap;border:1px solid transparent;
+}
+.t-high{background:var(--high-soft);color:var(--high);border-color:#f7cfcb}
+.t-mid{background:var(--mid-soft);color:var(--mid);border-color:#f3ddb8}
+.t-low{background:var(--low-soft);color:var(--low);border-color:#c9e0d4}
+.t-cur{background:var(--brand-soft);color:var(--brand);border-color:#cfe0f8}
+.t-soon{background:var(--mid-soft);color:var(--mid);border-color:#f3ddb8}
+.t-dead{background:#f1f2f4;color:var(--ink3);border-color:var(--line)}
+.t-gray{background:var(--bg);color:var(--ink2);border-color:var(--line)}
+/* 修改单徽标：用深紫红区别于勘误的红色 —— 两类都是"标准已改"，
+   但性质不同（勘误=更正表述；修改单=实质性技术修订，自批准之日起实施） */
+.t-mod{background:#f3e8f7;color:#7b2d8e;border-color:#e0c6ea}
+.tags{display:flex;gap:5px;flex-wrap:wrap}
+
+/* 提醒条目 */
+.alert{border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;background:var(--panel)}
+.alert.a-high{border-left:3px solid var(--high)}
+.alert.a-mid{border-left:3px solid var(--mid)}
+.alert.a-low{border-left:3px solid var(--low)}
+.alert .h{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
+.alert .h .t{font-weight:600;font-size:14px;flex:1;line-height:1.5}
+.alert .no{font-family:ui-monospace,Consolas,monospace;font-size:13px;color:var(--ink2)}
+.alert .kv{font-size:13px;color:var(--ink2);margin:3px 0}
+.alert .kv b{color:var(--ink);font-weight:500}
+.alert .why{
+  font-size:12.5px;background:#fafbfc;border:1px solid var(--line2);border-radius:6px;
+  padding:8px 10px;margin-top:9px;color:var(--ink2);
+}
+.alert .why .lb{font-weight:600;color:var(--ink);display:block;margin-bottom:3px;font-size:12.5px}
+.alert .act{font-size:12.5px;margin-top:9px}
+.alert .act .lb{font-weight:600;color:var(--ink);display:block;margin-bottom:4px;font-size:12.5px}
+.alert .act ul{margin:0;padding-left:18px;color:var(--ink2)}
+.alert .act li{margin:2px 0}
+.alert .foot{display:flex;align-items:center;gap:8px;margin-top:11px;padding-top:10px;border-top:1px dashed var(--line2)}
+
+/* 按钮 */
+.btn{
+  display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;
+  color:var(--ink2);border-radius:6px;padding:5px 11px;font-size:12.5px;cursor:pointer;
+  font-family:inherit;white-space:nowrap;
+}
+.btn:hover{background:var(--bg);text-decoration:none}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.pri:hover{background:#1a51bd}
+.btn.gh{border-style:dashed}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* 表格 */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line2);vertical-align:top}
+th{font-size:12px;color:var(--ink3);font-weight:600;background:#fafbfc;white-space:nowrap}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--ink)}
+tbody tr:hover{background:#fafbfc}
+td .no{font-family:ui-monospace,Consolas,monospace}
+.rowlink{cursor:pointer}
+.rowlink:hover td{background:var(--brand-soft)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs button{
+  border:0;background:transparent;padding:8px 14px;font-size:13.5px;color:var(--ink2);
+  cursor:pointer;border-bottom:2px solid transparent;font-family:inherit;margin-bottom:-1px;
+}
+.tabs button.on{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+.tabs .cnt{font-size:11.5px;color:var(--ink3);margin-left:4px}
+
+/* 订阅 */
+.sub-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:900px){.sub-grid{grid-template-columns:1fr}}
+.sub-box{border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.sub-box .hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sub-box .hd h4{font-size:13.5px;font-weight:600}
+.chk{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line2);cursor:pointer}
+.chk:last-child{border-bottom:0}
+.chk input{margin-top:4px;accent-color:var(--brand);width:14px;height:14px;flex-shrink:0}
+.chk .nm{font-size:13px;font-weight:500}
+.chk .ds{font-size:12px;color:var(--ink3);line-height:1.5}
+.chk input:checked + div .nm{color:var(--ink)}
+
+/* 详情卡 */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+@media(max-width:900px){.detail-grid{grid-template-columns:1fr}}
+.dl{display:grid;grid-template-columns:96px 1fr;gap:7px 12px;font-size:13px}
+.dl dt{color:var(--ink3);font-size:12.5px}
+.dl dd{color:var(--ink)}
+.dl dd .no{font-family:ui-monospace,Consolas,monospace}
+.timeline{border-left:2px solid var(--line);padding-left:16px;margin-left:6px}
+.tl-item{position:relative;padding-bottom:16px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{
+  content:"";position:absolute;left:-21px;top:5px;width:9px;height:9px;border-radius:50%;
+  background:#fff;border:2px solid var(--line);
+}
+.tl-item.now::before{border-color:var(--brand);background:var(--brand)}
+.tl-item .dt{font-size:12px;color:var(--ink3)}
+.tl-item .ev{font-size:13.5px;font-weight:500;margin:1px 0 3px}
+.tl-item .de{font-size:12.5px;color:var(--ink2)}
+
+/* 提醒中心 */
+.rem-item{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line2)}
+.rem-item.unread .tx{font-weight:600}
+.rem-item .dot{width:7px;height:7px;border-radius:50%;background:var(--high);margin-top:8px;flex-shrink:0}
+.rem-item.read .dot{background:var(--line)}
+.rem-item .tx{flex:1;font-size:13.5px}
+.rem-item .tm{font-size:11.5px;color:var(--ink3);white-space:nowrap}
+.filters,.chips{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.chip .cnt{margin-left:5px;opacity:.6;font-size:11px}
+.grouprow td{background:#f7f9fc;font-weight:600;font-size:12.5px;color:var(--ink2);padding:7px 10px;border-top:1px solid var(--line)}
+.chip{
+  border:1px solid var(--line);background:#fff;border-radius:14px;padding:3px 11px;font-size:12.5px;
+  cursor:pointer;color:var(--ink2);font-family:inherit;
+}
+.chip.on{background:var(--brand-soft);border-color:#cfe0f8;color:var(--brand);font-weight:600}
+
+/* ================= 研发管理（2026-10-22）=================
+   与质量管理工具共用 .qmcard 骨架，但配色区分开（紫→靛），
+   免得两个模块的卡片在视觉上分不清。 */
+.rdcard::before{background:linear-gradient(135deg,#7c3aed,#4f46e5)}
+.rdcard.open{border-color:#c4b5fd;box-shadow:0 6px 20px rgba(79,70,229,.14)}
+.rdcard .qmcard-t .key{color:#5b21b6;background:#ede9fe}
+.rdcard .qmcard-t .cg{background:rgba(124,58,237,.09);color:#6d28d9}
+.rdcard .qmcase{
+  background:#f5f3ff;border-color:#ddd6fe;border-left-color:#7c3aed;color:#4c1d95;
+}
+
+/* ================= 工具工作台（2026-10-22）=================
+   34 个可交互工具的共用外观。
+   设计取向：像「工作台」不像「说明书」——
+   表格紧凑、输入框显眼、统计条在顶部、结论用颜色直接给。 */
+.qwb-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.qmcard-t .cg.tool{background:rgba(16,185,129,.12);color:#047857}
+
+.qwt{border:1px solid var(--line);border-radius:9px;background:var(--panel);
+  overflow:hidden;margin-top:4px}
+.qwt-h{display:flex;align-items:center;gap:10px;padding:10px 13px;
+  background:var(--line2);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.qwt-h b{font-size:13px}
+.qwt-h .sp{flex:1}
+
+/* 统计条 */
+.qwt-stats{display:flex;gap:8px;flex-wrap:wrap;padding:10px 13px;
+  border-bottom:1px solid var(--line2)}
+.qws{display:inline-flex;flex-direction:column;align-items:center;gap:1px;
+  padding:5px 13px;background:var(--line2);border-radius:7px;min-width:74px}
+.qws b{font-size:15px;font-weight:700;color:var(--ink);line-height:1.2}
+.qws i{font-style:normal;font-size:10.5px;color:var(--ink3)}
+.qws.ok{background:#f0fdf4}.qws.ok b{color:#15803d}
+.qws.warn{background:#fffbeb}.qws.warn b{color:#b45309}
+.qws.bad{background:#fef2f2}.qws.bad b{color:#b91c1c}
+.qws.ok b{font-size:15px}
+.qws.warn b{font-size:15px}
+
+/* 表格 */
+.qwt-wrap{overflow-x:auto;max-height:520px;overflow-y:auto}
+.qwt-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.qwt-tbl th{position:sticky;top:0;z-index:2;background:var(--line2);
+  text-align:left;padding:7px 9px;font-size:11.5px;font-weight:600;
+  color:var(--ink2);white-space:nowrap;border-bottom:1px solid var(--line)}
+.qwt-tbl td{padding:3px 6px;border-bottom:1px solid var(--line2);vertical-align:middle}
+.qwt-tbl tr:hover td{background:rgba(37,99,235,.03)}
+.qwt-tbl tr.bad td{background:#fef2f2}
+.qwt-tbl tr.warn td{background:#fffbeb}
+.qwt-tbl td.idx{color:var(--ink3);font-size:11px;text-align:center;width:30px}
+.qwt-tbl td.num{text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;
+  padding-right:9px;white-space:nowrap}
+.qwt-tbl td.num.pos{color:#15803d}
+.qwt-tbl td.num.neg{color:#b91c1c}
+.qwt-tbl input[type=text],.qwt-tbl input[type=number],.qwt-tbl input[type=date],
+.qwt-tbl select{
+  width:100%;border:1px solid transparent;background:transparent;border-radius:4px;
+  padding:4px 6px;font:inherit;font-size:12.5px;color:var(--ink);
+}
+.qwt-tbl input:hover,.qwt-tbl select:hover{border-color:var(--line);background:#fff}
+.qwt-tbl input:focus,.qwt-tbl select:focus{
+  outline:none;border-color:var(--brand);background:#fff;
+  box-shadow:0 0 0 2px rgba(37,99,235,.12)}
+.qwt-tbl td.cmp{text-align:right;font-family:ui-monospace,Menlo,Consolas,monospace;padding-right:9px}
+.qwt-tbl td.cmp b{font-size:13px}
+.qwt-tbl td.cmp i{font-style:normal;font-size:10px;margin-left:4px;color:var(--ink3)}
+.qwt-tbl td.cmp.ok b{color:#15803d}
+.qwt-tbl td.cmp.warn b{color:#b45309}
+.qwt-tbl td.cmp.bad b{color:#b91c1c}
+.qwt-tbl .x{border:none;background:transparent;color:var(--ink3);
+  cursor:pointer;font-size:15px;line-height:1;padding:2px 5px;border-radius:4px}
+.qwt-tbl .x:hover{background:#fee2e2;color:#b91c1c}
+
+/* 提示条 */
+.qwflag{padding:9px 12px;margin:9px 13px;font-size:12.5px;line-height:1.75;
+  background:#fffbeb;border:1px solid #fde68a;border-radius:6px;color:#92400e}
+.qwflag.ok{background:#f0fdf4;border-color:#bbf7d0;color:#14532d}
+.qwfoot{padding:9px 13px;font-size:11.5px;line-height:1.7;color:var(--ink3);
+  border-top:1px solid var(--line2);background:#fafbfc}
+
+/* 徽标 */
+.qmcard-t .cg.tool{background:rgba(16,185,129,.12);color:#047857;font-weight:600}
+.vd{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10.5px;
+  font-weight:700;white-space:nowrap}
+.vd.ok{background:#dcfce7;color:#15803d}
+.vd.warn{background:#fef3c7;color:#b45309}
+.vd.bad{background:#fee2e2;color:#b91c1c}
+.vd.low{background:#fef3c7;color:#b45309}
+.tier{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;
+  border-radius:5px;font-size:11px;font-weight:700}
+.tierA{background:#fee2e2;color:#b91c1c}
+.tierB{background:#fef3c7;color:#b45309}
+.tierC{background:#f1f5f9;color:#64748b}
+.vf{display:inline-block;font-size:9.5px;padding:0 5px;border-radius:7px;
+  background:#fef3c7;color:#b45309;margin-left:5px;font-weight:600}
+.vf.gray{background:#f1f5f9;color:#64748b}
+
+/* 输入块 */
+.qwinput{margin:10px 13px}
+.qwinput input,.qwinput textarea,.qwinput select{
+  width:100%;border:1px solid var(--line);border-radius:6px;padding:6px 9px;
+  font:inherit;font-size:12.5px;background:#fff;color:var(--ink)}
+.qwinput input:focus,.qwinput textarea:focus{
+  outline:none;border-color:var(--brand);box-shadow:0 0 0 2px rgba(37,99,235,.12)}
+.qwl{font-size:12px;color:var(--ink3);display:inline-flex;align-items:center;gap:6px}
+.qwl select{border:1px solid var(--line);border-radius:5px;padding:3px 7px;
+  font:inherit;font-size:12px;background:#fff}
+
+/* 图表 */
+.qwsvg{width:100%;height:auto;display:block;margin:6px 0}
+.qwsvg .ax{font-size:9.5px;fill:#94a3b8}
+.qwsvg .ax.red{fill:#dc2626}
+.qwsvg .ax.blue{fill:#2563eb}
+.qwsvg .fbt{font-size:12px;font-weight:700;fill:#0f172a}
+.qwsvg .fbb{font-size:12px;font-weight:600;fill:#475569}
+.qwsvg .fbi{font-size:9.5px;fill:#94a3b8}
+.qwlegend{display:flex;flex-wrap:wrap;gap:10px;padding:0 13px 10px;font-size:11.5px;color:var(--ink2)}
+.qwlegend .lg{display:inline-flex;align-items:center;gap:5px}
+.qwlegend .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* 双栏 */
+.qwt-cols2{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.qwt-cols2>div:first-child{border-right:1px solid var(--line2)}
+@media(max-width:900px){
+  .qwt-cols2{grid-template-columns:1fr}
+  .qwt-cols2>div:first-child{border-right:none;border-bottom:1px solid var(--line2)}
+}
+
+/* 5Why 链 */
+.qwchain{padding:4px 13px}
+.qw5{display:flex;gap:11px;padding:8px 0;border-bottom:1px dashed var(--line2)}
+.qw5:last-child{border-bottom:none}
+.qw5-n{flex:0 0 62px;font-size:12px;font-weight:700;color:var(--brand);padding-top:6px}
+.qw5-b{flex:1;min-width:0}
+.qw5-b input{width:100%;border:1px solid transparent;background:transparent;
+  border-radius:4px;padding:4px 6px;font:inherit;font-size:12.5px}
+.qw5-b input:hover{border-color:var(--line);background:#fff}
+.qw5-b input:focus{outline:none;border-color:var(--brand);background:#fff}
+.qw5-m{display:flex;gap:6px;margin-top:4px}
+.qw5-m input{font-size:11.5px;color:var(--ink3);background:#fafbfc}
+
+/* 鱼骨图 */
+.qwfb-b{border-bottom:1px solid var(--line2);padding:8px 12px}
+.qwfb-h{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:5px}
+.qwfb-h .sp{flex:1}
+.qwfb-h .muted{font-size:11px}
+.qwfb-i{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.qwfb-i input[type=text]{flex:1;border:1px solid transparent;background:transparent;
+  border-radius:4px;padding:3px 6px;font:inherit;font-size:12px}
+.qwfb-i input[type=text]:hover{border-color:var(--line);background:#fff}
+.qwfb-i input[type=text]:focus{outline:none;border-color:var(--brand);background:#fff}
+
+/* 流程 */
+.qwsteps{display:flex;gap:6px;padding:11px 13px;flex-wrap:wrap;
+  border-bottom:1px solid var(--line2)}
+.qws-b{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;
+  border:1px solid var(--line);border-radius:20px;background:#fff;
+  font:inherit;font-size:12.5px;color:var(--ink2);cursor:pointer}
+.qws-b.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.qws-n{width:17px;height:17px;border-radius:50%;background:var(--line2);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:var(--ink3)}
+.qws-b.on .qws-n{background:rgba(255,255,255,.25);color:#fff}
+.qwflow-p{padding:11px 13px}
+.qwflow-f{display:flex;gap:11px;align-items:center;margin-bottom:7px}
+.qwflow-k{flex:0 0 128px;font-size:12px;color:var(--ink3)}
+.qwflow-f>div:last-child{flex:1}
+.qwflow-f input{width:100%;border:1px solid var(--line);border-radius:6px;
+  padding:6px 9px;font:inherit;font-size:12.5px;background:#fff}
+.qwflow-f input:focus{outline:none;border-color:var(--brand);
+  box-shadow:0 0 0 2px rgba(37,99,235,.12)}
+
+/* 追溯 */
+.qwtrace{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.qwtrace-b{padding:11px 13px}
+.qwtrace-b:first-child{border-right:1px solid var(--line2)}
+.qwtrace-h{font-size:12.5px;font-weight:700;margin-bottom:8px;color:var(--ink)}
+.qwchain2{margin-top:8px}
+.qwtr{display:flex;gap:9px;margin-bottom:6px;align-items:flex-start}
+.qwtr-l{flex:0 0 52px;font-size:10.5px;padding:2px 0;border-radius:4px;
+  text-align:center;font-weight:600}
+.qwtr-l.l1{background:#dbeafe;color:#1d4ed8}
+.qwtr-l.l2{background:#ede9fe;color:#6d28d9}
+.qwtr-l.l3{background:#dcfce7;color:#15803d}
+.qwtr-b{flex:1;min-width:0;font-size:12.5px}
+@media(max-width:900px){
+  .qwtrace{grid-template-columns:1fr}
+  .qwtrace-b:first-child{border-right:none;border-bottom:1px solid var(--line2)}
+}
+
+/* ================= 营养素配比计算（2026-10-22）=================
+   按用户给的参考图做的：左录入、右核算、下方版本流转。 */
+.gbc-head{padding:12px 15px;background:linear-gradient(180deg,#eff6ff,#fff);
+  border:1px solid #dbeafe;border-radius:9px 9px 0 0}
+.gbc-title{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap}
+.gbc-title b{font-size:15.5px}
+.gbc-ver{font-size:12.5px;color:var(--ink2);font-family:ui-monospace,Menlo,Consolas,monospace}
+.gbc-meta{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.gbc-tag{font-size:11px;padding:2px 9px;border-radius:10px;
+  background:#e0f2fe;color:#0369a1;font-weight:600}
+.gbc-tag.ok{background:#dcfce7;color:#15803d}
+.gbc-tag.bad{background:#fee2e2;color:#b91c1c}
+.gbc-tag.warn{background:#fef3c7;color:#b45309}
+.gbc-sub{margin-top:7px;font-size:11.5px;color:var(--ink3);
+  padding-top:7px;border-top:1px dashed var(--line2)}
+
+.gbc-ctl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+  padding:10px 15px;border:1px solid var(--line);border-top:none;background:#fafbfc}
+.gbc-ctl label{font-size:12px;color:var(--ink3);display:inline-flex;
+  align-items:center;gap:6px}
+.gbc-ctl select,.gbc-ctl input{border:1px solid var(--line);border-radius:5px;
+  padding:3px 7px;font:inherit;font-size:12px;background:#fff}
+.gbc-ctl .sp{flex:1}
+
+.gbc-cols{display:grid;grid-template-columns:minmax(0,0.85fr) minmax(0,1.15fr);
+  border:1px solid var(--line);border-top:none}
+@media(max-width:1000px){.gbc-cols{grid-template-columns:1fr}}
+.gbc-panel{min-width:0}
+.gbc-panel:first-child{border-right:1px solid var(--line)}
+@media(max-width:1000px){.gbc-panel:first-child{border-right:none;border-bottom:1px solid var(--line)}}
+.gbc-ph{display:flex;align-items:center;gap:8px;padding:9px 14px;
+  background:var(--line2);border-bottom:1px solid var(--line);
+  font-size:12.5px;font-weight:600}
+.gbc-ph .n{width:19px;height:19px;border-radius:50%;
+  background:linear-gradient(135deg,#2563eb,#0ea5e9);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700}
+
+.gbc-rows{padding:9px 12px;max-height:390px;overflow-y:auto}
+.gbc-row{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.gbc-row select{flex:1;min-width:0;border:1px solid var(--line);border-radius:5px;
+  padding:4px 7px;font:inherit;font-size:12px;background:#fff}
+.gbc-row input[type=number]{width:88px;border:1px solid var(--line);border-radius:5px;
+  padding:4px 7px;font:inherit;font-size:12px;text-align:right;background:#fff}
+.gbc-row .u{font-size:11px;color:var(--ink3)}
+.gbc-row .kd{font-size:10.5px;color:var(--ink3);flex:0 0 26px;text-align:center}
+.gbc-row .x{border:none;background:transparent;color:var(--ink3);cursor:pointer;
+  font-size:15px;line-height:1;padding:1px 5px;border-radius:4px}
+.gbc-row .x:hover{background:#fee2e2;color:#b91c1c}
+.gbc-sum{padding:10px 14px;border-top:1px solid var(--line);background:#f8fafc;
+  font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.gbc-sum b{color:var(--brand);font-size:14px}
+
+.gbc-tblwrap{overflow-x:auto;max-height:390px;overflow-y:auto}
+.gbc-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.gbc-tbl th{position:sticky;top:0;background:var(--line2);text-align:right;
+  padding:6px 10px;font-size:11px;font-weight:600;color:var(--ink2);
+  border-bottom:1px solid var(--line);white-space:nowrap}
+.gbc-tbl th:first-child{text-align:left}
+.gbc-tbl td{padding:5px 10px;border-bottom:1px solid var(--line2);
+  text-align:right;white-space:nowrap}
+.gbc-tbl td:first-child{text-align:left}
+.gbc-tbl td.v{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600}
+.gbc-tbl tr.bad{background:#fef2f2}
+.gbc-tbl tr.bad td.v{color:#b91c1c}
+.gbc-tbl tr.low{background:#fffbeb}
+.gbc-tbl tr.low td.v{color:#b45309}
+.gbc-tbl tr.ok td.v{color:#15803d}
+.gbc-tbl .vns{font-size:9.5px;color:var(--ink3);margin-left:3px}
+.gbc-unit{padding:7px 14px;font-size:11px;color:var(--ink3);border-top:1px solid var(--line2)}
+
+.gbc-bads{margin:11px 0;border:1px solid #fecaca;border-radius:8px;overflow:hidden}
+.gbc-bh{padding:8px 13px;background:#fef2f2;font-size:12.5px;font-weight:700;color:#b91c1c}
+.gbc-bad{padding:9px 13px;border-top:1px solid #fecaca;background:#fff}
+.gbc-bad .vd{margin-right:7px}
+.gbc-bad .num{margin-left:9px;font-size:11.5px;color:var(--ink3);
+  font-family:ui-monospace,Menlo,Consolas,monospace}
+.gbc-bad .adv{margin-top:5px;font-size:12px;color:var(--ink2);line-height:1.7;
+  padding-left:11px;border-left:2px solid #fca5a5}
+
+.gbc-tip{padding:10px 14px;font-size:12.5px;line-height:1.75;
+  background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;color:#14532d}
+
+.gbc-flow{margin-top:11px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.gbc-fh{padding:9px 14px;background:var(--line2);font-size:12.5px;font-weight:600;
+  border-bottom:1px solid var(--line)}
+.gbc-fnodes{display:flex;padding:16px 14px 12px;gap:0;flex-wrap:wrap}
+.gbc-fnodes .fn{flex:1;min-width:104px;text-align:center;position:relative;cursor:pointer}
+.gbc-fnodes .fn::before{content:"";position:absolute;top:11px;left:-50%;
+  width:100%;height:2px;background:var(--line)}
+.gbc-fnodes .fn:first-child::before{display:none}
+.gbc-fnodes .fn.done::before{background:#16a34a}
+.gbc-fnodes .dot{position:relative;z-index:1;width:23px;height:23px;margin:0 auto 6px;
+  border-radius:50%;background:#fff;border:2px solid var(--line);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--ink3)}
+.gbc-fnodes .fn.done .dot{background:#16a34a;border-color:#16a34a;color:#fff}
+.gbc-fnodes .fn.cur .dot{border-color:var(--brand);color:var(--brand);
+  box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.gbc-fnodes .ft{font-size:12px;font-weight:600;color:var(--ink)}
+.gbc-fnodes .fr{font-size:10.5px;color:var(--ink3);margin-top:2px}
+.gbc-fbar{display:flex;align-items:center;gap:8px;padding:9px 14px;
+  border-top:1px solid var(--line2);background:#fafbfc;flex-wrap:wrap}
+.gbc-fbar .sp{flex:1}
+
+/* ================= 质量管理工具（2026-10-22）=================
+   设计取向：工具卡片要能「一眼扫过去找到自己要用的那个」，
+   所以卡片头突出 toolKey 与分组标签，展开区把
+   「什么时候用 / 步骤 / 表单 / 案例」四块分清楚。 */
+.qmcard{
+  position:relative;margin-bottom:11px;border-radius:10px;overflow:hidden;
+  background:var(--panel);border:1px solid var(--line);
+  transition:box-shadow .18s,border-color .18s;
+}
+.qmcard::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(135deg,#0ea5e9,#6366f1);
+}
+.qmcard:hover{box-shadow:0 4px 16px rgba(15,23,42,.09);border-color:#cbd5e1}
+.qmcard.open{border-color:#93c5fd;box-shadow:0 6px 20px rgba(15,23,42,.11)}
+.qmcard-h{display:flex;align-items:flex-start;gap:12px;padding:13px 15px 13px 17px;cursor:pointer}
+.qmcard-t{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:5px}
+.qmcard-t .key{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;font-weight:700;
+  color:#0369a1;background:#e0f2fe;padding:1.5px 7px;border-radius:5px;
+}
+.qmcard-t .nm{font-size:14.5px;font-weight:600;color:var(--ink)}
+.qmcard-t .cg{
+  font-size:11px;padding:1.5px 8px;border-radius:9px;
+  background:rgba(99,102,241,.09);color:#4338ca;font-weight:600;
+}
+.qmcard .sm{font-size:12.5px;line-height:1.7;color:var(--ink3)}
+.qmcard-r{
+  flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;
+  font-size:11.5px;color:var(--ink3);
+}
+.qmcard-r .kv{font-size:11px;opacity:.75}
+
+.qmcard-b{padding:0 15px 16px 17px;border-top:1px solid var(--line2)}
+.qmrow{display:flex;gap:13px;padding:12px 0;border-bottom:1px dashed var(--line2)}
+.qmrow:last-of-type{border-bottom:none}
+.qmk{
+  flex:0 0 96px;font-size:12px;font-weight:700;color:var(--brand);
+  padding-top:2px;letter-spacing:.3px;
+}
+.qmv{flex:1;min-width:0;font-size:12.5px;line-height:1.8;color:var(--ink2)}
+
+/* 步骤：编号圆点，序号在左侧成一列，方便对照执行 */
+.qmsteps{list-style:none;padding:0;margin:0;counter-reset:s}
+.qmsteps li{display:flex;gap:10px;padding:5px 0;align-items:flex-start}
+.qmsteps li .n{
+  flex:0 0 19px;width:19px;height:19px;margin-top:1px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10.5px;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,#2563eb,#0ea5e9);
+}
+
+/* 表单字段：等宽字体 + 可横向滚动，方便看清分隔符 */
+.qmtpl{
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.75;
+  background:#f8fafc;border:1px solid var(--line2);border-radius:6px;
+  padding:9px 11px;margin-bottom:8px;overflow-x:auto;white-space:pre-wrap;
+  color:var(--ink2);
+}
+.qmcase{
+  padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;
+  border-left:3px solid #16a34a;border-radius:6px;
+  font-size:12.5px;line-height:1.8;color:#14532d;
+}
+.qmtip{
+  margin-top:12px;padding:8px 11px;font-size:11.5px;line-height:1.7;
+  background:#fffbeb;border:1px solid #fde68a;border-radius:5px;color:#92400e;
+}
+
+/* 标签页里的数量角标 */
+.tab .cnt{
+  margin-left:5px;font-size:10.5px;padding:0 5px;border-radius:8px;
+  background:var(--line2);color:var(--ink3);
+}
+.tab.on .cnt{background:rgba(255,255,255,.24);color:#fff}
+
+@media(max-width:720px){
+  .qmk{flex:0 0 100%;padding-bottom:3px}
+  .qmcard-r{display:none}
+}
+
+/* ================= 工作安全分析 JSA（2026-10-22）=================
+   目标：让安全类信息一眼分清「危害 / 事件 / 控制」，
+   风险等级用颜色直接可读，不靠文字描述。 */
+.jsa-tbl{width:100%;border-collapse:collapse;font-size:12.5px;line-height:1.7}
+.jsa-tbl th{
+  text-align:left;padding:8px 10px;font-weight:600;font-size:12px;
+  color:var(--ink2);border-bottom:1.5px solid var(--line);white-space:nowrap;
+}
+.jsa-tbl td{padding:9px 10px;border-bottom:1px solid var(--line2);vertical-align:top}
+.jsa-tbl tbody tr:last-child td{border-bottom:none}
+.jsa-tbl tbody tr:nth-child(even){background:rgba(0,0,0,.015)}
+.jsa-tbl td.hz{color:#b45309}          /* 潜在危害：琥珀 */
+.jsa-tbl td.ev{color:#be123c}          /* 可能事件：玫红 */
+.jsa-tbl td.ct{color:#15803d}          /* 控制措施：绿 */
+.rk{display:inline-block;padding:2px 8px;border-radius:11px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+.matrix{border-collapse:separate;border-spacing:2px;font-size:12px}
+.matrix th{padding:7px 10px;font-weight:600;font-size:11.5px}
+.matrix td{padding:9px 12px;width:62px;text-align:center;border-radius:4px}
+.warn-line{
+  padding:9px 12px;margin:0 0 12px;font-size:12.5px;line-height:1.75;
+  background:#fffbeb;border:1px solid #fde68a;border-radius:6px;color:#92400e;
+}
+.sign-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:13px 2px;border-bottom:1px solid var(--line2)}
+.sign-row:last-child{border-bottom:none}
+.sign-line{
+  flex:1;min-width:240px;font-size:12.5px;color:var(--ink2);
+  font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.4px;
+}
+@media(max-width:720px){.sign-row{gap:8px}.sign-line{min-width:100%}}
+
+/* ================= 检测方法原理 · 视觉升级（2026-10-22）=================
+   原来是一堆同样式的卡片，扫一眼分不出分区。改成：
+   分区标题带渐变色条、方法卡带左侧色条与悬停浮起、
+   试剂表与要点各自独立成块。 */
+.mgroup{display:flex;align-items:center;gap:10px;margin:22px 2px 11px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
+.mgroup .bar{width:3px;height:17px;border-radius:2px;background:linear-gradient(180deg,#2563eb,#0ea5e9);flex:0 0 3px}
+.mgroup .nm{font-size:14.5px;font-weight:700;letter-spacing:.4px;color:var(--ink)}
+.mgroup .ctp{font-size:11.5px;color:var(--ink3);padding:1.5px 8px;border-radius:10px;background:var(--line2)}
+.mgroup .sp{flex:1}
+.mcard{
+  position:relative;margin-bottom:11px;padding:0;overflow:hidden;border-radius:10px;
+  background:var(--panel);border:1px solid var(--line);
+  transition:box-shadow .18s,border-color .18s;
+}
+.mcard::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,#2563eb,#06b6d4);
+}
+.mcard:hover{box-shadow:0 4px 16px rgba(15,23,42,.09);border-color:#cbd5e1}
+.mcard .hd{display:flex;align-items:flex-start;gap:11px;padding:13px 15px 13px 17px;cursor:pointer}
+.mcard .no{font-size:12.5px;font-weight:700;color:var(--brand);flex:0 0 auto;font-family:ui-monospace,Menlo,Consolas,monospace}
+.mcard .ti{font-size:14.5px;font-weight:600;line-height:1.5}
+.mcard .me{display:inline-block;margin-top:5px;font-size:11.5px;padding:2px 9px;border-radius:9px;background:rgba(37,99,235,.09);color:var(--brand);font-weight:600}
+.mcard .pv{margin-top:7px;font-size:12.5px;line-height:1.75;color:var(--ink3)}
+.mcard .rt{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+.mcard .rt th{text-align:left;padding:8px 11px;font-size:11.5px;font-weight:600;background:var(--line2);color:var(--ink2);white-space:nowrap}
+.mcard .rt th:first-child{width:34%}
+.mcard .rt td{padding:9px 11px;border-top:1px solid var(--line2);vertical-align:top;line-height:1.75}
+.mcard .rt tr:first-child td{border-top:none}
+.mcard .rt td:first-child{font-weight:600;color:var(--ink)}
+.msec{margin-top:15px}
+.msec .sh{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--brand);margin-bottom:7px}
+.msec .sh::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--brand)}
+.msec .it{padding:6px 0 6px 13px;font-size:12.5px;line-height:1.8;color:var(--ink2);border-left:2px solid var(--line2);margin-bottom:5px}
+.mcard .tip{margin-top:13px;padding:8px 11px;font-size:11.5px;line-height:1.7;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;color:#92400e}
+
+/* 日志 */
+.log{font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.9;color:var(--ink2);background:#fafbfc;border:1px solid var(--line2);border-radius:6px;padding:12px 14px;overflow-x:auto}
+
+/* ================= 后台权限 ================= */
+.gate{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  border:1px solid var(--line);border-radius:var(--radius);
+  padding:12px 16px;margin-bottom:16px;background:var(--panel);
+}
+.gate.locked{background:#fdf3e2;border-color:#f3ddb8}
+.gate .ic{font-size:17px;line-height:1}
+.gate .t{font-size:13.5px;font-weight:600}
+.gate .d{font-size:12.5px;color:var(--ink3);margin-top:2px;line-height:1.5}
+.gate .sp{flex:1}
+/* 未授权时遮住写操作区，但内容仍可读（可查看 ≠ 可改） */
+.locked-zone{position:relative}
+.locked-zone .mask{
+  position:absolute;inset:0;z-index:5;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.72),rgba(255,255,255,.72) 8px,rgba(250,251,252,.86) 8px,rgba(250,251,252,.86) 16px);
+  border-radius:var(--radius);
+  display:flex;align-items:center;justify-content:center;
+}
+.locked-zone .mask span{
+  background:var(--panel);border:1px solid #f3ddb8;color:var(--mid);
+  border-radius:6px;padding:5px 12px;font-size:12.5px;font-weight:600;
+  box-shadow:0 1px 4px rgba(16,24,40,.06);
+}
+.btn:disabled{cursor:not-allowed}
+
+/* ================= 自绘弹窗（替代原生 confirm/alert/prompt） =================
+   ★ 为什么不用原生弹窗 ★
+     原生 confirm/alert 的配色由操作系统决定，样式完全不可控 ——
+     用户 2026-10-03 明确要求"弹窗改个颜色 容易区分"。
+     原生弹窗还有个问题：它会阻塞整个页面，且不同系统长得都不一样。
+     自绘弹窗能做三件原生做不到的事：
+       1. 按语义配色（删除=红、提示=琥珀、输入=蓝），一眼分清是什么操作
+       2. 关键信息结构化展示（关键词、类别、影响分块）
+       3. 统一三端外观
+   ------------------------------------------------------------------ */
+.mask{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(16,24,40,.45);
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;animation:fadeIn .12s ease-out;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.98)}
+                 to{opacity:1;transform:none}}
+.dlg{
+  background:var(--panel);border-radius:12px;width:100%;max-width:460px;
+  box-shadow:0 12px 32px rgba(16,24,40,.18);overflow:hidden;
+  animation:popIn .14s ease-out;
+}
+.dlg-h{display:flex;align-items:center;gap:10px;padding:16px 18px 13px;border-bottom:1px solid var(--line2)}
+.dlg-h .ic{
+  width:30px;height:30px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+}
+/* 三种语义色：删除=红 / 提示=琥珀 / 输入=蓝 */
+.dlg.danger .dlg-h{background:var(--high-soft);border-bottom-color:#f7cfcb}
+.dlg.danger .dlg-h .ic{background:var(--high);color:#fff}
+.dlg.danger .dlg-h .t{color:var(--high)}
+.dlg.warn   .dlg-h{background:var(--mid-soft);border-bottom-color:#f3ddb8}
+.dlg.warn   .dlg-h .ic{background:var(--mid);color:#fff}
+.dlg.warn   .dlg-h .t{color:var(--mid)}
+.dlg.info   .dlg-h{background:var(--brand-soft);border-bottom-color:#cfe0f8}
+.dlg.info   .dlg-h .ic{background:var(--brand);color:#fff}
+.dlg.info   .dlg-h .t{color:var(--brand)}
+.dlg-h .t{font-size:15px;font-weight:600;flex:1}
+.dlg-b{padding:16px 18px;font-size:13.5px;line-height:1.75;color:var(--ink2)}
+.dlg-b .rows{
+  background:var(--bg);border:1px solid var(--line2);border-radius:7px;
+  padding:10px 12px;margin:10px 0 0;font-size:12.5px;line-height:1.9;
+}
+.dlg-b .rows b{color:var(--ink)}
+.dlg-b .why{
+  margin-top:12px;padding:10px 12px;border-radius:7px;
+  background:var(--brand-soft);border:1px solid #cfe0f8;
+  color:var(--ink2);font-size:12.5px;line-height:1.75;
+}
+.dlg.danger .dlg-b .why{background:var(--high-soft);border-color:#f7cfcb}
+.dlg-b .why b{color:var(--ink)}
+.dlg-f{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;
+  border-top:1px solid var(--line2);background:#fafbfc}
+.btn.danger{background:var(--high);border-color:var(--high);color:#fff}
+.btn.danger:hover{background:#b42318}
+.dlg input[type=text]{
+  width:100%;border:1px solid var(--line);border-radius:6px;
+  padding:8px 11px;font-size:13.5px;font-family:inherit;margin-top:10px;
+}
+.dlg input[type=text]:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.dlg .lab{font-size:12.5px;color:var(--ink3);display:block;margin-top:12px}
+.dlg .lab:first-of-type{margin-top:0}
+.dlg select{
+  width:100%;border:1px solid var(--line);border-radius:6px;
+  padding:8px 11px;font-size:13.5px;font-family:inherit;margin-top:6px;
+}
+
+
+.log .ok{color:var(--low)}
+.log .wr{color:var(--mid)}
+.log .er{color:var(--high)}
+.log .tm{color:var(--ink3)}
+
+/* 提示条 */
+.notice{background:var(--brand-soft);border:1px solid #cfe0f8;border-radius:var(--radius);padding:11px 14px;font-size:12.5px;color:#1b4894;margin-bottom:16px;display:flex;gap:9px}
+.notice.warn{background:var(--mid-soft);border-color:#f3ddb8;color:#8a5300}
+.disclaimer{
+  border-top:1px solid var(--line);margin-top:26px;padding:14px 24px;background:var(--panel);
+  font-size:11.5px;color:var(--ink3);line-height:1.7;
+}
+.disclaimer b{color:var(--ink2);font-weight:600}
+.empty{padding:34px;text-align:center;color:var(--ink3);font-size:13px}
+.flex{display:flex;align-items:center;gap:8px}
+.mono{font-family:ui-monospace,Consolas,monospace}
+.hr{height:1px;background:var(--line2);margin:16px 0}
+.pill{font-size:11.5px;padding:1px 7px;border-radius:10px;background:var(--bg);border:1px solid var(--line);color:var(--ink2)}
+/* ============================================================
+   移动端适配（2026-10-03 新增）
+   ============================================================
+   实测前的问题：viewport 有了，但只有 3 条 @media 且都只管网格。
+   侧栏 212px 固定宽 + position:sticky，在 375px 屏上直接吃掉 56% 宽度，
+   主区只剩 163px —— 表格全部压成竖条，一行字都读不全。
+
+   改动清单：
+   1. 侧栏 ≤900px 变**抽屉**（translateX 移出屏外），汉堡按钮唤出 + 遮罩
+   2. 表格统一加 .twrap 横向滚动容器（5 个表格逐个包）
+   3. 顶栏换行：标题 / 搜索 / 按钮在窄屏分两行
+   4. 逐级收敛断点：1200 / 900 / 640 / 430
+   5. 所有可点元素补 min-height:44px（手指友好，低于 44 容易误触）
+   6. 弹窗在窄屏改全屏，避免小屏上按钮被挤到屏幕外
+   ============================================================ */
+
+/* ---- 抽屉遮罩 ---- */
+.side-mask{display:none;position:fixed;inset:0;background:rgba(16,20,28,.42);
+  z-index:60;backdrop-filter:saturate(120%)}
+.side-mask.on{display:block}
+
+/* ---- 汉堡按钮（桌面隐藏）---- */
+.burger{display:none;width:38px;height:38px;flex-shrink:0;border:1px solid var(--line);
+  background:#fff;border-radius:8px;cursor:pointer;padding:0;
+  align-items:center;justify-content:center;flex-direction:column;gap:4px}
+.burger span{display:block;width:17px;height:2px;background:var(--ink2);border-radius:1px;
+  transition:transform .22s ease,opacity .18s ease}
+body.nav-open .burger span:nth-child(1){transform:translateY(6px) rotate(45deg)}
+body.nav-open .burger span:nth-child(2){opacity:0}
+body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+
+/* ---- 表格横向滚动容器 ---- */
+.twrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  border-radius:8px;-webkit-overflow-scrolling:touch}
+.twrap table{min-width:520px}
+.twrap::-webkit-scrollbar{height:7px}
+.twrap::-webkit-scrollbar-thumb{background:#d7dce4;border-radius:4px}
+.twrap::-webkit-scrollbar-track{background:var(--line2)}
+
+/* ============================================================
+   ≤1200px：侧栏收窄，主内容区吃紧
+   ============================================================ */
+@media(max-width:1200px){
+  .side{width:184px}
+  .view{padding-left:18px;padding-right:18px}
+  .top{padding:12px 18px}
+}
+
+/* ============================================================
+   ≤900px：侧栏变抽屉
+   —— 212px 固定侧栏在手机上不可用，这是本轮最关键的一条
+   ============================================================ */
+@media(max-width:900px){
+  .app{flex-direction:row}
+  .side{
+    position:fixed;left:0;top:0;bottom:0;width:250px;max-width:82vw;height:100vh;
+    z-index:70;transform:translateX(-102%);transition:transform .24s ease;
+    box-shadow:0 0 40px rgba(0,0,0,.16);overflow-y:auto;
+  }
+  body.nav-open .side{transform:translateX(0)}
+  /* 抽屉里的导航项加大点击区 */
+  .side .nav a{min-height:44px}
+  .burger{display:flex}
+
+  .main{width:100%}
+  .top{flex-wrap:wrap;gap:10px;padding:10px 14px}
+  .top h2{font-size:15.5px;order:1}
+  .top .sp{display:none}
+  .top .search{order:2;flex:1 1 100%;min-width:0}
+  .top .search input{width:100%;min-width:0}
+  .top .btn{order:3}
+  /* 顶栏吸顶改普通流：sticky 在 iOS 上与抽屉层级打架 */
+  .top{position:sticky;top:0}
+
+  .view{padding-left:14px;padding-right:14px}
+  .dl{grid-template-columns:80px 1fr}
+}
+
+/* ============================================================
+   ≤640px：手机上单列，控件加大
+   ============================================================ */
+@media(max-width:640px){
+  .grid.g4{grid-template-columns:repeat(2,1fr);gap:10px}
+  .grid.g3,.grid.g2{grid-template-columns:1fr}
+  .sub-grid,.detail-grid{grid-template-columns:1fr}
+
+  .card{padding:14px}
+  .card-h{flex-wrap:wrap;gap:7px}
+  .card-h h3{font-size:14.5px}
+
+  /* 触摸目标不小于 44px，否则容易误触旁边的"删除" */
+  .btn{min-height:36px;padding:7px 12px}
+  .btn.sm{min-height:32px}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;gap:2px}
+  .tabs button{white-space:nowrap;padding:9px 12px;min-height:40px}
+
+  .kpi .v{font-size:22px}
+  .alert{padding:12px 13px}
+  .notice{padding:10px 12px;font-size:12.5px}
+
+  /* 详情页字段：左标签右值在窄屏挤，改成上下堆叠 */
+  .dl{grid-template-columns:1fr;gap:2px 0}
+  .dl dt{margin-top:8px;font-size:11.5px}
+  .dl dd{margin-bottom:2px}
+
+  .rem-item{gap:9px;padding:11px 0}
+  .log{font-size:11px;padding:10px}
+  .disclaimer{padding:12px 14px}
+
+  /* 自绘弹窗改底部抽屉：窄屏上左右排布的按钮会有一半在屏幕外
+     ★ 类名是 .mask / .dlg-b / .dlg-f（不是 .dlg-mask / .dlg-box / .dlg-foot）
+       一开始写错了，媒体查询不生效但不报错 —— 与团标接口那个坑同类 */
+  .mask{align-items:flex-end;padding:0}
+  .dlg{width:100%!important;max-width:none;max-height:88vh;overflow-y:auto;
+    border-radius:14px 14px 0 0}
+  .dlg-h{padding:14px 15px 11px}
+  .dlg-b{padding:0 15px 13px}
+  .dlg-f{flex-direction:column-reverse;gap:8px;padding:11px 15px 15px}
+  .dlg-f .btn{width:100%;min-height:44px;justify-content:center}
+}
+
+/* ============================================================
+   ≤430px：小屏（iPhone SE / 老安卓）进一步压缩
+   ============================================================ */
+@media(max-width:430px){
+  .grid.g4{grid-template-columns:1fr}
+  .view{padding-left:11px;padding-right:11px}
+  .top{padding:9px 11px}
+  .card{padding:12px}
+  .kpi{padding:11px 12px}
+  .kpi .v{font-size:20px}
+  .btn{font-size:12.5px}
+  /* 大按钮上文字过长时截断，别把布局撑破 */
+  .top .btn.pri{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+
+/* 横屏手机：屏幕矮，把抽屉改成从顶部铺开更省空间 */
+@media(max-width:900px) and (max-height:480px){
+  .side{width:200px;max-width:70vw}
+  .side .nav a{min-height:38px;padding-top:6px;padding-bottom:6px}
+}
+
+/* 打印/大屏不受影响 */
+@media(min-width:901px){
+  .side-mask{display:none!important}
+  .burger{display:none!important}
+}
+
+/* 尊重系统的"减少动效"设置 */
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .side{transition:none}
+}
+
+</style>
+</head>
+<body>
+<!-- 数据加载失败兜底
+     data.js 是独立文件（标准清单、法规、日志都在里面），网络或部署出问题时可能加载不到。
+     这种情况下最危险的解读是「页面空白 = 没有变更」——
+     用户会以为官方没发新标准。所以必须明确说出来，不能静默空白。 -->
+<div id="dataLoadFail" style="display:none;position:fixed;left:12px;right:12px;
+     top:12px;z-index:200;background:#fdecfa;border:1px solid #f7cfcb;
+     border-radius:10px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.14);
+     color:#8a1c12;font-size:13.5px;line-height:1.7">
+  <b>⚠ 数据文件加载失败，页面内容不是最新的。</b>
+  <div style="margin-top:5px">
+    页面读不到 <code>data.js</code>。<b>请不要把「这里没显示」当成「官方没有新标准」</b>
+    —— 那是两回事。刷新重试；若仍失败，说明 data.js 未随页面一起发布。
+  </div>
+</div>
+
+<!-- 抽屉遮罩（≤900px 出现，点它关闭菜单） -->
+<div class="side-mask" id="sideMask" onclick="toggleNav(false)"></div>
+
+<div class="app">
+  <!-- ============ 侧边栏 ============ -->
+  <aside class="side" id="side">
+    <div class="brand">
+      <h1>食品质量与安全管理系统</h1>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">日常</div>
+      <a href="#home" class="on" data-v="home"><span class="ic">◎</span><span class="tx">今日待办<span class="sub">（标准更新提醒）</span></span></a>
+      <a href="#refs" data-v="refs"><span class="ic">⚗</span><span class="tx">通则引用标准</span><span class="badge" id="refBadge" style="background:var(--brand)">—</span></a>
+      <a href="#list" data-v="list"><span class="ic">▤</span><span class="tx">标准清单</span></a>
+      <a href="#law" data-v="law"><span class="ic">⚖</span><span class="tx">法规与体系</span></a>
+      <!-- ★ CNAS 认可规范：独立一组，位置紧跟「法规与体系」（用户 2026-10-07 要求）★
+          刻意不放在「通则引用标准」下：通则引用页的每一条都来自产品标准正文，
+           CNAS 不在任何产品标准正文里，放那儿等于谎称「通则引用了它」。
+           它与法规体系同属「资质/体系」维度，故紧随其后。 -->
+      <a href="#cnas" data-v="cnas"><span class="ic">🎖</span><span class="tx">认可规范（CNAS）</span><span class="badge" id="cnasBadge" style="background:var(--brand)">—</span></a>
+      <a href="#subs" data-v="subs"><span class="ic">★</span><span class="tx">我的订阅</span></a>
+      <!-- ★ 实验室组排在提醒之上（用户 2026-10-07 要求）★
+           理由：这一组是检验员每天真正动手用的东西（方法卡片 / 录经验），
+           属于「日常干活」；提醒中心是异常时才看的。 -->
+      <!-- ★★ 质量管理工具（2026-10-22 用户要求新增）★★
+           排在「实验室」上面一层：
+           质量管理的思路是「先把框架和方法定下来，再落到实验室与车间」，
+           所以它比实验室更上位。16 个工具覆盖体系 / 分析 / 过程 / 现场 / 风险五类。 -->
+      <div class="nav-label">质量管理</div>
+      <a href="#qmtools" data-v="qmtools"><span class="ic">🧰</span><span class="tx">质量管理工具</span><span class="badge" id="qmBadge" style="background:var(--brand)">—</span></a>
+      <!-- ★★ 研发管理（2026-10-22 用户要求新增）★★
+           位置：质量管理之后、实验室之前。
+           理由：研发是婴配厂的主线业务（配方 → 中试 → 注册 → 上市），
+           质量管理与它并列同级，实验室是研发与质量共用的支撑环节，排后面。 -->
+      <div class="nav-label">研发管理</div>
+      <a href="#rdtools" data-v="rdtools"><span class="ic">🧬</span><span class="tx">研发管理工具</span><span class="badge" id="rdBadge" style="background:var(--brand)">—</span></a>
+      <div class="nav-label">实验室</div>
+      <!-- 2026-10-22 用户要求：
+           ① 删掉「检验方法卡片」与「录入经验」（要人维护，实际没人录入，显得系统空）
+           ② 新增「工作安全分析 (JSA)」，且排在实验室组**第一位**
+               —— 安全是检测的前提，动手之前先看风险，顺序上应该在方法之前。
+           ③ 只保留「检测方法原理」。 -->
+      <a href="#jsa" data-v="jsa"><span class="ic">⚠️</span><span class="tx">工作安全分析 (JSA)</span><span class="badge" id="jsaBadge" style="background:var(--high)">—</span></a>
+      <a href="#method" data-v="method"><span class="ic">🧪</span><span class="tx">检测方法原理</span><span class="badge" id="methodBadge" style="background:var(--brand)">—</span></a>
+      <div class="nav-label">提醒</div>
+      <a href="#alerts" data-v="alerts"><span class="ic">🔔</span><span class="tx">提醒中心</span><span class="badge">7</span></a>
+      <div class="nav-label">配置</div>
+      <a href="#admin" data-v="admin"><span class="ic">⚙</span><span class="tx">管理后台</span></a>
+    </nav>
+    <!-- ★ 原来写死「上次检查：今天 07:00 / 下次检查：明天 07:00」 ★
+         实际调度器从未常驻运行，页面在假装检查过。
+         实验室会以为"今天没变更"= "查过了确实没变更"，实际是根本没查。
+         现在由 build_runstate.py 从真实快照的修改时间生成。 -->
+    <div class="side-foot" id="sideFoot"></div>
+  </aside>
+
+  <!-- ============ 主区 ============ -->
+  <div class="main">
+    <header class="top">
+      <!-- 汉堡：仅 ≤900px 显示（桌面由 CSS 隐藏） -->
+      <button class="burger" id="burger" onclick="toggleNav()"
+              aria-label="打开导航菜单" aria-expanded="false"
+              aria-controls="side"><span></span><span></span><span></span></button>
+      <h2 id="pgTitle">今日待办</h2>
+      <div class="sp"></div>
+      <div class="search"><span class="muted">🔍</span><input placeholder="搜标准号，如 GB 10765" onkeydown="if(event.key==='Enter'){location.hash='#list';doSearch(this.value)}"></div>
+      <button class="btn pri" onclick="location.hash='#alerts'">🔔 7 条待处理</button>
+    </header>
+
+    <!-- ★★ 居中品牌头（2026-10-22 用户要求）★★
+         原先系统名只在左侧栏顶部，第一眼看不到。现在固定在页头正中。
+         ★ 副标题那一行已按用户要求删掉，只留徽标 + 系统名。 ★ -->
+    <div class="topbrand">
+      <div class="logo">🛡️</div>
+      <div class="tt">
+        <h1>食品质量与安全管理系统</h1>
+      </div>
+    </div>
+
+    <!-- ===== 首页 ===== -->
+    <div class="view" id="v-home">
+      <!-- ★ 自动检查状态提醒：只在"从未运行"或"已逾期"时显示 ★
+           正常时 display:none，不打扰。构建脚本会填内容。 -->
+      <div class="notice" id="runAlert" style="display:none;margin-bottom:14px"></div>
+
+      <div class="notice">
+        <span>ℹ️</span>
+        <div><b>本页只做一件事：告诉你哪些标准变了、什么时候开始用。</b>所有"下载"按钮一律指向官方站点，本工具不存标准全文、不提供破解下载。</div>
+      </div>
+
+      <div class="grid g4" style="margin-bottom:16px">
+        <div class="kpi hi"><div class="k">90 天内要动手</div><div class="v" id="kpiSoon90">—</div><div class="d" id="kpiSoon90d">按实施日期实算</div></div>
+        <div class="kpi"><div class="k">一年内要换版</div><div class="v" id="kpiSoon365">—</div><div class="d" id="kpiSoon365d">含已发布未实施</div></div>
+        <div class="kpi"><div class="k">现行有效标准</div><div class="v" id="kpiStd">—</div><div class="d" id="kpiSub">—</div></div>
+        <div class="kpi"><div class="k">法规与体系</div><div class="v" id="kpiLaw">—</div><div class="d" id="kpiLawd">按效力与环节分层</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>高优提醒（置顶）</h3><span class="muted">产品标准 / 安全限量 / 强制检测方法</span><div class="sp"></div><a href="#alerts">全部提醒 →</a></div>
+        <div id="highAlerts"></div>
+      </div>
+
+      <!-- ===== 通则引用标准（第二位置：今日待办之后） ===== -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-h"><h3>通则引用标准</h3>
+          <span class="muted" id="refSummary">—</span>
+          <div class="sp"></div>
+          <a href="#refs">查看全部 →</a></div>
+        <div class="notice" style="margin-bottom:12px">
+          <span>⚗</span>
+          <div>这批标准不是搜出来的，是从 <b>GB 10765 / 10766 / 10767</b>（婴配三个通则）+
+            <b>GB 19644</b>（乳粉和调制乳粉）等产品标准正文里"读"出来的。
+            通则的「规范性引用文件」一章列了它们，<b>实验室天天在用，但关键词检索搜不到</b>。
+            每条都经过有效性与实施状态核对。<b>下面的"标准勘误与修改单"只盯这一范围内的标准。</b></div>
+        </div>
+        <div id="refDigest"></div>
+      </div>
+
+      <!-- ===== 标准勘误与修改单 ===== -->
+      <div class="card">
+        <div class="card-h">
+          <h3>标准勘误与修改单</h3>
+          <span class="muted">不改标准号、不改实施日期的变更 —— 按标准号监控发现不了</span>
+          <div class="sp"></div>
+          <span class="tag t-high">最易漏</span>
+        </div>
+        <div class="notice warn" style="margin-bottom:12px">
+          <span>⚠️</span>
+          <div><b>只盯通则引用范围内的标准</b>（上面那块就是范围）。
+            <b>勘误</b>是更正表述错误；<b>修改单</b>是实质性技术修订，
+            <b>自批准之日起实施、没有过渡期</b> —— 后者漏掉的代价更大：作业文件照旧版做，数据就是错的。
+            注意：官方「标准勘误」专库<b>不收录修改单</b>，必须单独抓。</div>
+        </div>
+        <div id="erataBox"></div>
+      </div>
+
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-h"><h3>倒计时</h3><span class="muted">按实施日期排</span></div>
+          <div id="countdown"></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>我的订阅覆盖</h3><div class="sp"></div><a href="#subs">调整订阅 →</a></div>
+          <div id="subCover"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>下一步该做什么</h3></div>
+        <div id="todoList"></div>
+      </div>
+    </div>
+
+    <!-- ===== 标准清单 ===== -->
+    <div class="view hide" id="v-list">
+      <div class="tabs" id="listTabs"></div>
+      <div class="chips" id="subTabs" style="margin-bottom:12px"></div>
+      <div class="flex" style="margin-bottom:12px">
+        <span class="muted" id="listCnt"></span>
+        <div class="sp" style="flex:1"></div>
+        <span class="muted">数据来源：3 个官方源实抓，含产品标准正文引用的标准</span>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <!-- twrap：窄屏下表格横向滚动，否则列被压扁读不了 -->
+        <div class="twrap">
+        <table>
+          <thead><tr>
+            <th style="width:112px">标准号</th>
+            <th>标准名称</th>
+            <th style="width:80px">状态</th>
+            <th style="width:96px">发布日期</th>
+            <th style="width:96px">实施日期</th>
+            <th style="width:120px">代替</th>
+            <th style="width:150px">操作</th>
+          </tr></thead>
+          <tbody id="listBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 法律法规与体系标准 ===== -->
+    <div class="view hide" id="v-law">
+      <div class="notice">
+        <span>⚖</span>
+        <div>
+          <b>这一页是法律法规与体系文件，按效力层级和适用环节分类。</b>
+          实验室的检测方法来自标准，但<b>为什么必须做、按什么程序做、出问题谁担责</b>——这些是法律和规章定的。
+          例：<b>食品安全法</b>是所有判定的上位法，检出不合格即违法；
+          <b>CMA 资质认定管理办法</b>决定你出的报告有没有法律效力；
+          <b>广告法</b>管的是"检测数据能不能拿去做宣传"——
+          婴幼儿配方乳粉广告不得用科研单位或专家作推荐证明。
+          <br><br>
+          <b>为什么不自动抓取：</b>国家法律法规数据库（flk.npc.gov.cn）的检索接口经过打包混淆，
+          实测 6 组参数组合全部返回 500；且法规的"现行/已修订/已废止"本身需要人工核对修订链。
+          所以这里用<b>静态清单 + 人工维护</b>，每条给官方查询入口。
+          <b>不存条文全文</b>——只列名称、文号、施行日期与说明。
+        </div>
+      </div>
+      <div class="tabs" id="lawTabs"></div>
+      <div class="chips" id="lawSceneTabs" style="margin-bottom:12px"></div>
+      <div id="lawList"></div>
+    </div>
+
+    <!-- ===== CNAS 认可规范（独立页，2026-10-07 用户要求从通则引用里移出）===== -->
+    <div class="view hide" id="v-cnas">
+      <div class="notice">
+        <span>🎖</span>
+        <div>
+          <b>这一页是实验室认可（CNAS）的依据文件，和上面的「检测方法标准」不是一回事。</b>
+          标准清单与通则引用回答的是<b>「测什么、怎么测」</b>；
+          这一页回答的是<b>「凭什么出报告、实验室该达到什么能力」</b>。
+          <br><br>
+          <b>CNAS 文件不是国家标准</b>——标准委检索库（openstd / 全国标准信息公共服务平台）
+          根本不收录，在国标库里搜「CNAS-CL01」是<b>零结果</b>。
+          所以它必须单独一个源（SRC-11，直接抓 cnas.org.cn），
+          混在通则引用里会让检测员误以为它是产品标准强制引用的检测方法。
+          <br><br>
+          <b>最常被引用的一份是 CNAS-CL01</b>《检测和校准实验室能力认可准则》，
+          它是 ISO/IEC 17025 的中文实施版本 —— 评审时对**实验室整体能力**的要求，
+          不针对某一个检测项目。食品实验室重点看
+          <b>CL01-A002（化学检测领域）</b>、<b>CL01-A001（微生物检测领域）</b>、
+          <b>GL006（化学分析不确定度）</b>、<b>EL-06（食品检测领域能力范围表述）</b>。
+          <br><br>
+          <b>为什么不存全文</b>——只列编号、名称、发布日期与官方链接。
+          官方列表<b>没有「实施日期」字段</b>，这里如实标注，不编造。
+        </div>
+      </div>
+      <div class="flex" style="margin-bottom:14px">
+        <span class="muted">来源：中国合格评定国家认可委员会官网（cnas.org.cn）· 每日自动抓取</span>
+        <div class="sp" style="flex:1"></div>
+        <a class="btn sm" href="https://www.cnas.org.cn/rkgf/sysrk/index.html" target="_blank">CNAS 认可规范栏目</a>
+      </div>
+      <div class="tabs" id="cnasTabs"></div>
+      <div class="chips" id="cnasKindDesc" style="margin-bottom:12px"></div>
+      <div id="cnasList"></div>
+    </div>
+
+    <!-- ===== 通则引用标准 ===== -->
+    <div class="view hide" id="v-refs">
+      <div class="notice">
+        <span>⚗</span>
+        <div>
+          <b>这一页的标准，不是搜出来的，是从产品标准正文里"读"出来的。</b>
+          已通读 <b>GB 10765 / 10766 / 10767</b>（婴配三个通则）+
+          <b>GB 19644</b>（乳粉和调制乳粉）+
+          <b>GB 19302 / 19646 / 5420 / 25192 / 25190 / 19645 / 13102</b>（发酵乳、奶油、干酪、灭菌乳、巴氏杀菌乳、炼乳）
+          的「规范性引用文件」一章，共引用 62 个标准 ——
+          蛋白、脂肪、钙铁锌硒碘、12 种维生素、乳铁蛋白、牛磺酸、肌醇、
+          菌落总数、乳与乳制品检验、污染物限量、乳糖、低聚半乳糖、亚硝酸盐、黄曲霉毒素……
+          <b>这些不会主动出现在关键词检索里，但实验室天天在用。</b>
+          下面每条都经过<b>有效性与实施状态核对</b>：有效性按
+          「同号或同一检测对象下，是否有更新且已实施的<b>等价方法</b>」判定
+          （源站对已替代的历史版本也标「现行」，不可直接采信）；
+          <b>筛查法/快检法不算替代</b>（如三聚氰胺：GB/T 22388 仲裁法 vs GB/T 22400 快检法并存）；
+          实施状态<b>按当天日期实算</b>，不是按年份硬编码。
+        </div>
+      </div>
+      <div class="flex" style="margin-bottom:14px">
+        <span class="muted">来源：通则正文 PDF 解析（正文只在内存中分析，不落盘）→ 官方源回填元数据</span>
+        <div class="sp" style="flex:1"></div>
+        <button class="btn sm" onclick="toast('已导出：通则引用标准清单（Excel）')">导出清单</button>
+      </div>
+      <div id="refBox"></div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-h"><h3>版本换版提醒（引用标准里已实施的新版）</h3>
+          <span class="muted">按实施日期排序，最新的在最上</span></div>
+        <div id="refNew"></div>
+      </div>
+    </div>
+
+    <!-- ===== 详情（抽屉式，复用 list 页展示） ===== -->
+    <div class="view hide" id="v-detail">
+      <div class="flex" style="margin-bottom:14px">
+        <a href="#list" class="btn sm">← 返回清单</a>
+      </div>
+      <div id="detailBox"></div>
+    </div>
+
+    <!-- ===== 研发管理 ===== -->
+    <div class="view hide" id="v-rdtools">
+      <div class="notice">
+        <span>🧬</span>
+        <div>
+          <b>18 个研发动作，6 个环节。</b>按婴配粉（1/2/3 段）研发的实际流程排：
+          立项看法规 → 配方设计 → 小试中试 → 稳定性 → 注册合规 → 变更收口。
+          <div style="margin-top:9px" id="rdGroupHint"></div>
+          <div style="margin-top:8px;color:var(--ink3);font-size:12px">
+            法规口径：<b>GB 10765</b>（1段）· <b>GB 10766</b>（2段）· <b>GB 10767</b>（3段）·
+            <b>GB 19644</b>（乳粉和调制乳粉）· 婴配粉产品<b>配方注册</b>制度
+          </div>
+        </div>
+      </div>
+      <div class="tabs" id="rdTabs"></div>
+      <div id="rdList"></div>
+      <div id="rdDetail"></div>
+    </div>
+
+    <!-- ===== 质量管理工具 ===== -->
+    <div class="view hide" id="v-qmtools">
+      <div class="notice">
+        <span>🧰</span>
+        <div>
+          <b>16 个工具，五类。</b>不是给你「学理论」的，是给你<b>明天就能用</b>的——
+          每一条都能落到奶粉厂的实验室、车间班组长手上。
+          <div style="margin-top:9px" id="qmCatHint"></div>
+        </div>
+      </div>
+      <div class="tabs" id="qmTabs"></div>
+      <div id="qmList"></div>
+      <div id="qmDetail"></div>
+    </div>
+
+    <!-- ===== 工作安全分析 JSA ===== -->
+    <div class="view hide" id="v-jsa">
+      <div class="notice">
+        <span>⚠️</span>
+        <div>
+          <b>JSA = 工作安全分析（Job Safety Analysis）。做事前把「哪一步可能出什么事、怎么防」写下来。</b>
+          它和标准变更提醒是<b>两条并行的线</b>：标准提醒管「按哪一版做」，
+          JSA 管「按这版做的时候别伤到自己」。
+          <br><br>
+          <b>风险值 R = 可能性 L × 严重度 S</b>，范围 1~25，分四档：
+          低 1~4 / 一般 5~9 / 中等 10~14 / 高 15~25。
+          涉及<b>伤亡 / 中毒 / 职业禁忌</b>的条目，无论 R 多少，
+          严重度 <b>S 不得低于 3</b>，默认中等以上风险。
+          <br><br>
+          <b>⚠ 本页是空白模板与规则，不代你签字。</b>
+          「工作危害分析」里那7 条是<b>克罗诺杆菌的示例</b>，
+          要按你自己实验室的实际作业重填。
+          审批栏与日期<b>必须手签</b> —— 这是要留档的正式记录。
+        </div>
+      </div>
+
+      <div class="tabs" id="jsaTabs"></div>
+      <div id="jsaBody"></div>
+    </div>
+
+    <!-- ===== 检测方法原理 · 详情 ===== -->
+    <div class="view hide" id="v-mdetail">
+      <div class="flex" style="margin-bottom:14px">
+        <a href="#method" class="btn sm">← 返回方法原理</a>
+        <a href="#law" class="btn sm" id="mdLawBtn" style="display:none">看该标准的体系依据 →</a>
+      </div>
+      <div id="mdetailBox"></div>
+    </div>
+
+    <!-- ===== 检测方法原理（2026-10-10 用户提供 18 份 docx）===== -->
+    <div class="view hide" id="v-method">
+      <div class="notice">
+        <span>🧪</span>
+        <div>
+          <b>这一页解释「这个检测方法为什么这么做」——每一步用了什么试剂、起什么作用。</b>
+          检测员真正卡住的地方通常不是「用哪个标准」，而是
+          <b>「为什么要加这个试剂」「这一步为什么必须做」</b>。
+          <br><br>
+          <b>⚠ 这不是检测依据。</b>本页是<u>方法原理的说明</u>，
+          <b>不能替代标准原文</b>。试剂配比、仪器条件、判定阈值一律以
+          <b>GB 标准正文</b>为准；出报告、判合格必须翻标准。
+          <br><br>
+          <b>覆盖范围</b>：当前收录 <b>18 个 GB 标准</b>的方法原理（用户 2026-10-10 提供），
+          按<b>检测项目</b>归类，与「通则引用标准」的分组口径一致。
+          页面不抓取、不自动更新 —— 标准换版了这里不会自动跟着变，
+          <b>换版提醒请看「标准清单」</b>。
+        </div>
+      </div>
+      <div class="flex" style="margin-bottom:12px">
+        <input id="methodSearch" placeholder="搜标准号或方法名，如 GB 5009.5 / 凯氏定氮" style="flex:1;max-width:320px"
+               oninput="renderMethod()">
+        <div class="sp" style="flex:1"></div>
+        <span class="muted" id="methodCount"></span>
+      </div>
+      <div class="chips" id="methodCats" style="margin-bottom:12px"></div>
+      <div id="methodList"></div>
+    </div>
+
+    <!-- ===== 我的订阅 ===== -->
+    <div class="view hide" id="v-subs">
+      <div class="notice">
+        <span>✳️</span>
+        <div>只盯你关心的品类，减少噪音。<b>取消勾选只是不再提醒，不会影响标准库收录</b>。默认已按你的岗位预选了一部分。</div>
+      </div>
+      <div class="flex" style="margin-bottom:14px">
+        <span class="muted" id="subStat"></span>
+        <div class="sp" style="flex:1"></div>
+        <button class="btn sm" onclick="subAll(true)">全选</button>
+        <button class="btn sm" onclick="subAll(false)">全不选</button>
+        <button class="btn pri sm" onclick="saveSubs()">保存订阅</button>
+      </div>
+      <div class="sub-grid" id="subGrid"></div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-h"><h3>提醒强度</h3></div>
+        <div class="chk"><input type="checkbox" checked><div><div class="nm">实施前 90 天提醒一次</div><div class="ds">提前进提醒队列，标记"即将实施"</div></div></div>
+        <div class="chk"><input type="checkbox" checked><div><div class="nm">实施前 30 天再提醒一次</div><div class="ds">二���提醒，同一标准不重复刷屏</div></div></div>
+        <div class="chk"><input type="checkbox" checked><div><div class="nm">标准被替代当天立即提醒</div><div class="ds">最高优先级，建议当天就改 SOP</div></div></div>
+        <div class="chk"><input type="checkbox"><div><div class="nm">只提醒"我订阅的关键词"</div><div class="ds">关掉后全库变更都进提醒队列（噪音大）</div></div></div>
+        <div class="chk"><input type="checkbox" checked><div><div class="nm">每周一早上 08:00 推送上周汇总周报</div><div class="ds">邮件，可后续加企业微信/钉钉</div></div></div>
+      </div>
+    </div>
+
+    <!-- ===== 提醒中心 ===== -->
+    <div class="view hide" id="v-alerts">
+      <div class="flex" style="margin-bottom:14px">
+        <div class="filters" id="alertFilters">
+          <button class="chip on" data-lvl="all">全部</button>
+          <button class="chip" data-lvl="erata">勘误 8</button>
+          <button class="chip" data-lvl="high">换版·高优 3</button>
+          <button class="chip" data-lvl="mid">中 4</button>
+          <button class="chip" data-lvl="low">低 1</button>
+          <button class="chip" data-lvl="unread">未读</button>
+        </div>
+        <div class="sp" style="flex:1"></div>
+        <button class="btn sm" onclick="toast('已加入本地待办清单')">标记已处理</button>
+        <button class="btn sm" onclick="toast('周报已生成：本周变更 PDF 已就绪')">导出周报</button>
+        <button class="btn pri sm" onclick="toast('周报已发送至你的邮箱')">推送周报</button>
+      </div>
+      <div class="card">
+        <div id="alertList"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>周报预览</h3><span class="muted">每周一 08:00 自动发送，也可随时手动导出</span></div>
+        <div id="weekly"></div>
+      </div>
+    </div>
+
+    <!-- ===== 管理后台 ===== -->
+    <div class="view hide" id="v-admin">
+      <!-- ★ 权限门禁：未授权时可查看，不能新增/删除/改配置 ★ -->
+      <div class="gate" id="adminGate"></div>
+
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-h"><h3>监控关键词</h3><div class="sp"></div>
+            <span id="kwWriteZone"><button class="btn pri sm" id="kwAddBtn" onclick="addKw()">+ 新增关键词</button></span>
+          </div>
+          <div style="margin-bottom:12px">
+            <div class="search" style="width:100%"><span class="muted">🔍</span><input id="kwFilter" placeholder="筛选关键词" oninput="renderKw()"></div>
+          </div>
+          <div style="max-height:330px;overflow:auto">
+            <!-- twrap：窄屏下表格横向滚动，否则列被压扁读不了 -->
+            <div class="twrap">
+            <table>
+              <thead><tr><th>关键词 / 标准号</th><th style="width:96px">类别</th><th style="width:66px">优先级</th><th style="width:56px"></th></tr></thead>
+              <tbody id="kwBody"></tbody>
+            </table>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>检查频率</h3><div class="sp"></div>
+            <span class="tag t-gray" id="cfgReadTag">只读</span></div>
+          <div class="dl" style="margin-bottom:14px" id="cfgBox">
+            <dt>全量检查</dt><dd>每日 07:00（一次，不做秒级轮询）</dd>
+            <dt>实施日临近</dt><dd>每日 07:00 复算倒计时（≤90 / ≤30 天触发）</dd>
+            <dt>周报</dt><dd>每周一 08:00 汇总上周变更</dd>
+            <dt>失败重试</dt><dd>3 次，间隔 10 / 30 / 90 分钟</dd>
+            <dt>抓取间隔下限</dt><dd>单源 ≥ 4 小时，避免被封</dd>
+          </div>
+          <div class="hr"></div>
+          <div class="card-h"><h3>数据源健康</h3></div>
+          <div id="srcHealth"></div>
+        </div>
+      </div>
+        <div class="card">
+          <div class="card-h"><h3>抓取日志</h3><span class="muted">最近 20 条</span><div class="sp"></div>
+            <span id="runWriteZone"><button class="btn sm" id="runNowBtn" onclick="runNow()">立即执行一次检查</button></span></div>
+          <div class="log" id="logBox"></div>
+        </div>
+      <div class="card">
+        <div class="card-h"><h3>变更历史留痕</h3><span class="muted">每条变更永久保存，可追溯"当时通知的是哪一版"</span></div>
+        <!-- twrap：窄屏下表格横向滚动，否则列被压扁读不了 -->
+        <div class="twrap">
+        <table>
+          <thead><tr><th style="width:150px">时间</th><th style="width:120px">标准号</th><th>变更</th><th style="width:120px">发现来源</th><th style="width:80px">快照</th></tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="dlgHost"></div>
+
+<footer class="disclaimer">
+      <b>免责声明</b>　标准文本版权归发布机构所有。本工具仅做标准变更提醒与官方入口聚合，不提供未经授权的标准全文分发，不代替官方发布渠道。采标类标准（ISO/IEC 等）仅提供官方阅读入口与正版购买渠道说明。使用本工具做出的检测报告，以现行有效标准的正式文本为准。
+    </footer>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<!-- ★ 工具工作台引擎（2026-10-22）★ 34 个可交互工具的实现 -->
+<script src="workbench.js"></script>
+<!-- data.js 缺失时给出明确提示，不能静默空白 -->
+<script>
+if(!window.STDWATCH_DATA){
+  document.addEventListener("DOMContentLoaded",function(){
+    var b=document.getElementById("dataLoadFail");
+    if(b) b.style.display="block";
+  });
+}
+</script>
+<script>
+/* ================= 模拟数据（原型用，正式版由官方源抓取回填） ================= */
+const STD = (window.STDWATCH_DATA && window.STDWATCH_DATA.STD) || [];
+
+/* ===== 体系标准与法律法规（静态清单，人工核对，仅给官方查询入口，不存条文）===== */
+const LAWS = (window.STDWATCH_DATA && window.STDWATCH_DATA.LAWS) || [];
+/* 一级分类：按标准性质分；每个一级下还有二级细分（规则见 detect_rules.py） */
+const CATS = (window.STDWATCH_DATA && window.STDWATCH_DATA.CATS) || [];
+
+/* ===== 通则引用标准（真实数据：从 GB 10765/10766/10767 正文 PDF 提取）
+   这批标准不会出现在关键词检索里，但实验室天天在用 —— 规范性引用文件一章列的。
+   数据来源：通则正文 PDF → 提取引用标准号 → 回官方源抓元数据（按实施日期取最新版） */
+/* ===== CNAS 认可规范（独立页，2026-10-07 从通则引用里移出）=====
+   ★ 为什么单独一个数据键 ★
+     CNAS 文件不是产品标准正文里的规范性引用文件 —— 通则引用页的每一条
+     都要能追到某本通则的引用列表，CNAS 追不到。它是独立的认可规范，
+     与「法规与体系」同属资质/体系维度，故左侧导航紧随其后单独一组。*/
+const CNASDOCS = (window.STDWATCH_DATA && window.STDWATCH_DATA.CNASDOCS) || [];
+const CNASKINDS = (window.STDWATCH_DATA && window.STDWATCH_DATA.CNASKINDS) || [];
+/* 当前选中的 CNAS 分类。必须显式声明 ——
+   只在 renderCnas 里赋值而不声明，会落成隐式全局；
+   页面脚本若以 strict 模式或模块方式执行就直接 ReferenceError，
+   整页渲染中断（renderRefs 里 curLawScene 就是这个毛病）。*/
+let curCnasKind = null;
+function renderCnas(){
+  const all = CNASDOCS||[];
+  if(!curCnasKind) curCnasKind = "all";
+  const badge = $("#cnasBadge"); if(badge) badge.textContent = all.length;
+
+  // 分类标签（含「全部」）。用 CNASKINDS 的声明顺序，
+  // 「全部」放最前，计数为 0 的类别不显示。
+  const tabs = [{k:"all",name:"全部",desc:""}]
+    .concat(CNASKINDS.filter(k=>all.some(x=>x.kind===k.k)));
+  $("#cnasTabs").innerHTML = tabs.map(c=>{
+    const n = c.k==="all" ? all.length : all.filter(x=>x.kind===c.k).length;
+    return `<button class="${curCnasKind===c.k?"on":""}" data-kind="${c.k}">${c.name}<span class="cnt">${n}</span></button>`;
+  }).join("");
+  $$("#cnasTabs button").forEach(b=>b.onclick=()=>{curCnasKind=b.dataset.kind;renderCnas();});
+
+  // 当前分类的一句话说明（让人知道这一类文件管什么）
+  const cur = tabs.find(c=>c.k===curCnasKind) || tabs[0];
+  $("#cnasKindDesc").innerHTML = cur.desc
+    ? `<span class="muted">${cur.desc}</span>`
+    : `<span class="muted">共 ${all.length} 份现行文件 · 按编号前缀自动归类（CL 准则 / RL 规则 / R 通用规则 / GL 指南 / EL 说明 / TRL 技术报告）</span>`;
+
+  const rows = curCnasKind==="all" ? all : all.filter(x=>x.kind===curCnasKind);
+  if(!rows.length){
+    $("#cnasList").innerHTML = `<div class="card empty">暂无数据。请确认云端已跑过一次完整管线（需生成 data/snapshots/SRC-11_latest.json）。</div>`;
+    return;
+  }
+  $("#cnasList").innerHTML = rows.map(x=>`
+    <div class="card" style="padding:13px 15px;margin-bottom:9px">
+      <div class="flex" style="align-items:flex-start;gap:9px">
+        <div style="flex:1;min-width:0">
+          <div class="flex" style="gap:7px;align-items:center;flex-wrap:wrap">
+            <span class="mono" style="font-size:13px">${x.no}</span>
+            <b style="font-size:14px">${x.title}</b>
+          </div>
+          <div class="muted" style="margin-top:5px">
+            ${x.kindName}${x.pub?" · 发布 "+x.pub:""} · 发布方：中国合格评定国家认可委员会
+          </div>
+        </div>
+        <div style="text-align:right;white-space:nowrap">
+          <div class="muted" style="font-size:11.5px">官方文件</div>
+          ${x.url?offLink("官网查看", x.url, "btn sm", "margin-top:5px"):""}
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+const REFGROUPS = (window.STDWATCH_DATA && window.STDWATCH_DATA.REFGROUPS) || [];
+
+/*★★ 官方查询：必须用 POST 表单跳转，不能用普通链接 ★★
+   2026-10-21 用户两次报「链接到食品安全国家标准数据检索平台都是错的」。
+   根因（踩了两轮才看清）：
+
+   sppt.cfsa.net.cn 对**任何 GET** 都返回同一个 597 字符的空壳 HTML，
+   大意是：页面里有个 form（method=post，action=/db，隐藏域 task=index），
+   并在 window.onload 里调用 document.getElementById("form1").submit()。
+
+   ★ 这里的描述刻意不写成带尖括号的真实标签 ★
+     HTML 解析器见到「左尖括号 + 斜杠」就开始解析闭合标签，
+     哪怕后面是反引号、哪怕中间夹了加号，**script 块都会被当场截断** ——
+     后半段脚本变成正文文本，页面直接崩。
+     （实测踩过：注释里贴了完整的 script 标签示例，
+       提取出来的内联脚本只剩 3536 字符，而完整的是 5.7 万。）
+     所以这里全用文字描述。
+
+   注意两点：
+     ① 空壳里的 action 是 /db，隐藏域 task 的值是 index——
+        即使 URL 上带了?type=2&guid=xxx，浏览器 JS 执行后也只会
+        POST 出 task=index，**guid 被整个丢掉，回到首页**。
+     ② 所以「把 guid 拼在 href 上」在浏览器里**根本走不通**，
+        只会把你送到首页 —— 这正是用户看到「全是错的」的原因。
+        （第一版修法正是这么错的。）
+
+   真正的详情页要 POST：action=/db?type=2&guid=<ID>，body task=goto。
+   实测**不需要 cookie**，所以可以直接用一个自动提交的跨站表单，
+   在新标签页打开官方详情页。
+
+   → 凡是要跳 cfsa 的按钮，一律渲染成 <a> + onClick 走 postJump()。
+     其它站点（samr / ttbz / jjg）是普通 GET，用 href 即可。*/
+function postJump(url){
+  const f = document.createElement("form");
+  f.method = "POST";
+  f.action = url;
+  f.target = "_blank";
+  f.style.display = "none";
+  const i = document.createElement("input");
+  i.type = "hidden"; i.name = "task"; i.value = "goto";
+  f.appendChild(i);
+  document.body.appendChild(f);
+  f.submit();
+  setTimeout(()=>f.remove(), 1000);
+}
+/** 生成一个「点开官方详情页」的可点元素。
+    isPost=true 时用 POST 表单（cfsa），否则用普通 href。 */
+function offLink(label, url, cls, style){
+  cls = cls || "btn sm";
+  if(!url) return "";
+  if(isCfsaPost(url)){
+    return `<a class="${cls}"${style?' style="'+style+'"':""} href="javascript:void(0)"
+             onclick="postJump('${url.replace(/'/g,"%27")}');return false;"
+             rel="noopener">${label}</a>`;
+  }
+  return `<a class="${cls}"${style?' style="'+style+'"':""} href="${url}"
+           target="_blank" rel="noopener">${label}</a>`;
+}
+/** 该URL 是否必须走 POST —— cfsa 的详情页与检索页都要 POST。 */
+function isCfsaPost(url){
+  return /sppt\.cfsa\.net\.cn/.test(url || "");
+}
+
+const CFSA_SEARCH = q => "https://sppt.cfsa.net.cn:8086/db?task=indexSearch"
+  + "&isLength=9999&num_tn=99&standard_type=&keyword="
+  + encodeURIComponent(String(q||"").replace(/\s+/g,""));
+const _urlByNo = (()=>{
+  const m = {};
+  STD.forEach(s=>{ if(s && s.no && s.url) m[s.no.replace(/\s+/g,"")] = s.url; });
+  return m;
+})();
+function officialUrl(no){
+  const k = String(no||"").replace(/\s+/g,"");
+  return _urlByNo[k] || CFSA_SEARCH(k);
+}
+
+/* ===== 检测方法原理（2026-10-10 用户提供 18 份 docx）=====
+   ★ 与「检验方法卡片」的区别，别混 ★
+     本页（方法原理）= 逐个标准讲「用了哪些试剂、各起什么作用」
+     两者互补，不重复。
+   ★ 数据源是用户自己整理的 docx，不联网抓、不随标准换版自动更新。*/
+const METHODS = (window.STDWATCH_DATA && window.STDWATCH_DATA.METHODS) || [];
+let curMdetail = null;
+const _methodOpen = {};   // 记录展开状态，返回列表时不丢
+let curMethodCat = null;  // 当前选中的检测项目分类
+/* 分类展示顺序。与通则引用标准（build_refgroups.py）的分组口径一致，
+   两个页面能对得上：那边看到「维生素」组，点进这边也是维生素。*/
+const METHOD_CATS = ["蛋白质与基础成分","脂肪酸与反式脂肪酸","矿物质",
+                     "维生素","婴配特殊成分","其它"];
+
+function escHtml(s){
+  return String(s==null?"":s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function renderMethod(){
+  const badge = $("#methodBadge"); if(badge) badge.textContent = METHODS.length;
+  const q = ($("#methodSearch") && $("#methodSearch").value || "")
+            .trim().toLowerCase();
+  let pool = !q ? METHODS : METHODS.filter(m =>
+      (m.stdNo||"").toLowerCase().indexOf(q) >= 0 ||
+      (m.title||"").toLowerCase().indexOf(q) >= 0 ||
+      (m.method||"").toLowerCase().indexOf(q) >= 0 ||
+      (m.cat||"").toLowerCase().indexOf(q) >= 0 ||
+      (m.reagents||[]).some(r => (r.name||"").toLowerCase().indexOf(q) >= 0));
+
+  // ---- 分类标签（含「全部」）；只显示有内容的分类 ----
+  const cats = METHOD_CATS.filter(c => pool.some(m => m.cat === c));
+  if(!curMethodCat || !cats.includes(curMethodCat)) curMethodCat = "全部";
+  const tabs = ["全部"].concat(cats);
+  $("#methodCats").innerHTML = tabs.map(c=>{
+    const n = c==="全部" ? pool.length : pool.filter(x=>x.cat===c).length;
+    return `<button class="chip ${curMethodCat===c?"on":""}" data-cat="${escHtml(c)}">${escHtml(c)}<span class="cnt">${n}</span></button>`;
+  }).join("");
+  $$("#methodCats button").forEach(b=>b.onclick=()=>{
+    curMethodCat=b.dataset.cat; renderMethod();
+  });
+
+  const rows = curMethodCat==="全部" ? pool : pool.filter(x => x.cat===curMethodCat);
+  const c = $("#methodCount");
+  if(c) c.textContent = rows.length === METHODS.length
+      ? METHODS.length + " 个标准" : rows.length + " / " + METHODS.length + " 个标准";
+
+  if(!rows.length){
+    $("#methodList").innerHTML = `<div class="card empty">没匹配「${escHtml(q)}」的标准</div>`;
+    return;
+  }
+
+  // ---- 按分类分组渲染（组内保持数据里的排序：标准号数值序）----
+  let html = "";
+  const groups = curMethodCat==="全部" ? cats : [curMethodCat];
+  groups.forEach(g=>{
+    const items = rows.filter(x => x.cat === g);
+    if(!items.length) return;
+    if(groups.length > 1 || curMethodCat!=="全部"){
+      html += `<div class="mgroup"><span class="bar"></span>`
+           + `<span class="nm">${escHtml(g)}</span>`
+           + `<span class="ctp">${items.length} 个标准</span><span class="sp"></span></div>`;
+    }
+    html += items.map(m=>{
+      const open = !!_methodOpen[m.stdNo];
+      return `
+      <div class="mcard">
+        <div class="hd" onclick="toggleMethod('${m.stdNo}')">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+              <span class="no">${escHtml(m.stdNo)}</span>
+              <span class="ti">${escHtml(m.title)}</span>
+            </div>
+            ${m.method ? `<span class="me">${escHtml(m.method)}</span>` : ""}
+            ${m.principle ? `<div class="pv">${escHtml(m.principle.length > 118
+                ? m.principle.slice(0,118) + "…" : m.principle)}</div>` : ""}
+          </div>
+          <div class="cnt">
+            <span>${open ? "收起 ▲" : "展开 ▼"}</span>
+            <span class="kv">${m.reagents.length} 试剂 · ${m.sections.length} 要点</span>
+          </div>
+        </div>
+        ${open ? methodDetailHtml(m) : ""}
+      </div>`;
+    }).join("");
+  });
+  $("#methodList").innerHTML = html;
+}
+
+function methodDetailHtml(m){
+  const reagents = (m.reagents||[]).length ? `
+    <div class="msec">
+      <div class="sh">试剂与作用（${m.reagents.length}）</div>
+      <div style="border:1px solid var(--line);border-radius:7px;overflow:hidden">
+        <table class="rt">
+          <thead><tr><th>试剂</th><th>在方法中的主要作用</th></tr></thead>
+          <tbody>
+          ${m.reagents.map(r=>`<tr>
+            <td>${escHtml(r.name)}</td>
+            <td>${escHtml(r.role)}</td>
+          </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>` : "";
+
+  const sections = (m.sections||[]).length ? `
+    <div class="msec">
+      <div class="sh">要点与操作提示</div>
+      ${m.sections.map(s=>`
+        <div style="margin-bottom:11px">
+          <div style="font-weight:600;font-size:12.5px;margin-bottom:5px;color:var(--ink)">${escHtml(s.h)}</div>
+          ${s.items.map(t=>`<div class="it">${escHtml(t)}</div>`).join("")}
+        </div>`).join("")}
+    </div>` : "";
+
+  return `
+  <div class="dt">
+    <div class="msec" style="margin-top:13px">
+      <div class="sh">检测方法原理</div>
+      <div style="font-size:12.5px;line-height:1.9">${escHtml(m.principle)}</div>
+    </div>
+    ${reagents}
+    ${sections}
+    <div class="tip">
+      ⚠ 本页是原理说明，<b>不能替代标准原文</b>：试剂配比、仪器条件、判定阈值一律以 GB 标准正文为准。
+    </div>
+  </div>`;
+}
+
+function toggleMethod(no){
+  if(_methodOpen[no]) delete _methodOpen[no];
+  else _methodOpen[no] = true;
+  renderMethod();
+}
+
+/* ================================================================
+   营养素配比计算 —— 真正能算的工具（2026-10-22）
+   用户原话：「我要的是这种能直接使用的，不是你告诉我实操步骤这种垃圾」
+   → 所以这里是真引擎：录入原料 → 算营养素 → 比国标限值 → 给判定与建议
+   ================================================================ */
+const _gbRaw = (window.STDWATCH_DATA && window.STDWATCH_DATA.GBNUTRITION) || null;
+const GB = Array.isArray(_gbRaw) ? (_gbRaw[0] || null) : _gbRaw;
+
+/* ★ 营养素 key ↔ 原料营养成分键的映射 ★
+   ★ 踩过的坑（2026-10-22）★
+   原料表用简写键（p / f / c），NUTRIENTS 用全名（protein / fat / carb）。
+   两边直接用同一个 key 取值 → 蛋白质/脂肪/碳水全是 0，
+   只有 ca / phos 这类同名的对上了（实测：蛋白 0.00，全表归零）。
+   → 用这张表显式对应。
+   ★ 这张表必须**跟着 NUTRIENTS 一起维护** ★
+     加了新营养素（如叶酸、生物素、胆碱、肌醇）却忘了加到这里 →
+     那几项永远算成 0，页面显示「不足」，而原料库里明明有值。 */
+const GB_KEYMAP = {
+  protein: "p", fat: "f", carb: "c",
+  la: "la", ala: "ala",
+  ca: "ca", phos: "phos", na: "na",
+  va: "va", vd: "vd", ve: "ve", niacin: "niacin", vc: "vc",
+  folate: "folate", biotin: "biotin",
+  choline: "choline", inositol: "inositol",
+  dha: "dha", ara: "ara", taurine: "taurine",
+};
+
+/* 钙磷比这类「比值型」指标不能简单相加，要单独算 */
+const GB_RATIO_KEYS = { ca_ratio: ["ca", "phos"] };
+
+/* 计算状态 */
+let gbState = null;
+
+function gbInit(){
+  if(!GB) return;
+  gbState = {
+    seg: "3",                 // 段位
+    basis: "乳基",             // 乳基 / 豆基
+    version: "3.2",
+    recipe: GB.defaultRecipe.map(r=>({key:r.key, amount:r.amount})),
+    flowStep: 1,              // 流转走到第几步
+  };
+}
+
+/* ★ 各营养素在原料表里的单位（比值型计算时要用） ★ */
+const NT_SRC = {};
+GB.nutrients.forEach(nt=>{ NT_SRC[nt.key] = nt.srcUnit; });
+
+/* ★ 把「每 100g 成品、原料单位」的量，换算成「每 100kJ、国标单位」 ★
+   统一走这一条，避免各处自己写换算导致不一致。 */
+function convTo100kJ(raw, srcUnit, nt, e100g){
+  if(!raw) return 0;
+  let v = raw * (100 / (e100g || 1));   // 每 100g → 每 100kJ
+  const tu = nt.unit.split("/")[0];
+  if(srcUnit === "mg" && tu === "g") v = v / 1000;
+  if(srcUnit === "g"  && tu === "mg") v = v * 1000;
+  if(srcUnit === "g"  && tu === "ug") v = v * 1000000;
+  if(srcUnit === "mg" && tu === "ug") v = v * 1000;
+  if(srcUnit === "ug" && tu === "mg") v = v / 1000;
+  return v;
+}
+
+/* ★ 调整建议：超限和不足给的建议方向相反 ★
+   原来只给一条「XX 偏高：下调…」，结果显示「不足」时也在说「下调」——
+   方向反了，等于误导。→ 按 verdict 分开取。 */
+function pickAdvice(key, verdict){
+  const a = (GB.advice || {})[key];
+  if(!a) return "";
+  if(typeof a === "string") return a;          // 兼容旧格式
+  if(verdict === "超限") return a.over || a.under || "";
+  if(verdict === "不足") return a.under || a.over || "";
+  return "";
+}
+
+/* ★ 核心：按原料添加量算营养素 ★
+   步骤：① 每味原料的每 100g 营养成分 × 添加量(kg/1000kg) ÷ 10
+        → 得到每 1000kg 成品中的各营养素总量
+        ② 能量：按蛋白 17kJ/g、脂肪 37kJ/g、碳水 17kJ/g 算每 100g 成品能量
+        ③ 各营养素换算到「每 100kJ」，与国标限值同单位
+   为什么换算到 100kJ：国标限值就是按 100kJ 给的，不换算没法比。 */
+function gbCompute(){
+  if(!GB || !gbState) return null;
+  const mats = {};
+  GB.materials.forEach(m=>{ mats[m.key] = m; });
+
+  // ① 累计每 1000kg 配方中的营养素总量
+  const total = {};        // 营养素 key → 每 1000kg 的量
+  let sumAmount = 0;
+  gbState.recipe.forEach(r=>{
+    const m = mats[r.key];
+    if(!m || !r.amount) return;
+    sumAmount += r.amount;
+    /* ★★ 换算系数：每 100g 成品中该原料贡献多少 ★★
+       原料表的值是「每 100g 该原料」的量。
+
+       朴素推导（不化简，最不容易错）：
+         原料质量 = amt(kg) × 1000 (g/kg)
+         其中该营养素 = 原料质量 / 100 × 每100g值
+         成品总质量 = 1000(kg) × 1000 (g/kg)
+         每 100g 成品含该营养素 = 上式 / 成品总质量 × 100
+                              = 每100g值 × amt / 1000
+
+       验算：全脂乳粉 420kg/1000kg，蛋白 24g/100g
+             → 24 × 420 / 1000 = 10.08 g/100g 成品
+             → 3段国标限 10.5~13.5，量级对得上 ✓
+       ★ 踩过的坑 ★
+         写成 × amt×10 → 大 100 倍（能量 180 万 kJ/100g）
+         写成 × amt/100 → 大 10 倍（蛋白 100.8g/100g） */
+    const k = r.amount / 1000;
+    Object.keys(GB_KEYMAP).forEach(nkey=>{
+      const mkey = GB_KEYMAP[nkey];
+      const v = m[mkey];
+      if(v == null) return;
+      total[nkey] = (total[nkey] || 0) + v * k;
+    });
+  });
+
+  // ② 能量（每 100g 成品，kJ）
+  //   蛋白 17 kJ/g、脂肪 37 kJ/g、碳水 17 kJ/g
+  //   total 已经是「每 100g 成品」了，直接用
+  const e100g = (total.protein||0) * 17 + (total.carb||0) * 17
+              + (total.fat||0) * 37;
+  const energyPer100kJ = e100g / 100;   // 每 100kJ 相当于多少 100g
+
+  // ③ 按每个指标自己的基准换算
+  //   ★★ 基准不统一是最大的坑 ★★
+  //   GB 10765/10766/10767 里：
+  //     能量 / 蛋白质 / 脂肪 / 碳水化合物 → 每 100g 粉剂
+  //     钙 / 磷 / 钠 / 维生素 / 亚油酸 / DHA…      → 每 100kJ
+  //   一律按「每 100kJ」算 → 蛋白 12.5g/100g 被算成 1.07g/100kJ，
+  //   比限值低一个数量级，整张表全显示「不足」，工具直接废掉。
+  //   → 每个营养素按 nt.basis 分别处理。
+  const res = {};
+  GB.nutrients.forEach(nt=>{
+    if(nt.key === "energy"){ res[nt.key] = e100g; return; }
+    if(nt.basis === "ratio"){
+      // 比值型：亚油酸:α-亚麻酸、钙磷比
+      //   → 用「同一基准」下的两个值相除，不能拿不同基准的原始量相除。
+      const [a, b] = nt.ratio;
+      const av = convTo100kJ(total[a]||0, nt.srcUnit, nt, e100g);
+      const bv = convTo100kJ(total[b]||0, NT_SRC[a]||"mg", nt, e100g);
+      res[nt.key] = bv ? (av/bv) : 0;
+      return;
+    }
+    const raw = total[nt.key] || 0;
+    if(!raw) { res[nt.key] = 0; return; }
+
+    // raw 是「每 100g 成品」的量，单位 = nt.srcUnit
+    let v = raw;
+    if(nt.basis === "per100kJ"){
+      v = convTo100kJ(raw, nt.srcUnit, nt, e100g);
+    }
+    res[nt.key] = v;
+  });
+
+  // ④ 判定
+  //   ★ 限值分「乳基 / 豆基」两套 ★
+  //   GB 10765-2021：豆基婴儿配方食品蛋白质 0.53~0.72 g/100kJ（乳基 0.72~1.80），
+  //   磷下限也不同 —— 类别选错，整张表判定都错。
+  const segL = GB.limits[gbState.seg] || {};
+  const lim = (gbState.basis === "豆基" ? segL.soy : segL.milk) || {};
+  const rows = GB.nutrients.map(nt=>{
+    const L = lim[nt.key];
+    const val = res[nt.key] || 0;
+    let verdict = "—", note = "";
+    if(L){
+      const tol = 1e-9;
+      // 下限为 null = 标准写 N.S.（没有特别说明）→ 只有上限
+      if(L.min!=null && val < L.min - tol){ verdict = "不足"; }
+      else if(L.max!=null && val > L.max + tol){ verdict = "超限"; }
+      else { verdict = "达标"; }
+      if(!L.verified) note = "待核对";
+    } else {
+      note = "国标未设限";
+    }
+    return {key:nt.key, name:nt.name, unit:nt.unit, dec:nt.dec,
+            val:val, min:L?L.min:null, max:L?L.max:null,
+            verified:L?L.verified:true, verdict:verdict, note:note,
+            advice: pickAdvice(nt.key, verdict)};
+  });
+
+  return {
+    rows: rows,
+    sumAmount: sumAmount,
+    remain: 1000 - sumAmount,
+    energy100g: e100g,
+    limitInfo: GB.limits[gbState.seg] || {},
+  };
+}
+
+function gbRender(){
+  const host = $("#gbCalc");
+  if(!host) return;
+  if(!GB){ host.innerHTML = `<div class="card empty">未载入 GB 限值数据</div>`; return; }
+  if(!gbState) gbInit();
+
+  const r = gbCompute();
+  const mats = {};
+  GB.materials.forEach(m=>{ mats[m.key] = m; });
+  const L = r.limitInfo;
+
+  // ---- 顶部：版本与段位 ----
+  let h = `
+  <div class="gbc-head">
+    <div class="gbc-title">
+      <b>营养素配比计算</b>
+      <span class="gbc-ver">配方 F-IF-001 版本 ${escHtml(gbState.version)}</span>
+    </div>
+    <div class="gbc-meta">
+      <span class="gbc-tag">${escHtml(gbState.basis)}</span>
+      <span class="gbc-tag">${gbState.seg}段</span>
+      <span class="gbc-tag ${r.rows.some(x=>x.verdict==="超限")?"bad":"ok"}">
+        ${(()=>{
+        /* ★ 顶部判定要把「不足」也算上 ★
+           原来只查 verdict==="超限"，结果表里 8 项显示「不足」，
+           顶部却写「全部达标」—— 自相矛盾，用户一看就知道不可信。 */
+        const nOver = r.rows.filter(x=>x.verdict==="超限").length;
+        const nLow  = r.rows.filter(x=>x.verdict==="不足").length;
+        if(nOver) return `<span class="gbc-tag bad">${nOver} 项超限</span>`;
+        if(nLow)  return `<span class="gbc-tag warn">${nLow} 项不足</span>`;
+        return `<span class="gbc-tag ok">全部达标</span>`;
+      })()}
+    </div>
+    <div class="gbc-sub">
+      目标 ${escHtml(L.std||"")}-${escHtml(L.stdVersion||"")}　|
+      计划备案 2026-02-03　| 申请人 李工　| 2026-09-22 15:52
+    </div>
+  </div>
+
+  <div class="gbc-ctl">
+    <label>段位
+      <select onchange="gbSetSeg(this.value)">
+        ${["1","2","3"].map(s=>`<option value="${s}" ${s===gbState.seg?"selected":""}>
+          ${s}段（${GB.limits[s].std}）</option>`).join("")}
+      </select>
+    </label>
+    <label>产品类型
+      <select onchange="gbSetBasis(this.value)">
+        ${["乳基","豆基"].map(b=>`<option ${b===gbState.basis?"selected":""}>${b}</option>`).join("")}
+      </select>
+    </label>
+    <label>配方版本
+      <input type="text" value="${escHtml(gbState.version)}" style="width:74px"
+             oninput="gbState.version=this.value">
+    </label>
+    <div class="sp"></div>
+    <button class="btn sm" onclick="gbAddRow()">+ 加一味原料</button>
+    <button class="btn sm" onclick="gbResetRecipe()">恢复默认配方</button>
+  </div>
+
+  <div class="gbc-cols">
+    <!-- 左：原料数据录入 -->
+    <div class="gbc-panel">
+      <div class="gbc-ph">
+        <span class="n">1</span> 原料数据录入
+        <span class="muted" style="font-weight:400">（kg/1000kg）</span>
+      </div>
+      <div class="gbc-rows">
+        ${gbState.recipe.map((row,i)=>{
+          const m = mats[row.key];
+          if(!m) return "";
+          return `<div class="gbc-row">
+            <select onchange="gbSetMat(${i},this.value)">
+              ${GB.materials.map(x=>`<option value="${x.key}" ${x.key===row.key?"selected":""}>${escHtml(x.name)}</option>`).join("")}
+            </select>
+            <input type="number" step="0.01" value="${row.amount}"
+                   oninput="gbSetAmt(${i},this.value)">
+            <span class="u">kg</span>
+            <span class="kd">${escHtml(m.kind)}</span>
+            <button class="x" onclick="gbDelRow(${i})" title="移除">×</button>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="gbc-sum">
+        <div>设计余量 <b>${r.remain.toFixed(2)}</b> kg/1000kg</div>
+        <div class="muted">已投 ${r.sumAmount.toFixed(2)} kg　能量 ${r.energy100g.toFixed(0)} kJ/100g</div>
+      </div>
+    </div>
+
+    <!-- 右：营养素核算 vs 国标 -->
+    <div class="gbc-panel">
+      <div class="gbc-ph">
+        <span class="n">2</span> 营养素核算 vs ${escHtml(L.std||"")}-${escHtml(L.stdVersion||"")}（${gbState.seg}段）
+      </div>
+      <div class="gbc-tblwrap">
+      <table class="gbc-tbl">
+        <thead><tr>
+          <th>营养素</th><th>计算值</th><th>下限</th><th>上限</th><th>判定</th>
+        </tr></thead>
+        <tbody>
+        ${r.rows.map(row=>{
+          const bad = row.verdict==="超限", low = row.verdict==="不足";
+          const vc = bad?"bad":(low?"low":"ok");
+          return `<tr class="${vc}">
+            <td>${escHtml(row.name)}
+              ${row.note==="待核对"?'<span class="vf" title="内置参考值，请与标准正文核对">待核对</span>':""}
+              ${row.note==="国标未设限"?'<span class="vf gray">未设限</span>':""}</td>
+            <td class="v">${row.val.toFixed(row.dec)}</td>
+            <td>${row.min==null?(row.max==null?"—":"—"):row.min.toFixed(row.dec)}${row.min==null&&row.max!=null?'<span class="vns">起</span>':""}</td>
+            <td>${row.max==null?"—":row.max.toFixed(row.dec)}</td>
+            <td><span class="vd ${vc}">${row.verdict}</span></td>
+          </tr>`;
+        }).join("")}
+        </tbody>
+      </table>
+      </div>
+      <div class="gbc-unit">单位：${escHtml((GB.nutrients[1]||{}).unit||"")} 等，按国标口径换算</div>
+    </div>
+  </div>
+
+  <!-- 超限项的调整建议 -->
+  ${(()=>{
+    const bads = r.rows.filter(x=>x.verdict==="超限"||x.verdict==="不足");
+    if(!bads.length) return `
+      <div class="gbc-tip ok">✓ 全部指标在国标范围内，可以进入配方评审。</div>`;
+    return `<div class="gbc-bads">
+      <div class="gbc-bh">⚠ ${bads.length} 项需要处理</div>
+      ${bads.map(x=>`<div class="gbc-bad">
+        <span class="vd ${x.verdict==="超限"?"bad":"low"}">${x.verdict}</span>
+        <b>${escHtml(x.name)}</b>
+        <span class="num">${x.val.toFixed(x.dec)} ${escHtml(x.unit)}
+          ${x.min!=null?`（限 ${x.min}~${x.max}）`:""}</span>
+        <div class="adv">${escHtml(x.advice || "调整对应原料添加量后重算。")}</div>
+      </div>`).join("")}
+    </div>`;
+  })()}
+
+  <!-- 配方版本流转 -->
+  <div class="gbc-flow">
+    <div class="gbc-fh">配方版本流转<span class="muted">（点击节点可查看该版本审批链路）</span></div>
+    <div class="gbc-fnodes">
+      ${(GB.flow||[]).map((f,i)=>{
+        const done = i < gbState.flowStep, cur = i === gbState.flowStep;
+        return `<div class="fn ${done?"done":""} ${cur?"cur":""}" onclick="gbSetFlow(${i})">
+          <div class="dot">${done?"✓":i+1}</div>
+          <div class="ft">${escHtml(f.name)}</div>
+          <div class="fr">${escHtml(f.role)}</div>
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="gbc-fbar">
+      <span class="muted">当前节点：<b>${escHtml((GB.flow[gbState.flowStep]||{}).name||"—")}</b>
+        （${escHtml((GB.flow[gbState.flowStep]||{}).role||"")}）</span>
+      <div class="sp"></div>
+      <button class="btn sm" onclick="gbSetFlow(${Math.max(0,gbState.flowStep-1)})">退回上一步</button>
+      <button class="btn sm pri" onclick="gbSetFlow(${Math.min((GB.flow||[]).length-1,gbState.flowStep+1)})">推进到下一步</button>
+    </div>
+  </div>`;
+
+  host.innerHTML = h;
+}
+
+/* ---- 交互 ---- */
+function gbSetSeg(s){ gbState.seg = s; gbRender(); }
+function gbSetBasis(b){ gbState.basis = b; gbRender(); }
+function gbSetAmt(i,v){ gbState.recipe[i].amount = parseFloat(v)||0; gbRender(); }
+function gbSetMat(i,k){ gbState.recipe[i].key = k; gbRender(); }
+function gbDelRow(i){ gbState.recipe.splice(i,1); gbRender(); }
+function gbAddRow(){
+  const used = gbState.recipe.map(r=>r.key);
+  const next = GB.materials.find(m=>!used.includes(m.key)) || GB.materials[0];
+  gbState.recipe.push({key:next.key, amount:1});
+  gbRender();
+}
+function gbResetRecipe(){
+  gbState.recipe = GB.defaultRecipe.map(r=>({key:r.key, amount:r.amount}));
+  gbRender();
+}
+function gbSetFlow(i){ gbState.flowStep = i; gbRender(); }
+
+/* ================================================================
+   研发管理（2026-10-22 用户要求新增模块）
+   18 个功能点 · 6 个环节 · 婴幼儿配方奶粉/乳粉/调制乳粉
+   法规：GB 10765(1段) / GB 10766(2段) / GB 10767(3段) / GB 19644
+   ================================================================ */
+const _rdRaw = (window.STDWATCH_DATA && window.STDWATCH_DATA.RDTOOLS) || null;
+const RD = Array.isArray(_rdRaw) ? (_rdRaw[0] || null) : _rdRaw;
+let curRdGroup = "全部";
+let curRdKey = null;
+
+function renderRdTools(){
+  const badge = $("#rdBadge");
+  if(badge) badge.textContent = RD ? RD.modules.length : "—";
+  if(!RD){
+    $("#rdTabs").innerHTML = "";
+    $("#rdList").innerHTML = `<div class="card empty">未载入研发管理数据</div>`;
+    return;
+  }
+
+  $("#rdGroupHint").innerHTML = RD.groups.map(g=>{
+    const m = RD.catMeta[g] || {};
+    return `<span style="display:inline-block;margin:2px 12px 2px 0;font-size:12.5px">
+      <b>${m.icon||""} ${g}</b>
+      <span style="color:var(--ink3)">　${escHtml(m.hint||"")}</span></span>`;
+  }).join("");
+
+  const cnt = {};
+  RD.modules.forEach(m=>{ cnt[m.group] = (cnt[m.group]||0)+1; });
+  const TABS = [["全部", RD.modules.length]].concat(
+    RD.groups.map(g=>[g, cnt[g]||0]));
+  $("#rdTabs").innerHTML = TABS.map(([n,c])=>
+    `<button class="tab ${curRdGroup===n?"on":""}" data-rd="${escHtml(n)}">
+       ${escHtml(n)}${c ? `<span class="cnt">${c}</span>` : ""}</button>`).join("");
+  $$("#rdTabs button").forEach(b=>b.onclick=()=>{
+    curRdGroup = b.dataset.rd; curRdKey = null;
+    renderRdTools();
+  });
+
+  const rows = curRdGroup === "全部" ? RD.modules
+             : RD.modules.filter(m => m.group === curRdGroup);
+  const showGroup = curRdGroup === "全部";
+  let html = "";
+  const groups = showGroup ? RD.groups : [curRdGroup];
+  groups.forEach(g=>{
+    const items = rows.filter(m => m.group === g);
+    if(!items.length) return;
+    const meta = RD.catMeta[g] || {};
+    if(showGroup){
+      html += `<div class="mgroup"><span class="bar"></span>
+        <span class="nm">${meta.icon||""} ${escHtml(g)}</span>
+        <span class="ctp">${items.length} 个功能点</span><span class="sp"></span>
+      </div>`;
+    }
+    html += items.map(m=>rdCardHtml(m)).join("");
+  });
+  $("#rdList").innerHTML = html;
+  $$("#rdList .rdcard-h").forEach(el=>el.onclick=()=>toggleRd(el.dataset.key));
+  $("#rdDetail").innerHTML = "";
+}
+
+function rdCardHtml(m){
+  const open = curRdKey === m.moduleKey;
+  const hasW = !!(m.widget && m.widget.type);
+  return `
+  <div class="qmcard rdcard ${open?"open":""}">
+    <div class="qmcard-h rdcard-h" data-key="${escHtml(m.moduleKey)}">
+      <div style="flex:1;min-width:0">
+        <div class="qmcard-t">
+          <span class="key">${escHtml(m.moduleKey)}</span>
+          <span class="nm">${escHtml(m.name)}</span>
+          <span class="cg">${escHtml(m.group)}</span>
+          ${hasW?'<span class="cg tool">可操作工具</span>':""}
+        </div>
+        <div class="sm">${escHtml(m.summary)}</div>
+      </div>
+      <div class="qmcard-r">
+        <span>${open ? "收起 ▲" : "展开 ▼"}</span>
+        <span class="kv">${m.steps.length} 步</span>
+      </div>
+    </div>
+    ${open ? rdDetailHtml(m) : ""}
+  </div>`;
+}
+
+function rdDetailHtml(m){
+  const hasW = !!(m.widget && m.widget.type);
+  return `
+  <div class="qmcard-b">
+    ${hasW?`
+    <div class="qmrow">
+      <div class="qmk">工具</div>
+      <div class="qmv">
+        <div class="qwb-toolbar">
+          <button class="btn sm pri" onclick="RD_open('${escHtml(m.moduleKey)}')">▶ 打开工具</button>
+          <span class="muted">能直接用：数据可改，结论实时重算</span>
+        </div>
+        <div data-qw-host></div>
+      </div>
+    </div>`:""}
+    <div class="qmrow">
+      <div class="qmk">适用场景</div>
+      <div class="qmv">${escHtml(m.whenToUse)}</div>
+    </div>
+    <div class="qmrow">
+      <div class="qmk">实操步骤</div>
+      <div class="qmv">
+        <ol class="qmsteps">
+          ${m.steps.map((s,i)=>`<li><span class="n">${i+1}</span><span>${escHtml(s)}</span></li>`).join("")}
+        </ol>
+      </div>
+    </div>
+    <div class="qmrow">
+      <div class="qmk">配套表单 / 字段</div>
+      <div class="qmv">
+        <div class="qmtpl">${escHtml(m.template)}</div>
+        <button class="btn sm" onclick="copyRdTpl('${escHtml(m.moduleKey)}')">复制字段</button>
+      </div>
+    </div>
+    <div class="qmrow">
+      <div class="qmk">落地案例</div>
+      <div class="qmv"><div class="qmcase">${escHtml(m.case)}</div></div>
+    </div>
+    <div class="qmtip">
+      案例为婴配粉厂实际场景，数据与时间为示例量级 —— <b>照着做可以，别照抄数字</b>；
+      标准条款以现行版本为准。
+    </div>
+  </div>`;
+}
+
+function copyRdTpl(key){
+  const m = (RD && RD.modules || []).find(x=>x.moduleKey===key);
+  if(!m) return;
+  const txt = m.name + "\n" + m.template;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(
+      ()=>toast("已复制字段模板"), ()=>toast("复制失败，请手动选中"));
+  } else {
+    toast("当前环境不支持一键复制，请手动选中");
+  }
+}
+
+/* ★ 研发模块打开工作台 ★ */
+function RD_open(key){
+  const m = (RD && RD.modules || []).find(x=>x.moduleKey===key);
+  if(!m || !m.widget) return;
+  QW_register(key, m.widget);
+  QW_render(key);
+  const host = document.querySelector('[data-qw-host]');
+  if(host) host.scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function toggleRd(key){
+  curRdKey = (curRdKey === key) ? null : key;
+  renderRdTools();
+}
+
+/* ================================================================
+   质量管理工具（2026-10-22 用户要求新增模块）
+   16 个工具 · 5 个分组 · 面向婴幼儿奶粉生产工厂
+   ================================================================ */
+const _qmRaw = (window.STDWATCH_DATA && window.STDWATCH_DATA.QMTOOLS) || null;
+const QM = Array.isArray(_qmRaw) ? (_qmRaw[0] || null) : _qmRaw;
+let curQmCat = "全部";
+let curQmKey = null;
+
+function renderQmTools(){
+  const badge = $("#qmBadge");
+  if(badge) badge.textContent = QM ? QM.tools.length : "—";
+  if(!QM){
+    $("#qmTabs").innerHTML = "";
+    $("#qmList").innerHTML = `<div class="card empty">未载入质量管理工具数据</div>`;
+    return;
+  }
+
+  // 顶部提示：各组一句话
+  $("#qmCatHint").innerHTML =
+    QM.cats.map(c=>{
+      const m = QM.catMeta[c] || {};
+      return `<span style="display:inline-block;margin:2px 12px 2px 0;font-size:12.5px">
+        <b>${m.icon||""} ${c}</b>
+        <span style="color:var(--ink3)">　${escHtml(m.hint||"")}</span></span>`;
+    }).join("");
+
+  // 分组标签页（含数量）
+  const cnt = {};
+  QM.tools.forEach(t=>{ cnt[t.category] = (cnt[t.category]||0)+1; });
+  const TABS = [["全部", QM.tools.length]].concat(
+    QM.cats.map(c=>[c, cnt[c]||0]));
+  $("#qmTabs").innerHTML = TABS.map(([n,c])=>
+    `<button class="tab ${curQmCat===n?"on":""}" data-qm="${escHtml(n)}">
+       ${escHtml(n)}${c ? `<span class="cnt">${c}</span>` : ""}</button>`).join("");
+  $$("#qmTabs button").forEach(b=>b.onclick=()=>{
+    curQmCat = b.dataset.qm; curQmKey = null;
+    renderQmTools();
+  });
+
+  const rows = curQmCat === "全部" ? QM.tools
+             : QM.tools.filter(t => t.category === curQmCat);
+
+  // 按分组排（全部视图时），单组视图不重复显示组标题
+  const showGroup = curQmCat === "全部";
+  let html = "";
+  const groups = showGroup ? QM.cats : [curQmCat];
+  groups.forEach(g=>{
+    const items = rows.filter(t => t.category === g);
+    if(!items.length) return;
+    const meta = QM.catMeta[g] || {};
+    if(showGroup){
+      html += `<div class="mgroup"><span class="bar"></span>
+        <span class="nm">${meta.icon||""} ${escHtml(g)}</span>
+        <span class="ctp">${items.length} 个工具</span><span class="sp"></span>
+      </div>`;
+    }
+    html += items.map(t=>qmCardHtml(t)).join("");
+  });
+  $("#qmList").innerHTML = html;
+  $$("#qmList .qmcard-h").forEach(el=>el.onclick=()=>toggleQm(el.dataset.key));
+  $("#qmDetail").innerHTML = "";
+}
+
+function qmCardHtml(t){
+  const open = curQmKey === t.toolKey;
+  const hasW = !!(t.widget && t.widget.type);
+  return `
+  <div class="qmcard ${open?"open":""}">
+    <div class="qmcard-h" data-key="${escHtml(t.toolKey)}">
+      <div style="flex:1;min-width:0">
+        <div class="qmcard-t">
+          <span class="key">${escHtml(t.toolKey)}</span>
+          <span class="nm">${escHtml(t.name)}</span>
+          <span class="cg">${escHtml(t.category)}</span>
+          ${hasW?'<span class="cg tool">可操作工具</span>':""}
+        </div>
+        <div class="sm">${escHtml(t.summary)}</div>
+      </div>
+      <div class="qmcard-r">
+        <span>${open ? "收起 ▲" : "展开 ▼"}</span>
+        <span class="kv">${t.steps.length} 步</span>
+      </div>
+    </div>
+    ${open ? qmDetailHtml(t) : ""}
+  </div>`;
+}
+
+function qmDetailHtml(t){
+  const hasW = !!(t.widget && t.widget.type);
+  return `
+  <div class="qmcard-b">
+    ${hasW?`
+    <div class="qmrow">
+      <div class="qmk">工具</div>
+      <div class="qmv">
+        <div class="qwb-toolbar">
+          <button class="btn sm pri" onclick="QW_open('${escHtml(t.toolKey)}')">▶ 打开工具</button>
+          <span class="muted">下面就是能直接用的工具，数据可改，结论实时重算</span>
+        </div>
+        <div data-qw-host></div>
+      </div>
+    </div>`:""}
+    <div class="qmrow">
+      <div class="qmk">什么时候用</div>
+      <div class="qmv">${escHtml(t.whenToUse)}</div>
+    </div>
+    <div class="qmrow">
+      <div class="qmk">实操步骤</div>
+      <div class="qmv">
+        <ol class="qmsteps">
+          ${t.steps.map((s,i)=>`<li><span class="n">${i+1}</span><span>${escHtml(s)}</span></li>`).join("")}
+        </ol>
+      </div>
+    </div>
+    <div class="qmrow">
+      <div class="qmk">配套表单 / 字段</div>
+      <div class="qmv">
+        <div class="qmtpl">${escHtml(t.template)}</div>
+        <button class="btn sm" onclick="copyQmTpl('${escHtml(t.toolKey)}')">复制字段</button>
+      </div>
+    </div>
+    <div class="qmrow">
+      <div class="qmk">落地案例</div>
+      <div class="qmv"><div class="qmcase">${escHtml(t.case)}</div></div>
+    </div>
+    <div class="qmtip">
+      案例来自奶粉厂实际场景，时间与数据为示例量级 —— <b>照着做可以，但别照抄数字</b>。
+    </div>
+  </div>`;
+}
+
+/* ★ 打开工作台 ★
+   注册 widget 配置 → 渲染到卡片里的 [data-qw-host] 容器。 */
+function QW_open(key){
+  const t = (QM && QM.tools || []).find(x=>x.toolKey===key);
+  if(!t || !t.widget) return;
+  QW_register(key, t.widget);
+  QW_render(key);
+  const host = document.querySelector('[data-qw-host]');
+  if(host) host.scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function copyQmTpl(key){
+  const t = (QM && QM.tools || []).find(x=>x.toolKey===key);
+  if(!t) return;
+  const txt = t.name + "\n" + t.template;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(
+      ()=>toast("已复制字段模板"), ()=>toast("复制失败，请手动选中"));
+  } else {
+    toast("当前环境不支持一键复制，请手动选中");
+  }
+}
+
+function toggleQm(key){
+  curQmKey = (curQmKey === key) ? null : key;
+  renderQmTools();
+}
+
+/* ================================================================
+   工作安全分析 JSA（2026-10-22 用户提供 xlsx 模板）
+   ================================================================ */
+/* ★ 数据是数组包裹的（JSA[0]）★
+   inject_refdata.py 的注入器只支持数组值，
+   JSA 本身是嵌套对象，build_jsa.py 外面包了一层 `[...]`。 */
+const _jsaRaw = (window.STDWATCH_DATA && window.STDWATCH_DATA.JSA) || null;
+const JSA = Array.isArray(_jsaRaw) ? (_jsaRaw[0] || null) : _jsaRaw;
+let curJsaTab = "zones";
+
+/* 风险等级 → 颜色。与页面其它地方的风险色统一。 */
+function riskColor(r){
+  r = parseInt(r, 10);
+  if(!r && r !== 0) return "var(--ink3)";
+  if(r <= 4) return "#16a34a";   // 低
+  if(r <= 9) return "#ca8a04";   // 一般
+  if(r <= 14) return "#ea580c";   // 中等
+  return "#dc2626";              // 高
+}
+function riskName(g){
+  return g || ({ "低":"低风险", "一般":"一般风险", "中等":"中等风险", "高":"高风险" }[g] || g);
+}
+
+function renderJsa(){
+  const badge = $("#jsaBadge");
+  /* ★ 只放数字，不放「5 区」★
+     带文字会撑宽徽标，窄侧栏里换行后变成一条竖着的红药丸（用户截图）。 */
+  if(badge) badge.textContent = JSA ? JSA.zones.length : "—";
+  if(!JSA){ $("#jsaBody").innerHTML = `<div class="card empty">未载入 JSA 数据</div>`; return; }
+
+  const TABS = [
+    ["zones","分区预填清单"],
+    ["matrix","风险矩阵与评级"],
+    ["redlines","实验室红线"],
+    ["sample","工作危害分析"],
+    ["signoff","审批与追踪"],
+  ];
+  $("#jsaTabs").innerHTML = TABS.map(([k,n])=>
+    `<button class="tab ${curJsaTab===k?"on":""}" data-jsa="${k}">${n}</button>`).join("");
+  $$("#jsaTabs button").forEach(b=>b.onclick=()=>{curJsaTab=b.dataset.jsa;renderJsa();});
+
+  const B = $("#jsaBody");
+  if(curJsaTab === "zones") B.innerHTML = jsaZones();
+  else if(curJsaTab === "matrix") B.innerHTML = jsaMatrix();
+  else if(curJsaTab === "redlines") B.innerHTML = jsaRedlines();
+  else if(curJsaTab === "sample") B.innerHTML = jsaSample();
+  else B.innerHTML = jsaSignoff();
+}
+
+function jsaZones(){
+  return JSA.zones.map(z=>`
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-h">
+        <span style="font-size:19px">${z.icon}</span>
+        <h3>${escHtml(z.title)}</h3>
+        <span class="pill">${z.steps.length} 个作业步骤</span>
+      </div>
+      <div style="overflow-x:auto">
+      <table class="jsa-tbl">
+        <thead><tr>
+          <th style="width:23%">作业步骤</th>
+          <th style="width:22%">潜在危害</th>
+          <th style="width:19%">可能事件</th>
+          <th style="width:36%">控制措施</th>
+        </tr></thead>
+        <tbody>
+        ${z.steps.map((s,i)=>`<tr>
+          <td><b>${i+1}. ${escHtml(s.step)}</b></td>
+          <td class="hz">${escHtml(s.hazard)}</td>
+          <td class="ev">${escHtml(s.event)}</td>
+          <td class="ct">${escHtml(s.control)}</td>
+        </tr>`).join("")}
+        </tbody>
+      </table>
+      </div>
+    </div>`).join("");
+}
+
+function jsaMatrix(){
+  const g = JSA.guide;
+  const grades = (g.grades||[]).map(x=>{
+    const col = riskColor((x.match(/R=(\d+)~/)||[])[1] || (x.match(/(\d+)-(\d+)/)||[])[1]);
+    return `<span class="chip" style="border-color:${col};color:${col}">${escHtml(x)}</span>`;
+  }).join(" ");
+  const legend = [[1,4,"低风险"],[5,9,"一般风险"],[10,14,"中等风险"],[15,25,"高风险"]]
+    .map(([a,b,n])=>`<span class="chip" style="border-color:${riskColor(a)};color:${riskColor(a)}">${n} R=${a}~${b}</span>`).join(" ");
+
+  const L = (g.levels["可能性 L"]||[]), S = (g.levels["严重度 S"]||[]);
+  return `
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>怎么算风险值</h3></div>
+    <div style="font-size:13px;line-height:1.9">
+      <p style="margin:0 0 8px"><b>R = 可能性 L × 严重度 S</b>，范围 1~25。</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0">
+        <div style="padding:10px 12px;background:var(--line2);border-radius:var(--radius)">
+          <div style="font-weight:600;font-size:12.5px;margin-bottom:5px">可能性 L</div>
+          ${L.map((x,i)=>`<div style="font-size:12px;line-height:1.7">${escHtml(x)}</div>`).join("")}
+        </div>
+        <div style="padding:10px 12px;background:var(--line2);border-radius:var(--radius)">
+          <div style="font-weight:600;font-size:12.5px;margin-bottom:5px">严重度 S</div>
+          ${S.map((x,i)=>`<div style="font-size:12px;line-height:1.7">${escHtml(x)}</div>`).join("")}
+        </div>
+      </div>
+      <div style="margin-top:10px">${legend}</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>风险矩阵（可能性 L × 严重度 S）</h3></div>
+    <div style="overflow-x:auto">
+    <table class="matrix">
+      <thead><tr><th style="background:var(--line2)">L \\ S</th>
+        ${[1,2,3,4,5].map(s=>`<th style="background:var(--line2)">S=${s}</th>`).join("")}</tr></thead>
+      <tbody>
+      ${(g.matrix||[]).map(row=>`<tr>
+        <th style="background:var(--line2);text-align:center">L=${row.L}</th>
+        ${row.vals.map(v=>{
+          const c = riskColor(v==null?0:v);
+          return `<td style="text-align:center;font-weight:600;color:${v!=null?"#fff":"var(--ink3)"};background:${v==null?"transparent":c}">${v==null?"—":v}</td>`;
+        }).join("")}
+      </tr>`).join("")}
+      </tbody>
+    </table>
+    </div>
+    <div class="muted" style="margin-top:9px;font-size:11.5px">${escHtml(g.matrixNote||"")}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>填写与审批要求</h3></div>
+    <div style="font-size:12.5px;line-height:1.95">
+      ${(g.usage||[]).map(u=>`<div style="margin-bottom:5px">
+        <b>${escHtml(u.k)}：</b>${escHtml(u.v)}</div>`).join("")}
+    </div>
+  </div>`;
+}
+
+function jsaRedlines(){
+  return `
+  <div class="card">
+    <div class="card-h">
+      <span style="font-size:19px">🚫</span>
+      <h3>实验室重点红线</h3>
+      <span class="pill">${JSA.guide.redlines.length} 条</span>
+    </div>
+    <div class="muted" style="margin:-4px 0 12px;font-size:12.5px">
+      与 JSA <b>并行使用</b>：JSA 管风险，红线是<b>不可协商的底线</b>，
+      任何情况下都不能因为「风险评分低」而不执行。
+    </div>
+    ${JSA.guide.redlines.map(r=>`
+      <div style="display:flex;gap:11px;padding:11px 13px;margin-bottom:9px;
+                  background:#fef2f2;border:1px solid #fecaca;border-left:3px solid #dc2626;
+                  border-radius:6px">
+        <div style="flex:0 0 auto;font-weight:700;color:#dc2626;font-size:12.5px">${escHtml(r.no)}</div>
+        <div style="font-size:12.5px;line-height:1.75">${escHtml(r.text)}</div>
+      </div>`).join("")}
+  </div>`;
+}
+
+function jsaSample(){
+  const s = JSA.wha.sample;
+  return `
+  <div class="card">
+    <div class="card-h"><h3>工作危害分析表</h3>
+      <span class="pill">${s.length} 行（示例）</span>
+      <div class="sp"></div>
+      <span class="muted">JSA-2026-001 · 克罗诺杆菌属检验</span>
+    </div>
+    <div class="warn-line">
+      ⚠ 这7 行是<b>示例</b>（克罗诺杆菌属检验），不是本实验室已完成的记录。
+      实际使用时要按你实验室的真实作业重填，尤其是<b>建议补充控制措施</b>与<b>残余风险</b>两列。
+    </div>
+    <div style="overflow-x:auto">
+    <table class="jsa-tbl">
+      <thead><tr>
+        <th style="width:34px">#</th>
+        <th style="width:14%">作业步骤</th>
+        <th style="width:19%">潜在危害</th>
+        <th style="width:15%">可能事件</th>
+        <th style="width:24%">现有控制措施</th>
+        <th style="width:70px">L</th><th style="width:70px">S</th>
+        <th style="width:88px">风险值</th>
+      </tr></thead>
+      <tbody>
+      ${s.map(r=>`<tr>
+        <td class="mono">${escHtml(r.no)}</td>
+        <td><b>${escHtml(r.step)}</b></td>
+        <td class="hz">${escHtml(r.hazard)}</td>
+        <td class="ev">${escHtml(r.event)}</td>
+        <td class="ct">${escHtml(r.control)}</td>
+        <td style="text-align:center">${escHtml(r.L)}</td>
+        <td style="text-align:center">${escHtml(r.S)}</td>
+        <td style="text-align:center">
+          <span class="rk" style="background:${riskColor(r.R)}">${escHtml(r.R)} ${escHtml(r.grade)}</span>
+        </td>
+      </tr>`).join("")}
+      </tbody>
+    </table>
+    </div>
+    <div class="muted" style="margin-top:10px;font-size:11.5px;line-height:1.8">
+      <b>表头字段</b>（模板原文）：${(JSA.wha.fields||[]).map(escHtml).join(" · ")}
+    </div>
+  </div>`;
+}
+
+function jsaSignoff(){
+  const sg = JSA.signoff;
+  return `
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>审批栏</h3>
+      <div class="sp"></div>
+      <span class="muted">签字必须手签，页面不代填</span>
+    </div>
+    ${sg.roles.map(r=>`
+      <div class="sign-row">
+        <div style="flex:0 0 190px">
+          <b style="font-size:12.5px">${escHtml(r.role)}</b>
+          <div class="muted" style="font-size:11px;margin-top:3px;line-height:1.6">${escHtml(r.note)}</div>
+        </div>
+        <div class="sign-line">${escHtml(r.line)}</div>
+      </div>`).join("")}
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>修订记录</h3></div>
+    <div style="overflow-x:auto">
+    <table class="jsa-tbl">
+      <thead><tr><th style="width:110px">版本</th>
+        <th>修订内容与原因</th><th style="width:190px">修订人/ 日期</th></tr></thead>
+      <tbody>
+      ${sg.revisions.map(r=>`<tr>
+        <td class="mono"><b>${escHtml(r.ver)}</b></td>
+        <td>${escHtml(r.what) || '<span class="muted">（待填）</span>'}</td>
+        <td class="muted">${escHtml(r.who)}</td>
+      </tr>`).join("")}
+      </tbody>
+    </table>
+    </div>
+  </div>`;
+}
+
+/* ===== 一年内换版（按标准号去重；同一标准被多个检测对象引用时合并来源）=====
+   原先由页面把每个检测对象的 altsSoon 平铺汇总，同一标准号会被登记多次
+   （脂肪酸 / 反式脂肪酸两个检测对象指向同一批标准）→ 列表出现重复行。
+   改由 build_refgroups.py 预先去重输出，一个标准号一行。===== */
+const SOONPOOL = (window.STDWATCH_DATA && window.STDWATCH_DATA.SOONPOOL) || [];
+
+const ERATA = (window.STDWATCH_DATA && window.STDWATCH_DATA.ERATA) || [];
+
+/* ===== 标准换版提醒（真实数据，来源：CFSA + openstd + std.samr 实抓）===== */
+const ALERTS = (window.STDWATCH_DATA && window.STDWATCH_DATA.ALERTS) || [];
+
+const KWS = (window.STDWATCH_DATA && window.STDWATCH_DATA.KWS) || [];
+
+const SUBS = (window.STDWATCH_DATA && window.STDWATCH_DATA.SUBS) || [];
+
+/* ===== 数据源清单 =====
+   ★ cnt 与 mtime 不在这里 ★
+     原来每行写死 cnt:"386" 之类，那是从建立起就没变过的数字 ——
+     页面看着一切正常，实际早就没在抓了（2026-10-04 用户发现）。
+     现在条数与"最近抓取时间"全部由 RUNSTATE 提供，
+     这里只保留**静态元信息**（源名、说明、是否已停用）。 */
+const SRCS = (window.STDWATCH_DATA && window.STDWATCH_DATA.SRCS) || [];
+
+/* ===== 运行状态（由 scripts/build_runstate.py 从真实快照生成）=====
+   ★ 不要手改 ★ 每次抓取后跑：
+       python scripts/fetch_new_sources.py
+       python scripts/crawler.py --run
+       python scripts/build_runstate.py
+   字段全部来自 data/snapshots/*.json 的**文件修改时间**与条数，
+   不是页面上写死的字符串。跑没跑、跑了多少条，页面上看得见。 */
+const RUNSTATE = (window.STDWATCH_DATA && window.STDWATCH_DATA.RUNSTATE) || {};
+
+/* ★ 抓取日志不再写死 ★
+   原来是一串 10-03 12:xx 的手写记录，之后每跑一次抓取都不更新，
+   用户看到的是"历史最新"而不是"最近一次"——
+   恰好掩盖了"今天根本没跑"这个事实。
+   现在由 build_runstate.py 按各快照文件的真实 mtime 生成，
+   跑过就有、没跑就没有，顺序按时间倒序。 */
+const LOGS = RUNSTATE.logs;
+
+const HIST = (window.STDWATCH_DATA && window.STDWATCH_DATA.HIST) || [];
+
+/* ================= 渲染 ================= */
+const $ = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+let curSub, curLawKind, curLawScene;
+let curCat="all", curAlertLvl="all", curDetail=null;
+
+// 状态标签。数据来自核对结果（verify_validity.py），不是源站原样搬过来 ——
+// 源站对已被替代的历史版本也标"现行"，直接采信会误导。
+function stTag(s, newer){
+  const m = { "现行":"t-low", "现行有效":"t-low", "即将实施":"t-soon",
+              "废止":"t-dead", "已被替代":"t-dead", "被代替":"t-dead",
+              "日期待定":"t-gray" };
+  const tag = `<span class="tag ${m[s]||"t-gray"}">${s}</span>`;
+  if(newer) return tag + `<br><span class="muted" style="font-size:11px">→ ${newer}</span>`;
+  return tag;
+}
+// 距实施天数。**按当天日期实算**，不按年份硬编码。
+// 踩过的坑：曾写成 imp>="2026-01-01" 判"已实施"，
+// 结果 2027-08-18 才实施的标准被判成已实施，方向完全反了。
+const TODAY = new Date();
+function daysTo(d){
+  if(!d) return null;
+  const t = new Date(d + "T00:00:00") - new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate());
+  return Math.round(t / 86400000);
+}
+function impTag(impState, imp){
+  if(!imp) return "";
+  const d = daysTo(imp);
+  if(d === null) return "";
+  if(d < 0) return `<span class="tag t-low">已实施</span>`;
+  if(d === 0) return `<span class="tag t-soon">今日实施</span>`;
+  if(d <= 90) return `<span class="tag t-high">${d} 天后实施</span>`;
+  return `<span class="tag t-soon">${d} 天后</span>`;
+}
+function dlBtn(s){
+  // 严格规则：只有官方明确支持免费下载才给"下载"；否则只给官方阅读
+  if(s.dl===true) return offLink("⬇ 官方下载", s.url);
+  if(/iso\.org|fssc\.com/i.test(s.url)) return offLink("官方阅读/购买", s.url);
+  return offLink("官方在线阅读", s.url);
+}
+function legalNote(s){
+  if(/iso\.org/i.test(s.url)) return "该标准为 ISO/IEC 采标，版权归 ISO 所有，仅提供官方阅读入口与正版购买渠道。";
+  if(/fssc\.com/i.test(s.url)) return "该方案为第三方认证方案，以 FSSC 官方发布文本为准。";
+  return "标准文本版权归发布机构所有，本站仅提供官方入口，不提供全文下载。";
+}
+
+function renderRefs(){
+  const all=[];
+  REFGROUPS.forEach(g=>g.items.forEach(x=>all.push(Object.assign({g:g.g},x))));
+
+  // 有效性用核对好的字段，不再自己拿实施日期猜
+  const dotCol = v => v==="已废止" ? "var(--high)"
+                    : v==="已被替代" ? "var(--ink3)"
+                    : "var(--low)";
+
+  $("#refBox").innerHTML = REFGROUPS.map(g=>`
+    <div class="card">
+      <div class="card-h"><h3>${g.g}</h3><span class="pill">${g.items.length} 项</span>
+        <div class="sp"></div>
+        <span class="muted">实验室当前应执行的版本</span></div>
+      <div style="margin:0 -4px">
+      ${g.items.map(x=>`
+        <div class="rem-item">
+          <div class="dot" style="background:${dotCol(x.impState)}"></div>
+          <div class="tx">
+            <span class="mono" style="font-weight:600">${x.no}</span>
+            <span class="tag ${x.validity==="现行有效"?"t-low":"t-dead"}">${x.validity}</span>
+            <span class="tag ${x.impState==="已实施"?"t-cur":"t-soon"}">${x.impState}</span>
+            <div class="muted">${x.title}</div>
+            <div class="muted" style="margin-top:2px">${x.impDesc}</div>
+            ${x.olds?`<div class="muted" style="margin-top:2px;color:var(--high)">已替代：${x.olds}，勿再使用</div>`:""}
+            ${x.alts?`<div class="muted" style="margin-top:2px">另有现行方法：${x.alts}（用途不同，按作业文件选用）</div>`:""}
+            ${x.altsSoon?`<div class="muted" style="margin-top:3px;color:var(--mid);font-weight:600">⚠ 将换版：${x.altsSoon}　—— 现在仍执行上面这版，但作业文件要提前准备切换</div>`:""}
+          </div>
+          <div class="tm">实施 ${x.imp}<br><span class="muted">发布 ${x.pub}</span></div>
+          ${offLink("官方", officialUrl(x.no))}
+        </div>`).join("")}
+      </div>
+    </div>`).join("");
+
+  // 换版清单：只列"即将实施"的，以及近期换过的
+  const pending = all.filter(x=>x.impState==="即将实施")
+    .sort((a,b)=>(a.imp||"").localeCompare(b.imp||""));
+  const recent = all.filter(x=>x.impState==="已实施" && (x.imp||"")>="2024-01-01")
+    .sort((a,b)=>(b.imp||"").localeCompare(a.imp||""));
+
+  $("#refNew").innerHTML = `
+    <div style="margin-bottom:14px">
+      <div class="flex" style="margin-bottom:6px">
+        <b style="font-size:13px">即将实施（新版已发布，尚未到实施日）</b>
+        <span class="muted">${pending.length} 项</span>
+      </div>
+      ${pending.length? pending.map(x=>`
+        <div class="rem-item">
+          <div class="dot" style="background:var(--mid)"></div>
+          <div class="tx"><span class="mono">${x.no}</span> ${x.title}
+            <div class="muted">${x.g} · ${x.impDesc}</div></div>
+          <div class="tm">${x.imp}</div>
+        </div>`).join("") : `<div class="muted" style="padding:6px 0">无</div>`}
+    </div>
+    <div class="hr"></div>
+    <div>
+      <div class="flex" style="margin-bottom:6px">
+        <b style="font-size:13px">2024 年后已换版（检查作业文件是否跟上）</b>
+        <span class="muted">${recent.length} 项</span>
+      </div>
+      ${recent.length? recent.map(x=>`
+        <div class="rem-item">
+          <div class="dot" style="background:var(--line)"></div>
+          <div class="tx"><span class="mono">${x.no}</span> ${x.title}
+            <div class="muted">${x.g} · ${x.impDesc}</div></div>
+          <div class="tm">${x.imp}</div>
+        </div>`).join("") : `<div class="muted" style="padding:6px 0">无</div>`}
+    </div>`;
+}
+
+/* ===== 首页：通则引用标准摘要（完整内容在 #refs 独立页） ===== */
+function renderRefDigest(){
+  const all = REFGROUPS.reduce((a,g)=>a+g.items.length, 0);
+
+  // ★ 换版清单改读 SOONPOOL（已按标准号去重）★
+  //   原实现在这里把每个检测对象的 altsSoon 平铺汇总，而"脂肪酸"和
+  //   "反式脂肪酸"两个检测对象指向同一批标准 → 同一标准号被登记两次，
+  //   页面上就出现两行一模一样的条目（用户 2026-10-03 截图指出）。
+  //   SOONPOOL 由 build_refgroups.py 预先去重，一个标准号一行，
+  //   同一标准被多个检测对象引用时用 so 字段合并显示"用于哪些检测"。
+  const soon = (SOONPOOL||[]).slice().sort((a,b)=>a.d-b.d);
+
+  // 兜底：万一 SOONPOOL 缺失（旧版数据），退回按标准号去重的即时汇总
+  if (!soon.length){
+    const seen = {};
+    REFGROUPS.forEach(g=>g.items.forEach(x=>{
+      (x.altsSoon||"").split("；").filter(Boolean).forEach(t=>{
+        const m = t.match(/(GB[/T]?\s*[\d.]+-\d{4}).*?还有 (\d+) 天实施（([\d-]+)）/);
+        if (m && !seen[m[1]]) seen[m[1]] = {no:m[1], d:+m[2], imp:m[3],
+          so:(x.subject||"").split("｜").join("｜")};
+      });
+    }));
+    Object.keys(seen).forEach(k=>soon.push(seen[k]));
+    soon.sort((a,b)=>a.d-b.d);
+  }
+
+  $("#refSummary").textContent = all + " 项 · " + REFGROUPS.length + " 组"
+    + (soon.length ? " · " + soon.length + " 项一年内换版" : "");
+  const badge = $("#refBadge"); if (badge) badge.textContent = all;
+
+  // 换版倒计时优先（这是最需要提前动作的），再列分组概览
+  let html = "";
+  if (soon.length){
+    html += `<div class="notice warn" style="margin-bottom:12px"><span>⏳</span><div>
+      <b>${soon.length} 项标准在一年内换版</b>，作业文件需要提前排期切换：
+      <div style="margin-top:6px">${soon.slice(0,6).map(x=>
+        `<div style="margin:3px 0"><span class="mono">${x.no}</span> ·
+         <span class="muted">用于${(x.so||"").split("｜").join("、")}</span> ·
+         <b>还有 ${x.d} 天</b>（${x.imp} 实施）</div>`).join("")}</div>
+      ${soon.length>6?`<div class="muted" style="margin-top:4px">另有 ${soon.length-6} 项，<a href="#refs">查看全部</a></div>`:""}
+    </div></div>`;
+  }
+  html += REFGROUPS.map(g=>{
+    const n = g.items.length;
+    // ★ 这一组涉及几个"即将换版的标准号"（去重），不是几个检测对象 ★
+    //   原写法 `g.items.filter(x=>x.altsSoon).length` 数的是条目数，
+    //   同一标准被两个检测对象引用时会数成 2，与上面"4 项"对不上。
+    const soonSet = new Set();
+    g.items.forEach(x=>(x.altsSoon||"").split("；").filter(Boolean).forEach(t=>{
+      const m = t.match(/(GB[/T]?\s*[\d.]+-\d{4})/);
+      if (m) soonSet.add(m[1]);
+    }));
+    const soonN = soonSet.size;
+    return `<div class="rem-item" style="padding:8px 0;border-bottom:1px solid var(--line)">
+      <div class="tx">
+        <b style="font-size:13px">${g.g}</b>
+        <span class="muted"> · ${n} 项</span>
+        ${soonN?`<span class="tag t-soon" style="margin-left:6px">${soonN} 项待换版</span>`:""}
+        <div class="muted" style="margin-top:3px;font-size:11.5px">
+          ${g.items.slice(0,4).map(x=>`<span class="mono">${x.no.replace(/-\d{4}$/,"")}</span>`).join("、")}
+          ${n>4?` 等 ${n} 项`:""}
+        </div>
+      </div>
+      <a class="btn sm" href="#refs">详情</a>
+    </div>`;
+  }).join("");
+  $("#refDigest").innerHTML = html;
+}
+
+function renderErata(){
+  const hi = ERATA.filter(e=>e.lvl==="high");
+  // ★ 必须显示标准名和勘误时间 ★（用户要求）
+  //   没有名称：只看到「GB 5009.7-2016 3.4.4」，不知道测的是什么，
+  //            出报告时无法向委托方解释依据哪一版
+  //   没有时间：不知道这个错误是 2018 年还是上周发现的，
+  //            判断"我的作业文件是不是照着错版本写的"要靠猜
+  //
+  // ★ 两类分开渲染 ★
+  //   kind==="MOD"   标准修改单 —— 实质性技术修订，自批准之日起实施、无过渡期。
+  //                  官方"标准勘误"专库不收录这类文档，只查勘误库会 100% 漏抓
+  //                  （实测：GB 5413.30-2016 杂质度第1号修改单 2026-08-18 发布）
+  //   kind==="ERATA" 标准勘误   —— 更正表述错误，有改前/改后原文可对照
+  $("#erataBox").innerHTML = hi.map(e=>{
+    const isMod = e.kind==="MOD";
+    const tag = isMod
+      ? `<span class="tag t-mod">第${e.modNo}号修改单</span>`
+      : `<span class="tag t-high">勘误</span>`;
+    const meta = isMod
+      ? `发布 <b class="mono">${e.erataDate||"—"}</b> · <b>实施 ${e.impDate||e.erataDate||"—"}</b>
+         <span class="tag t-mod" style="margin-left:4px">自批准之日起实施</span>`
+      : `勘误章节 <b class="mono">${e.sec || "—"}</b>${e.reason?` · 官方原因「${e.reason}」`:""} · 勘误发布 <b class="mono">${e.erataDate || "—"}</b>`;
+    const body = isMod
+      ? `<div style="background:#faf6fc;border:1px solid #e0c6ea;border-radius:5px;padding:8px 10px;font-size:12.5px">
+           <span class="muted" style="display:block;margin-bottom:3px">官方变更说明（摘自官方解读材料）</span>
+           ${e.after || "官方未提供解读材料，请点击下方官方链接查看修改单正文"}
+         </div>`
+      : `<div style="margin:9px 0;font-size:12.5px">
+           <div style="background:#fdeceb;border:1px solid #f7cfcb;border-radius:5px;padding:7px 10px;margin-bottom:5px">
+             <span class="muted" style="display:block;margin-bottom:2px">改前（错误）</span>${e.before}
+           </div>
+           <div style="background:#eaf4ee;border:1px solid #c9e0d4;border-radius:5px;padding:7px 10px">
+             <span class="muted" style="display:block;margin-bottom:2px">改后（正确）</span>${e.after}
+           </div>
+         </div>`;
+    const link = isMod
+      ? offLink("官方修改单详情页", e.url || CFSA_SEARCH(e.no))
+      /* 勘误：不是落到整个勘误专库首页，而是带标准号去检索该标准的勘误记录 */
+      : offLink("官方勘误记录", CFSA_SEARCH(e.no));
+    return `
+    <div class="alert a-high">
+      <div class="h"><span class="no">${e.no}</span><div class="t">${e.stdName || "（标准名待补）"}</div>
+        ${tag}</div>
+      <div class="muted" style="margin:5px 0 8px;font-size:12px">${meta}</div>
+      ${body}
+      <div class="why"><span class="lb">为什么重要</span>${e.why}</div>
+      <div class="act"><span class="lb">实验室要做什么</span><ul>${(e.acts||[]).map(x=>`<li>${x}</li>`).join("")}</ul></div>
+      <div class="foot">${link}
+        <div class="sp" style="flex:1"></div>
+        <button class="btn sm" onclick="toast('已标记：' + e.no + '　' + e.sec + '　已核对')">已核对</button></div>
+    </div>`;
+  }).join("")
+    + `<div class="muted" style="padding-top:6px">仅收录<b>通则引用范围内</b>的标准（上面「通则引用标准」那块就是范围）。
+       共 ${ERATA.length} 条，其中高优 ${hi.length} 条${ERATA.length>hi.length?`，另有 ${ERATA.length-hi.length} 条中级勘误在提醒中心`:""}。</div>`;
+}
+
+function renderHome(){
+  renderErata();
+  renderRefDigest();
+  // ★ KPI 全部实算，不写死数字 ★
+  //   之前写死"3 项 / 2 项"，跟真实数据对不上（实际 0 项 ≤90 天、15 项 ≤365 天）。
+  //   提醒类数字一旦不准，用户会按错的日期做准备 —— 比没有更糟。
+  (function(){
+    const pend = STD.filter(s=>s.impState==="即将实施" && daysTo(s.imp)!==null)
+                     .map(s=>({d:daysTo(s.imp), no:s.no}));
+    const s90  = pend.filter(x=>x.d<=90).sort((a,b)=>a.d-b.d);
+    const s365 = pend.filter(x=>x.d<=365).sort((a,b)=>a.d-b.d);
+    $("#kpiSoon90").textContent = s90.length;
+    $("#kpiSoon90d").textContent = s90.length
+      ? "最早：" + s90[0].no + "（" + s90[0].d + " 天）" : "近期无强制换版";
+    $("#kpiSoon365").textContent = s365.length;
+    $("#kpiSoon365d").textContent = s365.length
+      ? "最近：" + s365[0].no + "（" + s365[0].d + " 天）" : "一年内无换版";
+    const subs = new Set(STD.map(s=>s.sub));
+    $("#kpiStd").textContent = STD.length;
+    $("#kpiSub").textContent = subs.size + " 个细类 · 只列现行版";
+    $("#kpiLaw").textContent = (LAWS||[]).length;
+    $("#kpiLawd").textContent = "法律/法规/规章/体系 " +
+      new Set((LAWS||[]).map(x=>x.sub.split(" · ")[0])).size + " 类";
+  })();
+  $("#highAlerts").innerHTML = ALERTS.filter(a=>a.lvl==="high").map(a=>`
+    <div class="alert a-high">
+      <div class="h"><span class="no">${a.no}</span><div class="t">${a.title}</div><span class="tag t-high">高优</span></div>
+      <div class="kv">${a.body}</div>
+      <div class="why"><span class="lb">为什么重要</span>${a.why}</div>
+      <div class="act"><span class="lb">实验室要做什么</span><ul>${a.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+      <div class="foot">${offLink("官方详情页", stdUrl(a.no))}
+        <a class="btn sm" href="#detail" onclick="openDetail('${a.no}')">查看变更摘要</a>
+        <div class="sp" style="flex:1"></div><span class="muted">${a.time}</span>
+        <button class="btn sm" onclick="toast('已标记处理：' + a.no)">标记已处理</button></div>
+    </div>`).join("");
+
+  const soon = STD.filter(s=>s.imp && daysTo(s.imp)>=0 && daysTo(s.imp)<=240).sort((a,b)=>daysTo(a.imp)-daysTo(b.imp)).slice(0,5);
+  $("#countdown").innerHTML = soon.map(s=>{
+    const d=daysTo(s.imp);
+    return `<div class="rem-item"><div class="dot" style="background:${d<=30?"var(--high)":d<=90?"var(--mid)":"var(--ink3)"}"></div>
+      <div class="tx"><span class="mono muted">${s.no}</span> ${s.title}<br><span class="muted">实施 ${s.imp}</span></div>
+      <div class="tm">${d} 天<br><span class="muted">${d<=30?"≤30天·二���提醒":d<=90?"≤90天·首次提醒":"待观察"}</span></div></div>`;
+  }).join("") || `<div class="empty">暂无</div>`;
+
+  let on=0,tot=0;
+  SUBS.forEach(g=>g.on.forEach(v=>{tot++;if(v)on++}));
+  $("#subCover").innerHTML = `
+    <div class="kpi" style="border:0;padding:0"><div class="k">已订阅项</div><div class="v">${on} <span style="font-size:15px;color:var(--ink3)">/ ${tot}</span></div>
+    <div class="d">按此范围推送提醒，噪音最小</div></div>
+    <div class="hr"></div>
+    <div class="flex" style="flex-wrap:wrap;gap:6px">
+    ${SUBS.map(g=>`<span class="pill">${g.g.replace(/（.*/,"")} ${g.on.filter(Boolean).length}/${g.items.length}</span>`).join("")}</div>`;
+
+  $("#todoList").innerHTML = [
+    ["1","确认蛋白测定作业文件执行的是 GB 5009.5-2025 还是 2016 版","方法换版后新旧数据不可直接比较","高"],
+    ["2","确认脂肪测定作业文件执行的是 GB 5009.6-2025 还是 2016 版","同步更新前处理与萃取条件","高"],
+    ["3","更新取样与留样作业指导书，切换到 GB 14881-2025","取样、留样、实验室卫生要求有变化","高"],
+    ["4","向包材供应商索取 GB 4806.2-2023 符合性报告","罐内壁涂料属于直接接触材料","中"],
+    ["5","把订阅范围收窄到你在测的品类","减少无关提醒","中"]
+  ].map(([i,t,d,l])=>`
+    <div class="rem-item"><div style="width:18px;height:18px;border:1.5px solid var(--line);border-radius:4px;flex-shrink:0;margin-top:2px"></div>
+      <div class="tx">${t}<br><span class="muted">${d}</span></div>
+      <div class="tm"><span class="tag ${l==="高"?"t-high":"t-mid"}">${l}</span></div></div>`).join("");
+}
+
+function stdUrl(no){ const s=STD.find(x=>x.no===no); return s?s.url:"https://openstd.samr.gov.cn/bzgk/gb/"; }
+/*提醒页的「官方详情页」同样可能落在 cfsa，必须走 offLink 而不是裸 href */
+
+function renderList(kw){
+  curCat = curCat||"all";
+  $("#listTabs").innerHTML = CATS.map(c=>{
+    const n = c.k==="all" ? STD.length : STD.filter(s=>s.cat===c.k).length;
+    return `<button class="${curCat===c.k?"on":""}" data-cat="${c.k}">${c.name}<span class="cnt">${n}</span></button>`;
+  }).join("");
+  $$("#listTabs button").forEach(b=>b.onclick=()=>{curCat=b.dataset.cat;curSub="all";renderList();});
+
+  // ---- 二级细分：按检测对象/项目分组（用户要求"再按种类细分"） ----
+  const base = STD.filter(s=>curCat==="all"||s.cat===curCat);
+  const subs = {};
+  base.forEach(s=>{ const k = s.sub || "未分类"; (subs[k]=subs[k]||[]).push(s); });
+  const subKeys = Object.keys(subs).sort((a,b)=>subs[b].length-subs[a].length);
+  if(curSub && !subKeys.includes(curSub)) curSub = "all";
+  const allBtn = `<button class="chip ${curSub==="all"?"on":""}" data-sub="all">全部细类<span class="cnt">${base.length}</span></button>`;
+  $("#subTabs").innerHTML = allBtn + subKeys.map(k=>{
+    const on = curSub===k;
+    return `<button class="chip ${on?"on":""}" data-sub="${k}">${k}<span class="cnt">${subs[k].length}</span></button>`;
+  }).join("");
+  $$("#subTabs button").forEach(b=>b.onclick=()=>{curSub=b.dataset.sub;renderList();});
+
+  let rows = curSub==="all" ? base : (subs[curSub]||[]);
+  if(kw) rows = rows.filter(s=>(s.no+s.title).toUpperCase().includes(kw.toUpperCase()));
+  const groupBy = curCat==="all" && curSub==="all";
+  $("#listCnt").innerHTML = `共 <b class="mono">${rows.length}</b> 条` + (groupBy?"　<span class=\"muted\">按细类分组显示</span>":"");
+  const cell = s => `<tr class="rowlink" onclick="openDetail('${s.no}')">
+      <td><span class="no">${s.no}</span></td>
+      <td>${s.title}<div style="margin-top:3px"><span class="tag ${s.cat==="product"?"t-high":s.cat==="test"?"t-mid":"t-gray"}">${s.sub||catName(s.cat)}</span></div></td>
+      <td>${stTag(s.status, s.newer)}</td>
+      <td class="muted">${s.pub||"—"}</td>
+      <td class="muted">${s.imp||"—"}<br>${impTag(s.impState, s.imp)}</td>
+      <td class="muted">${s.replace||"—"}</td>
+      <td>${offLink("官方页", s.url || "https://openstd.samr.gov.cn/bzgk/gb/")}
+          <span onclick="event.stopPropagation()"></span>
+        ${dlBtn(s)}</td></tr>`;
+  $("#listBody").innerHTML = groupBy
+    ? subKeys.map(k=>`<tr class="grouprow"><td colspan="7">${k}<span class="muted">　${subs[k].length} 条</span></td></tr>`
+        + subs[k].map(cell).join("")).join("")
+    : (rows.map(cell).join("") || `<tr><td colspan="7" class="empty">没有匹配的标准</td></tr>`);
+}
+
+/* ===== 法律法规与体系标准 ===== */
+const LAW_KINDS = (window.STDWATCH_DATA && window.STDWATCH_DATA.LAW_KINDS) || [];
+const LAW_SCENES = ["全部","全部","产品合规","标签","生产规范","实验室管理","体系认证","委托检验","实验室安全","广告宣传","原料乳"];
+
+function renderLaw(){
+  if(!curLawKind) curLawKind = "all";
+  if(!curLawScene) curLawScene = "全部";
+  const all = (LAWS||[]);
+  const byK = {};
+  all.forEach(x=>{ const k = (x.sub||"").split(" · ")[0]; (byK[k]=byK[k]||[]).push(x); });
+  const kindKeys = LAW_KINDS.map(x=>x.k).filter(k=>k==="all"||byK[k]);
+  $("#lawTabs").innerHTML = LAW_KINDS.filter(c=>c.k==="all"||byK[c.k]).map(c=>{
+    const n = c.k==="all" ? all.length : (byK[c.k]||[]).length;
+    return `<button class="${curLawKind===c.k?"on":""}" data-kind="${c.k}">${c.name}<span class="cnt">${n}</span></button>`;
+  }).join("");
+  $$("#lawTabs button").forEach(b=>b.onclick=()=>{curLawKind=b.dataset.kind;renderLaw();});
+
+  const pool = curLawKind==="all" ? all : (byK[curLawKind]||[]);
+  const scenes = ["全部", ...Array.from(new Set(pool.map(x=>x.scene))).filter(s=>s!=="全部")];
+  $("#lawSceneTabs").innerHTML = scenes.map(s=>{
+    const n = s==="全部" ? pool.length : pool.filter(x=>x.scene===s).length;
+    return `<button class="chip ${curLawScene===s?"on":""}" data-scene="${s}">${s}<span class="cnt">${n}</span></button>`;
+  }).join("");
+  $$("#lawSceneTabs button").forEach(b=>b.onclick=()=>{curLawScene=b.dataset.scene;renderLaw();});
+
+  const rows = curLawScene==="全部" ? pool : pool.filter(x=>x.scene===curLawScene);
+  const kindName = k => (LAW_KINDS.find(c=>c.k===k)||{}).name || k;
+  $("#lawList").innerHTML = rows.map(x=>{
+    const kind = (x.sub||"").split(" · ")[0];
+    return `<div class="card" style="padding:13px 15px;margin-bottom:9px">
+      <div class="flex" style="align-items:flex-start;gap:9px">
+        <div style="flex:1;min-width:0">
+          <div class="flex" style="gap:7px;align-items:center;flex-wrap:wrap">
+            <b style="font-size:14.5px">${x.title}</b>
+            <span class="tag t-high">${kindName(kind)}</span>
+            <span class="tag ${x.level==="强制"?"t-soon":"t-gray"}">${x.level==="强制"?"强制遵循":"相关规定"}</span>
+            <span class="tag t-gray">${x.scene}</span>
+          </div>
+          <div class="muted" style="margin-top:5px">${x.note}</div>
+        </div>
+        <div style="text-align:right;white-space:nowrap">
+          <div class="muted" style="font-size:11.5px">${x.pub?"公布 "+x.pub:"—"}</div>
+          ${offLink("官方查询", x.url, "btn sm", "margin-top:5px")}
+        </div>
+      </div>
+    </div>`;
+  }).join("") || `<div class="card empty">该分类下暂无条目</div>`;
+}
+
+function catName(c){ const x=CATS.find(y=>y.k===c); return x?x.name:"—"; }
+function doSearch(v){ if(curCat!=="all"){curCat="all";} renderList(v); }
+
+/* ---------- 来源性质提示 ---------- */
+/* ★ 为什么必须写清 ★
+     团标（T/CAB、T/CITS…）在"关联标准"里，跟国标 GB 混在同一个列表。
+     检测员很容易直接拿团标当判定依据出报告 —— 这是合规事故。
+     总局公告里又有"食品补充检验方法 BJS"，那个是可以用的
+     （总局批准发布的法定检验方法），两者性质完全相反。
+     所以按 sub 分流提示，不能一律写"仅供参考"。            */
+function sourceCaveat(s){
+  const sub = s.sub || "";
+  if (/团体标准/.test(sub)) return `
+    <div class="notice warn" style="margin-bottom:12px">
+      <span>⚠</span><div>
+        <b>团体标准不能作为判定依据。</b>
+        团标（T/xxx）由发布团体制定，<b>不是法定标准</b>，
+        检测报告里引用它，监管认可度与国标不同。
+        <div style="margin-top:5px">常见用法是企业内部把门槛提到高于国标
+        （如 T/CAB 0258 感官质量要求）。<b>对外出报告仍以 GB/GB/T 为准</b>，
+        团标只可作为内部验收依据。</div>
+      </div>
+    </div>`;
+  if (/官方公告/.test(sub)) return `
+    <div class="notice" style="margin-bottom:12px">
+      <span>ℹ</span><div>
+        这是一条<b>官方公告</b>，不是标准本体。
+        但公告本身有法律效力 —— 例如总局批准的
+        <b>食品补充检验方法（BJS）</b>可直接用于检测，
+        <b>生产许可审查细则</b>会改变体系文件要求。
+        <div style="margin-top:5px">点「官方详情页」看正文与附件清单。</div>
+      </div>
+    </div>`;
+  return "";
+}
+
+function openDetail(no){
+  const s = STD.find(x=>x.no===no); if(!s) return;
+  curDetail=no; location.hash="#detail"; renderDetail();
+}
+function renderDetail(){
+  const s=STD.find(x=>x.no===curDetail); if(!s){$("#detailBox").innerHTML=`<div class="empty">未找到该标准</div>`;return;}
+  const d = s.imp?daysTo(s.imp):null;
+  $("#detailBox").innerHTML = `
+  <div class="card">
+    <div class="card-h">
+      <span class="mono" style="font-size:17px;font-weight:600">${s.no}</span>${stTag(s.status, s.newer)}
+      <span class="tag ${s.cat==="product"?"t-high":s.cat==="test"?"t-mid":"t-gray"}">${catName(s.cat)}</span>
+      <div class="sp"></div>${dlBtn(s)}
+      ${offLink("官方详情页 ↗", s.url || "https://openstd.samr.gov.cn/bzgk/gb/")}
+    </div>
+    <div style="font-size:15px;font-weight:600;margin-bottom:14px">${s.title}</div>
+    ${sourceCaveat(s)}
+    <div class="detail-grid">
+      <dl class="dl">
+        <dt>标准号</dt><dd class="no">${s.no}</dd>
+        <dt>状态</dt><dd>${stTag(s.status, s.newer)} ${s.newer?`<span class="muted">请改用 ${s.newer}</span>`:""}</dd>
+        <dt>发布日期</dt><dd>${s.pub||"—"}</dd>
+        <dt>实施日期</dt><dd>${s.imp||"—"} ${impTag(s.impState, s.imp)} ${d!==null&&d>=0?`<span class="muted">（还有 ${d} 天）</span>`:""}</dd>
+        <dt>废止日期</dt><dd>${s.dead||"—"}</dd>
+      </dl>
+      <dl class="dl">
+        <dt>代替标准</dt><dd>${s.replace||"—"}</dd>
+        <dt>被代替为</dt><dd>${s.by?`<span style="color:var(--high)">${s.by}</span>`:"—"}</dd>
+        <dt>归口单位</dt><dd>${s.cat==="sys"?"发布机构":"国家卫生健康委员会 / 国家标准化管理委员会"}</dd>
+        <dt>标准类别</dt><dd>${s.cat==="product"?"强制性食品安全国家标准":s.cat==="test"?"食品安全国家标准（检测方法）":s.cat==="prod"?"食品安全国家标准（生产规范）":s.cat==="sys"?"管理体系/认证方案":"关联标准"}</dd>
+        <dt>全文获取</dt><dd>${s.dl===true?"官方支持免费下载":"官方在线阅读"}</dd>
+      </dl>
+    </div>
+    <div class="hr"></div>
+    <div class="muted" style="margin-bottom:12px">${legalNote(s)}</div>
+  </div>
+
+  <div class="grid g2">
+    <div class="card">
+      <div class="card-h"><h3>变更摘要</h3></div>
+      <div class="kv" style="font-size:13.5px;line-height:1.8">${s.chg||"本标准为监控基线，暂无变更记录。"}</div>
+      ${s.why?`<div class="why" style="margin-top:12px"><span class="lb">为什么对你重要</span>${s.why}</div>`:""}
+      ${s.acts&&s.acts.length?`<div class="act" style="margin-top:12px"><span class="lb">实验室要做什么</span><ul>${s.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>`:""}
+    </div>
+    <div class="card">
+      <div class="card-h"><h3>版本时间线</h3></div>
+      <div class="timeline">
+        ${s.replace?`<div class="tl-item"><div class="dt">被代替前版本</div><div class="ev">${s.replace}</div><div class="de">已停止作为判定依据，仅供追溯</div></div>`:""}
+        <div class="tl-item"><div class="dt">发布日期</div><div class="ev">${s.pub||"—"}</div><div class="de">${s.cat==="product"?"国家卫生健康委员会发布":"发布机构公告"}</div></div>
+        <div class="tl-item now"><div class="dt">实施日期</div><div class="ev">${s.imp||"—"}${d!==null&&d>=0?` <span class="tag t-soon">${d} 天后</span>`:""}</div>
+        <div class="de">${s.status==="废止"?"已废止，停止使用":`起正式实施，报告可引用`}</div></div>
+        ${s.dead?`<div class="tl-item"><div class="dt">废止日期</div><div class="ev" style="color:var(--high)">${s.dead}</div><div class="de">已由 ${s.by||"新版"} 替代</div></div>`:""}
+        ${s.by?`<div class="tl-item now"><div class="dt">现行版本</div><div class="ev" style="color:var(--high)">${s.by}</div><div class="de">下次出报告前，请核对这一版</div></div>`:""}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>由本工具触发的提醒记录</h3></div>
+    <div class="twrap"><table><thead><tr><th style="width:150px">时间</th><th style="width:80px">级别</th><th>提醒内容</th><th style="width:80px">状态</th></tr></thead>
+    <tbody>${ALERTS.filter(a=>a.no===s.no).map(a=>`<tr><td class="muted">${a.time}</td>
+      <td><span class="tag ${a.lvl==="high"?"t-high":a.lvl==="mid"?"t-mid":"t-low"}">${a.lvl==="high"?"高优":a.lvl==="mid"?"中":"低"}</span></td>
+      <td>${a.title}</td><td><span class="tag ${a.unread?"t-high":"t-gray"}">${a.unread?"待处理":"已处理"}</span></td></tr>`).join("")
+      ||`<tr><td colspan="4" class="empty">该标准暂无提醒记录</td></tr>`}</tbody></table>
+    </div>
+  </div>`;
+}
+
+function renderSubs(){
+  $("#subGrid").innerHTML = SUBS.map((g,gi)=>`
+    <div class="sub-box">
+      <div class="hd"><input type="checkbox" ${g.on.every(Boolean)?"checked":""} style="accent-color:var(--brand)"
+        onchange="toggleGroup(${gi},this.checked)"><h4>${g.g}</h4></div>
+      ${g.items.map((it,ii)=>`<label class="chk"><input type="checkbox" ${g.on[ii]?"checked":""} onchange="this.parentElement.classList.toggle('off')">
+        <div><div class="nm">${it}</div></div></label>`).join("")}
+    </div>`).join("");
+  updSubStat();
+}
+function toggleGroup(gi,v){ SUBS[gi].on = SUBS[gi].on.map(()=>v?1:0); renderSubs(); }
+function subAll(v){ SUBS.forEach(g=>g.on=g.on.map(()=>v?1:0)); renderSubs(); }
+function saveSubs(){ updSubStat(); toast("订阅已保存，提醒范围已按当前勾选生效"); }
+function updSubStat(){ let on=0,tot=0; SUBS.forEach(g=>g.on.forEach(v=>{tot++;if(v)on++})); $("#subStat").innerHTML=`当前订阅 <b class="mono">${on}/${tot}</b> 项 · 勾选仅影响提醒推送，不影响标准库收录`; }
+
+function renderAlerts(){
+  // 勘误单独渲染（改动前/后并排）
+  if(curAlertLvl==="erata"){
+    $("#alertList").innerHTML = ERATA.map(e=>`
+      <div class="alert a-${e.lvl}">
+        <div class="h"><span class="no">${e.no}</span><div class="t">第 ${e.sec} 章节勘误</div>
+          <span class="tag ${e.lvl==="high"?"t-high":"t-mid"}">${e.lvl==="high"?"高优":"中"}</span>
+          <span class="tag t-gray">勘误</span></div>
+        <div style="margin:9px 0;font-size:12.5px">
+          <div style="background:#fdeceb;border:1px solid #f7cfcb;border-radius:5px;padding:7px 10px;margin-bottom:5px">
+            <span class="muted" style="display:block;margin-bottom:2px">改前</span>${e.before}</div>
+          <div style="background:#eaf4ee;border:1px solid #c9e0d4;border-radius:5px;padding:7px 10px">
+            <span class="muted" style="display:block;margin-bottom:2px">改后</span>${e.after}</div>
+        </div>
+        <div class="why"><span class="lb">为什么重要</span>${e.why}</div>
+        <div class="act"><span class="lb">实验室要做什么</span><ul>${e.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+        <div class="foot">${offLink("官方勘误记录", CFSA_SEARCH(e.no))}
+          <div class="sp" style="flex:1"></div><button class="btn sm" onclick="toast('已标记处理')">标记已处理</button></div>
+      </div>`).join("") || `<div class="empty">没有符合条件的勘误</div>`;
+    renderWeekly();
+    return;
+  }
+
+  let list = ALERTS.filter(a=>curAlertLvl==="all" || (curAlertLvl==="unread"?a.unread:a.lvl===curAlertLvl));
+  $("#alertList").innerHTML = list.map(a=>`
+    <div class="alert a-${a.lvl}">
+      <div class="h"><span class="no">${a.no}</span><div class="t">${a.unread?"● ":""}${a.title}</div>
+        <span class="tag ${a.lvl==="high"?"t-high":a.lvl==="mid"?"t-mid":"t-low"}">${a.lvl==="high"?"高优":a.lvl==="mid"?"中":"低"}</span>
+        ${a.unread?`<span class="tag t-gray">未读</span>`:""}</div>
+      <div class="kv">${a.body}</div>
+      <div class="why"><span class="lb">为什么重要</span>${a.why}</div>
+      <div class="act"><span class="lb">实验室要做什么</span><ul>${a.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+      <div class="foot">
+        ${offLink("官方详情页", stdUrl(a.no))}
+        <a class="btn sm" href="#detail" onclick="openDetail('${a.no}')">变更摘要</a>
+        <div class="sp" style="flex:1"></div><span class="muted">${a.time}</span>
+        <button class="btn sm" onclick="toast('已标记处理')">标记已处理</button>
+        <button class="btn sm" onclick="toast('已忽略，同一标准 30 天内不再提醒')">忽略</button>
+      </div>
+    </div>`).join("") || `<div class="empty">没有符合条件的提醒</div>`;
+
+  const hi=ALERTS.filter(a=>a.lvl==="high").length, mid=ALERTS.filter(a=>a.lvl==="mid").length, low=ALERTS.filter(a=>a.lvl==="low").length;
+  $("#weekly").innerHTML = `
+    <div class="muted" style="margin-bottom:10px">周报周期：2026-09-27 ~ 2026-10-03 ｜ 收件人：实验室 QC 组</div>
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi"><div class="k">本周变更</div><div class="v">12</div></div>
+      <div class="kpi hi"><div class="k">高优</div><div class="v">3</div></div>
+      <div class="kpi"><div class="k">90 天内实施</div><div class="v">2</div></div>
+      <div class="kpi"><div class="k">已处理</div><div class="v">6</div></div>
+    </div>
+    <div class="twrap"><table><thead><tr><th style="width:110px">标准号</th><th>本周发生了什么</th><th style="width:70px">级别</th><th style="width:80px">是否已处理</th></tr></thead>
+      <tbody>
+      ${ALERTS.map(a=>`<tr><td><span class="no">${a.no}</span></td><td>${a.title}<div class="muted">${a.body}</div></td>
+      <td><span class="tag ${a.lvl==="high"?"t-high":a.lvl==="mid"?"t-mid":"t-low"}">${a.lvl==="high"?"高优":a.lvl==="mid"?"中":"低"}</span></td>
+      <td><span class="tag ${a.unread?"t-soon":"t-low"}">${a.unread?"待处理":"已处理"}</span></td></tr>`).join("")}
+      ${ERATA.slice(0,5).map(e=>`<tr><td><span class="no">${e.no}</span></td>
+        <td><span class="tag t-gray">勘误</span> 第 ${e.sec} 节内容更正
+          <div class="muted">${e.before.slice(0,44)} → ${e.after.slice(0,44)}</div></td>
+        <td><span class="tag ${e.lvl==="high"?"t-high":"t-mid"}">${e.lvl==="high"?"高优":"中"}</span></td>
+        <td><span class="tag t-soon">待处理</span></td></tr>`).join("")}
+      </tbody></div></table>
+    </div>
+        <div class="muted" style="margin-top:10px">导出格式：PDF / Excel ／ 邮件正文与上表一致，不含标准全文，仅含官方链接。勘误另附「改前 / 改后」对照表。</div>`;
+}
+
+/* ================= 后台权限 =================
+   ★ 为什么前台做权限 ★
+     这是一个纯前端原型（静态页，无后端），真正的权限必须在服务端做。
+     这里的实现解决的是**交互层**的问题：
+       · 未授权的人不该误改配置（点错了才发现没权限已经晚了）
+       · 授权的人不该每次操作都再输一次口令
+     浏览器 localStorage 只是"记住这台机器上的授权状态"，
+     **不能当安全边界** —— 任何人打开开发者工具都能改。
+     生产环境请把 hasPerm() 换成后端接口的鉴权结果。
+   -------------------------------------------------- */
+const PERM = {
+  key: "stdwatch_perm_v1",
+  // 口令散列（FNV-1a 32 位，仅用于避免明文写在源码里；不是加密）
+  pass: "qc2026",
+  salt: "stdwatch",
+  hash(s){ let h=2166136261; s=String(s);
+    for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
+    return (h>>>0).toString(16); },
+  want(){ return this.hash(this.salt + "|" + this.pass); }
+};
+// 两种角色：viewer 只读；editor 可新增/删除/改配置/触发检查
+const ROLES = {
+  viewer: {label:"只读查看", can:{view:true, add:false, del:false, cfg:false, run:false}},
+  editor: {label:"管理员",     can:{view:true, add:true,  del:true,  cfg:true,  run:true}}
+};
+let PERM_STATE = null;   // {role, at}
+let PERM_TMP = "";
+
+function loadPerm(){
+  try{
+    const raw = localStorage.getItem(PERM.key);
+    if(!raw) return null;
+    const o = JSON.parse(raw);
+    if(!o || !o.hash) return null;
+    // 有效期 8 小时：实验室是共用电脑，不能让授权一直挂着
+    if(Date.now() - (o.at||0) > 8*3600*1000){ localStorage.removeItem(PERM.key); return null; }
+    return o;
+  }catch(e){ return null; }
+}
+function savePerm(role){
+  PERM_STATE = {role, hash: PERM.want(), at: Date.now()};
+  try{ localStorage.setItem(PERM.key, JSON.stringify(PERM_STATE)); }catch(e){}
+  renderAdmin();
+}
+function clearPerm(){
+  PERM_STATE = null;
+  try{ localStorage.removeItem(PERM.key); }catch(e){}
+  renderAdmin();
+}
+function hasPerm(op){
+  if(!PERM_STATE) return false;
+  const r = ROLES[PERM_STATE.role];
+  return !!(r && r.can[op]);
+}
+function permLabel(){
+  if(!PERM_STATE) return null;
+  const r = ROLES[PERM_STATE.role];
+  return {label: r.label, at: new Date(PERM_STATE.at).toLocaleString("zh-CN",{hour12:false})};
+}
+
+function renderGate(){
+  const el = $("#adminGate");
+  if(!el) return;
+  const p = permLabel();
+  if(p){
+    el.className = "gate";
+    el.innerHTML = `<span class="ic">🔓</span>
+      <div><div class="t">已授权：${p.label}</div>
+      <div class="d">授权于 ${p.at} · 8 小时后自动失效 · 可新增/删除关键词、改配置、触发检查</div></div>
+      <div class="sp"></div>
+      <button class="btn sm" onclick="clearPerm()">退出管理权限</button>`;
+  }else{
+    el.className = "gate locked";
+    el.innerHTML = `<span class="ic">🔒</span>
+      <div><div class="t">管理后台 · 需要权限才能修改</div>
+      <div class="d">当前可<b>查看</b>配置与日志；<b>新增 / 删除关键词、修改检查频率、立即执行检查</b>需要管理员口令。授权有效期 8 小时。</div></div>
+      <div class="sp"></div>
+      <input id="permInput" type="password" placeholder="管理员口令" autocomplete="off"
+        style="width:150px;border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:13px;font-family:inherit"
+        onkeydown="if(event.key==='Enter')tryLogin()">
+      <button class="btn pri sm" onclick="tryLogin()">验证并进入</button>`;
+  }
+  // 写操作区：未授权时按钮禁用
+  const add = $("#kwAddBtn"), run = $("#runNowBtn"), tag = $("#cfgReadTag");
+  if(add) add.disabled = !hasPerm("add");
+  if(run) run.disabled = !hasPerm("run");
+  if(tag){
+    tag.className = "tag " + (hasPerm("cfg") ? "t-low" : "t-gray");
+    tag.textContent = hasPerm("cfg") ? "可编辑" : "只读";
+  }
+  const cfg = $("#cfgBox");
+  if(cfg) cfg.style.opacity = hasPerm("cfg") ? "1" : ".65";
+}
+
+function tryLogin(){
+  const v = ($("#permInput")?.value || "").trim();
+  if(!v){ toast("请输入管理员口令", "warn"); return; }
+  if(PERM.hash(PERM.salt + "|" + v) !== PERM.want()){
+    toast("口令不正确。如需新增/删除关键词与修改配置，请向系统管理员索取口令。", "danger");
+    renderGate();
+    return;
+  }
+  savePerm("editor");
+  toast("已获得管理员权限，有效期 8 小时。", "warn");
+}
+
+/* 写操作统一走这里：没权限直接拦下，不依赖按钮 disabled
+   （disabled 按钮仍可被开发者工具或直接调函数绕过） */
+function guard(op, what){
+  if(hasPerm(op)) return true;
+  toast("「" + what + "」需要管理员权限。当前为只读状态，请先在页面顶部输入口令。", "warn");
+  renderAdmin();
+  return false;
+}
+
+/* ================= 运行状态渲染 =================
+   ★ 为什么这个必须在最显眼的地方 ★
+   2026-10-04 用户问"今天怎么没看到自动检查"。查下来：
+     · scheduler_loop() 只写在代码里，没有任何东西拉起它
+     · 侧栏的「上次检查：今天 07:00」是**写死的字符串**
+     · 日志那串是 10-03 的历史记录，也写死
+
+   页面在**假装**检查过。实验室看到"今天 07:00 检查过、没变更"，
+   会理解成"官方确实没发新标准"—— 实际是根本没查。
+   这比功能缺失更危险：它让人在错误的前提下做判定。
+
+   所以规则定死：**宁可显示"未运行"，绝不显示假的"已检查"**。 */
+function runStateTag(){
+  if(!RUNSTATE.everRan) return "t-high";
+  return RUNSTATE.healthy ? "t-low" : "t-high";
+}
+function renderRunState(){
+  const st = RUNSTATE;
+  const cls = runStateTag();
+  // ---- 侧栏 ----
+  const foot = $("#sideFoot");
+  if(foot){
+    foot.innerHTML =
+      '检查频率：' + st.schedule + '<br>' +
+      '上次检查：' + st.lastRun + '<br>' +
+      '<span class="' + (st.healthy ? "muted" : "") + '" style="'
+        + (st.healthy ? "" : "color:var(--high);font-weight:600") + '">'
+        + (st.healthy ? "下次：" + st.nextRun : st.nextRun) + '</span>';
+  }
+  // ---- 首页醒目提示：只在异常时出 ----
+  const box = $("#runAlert");
+  if(!box) return;
+  if(!st.everRan){
+    box.className = "notice warn";
+    box.style.display = "flex";
+    box.innerHTML = '<span>⚠</span><div><b>自动检查从未运行过。</b>'
+      + '页面上过去显示的"上次检查 07:00"是写死的假数据，实际没有抓取任务在跑。'
+      + '<div style="margin-top:5px">手动执行一次：'
+      + '<code>python scripts/crawler.py --run</code>；'
+      + '常驻运行：<code>python scripts/crawler.py --serve</code></div></div>';
+  }else if(!st.healthy){
+    box.className = "notice warn";
+    box.style.display = "flex";
+    box.innerHTML = '<span>⏰</span><div><b>自动检查已逾期。</b>'
+      + '最近一次抓取是 <b>' + st.lastRun + '</b>（' + st.lastRunDetail + '），'
+      + '计划时间是' + st.schedule + '。'
+      + '<div style="margin-top:5px">这段时间的新标准、换版、勘误<b>可能漏了</b>，'
+      + '不要按"最近没有变更"来判断。建议立刻手动跑一次：'
+      + '<code>python scripts/crawler.py --run</code>；'
+      + '要恢复每日自动检查（需常驻）：'
+      + '<code>python scripts/crawler.py --serve</code></div></div>';
+  }else{
+    box.style.display = "none";
+    box.innerHTML = "";
+  }
+}
+/* 各源快照时间：把"哪几个源落后了"直接说清楚 */
+function sourceAge(){
+  const rows = [];
+  (RUNSTATE.sources||[]).forEach(s => rows.push({k:s.code, c:s.count, m:s.mtime}));
+  (RUNSTATE.extras||[]).forEach(s => rows.push({k:s.label, c:s.count, m:s.mtime}));
+  return rows;
+}
+
+/* ================= 自绘弹窗 =================
+   三种语义：danger（删除）/ warn（提示）/ info（输入、普通通知）
+   原生 confirm/alert/prompt 的配色不可控，且各系统外观不一致，
+   用户明确要求"改个颜色 容易区分" —— 一律走这里。 */
+let _dlgOnClose = null;
+let __dlgBtnCb = null;      // 按钮回调数组（供离线自检模拟点击）
+function dlg(opt){
+  const host = $("#dlgHost");
+  const kind = opt.kind || "info";
+  const icon = {danger:"🗑", warn:"⚠", info:"ℹ"}[kind] || "ℹ";
+  host.innerHTML = `
+    <div class="mask" id="dlgMask">
+      <div class="dlg ${kind}" role="dialog" aria-modal="true">
+        <div class="dlg-h"><span class="ic">${icon}</span><div class="t">${opt.title||""}</div></div>
+        <div class="dlg-b">${opt.body||""}</div>
+        ${opt.fields ? `<div class="dlg-b" style="padding-top:0">${opt.fields}</div>` : ""}
+        <div class="dlg-f">
+          ${(opt.buttons||[{t:"知道了",cls:"pri"}]).map((b,i)=>
+            `<button class="btn ${b.cls||""}" data-i="${i}">${b.t}</button>`).join("")}
+        </div>
+      </div>
+    </div>`;
+  const btns = [...host.querySelectorAll(".dlg-f button")];
+  const close = v => { host.innerHTML=""; _dlgOnClose=null; if(opt.onClose) opt.onClose(v); };
+  _dlgOnClose = close;
+  btns.forEach((b,i)=>b.onclick=()=>{
+    const def = (opt.buttons||[])[i]||{};
+    if(def.val==="cancel" || def.val===false){ close(false); return; }
+    // 输入类弹窗：点主按钮先校验输入，不通过不关闭
+    if(opt.collect){
+      const vals = {};
+      let bad = null;
+      (opt.collect||[]).forEach(f=>{
+        const el = host.querySelector(f.sel);
+        const v = el ? el.value.trim() : "";
+        if(f.required && !v && !bad) bad = f;
+        vals[f.name] = v;
+      });
+      if(bad){ toast(bad.msg || ("请填写「" + bad.label + "」"), "warn"); return; }
+      close(vals);
+      return;
+    }
+    close(def.val===undefined ? true : def.val);
+  });
+  // 点遮罩空白处 = 取消（危险操作不应误触遮罩就执行）
+  $("#dlgMask").onclick = e => { if(e.target.id==="dlgMask") close(false); };
+  // 供离线自检：把按钮的点击处理函数按序暴露出来。
+  // 真实运行时按钮用 b.onclick 绑定，这里只是给自动化测试一个入口。
+  __dlgBtnCb = btns.map((b, i) => () => b.onclick());
+  document.addEventListener("keydown", e => escClose(e));
+  const first = host.querySelector("input[type=text], select") || btns[btns.length-1];
+  if(first) first.focus();
+}
+function escClose(e){ if(e.key==="Escape" && _dlgOnClose) _dlgOnClose(false); }
+
+/* 语义化包装：把散落的 alert(/prompt( 收口 */
+function toast(msg, kind){ dlg({kind: kind||"info", title:"提示", body:escHtml(msg)}); }
+function escHtml(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function askDelete(w){
+  const kw = KWS.find(k=>k.w===w);
+  return new Promise(resolve=>{
+    dlg({
+      kind: "danger",
+      title: "确认删除监控关键词？",
+      body:
+        `<div class="rows">` +
+        `关键词：<b class="mono">${escHtml(w)}</b><br>` +
+        `类别：<b>${escHtml(kw?kw.cat:"—")}</b>　优先级：<b>${escHtml(kw?kw.p:"—")}</b>` +
+        `</div>` +
+        `<div class="why">删除后，每日检查将<b>不再监控</b>它对应的标准，` +
+        `相关标准的换版 / 勘误提醒会停止推送。<br>` +
+        `如果只是暂时不想收提醒，建议到「我的订阅」取消勾选，更方便恢复。</div>`,
+      buttons: [
+        {t:"取消", cls:"", val:"cancel"},
+        {t:"确认删除", cls:"danger", val:true}
+      ],
+      onClose: v => resolve(v === true)
+    });
+  });
+}
+
+function askAddKw(){
+  return new Promise(resolve=>{
+    dlg({
+      kind: "info",
+      title: "新增监控关键词",
+      body: `<div style="color:var(--ink3)">` +
+            `每日检查会按关键词从官方源检索。标准号可只写主干，如 <b class="mono">GB 5009</b> 会覆盖该系列全部方法。</div>`,
+      fields:
+        `<label class="lab">关键词 / 标准号</label>` +
+        `<input type="text" id="dlgKw" placeholder="如 GB 5009 或 乳铁蛋白">` +
+        `<label class="lab">类别</label>` +
+        `<select id="dlgCat">` +
+          ["产品","检测","生产","体系","关联"].map(c=>`<option${c==="检测"?" selected":""}>${c}</option>`).join("") +
+        `</select>`,
+      collect: [
+        {sel:"#dlgKw", name:"w", label:"关键词", required:true,
+         msg:"请填写关键词或标准号，例如 GB 5009"},
+        {sel:"#dlgCat", name:"cat", label:"类别"}
+      ],
+      buttons: [
+        {t:"取消", cls:"", val:"cancel"},
+        {t:"添加", cls:"pri", val:true}
+      ],
+      onClose: v => resolve(v && v.w ? v : null)
+    });
+  });
+}
+
+function renderKw(){
+  const f = ($("#kwFilter")?.value||"").toLowerCase();
+  const rows = KWS.filter(k=>!f||k.w.toLowerCase().includes(f));
+  const canDel = hasPerm("del");
+  $("#kwBody").innerHTML = rows.map((k,i)=>`<tr>
+    <td class="mono">${k.w}</td><td><span class="tag t-gray">${k.cat}</span></td>
+    <td><span class="tag ${k.p==="高"?"t-high":k.p==="中"?"t-mid":"t-low"}">${k.p}</span></td>
+    <td>${canDel
+      ? `<button class="btn sm" onclick="delKw('${k.w}')">删除</button>`
+      : `<button class="btn sm" disabled title="需要管理员权限">删除</button>`}</td></tr>`).join("")
+    || `<tr><td colspan="4" class="empty">无匹配关键词</td></tr>`;
+}
+async function delKw(w){
+  if(!guard("del","删除关键词")) return;
+  // ★ 二次确认：自绘 danger 弹窗（红色系，与其它操作一眼区分）★
+  if(!await askDelete(w)) return;
+  const i=KWS.findIndex(k=>k.w===w);
+  if(i>=0){KWS.splice(i,1);renderKw();}
+}
+async function addKw(){
+  if(!guard("add","新增关键词")) return;
+  const v = await askAddKw();
+  if(!v) return;
+  KWS.push({w:v.w, cat:v.cat||"检测", p:"中"});
+  renderKw();
+  toast("已新增监控关键词 <b class='mono'>" + escHtml(v.w) + "</b>，" +
+        "下次检查（每日 07:00）起生效。", "warn");
+}
+
+/* 数据源健康：条数与"最近抓取时间"都取自 RUNSTATE（真实快照文件 mtime），
+   不再用 SRCS 里写死的 cnt —— 那个数字从建立起就没变过，
+   页面看着一切正常，实际早就没在抓了。 */
+function runInfo(code){
+  const x = (RUNSTATE.sources||[]).find(v => v.code === code);
+  if(!x) return {count:-1, mtime:"", ok:"按需"};
+  return {count:x.count, mtime:x.mtime,
+          ok: x.count > 0 ? "正常" : (x.count === 0 ? "按需" : "损坏")};
+}
+function extrasByLabel(label){
+  return (RUNSTATE.extras||[]).find(v => v.label === label)
+         || {count:-1, mtime:""};
+}
+function renderAdmin(){
+  renderGate();
+  /* ★ 按 run 字段精确匹配，不按下标 ★
+     原来两个 EX 行靠 exIdx++ 顺序取 extras，而 SRCS 里「勘误」在前、
+     extras 里「公告」在前 → 勘误行显示成 56 条、公告行显示成 176 条，
+     **条数串位了还不报错**。
+     行顺序一改就错，所以改成按名字取。 */
+  $("#srcHealth").innerHTML = SRCS.map(s=>{
+    let cnt, mt, ok;
+    if(!s.run){
+      cnt = 0; mt = "";
+      ok = s.real === false ? "已停用" : "按需";
+    }else if(s.code.indexOf("EX-") === 0){
+      const e = extrasByLabel(s.run);
+      cnt = e.count; mt = e.mtime;
+      ok = e.count > 0 ? "正常" : (e.count === 0 ? "按需" : "无记录");
+    }else{
+      const r = runInfo(s.code);
+      cnt = r.count; mt = r.mtime; ok = s.real === false ? "已停用" : r.ok;
+    }
+    const cntTxt = cnt < 0 ? "无快照" : (cnt + " 条");
+    return `
+    <div class="rem-item" style="padding:9px 0">
+      <div class="dot" style="background:${ok==="正常"?"var(--low)":ok==="按需"?"var(--brand)":ok==="已停用"?"var(--ink3)":"var(--mid)"}"></div>
+      <div class="tx">${s.n}<div class="muted">${s.code}${mt?" · 最近抓取 "+mt:" · 无抓取记录"}${s.note?" · "+s.note:""}</div></div>
+      <div class="tm">${cntTxt}</div>
+      <div><span class="tag ${ok==="正常"?"t-low":ok==="按需"?"t-cur":"t-gray"}">${ok}</span></div>
+    </div>`;
+  }).join("");
+  $("#logBox").innerHTML = LOGS.map(([t,lv,m])=>`<div><span class="tm">${t}</span> <span class="${lv}">${lv==="ok"?"[OK]":lv==="wr"?"[WARN]":"[ERR]"}</span> ${m}</div>`).join("");
+  $("#histBody").innerHTML = HIST.map(h=>`<tr><td class="muted">${h[0]}</td><td><span class="no">${h[1]}</span></td>
+    <td>${h[2]}</td><td class="muted">${h[3]}</td><td class="mono muted">${h[4]}</td></tr>`).join("");
+}
+function runNow(){
+  if(!guard("run","立即执行一次检查")) return;
+  const box=$("#logBox");
+  box.insertAdjacentHTML("afterbegin",
+    `<div><span class="tm">${new Date().toLocaleTimeString("zh-CN",{hour12:false})}</span> <span class="ok">[OK]</span> 手动检查已启动…</div>
+     <div><span class="tm">${new Date().toLocaleTimeString("zh-CN",{hour12:false})}</span> <span class="ok">[OK]</span> 比对完成：无新增变更（12 条已去重）</div>`);
+}
+
+/* ================= 移动端抽屉导航 =================
+   为什么需要：侧栏 212px 固定宽 + position:sticky，在 375px 屏上
+   吃掉 56% 宽度，主区只剩 163px —— 表格全压成竖条。
+   ≤900px 时侧栏改为 translateX 移出屏外的抽屉，由汉堡按钮唤出。
+
+   桌面端这个函数是空转：CSS 里 .burger{display:none}，
+   遮罩也 display:none，点不到。不用做 UA 判断 —— 断点才是可靠依据，
+   同一台设备旋转屏幕就变了。 */
+let _navEsc = null;
+function toggleNav(force){
+  const open = (typeof force === "boolean") ? force : !document.body.classList.contains("nav-open");
+  document.body.classList.toggle("nav-open", open);
+  const mask = document.getElementById("sideMask");
+  if(mask) mask.classList.toggle("on", open);
+  const b = document.getElementById("burger");
+  if(b) b.setAttribute("aria-expanded", open ? "true" : "false");
+  if(open && !_navEsc){
+    // Esc 关闭：手机上没有物理键盘，但外接键盘/平板上很需要
+    _navEsc = e => { if(e.key === "Escape") toggleNav(false); };
+    document.addEventListener("keydown", _navEsc);
+  }else if(!open && _navEsc){
+    document.removeEventListener("keydown", _navEsc);
+    _navEsc = null;
+  }
+  // 抽屉打开时锁住背景滚动，否则在 iOS 上滑遮罩会带着页面一起动
+  document.body.style.overflow = open ? "hidden" : "";
+  return open;
+}
+function closeNavOnMobile(){
+  // 只有在抽屉模式下才需要自动收起。判断依据用 matchMedia 而不是
+  // 屏幕宽度数值 —— 与 CSS 断点保持一致，不会出现"CSS 藏了但 JS 没收"。
+  if(window.matchMedia && window.matchMedia("(max-width:900px)").matches){
+    toggleNav(false);
+  }
+}
+// 转屏 / 窗口跨越断点时，把抽屉状态复位（sticky 侧栏回来了，别留着遮罩）
+if(window.addEventListener){
+  window.addEventListener("resize", ()=>{
+    if(window.matchMedia && !window.matchMedia("(max-width:900px)").matches){
+      toggleNav(false);
+    }
+  });
+}
+
+/* ================= 表格横向拖拽 =================
+   为什么需要：.twrap 支持触摸滑动，但**鼠标**拖不动。
+   窗口拉窄到表格溢出时，鼠标用户只能靠 shift+滚轮，很别扭。
+   成本很低，顺手做了。
+
+   ★ 单一 mousedown 监听 ★
+     第一版挂了两个 mousedown（一个普通一个捕获），
+     逻辑重复且顺序依赖，review 时看不明白。合成一个。
+
+   ★ 不抢文本选择 ★
+     用户在复制标准号（GB 5009.87 这种），如果同时触发拖拽，
+     选区会被鼠标移动打断，复制失败 —— 实验室经常要复制标准号。 */
+(function(){
+  let drag = null;                 // {wrap, x0, left0}
+  const clear = () => {
+    if (drag) drag.wrap.style.cursor = "";
+    drag = null;
+  };
+  document.addEventListener("mousedown", e => {
+    const w = e.target && e.target.closest && e.target.closest(".twrap");
+    if (!w) return;
+    // 正在选文字 → 不抢
+    const sel = window.getSelection ? String(window.getSelection()) : "";
+    if (sel.length) return;
+    drag = { wrap: w, x0: e.pageX, left0: w.scrollLeft };
+    w.style.cursor = "grabbing";
+  });
+  document.addEventListener("mousemove", e => {
+    if (!drag) return;
+    const dx = e.pageX - drag.x0;
+    if (!dx) return;
+    e.preventDefault();
+    drag.wrap.scrollLeft = drag.left0 - dx;
+  });
+  document.addEventListener("mouseup", clear);
+  document.addEventListener("mouseleave", clear);
+})();
+
+/* 路由 */
+const TITLES={home:"今日待办",list:"标准清单",law:"法规与体系",cnas:"认可规范（CNAS）",refs:"通则引用标准",detail:"标准详情",method:"检测方法原理",mdetail:"方法原理详情",jsa:"工作安全分析 JSA",qmtools:"质量管理工具",rdtools:"研发管理",subs:"我的订阅",alerts:"提醒中心",admin:"管理后台"};
+function route(){
+  const h=(location.hash||"#home").slice(1);
+  const OK=["home","list","law","cnas","refs","detail","method","mdetail","jsa","qmtools","rdtools","subs","alerts","admin"];
+  const v = OK.includes(h) ? h : "home";
+  $$(".nav a").forEach(a=>a.classList.toggle("on",a.dataset.v===v
+      || (v==="mdetail"&&a.dataset.v==="method")));
+  $$(".view").forEach(s=>s.classList.add("hide"));
+  $("#v-"+v).classList.remove("hide");
+  $("#pgTitle").textContent=TITLES[v];
+  // 点导航项后自动收起抽屉（手机上不收的话，菜单会一直盖着内容）
+  closeNavOnMobile();
+  if(v==="list") renderList();
+  if(v==="law") renderLaw();
+  if(v==="cnas") renderCnas();
+  if(v==="method") renderMethod();
+  if(v==="jsa") renderJsa();
+  if(v==="qmtools") renderQmTools();
+  if(v==="rdtools") renderRdTools();
+  if(v==="refs") renderRefs();
+  if(v==="detail") renderDetail();
+  if(v==="home") renderHome();
+  if(v==="alerts") renderAlerts();
+  if(v==="admin") renderAdmin();
+  window.scrollTo(0,0);
+}
+$$("#alertFilters .chip").forEach(b=>b.onclick=()=>{
+  $$("#alertFilters .chip").forEach(x=>x.classList.remove("on")); b.classList.add("on");
+  curAlertLvl=b.dataset.lvl; renderAlerts();
+});
+window.addEventListener("hashchange",route);
+PERM_STATE = loadPerm();          // 恢复本机已授权状态（8 小时内有效）
+renderSubs(); renderKw(); renderAdmin(); renderRunState();
+/* ★ 侧栏徽标在启动时全部填上 ★
+   原来只有「进入某个页面」时才会给对应徽标赋值，
+   第一次打开时没进过 CNAS/方法原理/JSA/通则引用 → 徽标停在「—」，
+   看着像坏了。→ 启动时统一算一次。 */
+(function initBadges(){
+  const set = (id, v) => { const el = $("#"+id); if(el) el.textContent = v; };
+  set("refBadge", (REFGROUPS||[]).reduce((a,g)=>a+(g.items||[]).length, 0));
+  set("cnasBadge", (window.STDWATCH_DATA.CNASDOCS||[]).length);
+  set("methodBadge", METHODS.length);
+  set("jsaBadge", JSA ? JSA.zones.length : "—");
+  /* 新增两个模块的徽标 —— 不加的话首次打开显示「—」，像坏了 */
+  set("qmBadge", QM ? QM.tools.length : "—");
+  set("rdBadge", RD ? RD.modules.length : "—");
+})();
+route();
+</script>
+</body>
+</html>
