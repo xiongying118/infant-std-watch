@@ -16,11 +16,11 @@ ck(/data-v="jsa"/.test(nav), '导航含 JSA');
 ck(/data-v="method"/.test(nav), '导航含检测方法原理');
 ck(nav.indexOf('data-v="jsa"') < nav.indexOf('data-v="method"'),
    '★ JSA 排在检测方法原理之前');
-// 实验室组归属
-const lab = nav.indexOf('>实验室<');
+// 实验室管理组归属
+const lab = nav.indexOf('>实验室管理<');
 const jsa = nav.indexOf('data-v="jsa"');
 const rem = nav.indexOf('>提醒<');
-ck(lab > 0 && jsa > lab && (rem < 0 || jsa < rem), 'JSA 在「实验室」组内');
+ck(lab > 0 && jsa > lab && (rem < 0 || jsa < rem), 'JSA 在「实验室管理」组内');
 
 console.log('\n=== 2. 文件已删 ===');
 ck(!fs.existsSync(path.join(ROOT, 'prototype', 'cards.html')), 'cards.html 已删除');

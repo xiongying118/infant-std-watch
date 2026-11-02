@@ -835,11 +835,11 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .jsa-edit tr.g-low td:first-child{box-shadow:inset 3px 0 0 #15803d}
 
 /* ===== JSA 步骤卡（2026-11-02）=====
-   12 列表格在窄屏会把 L/S 压成 15px、数字完全看不见，
-   改成「一步一卡」，数字框锁死宽度，文本框按内容增高。 */
+   12 列表格在窄屏会把 L/S 压成 15px、数字完全看不见；
+   改成「一步一行到底」的卡片，数字锁死宽度，文本框按内容增高。 */
 .jcards{display:flex;flex-direction:column}
 .jcard{
-  padding:13px 16px;border-bottom:1px solid var(--line2);
+  padding:12px 16px 13px;border-bottom:1px solid var(--line2);
   border-left:3px solid transparent;min-width:0;
 }
 .jcard:last-child{border-bottom:none}
@@ -848,49 +848,58 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .jcard.g-mid{border-left-color:#b45309}
 .jcard.g-low{border-left-color:#15803d}
 .jcard.hl{background:#fffbea}
-.jcard-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+/* 卡头：序号 · 作业步骤 · 等级 */
+.jcard-h{display:flex;align-items:center;gap:10px;margin-bottom:9px}
 .jcard-no{
-  flex:0 0 24px;width:24px;height:24px;border-radius:7px;
+  flex:0 0 22px;width:22px;height:22px;border-radius:6px;
   display:flex;align-items:center;justify-content:center;
-  background:var(--brand);color:#fff;font-size:12.5px;font-weight:700;
+  background:var(--brand);color:#fff;font-size:12px;font-weight:700;
 }
 .jcard-step{
-  flex:1 1 auto;min-width:0;font-size:14px;font-weight:600;
+  flex:1 1 auto;min-width:0;font-size:13.5px;font-weight:600;
   border:1px solid transparent;background:transparent;border-radius:6px;
-  padding:5px 8px;font-family:inherit;color:var(--ink);
+  padding:4px 8px;font-family:inherit;color:var(--ink);
 }
 .jcard-step:hover{border-color:var(--line);background:var(--panel)}
 .jcard-step:focus{outline:none;border-color:var(--brand);background:#fff;
   box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent)}
-.jcard-body{display:flex;gap:16px;align-items:flex-start;min-width:0}
-.jcard-fields{
-  flex:1 1 auto;min-width:0;
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:11px 14px;
+/* ★ 主体：所有字段一行到底，列宽明确指定，不再有 3+1 的断行 ★ */
+.jcard-body{
+  display:grid;
+  grid-template-columns:
+    minmax(150px,1.05fr) minmax(140px,1fr) minmax(160px,1.15fr) minmax(160px,1.15fr)
+    50px 50px 62px minmax(92px,.68fr) minmax(112px,.78fr) 44px;
+  gap:9px 11px;align-items:start;min-width:0;
 }
-.jfield{display:flex;flex-direction:column;gap:4px;min-width:0}
-.jfield>label{font-size:11px;color:var(--ink3);font-weight:600;letter-spacing:.2px}
+.jfield{display:flex;flex-direction:column;gap:3px;min-width:0}
+.jfield>label{
+  font-size:10.5px;color:var(--ink3);font-weight:600;letter-spacing:.2px;
+  display:flex;align-items:center;gap:5px;white-space:nowrap;
+}
+.jfield>label .req{
+  font-size:9.5px;color:#fff;background:var(--high);
+  padding:0 4px;border-radius:4px;font-weight:700;
+}
 .jfield textarea,.jfield input{
-  width:100%;min-width:0;font-family:inherit;font-size:12.5px;line-height:1.65;color:var(--ink);
-  border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:var(--panel);
+  width:100%;min-width:0;font-family:inherit;font-size:12px;line-height:1.55;color:var(--ink);
+  border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--panel);
   resize:vertical;
 }
-.jfield textarea{overflow:hidden}
+.jfield textarea{overflow:hidden;min-height:40px}
+.jfield input[type=date]{font-size:11.5px;padding:5px 6px}
 .jfield textarea:hover,.jfield input:hover{border-color:var(--brand)}
 .jfield textarea:focus,.jfield input:focus{
   outline:none;border-color:var(--brand);background:#fff;
   box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent);
 }
-/* 右侧风险列：L / S / R 固定宽度，数字永远看得见 */
-.jcard-risk{
-  flex:0 0 224px;width:224px;min-width:224px;
-  display:flex;flex-direction:column;gap:9px;
-  padding:11px 12px;border:1px solid var(--line2);border-radius:9px;background:rgba(0,0,0,.015);
+/* L / S / R：锁死宽度，数字永远看得见 */
+.jrisk{display:flex;flex-direction:column;gap:3px;align-items:center;min-width:0}
+.jrisk>label{
+  font-size:10.5px;color:var(--ink3);font-weight:700;letter-spacing:.3px;
+  white-space:nowrap;
 }
-.jrisks{display:flex;gap:9px;align-items:flex-end}
-.jrisk{display:flex;flex-direction:column;gap:3px;align-items:center}
-.jrisk>label{font-size:10.5px;color:var(--ink3);font-weight:700;letter-spacing:.3px}
 .jrisk .lvl-in{
-  width:52px;min-width:52px;max-width:52px;      /* ★ 锁死宽度，数字不会被压没 ★ */
+  width:50px;min-width:50px;max-width:50px;      /* ★ 锁死宽度 ★ */
   text-align:center;font-weight:700;font-size:16px;
   border:1px solid var(--line);border-radius:6px;padding:5px 2px;
   font-family:inherit;color:var(--ink);background:var(--panel);
@@ -900,19 +909,30 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .jrisk .lvl-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .jrisk .lvl-in:focus{outline:none;border-color:var(--brand);background:#fff;
   box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent)}
-.jrisk .rv{font-size:22px;font-weight:700;line-height:1.25;font-variant-numeric:tabular-nums}
-.jfield-inline{gap:3px}
-.jfield-inline input{font-size:12.5px;padding:5px 8px}
-.jcard-act{display:flex;gap:6px;align-items:center;margin-top:auto;padding-top:3px}
-.jcard-act .x{margin-left:auto}
+.jrisk-r .rv{
+  font-size:21px;font-weight:700;line-height:1.3;font-variant-numeric:tabular-nums;
+  padding:2px 0;
+}
+.jcard-act{display:flex;gap:5px;align-items:center;justify-content:center;padding-top:14px}
+.jcard-act .x{margin:0}
 .jcard-res{
   display:flex;flex-wrap:wrap;gap:8px;align-items:center;
-  margin-top:11px;padding:9px 11px;border-radius:7px;
+  margin-top:10px;padding:9px 11px;border-radius:7px;
   background:#eaf4ee;border:1px solid #c9e0d4;font-size:12px;
 }
-@media (max-width:1100px){
-  .jcard-body{flex-direction:column}
-  .jcard-risk{flex:1 1 auto;width:100%;min-width:0}
+/* 窄屏退化成两行 / 一列 —— 宁可换行也不把字段压扁 */
+@media (max-width:1180px){
+  .jcard-body{
+    grid-template-columns:
+      minmax(180px,1fr) minmax(180px,1fr) minmax(180px,1fr)
+      50px 50px 62px minmax(100px,.7fr) minmax(120px,.8fr) 44px;
+  }
+  .jcard-act{padding-top:14px}
+}
+@media (max-width:900px){
+  .jcard-body{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .jrisk{align-items:flex-start}
+  .jcard-act{padding-top:4px;justify-content:flex-start}
 }
 
 .jsa-edit tr.res-row td{background:#f4faf6;padding:7px 12px;font-size:12px}
@@ -1291,31 +1311,27 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
       <!-- ★ 实验室组排在提醒之上（用户 2026-10-07 要求）★
            理由：这一组是检验员每天真正动手用的东西（方法卡片 / 录经验），
            属于「日常干活」；提醒中心是异常时才看的。 -->
+      <!-- ★★ 实验室管理（2026-11-02 用户要求）★★
+           位置：从「质量管理」后面提到**前面**。
+           理由：实验室是质量与研发的落地环节，检测员每天真正动手的地方；
+           质量管理与研发管理是它的上游方法与规范。
+           组内顺序：JSA（动手之前先看风险）→ 日常台账 → 方法原理。 -->
+      <div class="nav-label">实验室管理</div>
+      <a href="#jsa" data-v="jsa"><span class="ic">⚠️</span><span class="tx">工作安全分析 (JSA)</span><span class="badge" id="jsaBadge" style="background:var(--high)">—</span></a>
+      <!-- 原「实验室管理」与外层组重名 → 改叫「日常台账」
+           （里面是设备/试剂/样品/QC/PT/CAPA/内审/排班/环境这些每天要记的账） -->
+      <a href="#lab" data-v="lab"><span class="ic">🏢</span><span class="tx">日常台账</span><span class="badge" id="labBadge" style="background:var(--brand)">—</span></a>
+      <a href="#method" data-v="method"><span class="ic">🧪</span><span class="tx">检测方法原理</span><span class="badge" id="methodBadge" style="background:var(--brand)">—</span></a>
       <!-- ★★ 质量管理工具（2026-10-22 用户要求新增）★★
-           排在「实验室」上面一层：
-           质量管理的思路是「先把框架和方法定下来，再落到实验室与车间」，
-           所以它比实验室更上位。16 个工具覆盖体系 / 分析 / 过程 / 现场 / 风险五类。 -->
+           16 个工具覆盖体系 / 分析 / 过程 / 现场 / 风险五类。 -->
       <div class="nav-label">质量管理</div>
       <a href="#qmtools" data-v="qmtools"><span class="ic">🧰</span><span class="tx">质量管理工具</span><span class="badge" id="qmBadge" style="background:var(--brand)">—</span></a>
       <!-- ★★ 研发管理（2026-10-22 用户要求新增）★★
-           位置：质量管理之后、实验室之前。
-           理由：研发是婴配厂的主线业务（配方 → 中试 → 注册 → 上市），
-           质量管理与它并列同级，实验室是研发与质量共用的支撑环节，排后面。 -->
+           理由：研发是婴配厂的主线业务（配方 → 中试 → 注册 → 上市）。 -->
       <div class="nav-label">研发管理</div>
       <a href="#rdtools" data-v="rdtools"><span class="ic">🧬</span><span class="tx">研发管理工具</span><span class="badge" id="rdBadge" style="background:var(--brand)">—</span></a>
-      <div class="nav-label">实验室</div>
-      <!-- 2026-10-22 用户要求：
-           ① 删掉「检验方法卡片」与「录入经验」（要人维护，实际没人录入，显得系统空）
-           ② 新增「工作安全分析 (JSA)」，且排在实验室组**第一位**
-               —— 安全是检测的前提，动手之前先看风险，顺序上应该在方法之前。
-           ③ 只保留「检测方法原理」。
-           2026-11-01：新增「实验室管理」—— 设备/试剂/留样/QC/PT/原始记录
-           七件台账日常事，放在实验室组第一位（它是日常作业入口）。 -->
-      <a href="#lab" data-v="lab"><span class="ic">🏢</span><span class="tx">实验室管理</span><span class="badge" id="labBadge" style="background:var(--brand)">—</span></a>
-      <a href="#jsa" data-v="jsa"><span class="ic">⚠️</span><span class="tx">工作安全分析 (JSA)</span><span class="badge" id="jsaBadge" style="background:var(--high)">—</span></a>
-      <a href="#method" data-v="method"><span class="ic">🧪</span><span class="tx">检测方法原理</span><span class="badge" id="methodBadge" style="background:var(--brand)">—</span></a>
       <div class="nav-label">提醒</div>
-      <a href="#alerts" data-v="alerts"><span class="ic">🔔</span><span class="tx">提醒中心</span><span class="badge">7</span></a>
+      <a href="#alerts" data-v="alerts"><span class="ic">🔔</span><span class="tx">提醒中心</span><span class="badge" id="alertBadge" style="background:var(--high)" title="待处理提醒数">—</span></a>
       <div class="nav-label">配置</div>
       <a href="#admin" data-v="admin"><span class="ic">⚙</span><span class="tx">管理后台</span></a>
     </nav>
@@ -1346,7 +1362,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
       <div class="logo">🛡️</div>
       <div class="tt">
         <h1>食品质量与安全管理系统</h1>
-        <div class="tt-sub">婴配粉检测实验室 · 标准变更 · 质量管理 · 研发管理</div>
+        <div class="tt-sub">标准变更 · 实验室管理 · 质量管理 · 研发管理</div>
       </div>
     </div>
 
@@ -1808,6 +1824,10 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 </div>
 
 <script src="data.js"></script>
+<!-- ★ 全站输入防抖（2026-11-02）★ 必须排在所有组件之前：
+     oninput 触发的整块重绘会把正在编辑的输入框销毁 → 焦点丢失、
+     光标回开头、页面高度变 → 抖动。这个脚本全局兜底。 -->
+<script src="focus.js"></script>
 <!-- ★ 视觉重设计（2026-11-01）★ 深墨蓝 + 翡翠金 · 必须放在最后才能覆盖旧样式 -->
 <link rel="stylesheet" href="theme.css">
 <!-- ★ 用户状态持久化（2026-11-01）★ 必须排在 workbench.js 之前 -->
@@ -3978,12 +3998,22 @@ function snoozeAlert(no, sec, days){
 /* 顶栏待处理数字：实算（高优 + 中优，未处理未忽略） */
 function updateAlertBadge(){
   const btn = $("#alertBtn");
-  if(!btn) return;
   const pend = Store.alerts.pending(ALERTS);
   const hi = pend.filter(a=>a.lvl==="high").length;
   const mid = pend.filter(a=>a.lvl==="mid").length;
-  btn.textContent = pend.length ? ("🔔 " + pend.length + " 条待处理") : "🔔 已清空";
-  btn.title = "高优 " + hi + " 条 · 中优 " + mid + " 条";
+  if(btn){
+    btn.textContent = pend.length ? ("🔔 " + pend.length + " 条待处理") : "🔔 已清空";
+    btn.title = "高优 " + hi + " 条 · 中优 " + mid + " 条";
+  }
+  /* ★ 侧栏徽标也必须实算 ★
+     原来是写死的 <span class="badge">7</span>，永远不变 ——
+     顶栏按钮改了，侧栏这个漏了。用户一眼就看出来是假数。 */
+  const nb = $("#alertBadge");
+  if(nb){
+    nb.textContent = pend.length ? String(pend.length) : "0";
+    nb.title = "待处理 " + pend.length + " 条（高优 " + hi + " · 中优 " + mid + "）";
+    nb.style.background = hi ? "var(--high)" : (pend.length ? "var(--mid)" : "var(--ink3)");
+  }
 }
 
 /* 低优提醒批量标记已处理 */
@@ -4810,7 +4840,7 @@ if(window.addEventListener){
 })();
 
 /* 路由 */
-const TITLES={home:"今日待办",list:"标准清单",law:"法规与体系",cnas:"认可规范（CNAS）",refs:"通则引用标准",detail:"标准详情",method:"检测方法原理",mdetail:"方法原理详情",lab:"实验室管理",jsa:"工作安全分析 JSA",qmtools:"质量管理工具",rdtools:"研发管理",subs:"我的订阅",alerts:"提醒中心",admin:"管理后台"};
+const TITLES={home:"今日待办",list:"标准清单",law:"法规与体系",cnas:"认可规范（CNAS）",refs:"通则引用标准",detail:"标准详情",method:"检测方法原理",mdetail:"方法原理详情",lab:"日常台账",jsa:"工作安全分析 JSA",qmtools:"质量管理工具",rdtools:"研发管理",subs:"我的订阅",alerts:"提醒中心",admin:"管理后台"};
 function route(){
   const h=(location.hash||"#home").slice(1);
   const OK=["home","list","law","cnas","refs","detail","method","mdetail","lab","jsa","qmtools","rdtools","subs","alerts","admin"];

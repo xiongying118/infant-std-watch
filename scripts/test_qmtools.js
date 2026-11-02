@@ -14,18 +14,18 @@ vm.runInNewContext(
 const Q = global.window.STDWATCH_DATA.QMTOOLS;
 const M = Array.isArray(Q) ? Q[0] : Q;
 
-console.log('=== 1. 导航层级（质量管理在实验室上面）===');
+console.log('=== 1. 导航层级（实验室管理在质量管理上面）===');
 const nav = html.slice(html.indexOf('<nav class="nav">'), html.indexOf('</nav>'));
 const labels = [...nav.matchAll(/nav-label">([^<]+)</g)].map(m => m[1]);
 ck(labels.includes('质量管理'), '导航有「质量管理」分组');
-ck(labels.includes('实验室'), '导航仍有「实验室」分组');
-const iq = labels.indexOf('质量管理'), il = labels.indexOf('实验室');
-ck(iq >= 0 && il >= 0 && iq < il,
-   '★ 「质量管理」排在「实验室」上面（实际 ' + labels.join(' → ') + '）');
+ck(labels.includes('实验室管理'), '导航有「实验室管理」分组');
+const iq = labels.indexOf('质量管理'), il = labels.indexOf('实验室管理');
+ck(iq >= 0 && il >= 0 && il < iq,
+   '★ 「实验室管理」排在「质量管理」上面（实际 ' + labels.join(' → ') + '）');
 ck(nav.indexOf('data-v="qmtools"') > nav.indexOf('>质量管理<'),
    '工具入口在质量管理组内');
-ck(nav.indexOf('data-v="qmtools"') < nav.indexOf('data-v="jsa"'),
-   '工具入口在实验室入口之前');
+ck(nav.indexOf('data-v="qmtools"') > nav.indexOf('data-v="jsa"'),
+   '质量管理工具入口在实验室管理之后（实验室管理组整体在前）');
 
 console.log('\n=== 2. 分组 ===');
 const NEED_CATS = ['体系工具', '问题分析', '过程控制', '现场管理', '风险预防'];

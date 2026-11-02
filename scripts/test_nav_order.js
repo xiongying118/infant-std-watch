@@ -33,10 +33,11 @@ console.log('\n=== 校验 ===');
 const groups = rows.map(r => r.group).filter((v, i, a) => a.indexOf(v) === i);
 const gi = {};
 groups.forEach((g, i) => { gi[g] = i; });
-ck('实验室' in gi, '存在「实验室」分组');
+ck('实验室管理' in gi, '存在「实验室管理」分组');
+ck(!('实验室' in gi), '不再有光秃秃的「实验室」分组');
 ck('提醒' in gi, '存在「提醒」分组');
-if ('实验室' in gi && '提醒' in gi) {
-  ck(gi['实验室'] < gi['提醒'], '「实验室」排在「提醒」之前（用户要求）');
+if ('实验室管理' in gi && '提醒' in gi) {
+  ck(gi['实验室管理'] < gi['提醒'], '「实验室管理」排在「提醒」之前（用户要求）');
 }
 
 // 完整性：不能因为移动而丢项
@@ -56,11 +57,12 @@ ck(!hrefs.includes('card-editor.html'), '「录入经验」已下线');
 // 归属：实验室组有「实验室管理」「JSA」「检测方法原理」
 //   2026-11-01：新增「实验室管理」并放在第一位 —— 它是实验室日常作业入口
 //   （设备、试剂、留样、QC、原始记录），比 JSA 更常打开。
-const inLab = rows.filter(r => r.group === '实验室').map(r => r.href);
+const inLab = rows.filter(r => r.group === '实验室管理').map(r => r.href);
 ck(inLab.includes('#lab') && inLab.includes('#jsa') && inLab.includes('#method'),
-   '实验室管理 / JSA / 检测方法原理都在「实验室」组');
-ck(inLab[0] === '#lab', '★ 实验室管理排在实验室组第一位（实际 ' + inLab[0] + '）');
-ck(inLab[1] === '#jsa', '★ JSA 排在实验室管理之后、方法原理之前（实际 ' + inLab[1] + '）');
+   'JSA / 日常台账 / 检测方法原理都在「实验室管理」组');
+ck(inLab[0] === '#jsa', '★ JSA 排在实验室管理组第一位（实际 ' + inLab[0] + '）');
+ck(inLab[1] === '#lab', '★ 日常台账排在 JSA 之后（实际 ' + inLab[1] + '）');
+ck(inLab[2] === '#method', '★ 检测方法原理排第三（实际 ' + inLab[2] + '）');
 ck(rows.find(r => r.href === '#alerts').group === '提醒', '提醒中心归属「提醒」组');
 
 // ★ 2026-10-22 用户截图：长导航名折行，把徽标挤成竖条 ★
@@ -95,6 +97,12 @@ ck(/\.nav a \.tx \.sub\{[^}]*display:block/.test(html), '.sub 是块级（换行
 ck(!/婴配标准变更提醒/.test(html.slice(html.indexOf('<div class="brand">'),
                                          html.indexOf('</nav>'))),
    '侧栏品牌区已删副标题');
+ck(/标准变更 · 实验室管理 · 质量管理 · 研发管理/.test(html),
+   '副标题是「标准变更 · 实验室管理 · 质量管理 · 研发管理」');
+if ('实验室管理' in gi && '质量管理' in gi) {
+  ck(gi['实验室管理'] < gi['质量管理'],
+     '★「实验室管理」排在「质量管理」上面（用户 2026-11-02 要求）');
+}
 ck(!/婴配标准变更提醒 · 实验室安全 · 方法原理/.test(html),
    '居中品牌头已删副标题');
 

@@ -357,59 +357,53 @@
                   style="background:${g.color}1a;color:${g.color};flex-shrink:0">${g.k}</span>
           </div>
           <div class="jcard-body">
-            <div class="jcard-fields">
-              <div class="jfield">
-                <label>潜在危害</label>
-                <textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'hazard',this.value);JSAW.autoGrow(this)">${esc(s.hazard)}</textarea>
-              </div>
-              <div class="jfield">
-                <label>可能导致的事件</label>
-                <textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'event',this.value);JSAW.autoGrow(this)">${esc(s.event)}</textarea>
-              </div>
-              <div class="jfield">
-                <label>现有控制措施</label>
-                <textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'control',this.value);JSAW.autoGrow(this)">${esc(s.control)}</textarea>
-              </div>
-              <div class="jfield">
-                <label>建议补充措施${r>=10?"（必须填）":"（可选）"}</label>
-                <textarea rows="2" placeholder="${r>=10?"这一步风险高，建议措施必填":"没有就留空"}"
-                  oninput="JSAW.setStep(${CUR_ZONE},${si},'add',this.value);JSAW.autoGrow(this)">${esc(s.add)}</textarea>
-              </div>
+            <div class="jfield">
+              <label>潜在危害</label>
+              <textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'hazard',this.value);JSAW.autoGrow(this)">${esc(s.hazard)}</textarea>
             </div>
-            <div class="jcard-risk">
-              <div class="jrisks">
-                <div class="jrisk">
-                  <label>L</label>
-                  <input type="number" min="1" max="5" value="${s.L}" class="lvl-in"
-                    oninput="JSAW.setStep(${CUR_ZONE},${si},'L',this.value)">
-                </div>
-                <div class="jrisk">
-                  <label>S</label>
-                  <input type="number" min="1" max="5" value="${s.S}" class="lvl-in"
-                    oninput="JSAW.setStep(${CUR_ZONE},${si},'S',this.value)">
-                </div>
-                <div class="jrisk">
-                  <label>R = L×S</label>
-                  <div class="rv" style="color:${g.color}">${r}</div>
-                </div>
-              </div>
-              <div class="jfield jfield-inline">
-                <label>责任人</label>
-                <input type="text" value="${esc(s.owner)}"
-                  oninput="JSAW.setStep(${CUR_ZONE},${si},'owner',this.value)">
-              </div>
-              <div class="jfield jfield-inline">
-                <label>期限</label>
-                <input type="date" value="${esc(s.due)}"
-                  oninput="JSAW.setStep(${CUR_ZONE},${si},'due',this.value)">
-              </div>
-              <div class="jcard-act">
-                ${s.add && String(s.add).trim()
-                  ? `<button class="btn xs ${s.done?"ok":""}" title="${s.done?"已落实，点击撤销":"标记措施已落实"}"
-                       onclick="JSAW.toggleDone(${CUR_ZONE},${si})">${s.done?"✓ 已落实":"○ 标记落实"}</button>`
-                  : ""}
-                <button class="x" onclick="JSAW.delStep(${CUR_ZONE},${si})" title="删除这一步">×</button>
-              </div>
+            <div class="jfield">
+              <label>可能的事件</label>
+              <textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'event',this.value);JSAW.autoGrow(this)">${esc(s.event)}</textarea>
+            </div>
+            <div class="jfield">
+              <label>现有控制</label>
+              <textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'control',this.value);JSAW.autoGrow(this)">${esc(s.control)}</textarea>
+            </div>
+            <div class="jfield">
+              <label>补充措施${r>=10?"<span class=\"req\">必填</span>":""}</label>
+              <textarea rows="2" placeholder="${r>=10?"风险偏高，补充措施必填":"没有就留空"}"
+                oninput="JSAW.setStep(${CUR_ZONE},${si},'add',this.value);JSAW.autoGrow(this)">${esc(s.add)}</textarea>
+            </div>
+            <div class="jrisk">
+              <label>L</label>
+              <input type="number" min="1" max="5" value="${s.L}" class="lvl-in"
+                oninput="JSAW.setStep(${CUR_ZONE},${si},'L',this.value)">
+            </div>
+            <div class="jrisk">
+              <label>S</label>
+              <input type="number" min="1" max="5" value="${s.S}" class="lvl-in"
+                oninput="JSAW.setStep(${CUR_ZONE},${si},'S',this.value)">
+            </div>
+            <div class="jrisk jrisk-r">
+              <label>R = L×S</label>
+              <div class="rv" style="color:${g.color}">${r}</div>
+            </div>
+            <div class="jfield jf-owner">
+              <label>责任人</label>
+              <input type="text" value="${esc(s.owner)}"
+                oninput="JSAW.setStep(${CUR_ZONE},${si},'owner',this.value)">
+            </div>
+            <div class="jfield jf-due">
+              <label>期限</label>
+              <input type="date" value="${esc(s.due)}"
+                oninput="JSAW.setStep(${CUR_ZONE},${si},'due',this.value)">
+            </div>
+            <div class="jcard-act">
+              ${s.add && String(s.add).trim()
+                ? `<button class="btn xs ${s.done?"ok":""}" title="${s.done?"已落实，点击撤销":"标记措施已落实"}"
+                     onclick="JSAW.toggleDone(${CUR_ZONE},${si})">${s.done?"✓":"○"}</button>`
+                : ""}
+              <button class="x" onclick="JSAW.delStep(${CUR_ZONE},${si})" title="删除这一步">×</button>
             </div>
           </div>
           ${s.done ? `<div class="jcard-res">

@@ -20,8 +20,8 @@ const labels = [...nav.matchAll(/nav-label">([^<]+)</g)].map(m => m[1]);
 ck(labels.includes('研发管理'), '导航有「研发管理」分组');
 ck(labels.indexOf('质量管理') < labels.indexOf('研发管理'),
    '研发管理排在质量管理之后');
-ck(labels.indexOf('研发管理') < labels.indexOf('实验室'),
-   '★ 研发管理排在实验室之前');
+ck(labels.indexOf('研发管理') > labels.indexOf('实验室管理'),
+   '★ 研发管理排在实验室管理之后（用户 2026-11-02 要求实验室管理在前）');
 ck(nav.indexOf('data-v="rdtools"') > nav.indexOf('>研发管理<'),
    '入口在研发管理组内');
 // 入口必须有 .tx 包裹（漏了会折行 + 徽标被挤扁）

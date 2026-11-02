@@ -17,13 +17,13 @@ ck(/if\(v==="method"\) renderMethod\(\);/.test(html), 'route 调用 renderMethod
 ck(/id="methodList"/.test(html) && /id="methodSearch"/.test(html), '视图含列表/搜索框');
 ck(/id="mdetailBox"/.test(html), '存在 mdetailBox');
 
-// 导航归属：method 必须在「实验室」组内
+// 导航归属：method 必须在「实验室管理」组内
 const nav = html.slice(html.indexOf('<nav class="nav">'), html.indexOf('</nav>'));
-const labStart = nav.indexOf('>实验室<');
+const labStart = nav.indexOf('>实验室管理<');
 const remStart = nav.indexOf('>提醒<');
 const mPos = nav.indexOf('data-v="method"');
 ck(labStart > 0 && mPos > labStart && (remStart < 0 || mPos < remStart),
-   'method 入口归属「实验室」组');
+   'method 入口归属「实验室管理」组');
 
 console.log('\n=== 2. 数据 ===');
 global.window = {};
