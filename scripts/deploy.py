@@ -179,6 +179,13 @@ def changed_files():
     for root, dirs, files in os.walk(ROOT):
         dirs[:] = [d for d in dirs
                    if d not in (".git", "node_modules", "__pycache__")]
+        # ★ 本机临时目录不算改动 ★
+        #   .workbuddy/tmp 下 785 个文件（50 MB 快照）mtime 都是新的，
+        #   不排除的话每次都被判成 full，白烧 20 分钟。
+        if ".workbuddy" in os.path.relpath(root, ROOT).replace("\\", "/").split("/")[:2]:
+            if os.path.basename(root) == "tmp":
+                dirs[:] = []
+                continue
         for fn in files:
             p = os.path.join(root, fn)
             try:
@@ -295,8 +302,12 @@ def main():
 
     if not a.no_push:
         print("\n=== 2. 提交并推送 ===")
-        rc, out, err = sh('"%s" scripts/rebuild_repo.py' % PY)
-        m = re.search(r"commit = (\w+)", out)
+        # ★ 用增量推送，不用 rebuild_repo.py ★
+        #   rebuild_repo.py 每次把本地全部文件（371 个，含 .workbuddy/tmp
+        #   下 785 个 50MB 临时文件）逐个重传，网络一慢就是 20+ 分钟。
+        #   push_incremental.py 只传内容变了的文件（实测 116 个，3 分钟）。
+        rc, out, err = sh('"%s" scripts/push_incremental.py' % PY)
+        m = re.search(r"commit (\w+)", out)
         print("  " + (("commit " + m.group(1)) if m
                     else (out.strip()[-200:] or err.strip()[-200:])))
         if rc != 0 and "OK" not in out:

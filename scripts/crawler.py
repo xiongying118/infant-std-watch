@@ -854,12 +854,36 @@ def run_once(source_codes: list[str] | None = None, run_extras: bool = True) -> 
         try:
             log.info("[%s] 开始抓取 %s（%d 个检索词）", code, base, len(query_terms))
             stds = fetch_source(code, query_terms)
-            if not stds and not load_snapshot(code):
-                # 空结果 + 无历史快照 = 这个源我们没真正接通，别假装成功
-                raise RuntimeError("返回 0 条且无历史快照，视为未接通（可能接口变更或被风控）")
+            old = load_snapshot(code)
+            if not stds:
+                if not old:
+                    # 空结果 + 无历史快照 = 这个源我们没真正接通，别假装成功
+                    raise RuntimeError("返回 0 条且无历史快照，视为未接通（可能接口变更或被风控）")
+                # ★★ 空结果但有历史快照 = 本次站点抽风，**沿用上一版** ★★
+                #   原来的写法会一路走下去，把快照覆盖成空 dict，
+                #   标准清单当场少几十条 —— 而且结构完全合法，
+                #   只有条数合理性闸门才拦得住。
+                #   实测 2026-11-02：SRC-08 团标站返回 0 条（上次 54 条），
+                #   assoc 分类从 61 掉到 11，STD 341→293，被闸门拦下没上线。
+                #
+                #   判断依据：源从「几十条」瞬间变「0 条」几乎不可能是真的
+                #   （标准不会同一天全部作废），站点接口抽风才是常态。
+                #   所以这里保留旧快照，只记一条警告，不产生「批量下架」事件。
+                log.warning("[%s] 本次返回 0 条，沿用上次快照的 %d 条"
+                            "（站点可能临时抽风，不当作下架）", code, len(old))
+                counts[code] = len(old)
+                con = _con()
+                con.execute(
+                    "INSERT INTO crawl_logs(level,source_code,message,cost_ms)"
+                    " VALUES('warning',?,?,?)",
+                    (code, f"返回 0 条，沿用上次快照 {len(old)} 条",
+                     int((time.time() - t0) * 1000)))
+                con.commit()
+                con.close()
+                time.sleep(2)                      # 源之间 2 秒礼貌间隔
+                continue
             new = {s.norm(): {**asdict(s), "row_hash": s.row_hash(),
                               "days_to_implement": s.days_to_implement()} for s in stds}
-            old = load_snapshot(code)
             first_run = len(old) == 0
             events = diff_snapshots(old, new, first_run) + countdown_events(old, new)
             log.info("[%s] 抓取 %d 条，%s变更事件 %d 条",

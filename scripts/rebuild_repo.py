@@ -98,6 +98,12 @@ def collect():
         rel_base = os.path.relpath(base, ROOT).replace("\\", "/")
         if rel_base == ".":
             rel_base = ""
+        # ★ 本机临时目录不推 ★
+        #   .workbuddy/tmp 下有 4 份 13 MB 的 baseline 快照 + 各种探针文件，
+        #   一次就是 50+ MB 垃圾，仓库里完全用不到。
+        if rel_base.startswith(".workbuddy/tmp"):
+            dirs[:] = []
+            continue
         for fn in files:
             if fn.endswith(SKIP_SUFFIX):
                 continue
