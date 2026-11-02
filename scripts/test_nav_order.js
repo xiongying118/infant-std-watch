@@ -53,11 +53,14 @@ const hrefs = rows.map(r => r.href);
 ck(!hrefs.includes('cards.html'), '「检验方法卡片」已下线');
 ck(!hrefs.includes('card-editor.html'), '「录入经验」已下线');
 
-// 归属：JSA 与方法原理都在「实验室」组，且 JSA 排第一
+// 归属：实验室组有「实验室管理」「JSA」「检测方法原理」
+//   2026-11-01：新增「实验室管理」并放在第一位 —— 它是实验室日常作业入口
+//   （设备、试剂、留样、QC、原始记录），比 JSA 更常打开。
 const inLab = rows.filter(r => r.group === '实验室').map(r => r.href);
-ck(inLab.includes('#jsa') && inLab.includes('#method'),
-   'JSA 与检测方法原理都在「实验室」组');
-ck(inLab[0] === '#jsa', '★ JSA 排在实验室组第一位（实际 ' + inLab[0] + '）');
+ck(inLab.includes('#lab') && inLab.includes('#jsa') && inLab.includes('#method'),
+   '实验室管理 / JSA / 检测方法原理都在「实验室」组');
+ck(inLab[0] === '#lab', '★ 实验室管理排在实验室组第一位（实际 ' + inLab[0] + '）');
+ck(inLab[1] === '#jsa', '★ JSA 排在实验室管理之后、方法原理之前（实际 ' + inLab[1] + '）');
 ck(rows.find(r => r.href === '#alerts').group === '提醒', '提醒中心归属「提醒」组');
 
 // ★ 2026-10-22 用户截图：长导航名折行，把徽标挤成竖条 ★

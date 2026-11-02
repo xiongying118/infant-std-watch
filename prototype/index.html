@@ -260,6 +260,16 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .rem-item.read .dot{background:var(--line)}
 .rem-item .tx{flex:1;font-size:13.5px}
 .rem-item .tm{font-size:11.5px;color:var(--ink3);white-space:nowrap}
+/* ★ 已处理的提醒 / 已完成的待办（2026-11-01）★
+   处理完的事要让用户一眼看出来，但不能用红色警告 —— 那是「还没做」的语义。
+   用灰色 + 左侧浅绿条表示「做完了」。 */
+.alert.is-done{opacity:.62;background:#f7faf8;border-left-color:var(--low)!important}
+.alert.is-done .h .t{text-decoration:line-through;text-decoration-color:var(--ink3)}
+.alert.is-snoozed{opacity:.72}
+.alert.is-snoozed .h .t{font-style:italic}
+.rem-item.todo-done .tx{text-decoration:line-through;text-decoration-color:var(--ink3)}
+.rem-item .x{border:0;background:transparent;color:var(--ink3);cursor:pointer;padding:0 2px;line-height:1;font-size:15px}
+.rem-item .x:hover{color:var(--high)}
 .filters,.chips{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .chip .cnt{margin-left:5px;opacity:.6;font-size:11px}
 .grouprow td{background:#f7f9fc;font-weight:600;font-size:12.5px;color:var(--ink2);padding:7px 10px;border-top:1px solid var(--line)}
@@ -662,6 +672,182 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .matrix{border-collapse:separate;border-spacing:2px;font-size:12px}
 .matrix th{padding:7px 10px;font-weight:600;font-size:11.5px}
 .matrix td{padding:9px 12px;width:62px;text-align:center;border-radius:4px}
+
+/* ===== ledger 通用台账（2026-11-01）=====
+   与 JSA 编辑表格同风格：单元格内直接改，改完即时落盘 */
+.ledger-tbl input,.ledger-tbl select,.ledger-tbl textarea{
+  width:100%;border:1px solid transparent;background:transparent;border-radius:5px;
+  padding:4px 6px;font-family:inherit;font-size:12.5px;line-height:1.55;color:var(--ink);
+}
+.ledger-tbl textarea{resize:vertical;min-height:40px}
+.ledger-tbl input:hover,.ledger-tbl select:hover,.ledger-tbl textarea:hover{
+  border-color:var(--line);background:var(--panel);
+}
+.ledger-tbl input:focus,.ledger-tbl select:focus,.ledger-tbl textarea:focus{
+  outline:none;border-color:var(--brand);background:#fff;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent);
+}
+.ledger-tbl input[readonly]{background:rgba(0,0,0,.02);color:var(--ink2)}
+.ledger-tbl th.sorted{color:var(--brand);cursor:pointer}
+.ledger-tbl th.sorted:hover{background:rgba(0,0,0,.03)}
+.ledger-tbl td{padding:4px 5px;vertical-align:top}
+.ledger-tbl tbody tr:hover{background:rgba(0,0,0,.015)}
+.ledger-tbl .x{border:0;background:transparent;color:var(--ink3);cursor:pointer;
+  padding:0 3px;font-size:14px;line-height:1}
+.ledger-tbl .x:hover{color:var(--high)}
+.ledger-tbl tr.bad td{background:rgba(220,38,38,.045)}
+.ledger-tbl tr.warn td{background:rgba(245,158,11,.055)}
+.ledger-tbl tr.bad td:first-child{box-shadow:inset 3px 0 0 var(--high)}
+.ledger-tbl tr.warn td:first-child{box-shadow:inset 3px 0 0 var(--mid)}
+
+/* ===== 卡片式台账（列多时用：一行一条记录，字段横排，不再被压扁）===== */
+.ledger-cards{display:flex;flex-direction:column}
+/* 卡片里的 input 必须自己控宽 —— 全局 input{width:100%} 会把 grid 撑破。
+   min-width:0 是关键：grid item 的默认最小尺寸是 auto，
+   input 的 size 属性默认宽度（约 20 字符）会把列撑开。 */
+.ledger-cards input,.ledger-cards select,.ledger-cards textarea{
+  width:auto;max-width:100%;min-width:0;box-sizing:border-box;
+}
+.lcard{
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:14px;
+  padding:13px 16px;border-bottom:1px solid var(--line2);
+  min-width:0;overflow:hidden;
+}
+.lcard>*{min-width:0}
+/* 左：身份信息；右：校准信息；操作按钮固定在最右 */
+.lcard-h,.lcard-use{flex:1 1 260px}
+.lcard-f{flex:3 1 460px}
+.lcard-act{flex:0 0 42px;display:flex;gap:4px;align-items:center;padding-top:4px}
+/* 自动卡片化：主区（身份）＋ 次区（横排字段）＋ 宽字段区（长文本） */
+.lcard-main{flex:1 1 250px;display:flex;flex-wrap:wrap;gap:7px 10px;align-items:center;min-width:0}
+.lcard-main>label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--ink3);min-width:0}
+.lcard-main>label .lfl{font-size:10px;letter-spacing:.02em}
+.lcard-main>label input[type=checkbox]{width:16px;height:16px;accent-color:var(--brand)}
+.lcard-main>label input:not([type=checkbox]),.lcard-main>label select{
+  font-size:12.5px;font-weight:500;color:var(--ink);padding:3px 7px;
+  border:1px solid transparent;border-radius:5px;background:transparent;
+  min-width:0;max-width:100%;
+}
+.lcard-main>label input:not([type=checkbox]):hover,.lcard-main>label select:hover{
+  border-color:var(--line);background:var(--panel);
+}
+.lcard-main>label input:not([type=checkbox]):focus,.lcard-main>label select:focus{
+  outline:none;border-color:var(--brand);background:var(--panel);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent);
+}
+.lcard-wide{flex:1 1 100%;display:flex;flex-direction:column;gap:6px}
+.lcard-wide>label{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--ink3)}
+.lcard-wide>label .lfl{font-size:10px}
+.lcard-wide>label input,.lcard-wide>label textarea,.lcard-wide>label select{
+  font-size:12.5px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;
+  font-family:inherit;background:var(--panel);color:var(--ink);width:100%;
+}
+.lcard-wide>label textarea{resize:vertical;min-height:34px;line-height:1.55}
+.lcard-wide>label input:focus,.lcard-wide>label textarea:focus,.lcard-wide>label select:focus{
+  outline:none;border-color:var(--brand);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent);
+}
+.lcard-f>label .lfl{font-size:10px;letter-spacing:.02em}
+.lcard-f>label input,.lcard-f>label select,.lcard-f>label textarea{
+  font-size:12px;padding:4px 7px;border:1px solid var(--line);border-radius:5px;
+  font-family:inherit;background:var(--panel);color:var(--ink);width:100%;min-width:0;
+}
+.lcard-f>label input:focus,.lcard-f>label select:focus,.lcard-f>label textarea:focus{
+  outline:none;border-color:var(--brand);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent);
+}
+.lcard:last-child{border-bottom:none}
+.lcard:hover{background:rgba(0,0,0,.015)}
+.lcard.bad{background:rgba(220,38,38,.045);box-shadow:inset 3px 0 0 var(--high)}
+.lcard.warn{background:rgba(245,158,11,.055);box-shadow:inset 3px 0 0 var(--mid)}
+.lcard-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lcard-h .lc-id{
+  font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--ink3);
+  border:1px solid var(--line);border-radius:5px;padding:2px 7px;background:rgba(0,0,0,.02);
+  width:78px;text-align:center;flex-shrink:0;
+}
+.lcard-h .lc-nm{
+  font-weight:600;font-size:14px;flex:1 1 130px;min-width:120px;
+  border-color:transparent;padding:4px 6px;
+}
+.lcard-h input[type=checkbox]{
+  width:15px;height:15px;accent-color:var(--brand);flex-shrink:0;margin:0;
+}
+.lcard-sub{
+  display:flex;gap:7px;flex-wrap:wrap;width:100%;font-size:11.5px;align-items:center;
+}
+.lcard-sub .lc-in{
+  min-width:76px;max-width:190px;padding:2px 6px;font-size:11.5px;
+  background:rgba(0,0,0,.02);border-color:transparent;
+}
+.lcard-use{margin-top:7px;display:flex;flex-direction:column;gap:5px;font-size:11.5px}
+.lcard-use .lc-full{width:100%;font-size:12.5px;padding:4px 6px}
+.lcard-use .lc-in{
+  min-width:86px;max-width:200px;padding:2px 6px;font-size:11.5px;
+  background:rgba(0,0,0,.02);border-color:transparent;
+}
+.lcard-f{
+  display:flex;flex-wrap:wrap;gap:9px 12px;align-items:flex-end;min-width:0;
+}
+.lcard-f label{
+  display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--ink3);
+  flex:0 1 112px;min-width:0;
+}
+.lcard-f label.wide{flex:1 1 100%}
+.lcard-f input,.lcard-f select{
+  font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:5px;
+  font-family:inherit;background:var(--panel);color:var(--ink);width:100%;min-width:0;
+}
+.lcard-f input[type=date]{padding:4px 6px}
+.lcard-f input:focus,.lcard-f select:focus{
+  outline:none;border-color:var(--brand);box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent);
+}
+.lcard-f .tag{align-self:flex-start;margin-top:3px;padding:2px 8px}
+.lcard-act .x{
+  border:0;background:transparent;color:var(--ink3);cursor:pointer;
+  padding:0 5px;font-size:15px;line-height:1.3;
+}
+.lcard-act .x:hover{color:var(--high)}
+@media(max-width:1080px){
+  .lcard{grid-template-columns:1fr;gap:11px}
+}
+
+/* ===== JSA 工作台（2026-11-01）=====
+   可编辑表格：输入框直接嵌在单元格里，边改边算。 */
+.jsa-edit td{padding:5px 6px}
+.jsa-edit input,.jsa-edit textarea{
+  width:100%;border:1px solid transparent;background:transparent;border-radius:5px;
+  padding:5px 6px;font-family:inherit;font-size:12.5px;line-height:1.6;color:var(--ink);
+  resize:vertical;
+}
+.jsa-edit textarea{min-height:44px}
+.jsa-edit input:hover,.jsa-edit textarea:hover{border-color:var(--line);background:var(--panel)}
+.jsa-edit input:focus,.jsa-edit textarea:focus{
+  outline:none;border-color:var(--brand);background:#fff;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent);
+}
+.jsa-edit .lvl-in{text-align:center;font-weight:700;font-size:14px;max-width:56px}
+.jsa-edit .rv{font-size:15px}
+.jsa-edit tr.hl{background:#fffbea!important;box-shadow:inset 3px 0 0 var(--mid)}
+.jsa-edit tr.g-crit td:first-child{box-shadow:inset 3px 0 0 #b91c1c}
+.jsa-edit tr.g-hi td:first-child{box-shadow:inset 3px 0 0 #c2410c}
+.jsa-edit tr.g-mid td:first-child{box-shadow:inset 3px 0 0 #b45309}
+.jsa-edit tr.g-low td:first-child{box-shadow:inset 3px 0 0 #15803d}
+.jsa-edit tr.res-row td{background:#f4faf6;padding:7px 12px;font-size:12px}
+.jsa-edit tr.res-row .btn.xs{margin-left:6px}
+.btn.xs{padding:2px 7px;font-size:11px;border-radius:5px}
+.btn.xs.ok{background:#15803d;color:#fff;border-color:#15803d}
+
+/* 风险矩阵 */
+.jsa-matrix-wrap{overflow-x:auto}
+.jsa-matrix{border-collapse:separate;border-spacing:3px;font-size:12px;width:100%}
+.jsa-matrix th{padding:6px 8px;font-weight:600;font-size:11.5px;color:var(--ink2);
+  background:var(--panel);border-radius:5px;white-space:nowrap}
+.jsa-matrix td{padding:8px 9px;border-radius:6px;vertical-align:top;
+  border:1px solid var(--line2);min-width:86px;transition:filter .12s}
+.jsa-matrix td:hover{filter:brightness(.97)}
+.lg{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2)}
+.lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .warn-line{
   padding:9px 12px;margin:0 0 12px;font-size:12.5px;line-height:1.75;
   background:#fffbeb;border:1px solid #fde68a;border-radius:6px;color:#92400e;
@@ -1040,7 +1226,10 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
            ① 删掉「检验方法卡片」与「录入经验」（要人维护，实际没人录入，显得系统空）
            ② 新增「工作安全分析 (JSA)」，且排在实验室组**第一位**
                —— 安全是检测的前提，动手之前先看风险，顺序上应该在方法之前。
-           ③ 只保留「检测方法原理」。 -->
+           ③ 只保留「检测方法原理」。
+           2026-11-01：新增「实验室管理」—— 设备/试剂/留样/QC/PT/原始记录
+           七件台账日常事，放在实验室组第一位（它是日常作业入口）。 -->
+      <a href="#lab" data-v="lab"><span class="ic">🏢</span><span class="tx">实验室管理</span><span class="badge" id="labBadge" style="background:var(--brand)">—</span></a>
       <a href="#jsa" data-v="jsa"><span class="ic">⚠️</span><span class="tx">工作安全分析 (JSA)</span><span class="badge" id="jsaBadge" style="background:var(--high)">—</span></a>
       <a href="#method" data-v="method"><span class="ic">🧪</span><span class="tx">检测方法原理</span><span class="badge" id="methodBadge" style="background:var(--brand)">—</span></a>
       <div class="nav-label">提醒</div>
@@ -1065,7 +1254,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
       <h2 id="pgTitle">今日待办</h2>
       <div class="sp"></div>
       <div class="search"><span class="muted">🔍</span><input placeholder="搜标准号，如 GB 10765" onkeydown="if(event.key==='Enter'){location.hash='#list';doSearch(this.value)}"></div>
-      <button class="btn pri" onclick="location.hash='#alerts'">🔔 7 条待处理</button>
+      <button class="btn pri" id="alertBtn" onclick="location.hash='#alerts'">🔔 待处理</button>
     </header>
 
     <!-- ★★ 居中品牌头（2026-10-22 用户要求）★★
@@ -1075,6 +1264,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
       <div class="logo">🛡️</div>
       <div class="tt">
         <h1>食品质量与安全管理系统</h1>
+        <div class="tt-sub">婴配粉检测实验室 · 标准变更 · 质量管理 · 研发管理</div>
       </div>
     </div>
 
@@ -1147,7 +1337,12 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
       </div>
 
       <div class="card">
-        <div class="card-h"><h3>下一步该做什么</h3></div>
+        <div class="card-h"><h3>下一步该做什么</h3>
+          <span class="muted" id="todoStat">—</span>
+          <div class="sp"></div>
+          <button class="btn sm" onclick="addTodoItem()">+ 加一条</button>
+          <button class="btn sm" onclick="exportTodoCsv()">导出</button>
+        </div>
         <div id="todoList"></div>
       </div>
     </div>
@@ -1156,9 +1351,14 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
     <div class="view hide" id="v-list">
       <div class="tabs" id="listTabs"></div>
       <div class="chips" id="subTabs" style="margin-bottom:12px"></div>
-      <div class="flex" style="margin-bottom:12px">
+      <div class="flex" style="margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <span class="muted" id="listCnt"></span>
         <div class="sp" style="flex:1"></div>
+        <button class="btn sm" onclick="exportStdCsv()">⬇ 导出当前筛选（CSV）</button>
+        <button class="btn sm" onclick="exportImpactCsv()">⬇ 导出换版影响清单</button>
+        <button class="btn sm" onclick="showImpactPanel()">换版影响分析</button>
+        <button class="btn sm" onclick="sortStdBy('imp')">按实施日期排</button>
+        <button class="btn sm" onclick="sortStdBy('pub')">按发布日期排</button>
         <span class="muted">数据来源：3 个官方源实抓，含产品标准正文引用的标准</span>
       </div>
       <div class="card" style="padding:0;overflow:hidden">
@@ -1178,6 +1378,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
         </table>
         </div>
       </div>
+      <div id="impactPanel"></div>
     </div>
 
     <!-- ===== 法律法规与体系标准 ===== -->
@@ -1312,6 +1513,30 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
       <div id="qmDetail"></div>
     </div>
 
+    <!-- ===== 实验室管理（2026-11-01 新增）===== -->
+    <div class="view hide" id="v-lab">
+      <div class="notice">
+        <span>🏢</span>
+        <div>
+          <b>这一页是实验室的日常作业台账 —— 设备、试剂、留样、质控、能力验证、原始记录。</b>
+          以前这些全靠 Excel 和脑子，谁负责、什么时候到期、出了什么问题，全靠人记。
+          <br><br>
+          <b>七件工具：</b>
+          ① <b>检测能力矩阵</b> —— 客户问「能测什么、什么方法、多久、多少钱」，直接给这张表；
+          ② <b>计量设备台账</b> —— 校准超期自动标红，溯源证书号可查；
+          ③ <b>试剂与危化品</b> —— 效期预警 + GB 13690 危险品分类；
+          ④ <b>样品与留样</b> —— 留存期限、到期处置提醒；
+          ⑤ <b>质量控制</b> —— 空白/平行样/加标/标准物质四件套，QC 超限必须闭环；
+          ⑥ <b>能力验证</b> —— PT 与实验室间比对的计划、结果、可疑值分析；
+          ⑦ <b>原始记录生成器</b> —— 选方法出空白表单，打印后手填签字。
+          <br><br>
+          <b>数据只存在本机</b>，改完刷新不丢；在「管理后台 → 本机数据」可导出备份。
+        </div>
+      </div>
+      <div class="tabs" id="labTabs"></div>
+      <div id="labBody"></div>
+    </div>
+
     <!-- ===== 工作安全分析 JSA ===== -->
     <div class="view hide" id="v-jsa">
       <div class="notice">
@@ -1326,10 +1551,14 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
           涉及<b>伤亡 / 中毒 / 职业禁忌</b>的条目，无论 R 多少，
           严重度 <b>S 不得低于 3</b>，默认中等以上风险。
           <br><br>
-          <b>⚠ 本页是空白模板与规则，不代你签字。</b>
-          「工作危害分析」里那7 条是<b>克罗诺杆菌的示例</b>，
-          要按你自己实验室的实际作业重填。
-          审批栏与日期<b>必须手签</b> —— 这是要留档的正式记录。
+          <b>这一页是可以直接用的工作台：</b>
+          表格里的<b>每一步、每个 L/S 评级、每条控制措施都能直接改</b>，
+          改完 <b>R 值、风险等级、顶部统计、风险矩阵会立即跟着变</b>；
+          填了建议措施并标记「已落实」，残余风险自动算出来。
+          <b>导出 CSV / Word / 打印视图</b>，拿去签字归档。
+          <br><br>
+          <b>⚠ 签字与日期必须手签</b> —— 这是要留档的正式记录；
+          本工具帮你把表填完整、把风险算对，<b>不代你签字</b>。
         </div>
       </div>
 
@@ -1386,6 +1615,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
         <div class="sp" style="flex:1"></div>
         <button class="btn sm" onclick="subAll(true)">全选</button>
         <button class="btn sm" onclick="subAll(false)">全不选</button>
+        <button class="btn sm" onclick="exportSubsCsv()">⬇ 导出订阅</button>
         <button class="btn pri sm" onclick="saveSubs()">保存订阅</button>
       </div>
       <div class="sub-grid" id="subGrid"></div>
@@ -1401,19 +1631,14 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 
     <!-- ===== 提醒中心 ===== -->
     <div class="view hide" id="v-alerts">
-      <div class="flex" style="margin-bottom:14px">
+      <div class="flex" style="margin-bottom:14px;flex-wrap:wrap;gap:8px">
         <div class="filters" id="alertFilters">
           <button class="chip on" data-lvl="all">全部</button>
-          <button class="chip" data-lvl="erata">勘误 8</button>
-          <button class="chip" data-lvl="high">换版·高优 3</button>
-          <button class="chip" data-lvl="mid">中 4</button>
-          <button class="chip" data-lvl="low">低 1</button>
-          <button class="chip" data-lvl="unread">未读</button>
         </div>
         <div class="sp" style="flex:1"></div>
-        <button class="btn sm" onclick="toast('已加入本地待办清单')">标记已处理</button>
-        <button class="btn sm" onclick="toast('周报已生成：本周变更 PDF 已就绪')">导出周报</button>
-        <button class="btn pri sm" onclick="toast('周报已发送至你的邮箱')">推送周报</button>
+        <button class="btn sm" onclick="markAllLowDone()">低优全部标记已处理</button>
+        <button class="btn sm" onclick="exportAlertCsv()">导出待办 CSV</button>
+        <button class="btn sm" onclick="resetAlertState()">重置处理记录</button>
       </div>
       <div class="card">
         <div id="alertList"></div>
@@ -1477,6 +1702,19 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
         </table>
         </div>
       </div>
+
+      <!-- ===== 本机数据管理（2026-11-01 新增）===== -->
+      <div class="card">
+        <div class="card-h"><h3>本机数据</h3>
+          <span class="muted">订阅、已处理记录、待办、工具草稿都存在这台电脑的浏览器里</span></div>
+        <div class="notice" style="margin-bottom:12px">
+          <span>💾</span>
+          <div><b>数据只存在本机，不上传任何服务器。</b>
+            换电脑或清浏览器缓存会丢 —— 用下面的「导出备份」存一份 JSON，
+            新机器上「导入备份」即可恢复全部勾选与草稿。</div>
+        </div>
+        <div id="localStateBox"></div>
+      </div>
     </div>
 
     <div id="dlgHost"></div>
@@ -1488,6 +1726,22 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 </div>
 
 <script src="data.js"></script>
+<!-- ★ 视觉重设计（2026-11-01）★ 深墨蓝 + 翡翠金 · 必须放在最后才能覆盖旧样式 -->
+<link rel="stylesheet" href="theme.css">
+<!-- ★ 用户状态持久化（2026-11-01）★ 必须排在 workbench.js 之前 -->
+<script src="store.js"></script>
+<!-- ★ 实验室台账数据（2026-11-01）★ 设备/试剂/留样/质控/人员/能力矩阵 -->
+<script src="labdata.js"></script>
+<!-- ★ 实验室新增 8 个模块的种子数据（2026-11-01）★ 委托单/CAPA/排班/配制/出入库/报告/内审/环境 -->
+<script src="labdata2.js"></script>
+<!-- ★ 通用台账工作台框架（2026-11-01）★ 可编辑 · 可联动 · 可导入导出 -->
+<script src="ledger.js"></script>
+<!-- ★ 实验室台账注册（2026-11-01）★ 10 个台账挂到框架上 -->
+<script src="labledger.js"></script>
+<!-- ★ JSA 工作台（2026-11-01）★ 可编辑 · 可联动 · 可交付 -->
+<script src="jsa.js"></script>
+<!-- ★ 实验室管理台账工具（2026-11-01）★ 设备/试剂/留样/QC/PT/原始记录 -->
+<script src="labbench.js"></script>
 <!-- ★ 工具工作台引擎（2026-10-22）★ 34 个可交互工具的实现 -->
 <script src="workbench.js"></script>
 <!-- data.js 缺失时给出明确提示，不能静默空白 -->
@@ -1816,6 +2070,21 @@ let gbState = null;
 
 function gbInit(){
   if(!GB) return;
+  /* ★ 2026-11-01：配方状态也要落盘 ★
+     营养素配比计算是最费时间的工具（调平一份配方要半小时），
+     之前 gbInit 每次都重置成默认配方 → 刷新等于从头再来。
+     现在优先从本地存储恢复；存储里没有才用默认配方。 */
+  const saved = (typeof Store !== "undefined" && Store.draft) ? Store.draft.get("gbRecipe") : null;
+  if(saved && saved.recipe && Array.isArray(saved.recipe) && saved.recipe.length){
+    gbState = {
+      seg: saved.seg || "3",
+      basis: saved.basis || "乳基",
+      version: saved.version || "3.2",
+      recipe: saved.recipe.map(r=>({key:r.key, amount:r.amount})),
+      flowStep: saved.flowStep || 1
+    };
+    return;
+  }
   gbState = {
     seg: "3",                 // 段位
     basis: "乳基",             // 乳基 / 豆基
@@ -1823,6 +2092,15 @@ function gbInit(){
     recipe: GB.defaultRecipe.map(r=>({key:r.key, amount:r.amount})),
     flowStep: 1,              // 流转走到第几步
   };
+}
+/* 配方状态存盘（改任何一项都调） */
+function gbSave(){
+  if(typeof Store === "undefined" || !Store.draft || !gbState) return;
+  Store.draft.set("gbRecipe", {
+    seg: gbState.seg, basis: gbState.basis, version: gbState.version,
+    recipe: gbState.recipe.map(r=>({key:r.key, amount:r.amount})),
+    flowStep: gbState.flowStep
+  });
 }
 
 /* ★ 各营养素在原料表里的单位（比值型计算时要用） ★ */
@@ -2133,23 +2411,24 @@ function gbRender(){
   host.innerHTML = h;
 }
 
-/* ---- 交互 ---- */
-function gbSetSeg(s){ gbState.seg = s; gbRender(); }
-function gbSetBasis(b){ gbState.basis = b; gbRender(); }
-function gbSetAmt(i,v){ gbState.recipe[i].amount = parseFloat(v)||0; gbRender(); }
-function gbSetMat(i,k){ gbState.recipe[i].key = k; gbRender(); }
-function gbDelRow(i){ gbState.recipe.splice(i,1); gbRender(); }
+/* ---- 交互 ----
+   ★ 每个改动都调 gbSave()，保证刷新后配方还在 ★ */
+function gbSetSeg(s){ gbState.seg = s; gbSave(); gbRender(); }
+function gbSetBasis(b){ gbState.basis = b; gbSave(); gbRender(); }
+function gbSetAmt(i,v){ gbState.recipe[i].amount = parseFloat(v)||0; gbSave(); gbRender(); }
+function gbSetMat(i,k){ gbState.recipe[i].key = k; gbSave(); gbRender(); }
+function gbDelRow(i){ gbState.recipe.splice(i,1); gbSave(); gbRender(); }
 function gbAddRow(){
   const used = gbState.recipe.map(r=>r.key);
   const next = GB.materials.find(m=>!used.includes(m.key)) || GB.materials[0];
   gbState.recipe.push({key:next.key, amount:1});
-  gbRender();
+  gbSave(); gbRender();
 }
 function gbResetRecipe(){
   gbState.recipe = GB.defaultRecipe.map(r=>({key:r.key, amount:r.amount}));
-  gbRender();
+  gbSave(); gbRender();
 }
-function gbSetFlow(i){ gbState.flowStep = i; gbRender(); }
+function gbSetFlow(i){ gbState.flowStep = i; gbSave(); gbRender(); }
 
 /* ================================================================
    研发管理（2026-10-22 用户要求新增模块）
@@ -2490,221 +2769,33 @@ function riskName(g){
   return g || ({ "低":"低风险", "一般":"一般风险", "中等":"中等风险", "高":"高风险" }[g] || g);
 }
 
+/* ================================================================
+   实验室管理（2026-11-01 新增）
+   ================================================================
+   设备 / 试剂 / 留样 / QC / PT / 原始记录 六类台账 + 能力矩阵。
+   实现在 prototype/labbench.js，这里只做转发。 */
+function renderLab(){
+  if(typeof LAB === "undefined"){
+    $("#labBody").innerHTML = `<div class="card empty">实验室台账数据未载入</div>`;
+    return;
+  }
+  LAB.render();
+}
+
 function renderJsa(){
-  const badge = $("#jsaBadge");
-  /* ★ 只放数字，不放「5 区」★
-     带文字会撑宽徽标，窄侧栏里换行后变成一条竖着的红药丸（用户截图）。 */
-  if(badge) badge.textContent = JSA ? JSA.zones.length : "—";
-  if(!JSA){ $("#jsaBody").innerHTML = `<div class="card empty">未载入 JSA 数据</div>`; return; }
-
-  const TABS = [
-    ["zones","分区预填清单"],
-    ["matrix","风险矩阵与评级"],
-    ["redlines","实验室红线"],
-    ["sample","工作危害分析"],
-    ["signoff","审批与追踪"],
-  ];
-  $("#jsaTabs").innerHTML = TABS.map(([k,n])=>
-    `<button class="tab ${curJsaTab===k?"on":""}" data-jsa="${k}">${n}</button>`).join("");
-  $$("#jsaTabs button").forEach(b=>b.onclick=()=>{curJsaTab=b.dataset.jsa;renderJsa();});
-
-  const B = $("#jsaBody");
-  if(curJsaTab === "zones") B.innerHTML = jsaZones();
-  else if(curJsaTab === "matrix") B.innerHTML = jsaMatrix();
-  else if(curJsaTab === "redlines") B.innerHTML = jsaRedlines();
-  else if(curJsaTab === "sample") B.innerHTML = jsaSample();
-  else B.innerHTML = jsaSignoff();
-}
-
-function jsaZones(){
-  return JSA.zones.map(z=>`
-    <div class="card" style="margin-bottom:14px">
-      <div class="card-h">
-        <span style="font-size:19px">${z.icon}</span>
-        <h3>${escHtml(z.title)}</h3>
-        <span class="pill">${z.steps.length} 个作业步骤</span>
-      </div>
-      <div style="overflow-x:auto">
-      <table class="jsa-tbl">
-        <thead><tr>
-          <th style="width:23%">作业步骤</th>
-          <th style="width:22%">潜在危害</th>
-          <th style="width:19%">可能事件</th>
-          <th style="width:36%">控制措施</th>
-        </tr></thead>
-        <tbody>
-        ${z.steps.map((s,i)=>`<tr>
-          <td><b>${i+1}. ${escHtml(s.step)}</b></td>
-          <td class="hz">${escHtml(s.hazard)}</td>
-          <td class="ev">${escHtml(s.event)}</td>
-          <td class="ct">${escHtml(s.control)}</td>
-        </tr>`).join("")}
-        </tbody>
-      </table>
-      </div>
-    </div>`).join("");
-}
-
-function jsaMatrix(){
-  const g = JSA.guide;
-  const grades = (g.grades||[]).map(x=>{
-    const col = riskColor((x.match(/R=(\d+)~/)||[])[1] || (x.match(/(\d+)-(\d+)/)||[])[1]);
-    return `<span class="chip" style="border-color:${col};color:${col}">${escHtml(x)}</span>`;
-  }).join(" ");
-  const legend = [[1,4,"低风险"],[5,9,"一般风险"],[10,14,"中等风险"],[15,25,"高风险"]]
-    .map(([a,b,n])=>`<span class="chip" style="border-color:${riskColor(a)};color:${riskColor(a)}">${n} R=${a}~${b}</span>`).join(" ");
-
-  const L = (g.levels["可能性 L"]||[]), S = (g.levels["严重度 S"]||[]);
-  return `
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-h"><h3>怎么算风险值</h3></div>
-    <div style="font-size:13px;line-height:1.9">
-      <p style="margin:0 0 8px"><b>R = 可能性 L × 严重度 S</b>，范围 1~25。</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0">
-        <div style="padding:10px 12px;background:var(--line2);border-radius:var(--radius)">
-          <div style="font-weight:600;font-size:12.5px;margin-bottom:5px">可能性 L</div>
-          ${L.map((x,i)=>`<div style="font-size:12px;line-height:1.7">${escHtml(x)}</div>`).join("")}
-        </div>
-        <div style="padding:10px 12px;background:var(--line2);border-radius:var(--radius)">
-          <div style="font-weight:600;font-size:12.5px;margin-bottom:5px">严重度 S</div>
-          ${S.map((x,i)=>`<div style="font-size:12px;line-height:1.7">${escHtml(x)}</div>`).join("")}
-        </div>
-      </div>
-      <div style="margin-top:10px">${legend}</div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-h"><h3>风险矩阵（可能性 L × 严重度 S）</h3></div>
-    <div style="overflow-x:auto">
-    <table class="matrix">
-      <thead><tr><th style="background:var(--line2)">L \\ S</th>
-        ${[1,2,3,4,5].map(s=>`<th style="background:var(--line2)">S=${s}</th>`).join("")}</tr></thead>
-      <tbody>
-      ${(g.matrix||[]).map(row=>`<tr>
-        <th style="background:var(--line2);text-align:center">L=${row.L}</th>
-        ${row.vals.map(v=>{
-          const c = riskColor(v==null?0:v);
-          return `<td style="text-align:center;font-weight:600;color:${v!=null?"#fff":"var(--ink3)"};background:${v==null?"transparent":c}">${v==null?"—":v}</td>`;
-        }).join("")}
-      </tr>`).join("")}
-      </tbody>
-    </table>
-    </div>
-    <div class="muted" style="margin-top:9px;font-size:11.5px">${escHtml(g.matrixNote||"")}</div>
-  </div>
-
-  <div class="card">
-    <div class="card-h"><h3>填写与审批要求</h3></div>
-    <div style="font-size:12.5px;line-height:1.95">
-      ${(g.usage||[]).map(u=>`<div style="margin-bottom:5px">
-        <b>${escHtml(u.k)}：</b>${escHtml(u.v)}</div>`).join("")}
-    </div>
-  </div>`;
-}
-
-function jsaRedlines(){
-  return `
-  <div class="card">
-    <div class="card-h">
-      <span style="font-size:19px">🚫</span>
-      <h3>实验室重点红线</h3>
-      <span class="pill">${JSA.guide.redlines.length} 条</span>
-    </div>
-    <div class="muted" style="margin:-4px 0 12px;font-size:12.5px">
-      与 JSA <b>并行使用</b>：JSA 管风险，红线是<b>不可协商的底线</b>，
-      任何情况下都不能因为「风险评分低」而不执行。
-    </div>
-    ${JSA.guide.redlines.map(r=>`
-      <div style="display:flex;gap:11px;padding:11px 13px;margin-bottom:9px;
-                  background:#fef2f2;border:1px solid #fecaca;border-left:3px solid #dc2626;
-                  border-radius:6px">
-        <div style="flex:0 0 auto;font-weight:700;color:#dc2626;font-size:12.5px">${escHtml(r.no)}</div>
-        <div style="font-size:12.5px;line-height:1.75">${escHtml(r.text)}</div>
-      </div>`).join("")}
-  </div>`;
-}
-
-function jsaSample(){
-  const s = JSA.wha.sample;
-  return `
-  <div class="card">
-    <div class="card-h"><h3>工作危害分析表</h3>
-      <span class="pill">${s.length} 行（示例）</span>
-      <div class="sp"></div>
-      <span class="muted">JSA-2026-001 · 克罗诺杆菌属检验</span>
-    </div>
-    <div class="warn-line">
-      ⚠ 这7 行是<b>示例</b>（克罗诺杆菌属检验），不是本实验室已完成的记录。
-      实际使用时要按你实验室的真实作业重填，尤其是<b>建议补充控制措施</b>与<b>残余风险</b>两列。
-    </div>
-    <div style="overflow-x:auto">
-    <table class="jsa-tbl">
-      <thead><tr>
-        <th style="width:34px">#</th>
-        <th style="width:14%">作业步骤</th>
-        <th style="width:19%">潜在危害</th>
-        <th style="width:15%">可能事件</th>
-        <th style="width:24%">现有控制措施</th>
-        <th style="width:70px">L</th><th style="width:70px">S</th>
-        <th style="width:88px">风险值</th>
-      </tr></thead>
-      <tbody>
-      ${s.map(r=>`<tr>
-        <td class="mono">${escHtml(r.no)}</td>
-        <td><b>${escHtml(r.step)}</b></td>
-        <td class="hz">${escHtml(r.hazard)}</td>
-        <td class="ev">${escHtml(r.event)}</td>
-        <td class="ct">${escHtml(r.control)}</td>
-        <td style="text-align:center">${escHtml(r.L)}</td>
-        <td style="text-align:center">${escHtml(r.S)}</td>
-        <td style="text-align:center">
-          <span class="rk" style="background:${riskColor(r.R)}">${escHtml(r.R)} ${escHtml(r.grade)}</span>
-        </td>
-      </tr>`).join("")}
-      </tbody>
-    </table>
-    </div>
-    <div class="muted" style="margin-top:10px;font-size:11.5px;line-height:1.8">
-      <b>表头字段</b>（模板原文）：${(JSA.wha.fields||[]).map(escHtml).join(" · ")}
-    </div>
-  </div>`;
-}
-
-function jsaSignoff(){
-  const sg = JSA.signoff;
-  return `
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-h"><h3>审批栏</h3>
-      <div class="sp"></div>
-      <span class="muted">签字必须手签，页面不代填</span>
-    </div>
-    ${sg.roles.map(r=>`
-      <div class="sign-row">
-        <div style="flex:0 0 190px">
-          <b style="font-size:12.5px">${escHtml(r.role)}</b>
-          <div class="muted" style="font-size:11px;margin-top:3px;line-height:1.6">${escHtml(r.note)}</div>
-        </div>
-        <div class="sign-line">${escHtml(r.line)}</div>
-      </div>`).join("")}
-  </div>
-
-  <div class="card">
-    <div class="card-h"><h3>修订记录</h3></div>
-    <div style="overflow-x:auto">
-    <table class="jsa-tbl">
-      <thead><tr><th style="width:110px">版本</th>
-        <th>修订内容与原因</th><th style="width:190px">修订人/ 日期</th></tr></thead>
-      <tbody>
-      ${sg.revisions.map(r=>`<tr>
-        <td class="mono"><b>${escHtml(r.ver)}</b></td>
-        <td>${escHtml(r.what) || '<span class="muted">（待填）</span>'}</td>
-        <td class="muted">${escHtml(r.who)}</td>
-      </tr>`).join("")}
-      </tbody>
-    </table>
-    </div>
-  </div>`;
+  /* ★ 2026-11-01：JSA 改为独立工作台（prototype/jsa.js）★
+     用户要求：「可编辑，可联动，可交付」。
+     原来这一段是只读的展示 —— 改了不算数、导不出去、统计不跟着变。
+     现在全部交给 jsa.js 的工作台：
+       · 基础信息 / 作业步骤 / L / S / 建议措施 全部可编辑，改完落盘
+       · L、S 一改 → R、等级、顶部 KPI、矩阵高亮全部联动
+       · 可导出 CSV / Word（可打印签字）/ 打印视图 / JSON
+     本函数只做转发。 */
+  if(typeof JSAW === "undefined" || !JSAW.load()){
+    $("#jsaBody").innerHTML = `<div class="card empty">未载入 JSA 数据</div>`;
+    return;
+  }
+  JSAW.render();
 }
 
 /* ===== 一年内换版（按标准号去重；同一标准被多个检测对象引用时合并来源）=====
@@ -2788,6 +2879,44 @@ function dlBtn(s){
   if(s.dl===true) return offLink("⬇ 官方下载", s.url);
   if(/iso\.org|fssc\.com/i.test(s.url)) return offLink("官方阅读/购买", s.url);
   return offLink("官方在线阅读", s.url);
+}
+
+/* ================================================================
+   CSV 导出（2026-11-01）
+   ================================================================
+   实验室经常要交「标准清单」「待办清单」给评审/客户。
+   之前只能看着屏幕手抄 —— 这类活最耗时间也最易错。
+   现在：按当前筛选条件导出，直接是 Excel 能打开的 CSV（带 BOM）。
+
+   注意：CSV 只含标准号/名称/日期/官方链接，**不含标准全文**，
+   与本系统「不存全文、只给官方入口」的定位一致。
+   ================================================================ */
+function downloadCsv(filename, rows){
+  if(!rows || !rows.length){ toast("没有可导出的数据", "warn"); return; }
+  const esc = v => {
+    const s = (v==null?"":String(v));
+    // 前导 =+-@ 会被 Excel 当公式 → 加单引号防注入
+    let out = s.replace(/"/g,'""');
+    if(/^[=+\-@\t\r]/.test(out)) out = "'" + out;
+    return '"' + out + '"';
+  };
+  const csv = "﻿" + rows.map(r=>r.map(esc).join(",")).join("\r\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+}
+
+/* 把当前订阅的勾选状态同步到 Store（订阅页用） */
+function syncSubsToStore(){
+  const map = {};
+  SUBS.forEach((g,gi)=>{
+    map[g.g] = (g.on||[]).slice();
+  });
+  Store.subs.set(map);
+  return map;
 }
 function legalNote(s){
   if(/iso\.org/i.test(s.url)) return "该标准为 ISO/IEC 采标，版权归 ISO 所有，仅提供官方阅读入口与正版购买渠道。";
@@ -3014,17 +3143,27 @@ function renderHome(){
     $("#kpiLawd").textContent = "法律/法规/规章/体系 " +
       new Set((LAWS||[]).map(x=>x.sub.split(" · ")[0])).size + " 类";
   })();
-  $("#highAlerts").innerHTML = ALERTS.filter(a=>a.lvl==="high").map(a=>`
-    <div class="alert a-high">
-      <div class="h"><span class="no">${a.no}</span><div class="t">${a.title}</div><span class="tag t-high">高优</span></div>
+  const doneMap = Store.alerts.doneMap();
+  const hiPend = ALERTS.filter(a=>a.lvl==="high");
+  $("#highAlerts").innerHTML = hiPend.map(a=>{
+    const done = !!doneMap[a.no];
+    return `
+    <div class="alert a-high ${done?"is-done":""}">
+      <div class="h"><span class="no">${a.no}</span><div class="t">${a.title}</div>
+        <span class="tag t-high">高优</span>
+        ${done?`<span class="tag t-low">已处理</span>`:""}</div>
       <div class="kv">${a.body}</div>
       <div class="why"><span class="lb">为什么重要</span>${a.why}</div>
       <div class="act"><span class="lb">实验室要做什么</span><ul>${a.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
       <div class="foot">${offLink("官方详情页", stdUrl(a.no))}
         <a class="btn sm" href="#detail" onclick="openDetail('${a.no}')">查看变更摘要</a>
         <div class="sp" style="flex:1"></div><span class="muted">${a.time}</span>
-        <button class="btn sm" onclick="toast('已标记处理：' + a.no)">标记已处理</button></div>
-    </div>`).join("");
+        ${done
+          ? `<button class="btn sm" onclick="unmarkAlertDone('${a.no}')">撤销处理</button>`
+          : `<button class="btn sm" onclick="markAlertDone('${a.no}')">标记已处理</button>`}
+      </div>
+    </div>`;
+  }).join("") || `<div class="empty">当前没有高优提醒</div>`;
 
   const soon = STD.filter(s=>s.imp && daysTo(s.imp)>=0 && daysTo(s.imp)<=240).sort((a,b)=>daysTo(a.imp)-daysTo(b.imp)).slice(0,5);
   $("#countdown").innerHTML = soon.map(s=>{
@@ -3035,24 +3174,186 @@ function renderHome(){
   }).join("") || `<div class="empty">暂无</div>`;
 
   let on=0,tot=0;
-  SUBS.forEach(g=>g.on.forEach(v=>{tot++;if(v)on++}));
+  SUBS.forEach(g=>(g.on||[]).forEach(v=>{tot++;if(v)on++}));
+  const subPend = subPendingCount();
   $("#subCover").innerHTML = `
     <div class="kpi" style="border:0;padding:0"><div class="k">已订阅项</div><div class="v">${on} <span style="font-size:15px;color:var(--ink3)">/ ${tot}</span></div>
-    <div class="d">按此范围推送提醒，噪音最小</div></div>
+    <div class="d">${subPend?`<b style="color:var(--high)">${subPend} 项有未处理变更</b>`:"订阅范围内无未处理变更"}</div></div>
     <div class="hr"></div>
     <div class="flex" style="flex-wrap:wrap;gap:6px">
-    ${SUBS.map(g=>`<span class="pill">${g.g.replace(/（.*/,"")} ${g.on.filter(Boolean).length}/${g.items.length}</span>`).join("")}</div>`;
+    ${SUBS.map(g=>`<span class="pill">${g.g.replace(/（.*/,"")} ${(g.on||[]).filter(Boolean).length}/${g.items.length}</span>`).join("")}</div>`;
 
-  $("#todoList").innerHTML = [
-    ["1","确认蛋白测定作业文件执行的是 GB 5009.5-2025 还是 2016 版","方法换版后新旧数据不可直接比较","高"],
-    ["2","确认脂肪测定作业文件执行的是 GB 5009.6-2025 还是 2016 版","同步更新前处理与萃取条件","高"],
-    ["3","更新取样与留样作业指导书，切换到 GB 14881-2025","取样、留样、实验室卫生要求有变化","高"],
-    ["4","向包材供应商索取 GB 4806.2-2023 符合性报告","罐内壁涂料属于直接接触材料","中"],
-    ["5","把订阅范围收窄到你在测的品类","减少无关提醒","中"]
-  ].map(([i,t,d,l])=>`
-    <div class="rem-item"><div style="width:18px;height:18px;border:1.5px solid var(--line);border-radius:4px;flex-shrink:0;margin-top:2px"></div>
-      <div class="tx">${t}<br><span class="muted">${d}</span></div>
-      <div class="tm"><span class="tag ${l==="高"?"t-high":"t-mid"}">${l}</span></div></div>`).join("");
+  /* ================================================================
+     下一步该做什么（2026-11-01 重做：真·行动清单）
+     ================================================================
+     之前这里是 5 条写死的文字，看完没法做、做完没法打勾、刷新全忘。
+     现在是四类任务合成的真清单，勾选落盘、可导出、可自己加：
+       ① 未处理的高优提醒（自动从提醒中心来）
+       ② 订阅范围内有变更的标准（自动）
+       ③ 90 天内要实施的标准（自动）
+       ④ 固定建议动作 + 用户自己加的（本地存）
+     ================================================================ */
+  renderTodoList();
+  updateAlertBadge();
+}
+
+/* 固定建议动作（首次进入自动生成一次，之后可删） */
+const _FIXED_TODO_SEED = [
+  {id:"fix-1", t:"确认蛋白测定作业文件执行的是 GB 5009.5-2025 还是 2016 版", d:"方法换版后新旧数据不可直接比较", lvl:"高"},
+  {id:"fix-2", t:"确认脂肪测定作业文件执行的是 GB 5009.6-2025 还是 2016 版", d:"同步更新前处理与萃取条件", lvl:"高"},
+  {id:"fix-3", t:"更新取样与留样作业指导书，切换到 GB 14881-2025", d:"取样、留样、实验室卫生要求有变化", lvl:"高"},
+  {id:"fix-4", t:"向包材供应商索取 GB 4806.2-2023 符合性报告", d:"罐内壁涂料属于直接接触材料", lvl:"中"},
+  {id:"fix-5", t:"把订阅范围收窄到你在测的品类", d:"减少无关提醒", lvl:"中"}
+];
+
+/* 自建任务 */
+function getCustomTodos(){
+  return Store.get("todo.custom", []) || [];
+}
+function addTodoItem(){
+  dlg({
+    title:"加一条待办",
+    body:"写下要做的事，保存后在这台电脑上长期保留。",
+    fields:`<div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input id="tt" placeholder="要做什么" style="flex:1 1 260px;padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-family:inherit">
+      <select id="tl" style="padding:8px 10px;border:1px solid var(--line);border-radius:7px;font-family:inherit">
+        <option value="高">高</option><option value="中" selected>中</option><option value="低">低</option>
+      </select></div>`,
+    buttons:[{t:"取消", val:"cancel"}, {t:"添加", cls:"pri"}],
+    collect:[{sel:"#tt", name:"t", required:true, label:"要做的事", msg:"请先写内容"},
+             {sel:"#tl", name:"lvl", label:"优先级"}],
+    onClose: function(v){
+      if(!v) return;
+      const list = getCustomTodos();
+      list.push({id:"cus-"+Date.now(), t:v.t, d:"自己添加", lvl:v.lvl||"中"});
+      Store.set("todo.custom", list);
+      renderTodoList();
+      toast("已加入待办");
+    }
+  });
+}
+function removeTodoItem(id){
+  const list = getCustomTodos().filter(t=>t.id!==id);
+  Store.set("todo.custom", list);
+  renderTodoList();
+}
+function toggleTodo(id){
+  Store.todo.toggle(id);
+  renderTodoList();
+}
+
+/* 汇总所有待办来源 */
+function collectTodos(){
+  const done = Store.todo.get();       // ★ 待办的完成状态在 todo.done，不在 alerts.done
+  const out = [];
+
+  /* ① 未处理的高优提醒 */
+  const alertDone = Store.alerts.doneMap();
+  ALERTS.filter(a=>a.lvl==="high" && !alertDone[a.no]).forEach(a=>{
+    out.push({
+      id:"alert-"+a.no, t:a.title, d:a.no+" · "+a.body, lvl:"高",
+      src:"提醒", auto:true, link:"#alerts"
+    });
+  });
+
+  /* ② 订阅范围内有变更（且提醒里没有的） */
+  SUBS.forEach(g=>(g.on||[]).forEach((on,ii)=>{
+    if(!on) return;
+    const no = subStdNo(g.items[ii]);
+    if(!no) return;
+    const already = out.some(x=>x.id==="alert-"+no);
+    if(already) return;
+    const chg = subHasChange(no);
+    if(chg) out.push({
+      id:"sub-"+no, t:g.items[ii]+" 有" + chg.type, d:chg.title, lvl:chg.lvl==="high"?"高":"中",
+      src:"订阅", auto:true, link:"#alerts"
+    });
+  }));
+
+  /* ③ 90 天内要实施的标准 */
+  STD.filter(s=>s.impState==="即将实施" && daysTo(s.imp)!==null && daysTo(s.imp)<=90)
+     .sort((a,b)=>daysTo(a.imp)-daysTo(b.imp)).forEach(s=>{
+    out.push({
+      id:"imp-"+s.no, t:s.no+" 即将实施（还有 "+daysTo(s.imp)+" 天）",
+      d:s.title+" · 实施 "+s.imp, lvl:daysTo(s.imp)<=30?"高":"中",
+      src:"倒计时", auto:true, link:"#list"
+    });
+  });
+
+  /* ④ 固定建议 */
+  _FIXED_TODO_SEED.forEach(t=>out.push({
+    id:t.id, t:t.t, d:t.d, lvl:t.lvl, src:"建议", auto:false
+  }));
+
+  /* ⑤ 自建 */
+  getCustomTodos().forEach(t=>out.push({
+    id:t.id, t:t.t, d:t.d, lvl:t.lvl||"中", src:"我的", auto:false, custom:true
+  }));
+
+  /* 排序：高 → 中 → 低，同级按来源权重 */
+  const w = {"高":0,"中":1,"低":2};
+  out.sort((a,b)=>{
+    const da = done[a.id]?1:0, db = done[b.id]?1:0;
+    if(da!==db) return da-db;          // 未完成的排前面
+    if(w[a.lvl]!==w[b.lvl]) return w[a.lvl]-w[b.lvl];
+    return 0;
+  });
+  return {items:out, done:done};
+}
+
+function renderTodoList(){
+  const el = $("#todoList");
+  if(!el) return;
+  const {items, done} = collectTodos();
+  const pend = items.filter(x=>!done[x.id]);
+  const fin  = items.filter(x=>done[x.id]);
+  const st = $("#todoStat");
+  if(st) st.textContent = "未完成 " + pend.length + " 条 · 已完成 " + fin.length + " 条 · 勾选后保存在本机";
+
+  if(!items.length){
+    el.innerHTML = `<div class="empty">暂无待办。订阅范围里没有变更，也没有临近实施的标准。</div>`;
+    return;
+  }
+
+  const row = x=>{
+    const isDone = !!done[x.id];
+    const lvlCls = x.lvl==="高"?"t-high":x.lvl==="中"?"t-mid":"t-gray";
+    return `<div class="rem-item ${isDone?"todo-done":""}" style="${isDone?"opacity:.5":""}">
+      <input type="checkbox" ${isDone?"checked":""} style="width:17px;height:17px;flex-shrink:0;margin-top:2px;accent-color:var(--brand)"
+        onclick="toggleTodo('${x.id}')">
+      <div class="tx">
+        <span style="${isDone?"text-decoration:line-through":""}">${x.t}</span>
+        <br><span class="muted">${x.d}</span>
+      </div>
+      <div class="tm" style="text-align:right;white-space:nowrap">
+        <span class="tag ${lvlCls}">${x.lvl}</span>
+        <div class="muted" style="font-size:10.5px;margin-top:3px">${x.src}</div>
+        ${x.link?`<a class="muted" style="font-size:10.5px;display:inline-block;margin-top:2px" href="${x.link}">去看 →</a>`:""}
+        ${x.custom?`<button class="x" style="margin-left:6px;font-size:14px" onclick="removeTodoItem('${x.id}')">×</button>`:""}
+      </div>
+    </div>`;
+  };
+
+  el.innerHTML =
+    (pend.length
+      ? `<div class="muted" style="padding:2px 0 8px;font-size:11.5px">待办 ${pend.length} 条</div>` + pend.map(row).join("")
+      : `<div class="qwflag ok" style="margin:6px 0">✓ 当前没有未完成的待办。</div>`)
+    + (fin.length
+      ? `<div class="muted" style="padding:14px 0 8px;font-size:11.5px;border-top:1px solid var(--line);margin-top:6px">已完成 ${fin.length} 条（勾选可撤销）</div>`
+        + fin.map(row).join("")
+      : "");
+}
+
+/* 导出待办 */
+function exportTodoCsv(){
+  const {items, done} = collectTodos();
+  const rows = [["状态","优先级","来源","事项","说明"]];
+  items.forEach(x=>rows.push([
+    done[x.id]?"已完成":"待处理", x.lvl, x.src, x.t, x.d
+  ]));
+  if(rows.length===1){ toast("没有待办可导出"); return; }
+  downloadCsv("待办清单_"+new Date().toISOString().slice(0,10)+".csv", rows);
+  toast("已导出 "+items.length+" 条待办");
 }
 
 function stdUrl(no){ const s=STD.find(x=>x.no===no); return s?s.url:"https://openstd.samr.gov.cn/bzgk/gb/"; }
@@ -3081,8 +3382,16 @@ function renderList(kw){
 
   let rows = curSub==="all" ? base : (subs[curSub]||[]);
   if(kw) rows = rows.filter(s=>(s.no+s.title).toUpperCase().includes(kw.toUpperCase()));
-  const groupBy = curCat==="all" && curSub==="all";
-  $("#listCnt").innerHTML = `共 <b class="mono">${rows.length}</b> 条` + (groupBy?"　<span class=\"muted\">按细类分组显示</span>":"");
+  if(curStdSort==="imp") rows = rows.slice().sort((a,b)=>{
+    const av=a.imp||"9999", bv=b.imp||"9999"; return av<bv?-1:av>bv?1:0;
+  });
+  else if(curStdSort==="pub") rows = rows.slice().sort((a,b)=>{
+    const av=a.pub||"9999", bv=b.pub||"9999"; return av<bv?-1:av>bv?1:0;
+  });
+  const groupBy = curCat==="all" && curSub==="all" && curStdSort!=="imp" && curStdSort!=="pub";
+  $("#listCnt").innerHTML = `共 <b class="mono">${rows.length}</b> 条` +
+    (curStdSort?`　<span class="muted">按${curStdSort==="imp"?"实施日期":"发布日期"}排序</span>`:"") +
+    (groupBy?"　<span class=\"muted\">按细类分组显示</span>":"");
   const cell = s => `<tr class="rowlink" onclick="openDetail('${s.no}')">
       <td><span class="no">${s.no}</span></td>
       <td>${s.title}<div style="margin-top:3px"><span class="tag ${s.cat==="product"?"t-high":s.cat==="test"?"t-mid":"t-gray"}">${s.sub||catName(s.cat)}</span></div></td>
@@ -3097,6 +3406,160 @@ function renderList(kw){
     ? subKeys.map(k=>`<tr class="grouprow"><td colspan="7">${k}<span class="muted">　${subs[k].length} 条</span></td></tr>`
         + subs[k].map(cell).join("")).join("")
     : (rows.map(cell).join("") || `<tr><td colspan="7" class="empty">没有匹配的标准</td></tr>`);
+}
+
+/* ---------- 标准清单：排序 / 导出 / 换版影响 ---------- */
+let curStdSort = "";
+
+/* 排序切换（再点一次取消） */
+function sortStdBy(k){
+  curStdSort = (curStdSort===k) ? "" : k;
+  renderList();
+  toast(curStdSort ? ("已按" + (k==="imp"?"实施日期":"发布日期") + "排序") : "已恢复默认排序");
+}
+
+/* 当前筛选条件下的标准（导出用，与界面显示一致） */
+function currentStdRows(){
+  const base = STD.filter(s=>curCat==="all"||s.cat===curCat);
+  const subs = {};
+  base.forEach(s=>{ const k=s.sub||"未分类"; (subs[k]=subs[k]||[]).push(s); });
+  let rows = curSub==="all" ? base : (subs[curSub]||[]);
+  if(curStdSort==="imp") rows = rows.slice().sort((a,b)=>(a.imp||"9999")<(b.imp||"9999")?-1:1);
+  else if(curStdSort==="pub") rows = rows.slice().sort((a,b)=>(a.pub||"9999")<(b.pub||"9999")?-1:1);
+  return rows;
+}
+
+/* 导出当前筛选的标准清单 */
+function exportStdCsv(){
+  const rows = currentStdRows();
+  if(!rows.length){ toast("当前筛选没有标准", "warn"); return; }
+  const csv = [["标准号","标准名称","类别","细类","状态","发布日期","实施日期","代替标准","官方链接"]];
+  rows.forEach(s=>csv.push([
+    s.no, s.title, catName(s.cat), s.sub||"", s.status,
+    s.pub||"", s.imp||"", s.replace||"", s.url||""
+  ]));
+  downloadCsv("标准清单_"+(curCat==="all"?"全部":catName(curCat))+"_"
+    +new Date().toISOString().slice(0,10)+".csv", csv);
+  toast("已导出 "+rows.length+" 条标准");
+}
+
+/* ================================================================
+   换版影响分析
+   ================================================================
+   实验室真正的痛点不是「哪个标准要换了」，而是「换了之后我哪些文件要跟着改」。
+   这里把「被替代的标准」和「即将实施的标准」连起来，
+   给出要跟着改的文件方向，并标出订阅范围内受影响的项。
+   ================================================================ */
+function impactItems(){
+  const out = [];
+  // ① 有代替关系（新标准代替旧标准）
+  STD.forEach(s=>{
+    if(!s.replace) return;
+    const d = daysTo(s.imp);
+    out.push({
+      type:"换版", newNo:s.no, newTitle:s.title, oldNo:s.replace,
+      imp:s.imp||"—", days:d, sub:s.sub||"", cat:s.cat,
+      subsHit: isSubscribed(s.no)
+    });
+  });
+  // ② 即将实施但没有代替关系（首次发布）
+  STD.forEach(s=>{
+    if(s.replace) return;
+    if(s.impState!=="即将实施") return;
+    const d = daysTo(s.imp);
+    if(d===null || d>365) return;
+    out.push({
+      type:"新发布", newNo:s.no, newTitle:s.title, oldNo:"（首次发布，无旧版）",
+      imp:s.imp||"—", days:d, sub:s.sub||"", cat:s.cat,
+      subsHit: isSubscribed(s.no)
+    });
+  });
+  out.sort((a,b)=>{
+    if(a.subsHit!==b.subsHit) return a.subsHit?-1:1;
+    const av=a.days===null?9999:a.days, bv=b.days===null?9999:b.days;
+    return av-bv;
+  });
+  return out;
+}
+/* 该标准是否在你的订阅范围内 */
+function isSubscribed(no){
+  const norm = String(no).replace(/\s+/g,"");
+  let hit = false;
+  SUBS.forEach(g=>(g.on||[]).forEach((on,ii)=>{
+    if(!on) return;
+    const s = subStdNo(g.items[ii]);
+    if(s && norm.indexOf(s.replace(/\s+/g,""))>=0) hit = true;
+  }));
+  return hit;
+}
+
+/* 换版影响清单导出 */
+function exportImpactCsv(){
+  const items = impactItems();
+  if(!items.length){ toast("暂无换版影响项", "warn"); return; }
+  const csv = [["类型","新标准号","新标准名称","被代替/旧版","实施日期","剩余天数","细类","在订阅范围","要跟着改什么"]];
+  items.forEach(x=>csv.push([
+    x.type, x.newNo, x.newTitle, x.oldNo, x.imp,
+    x.days===null?"—":x.days, x.sub, x.subsHit?"是":"否", impactAdvice(x)
+  ]));
+  downloadCsv("换版影响清单_"+new Date().toISOString().slice(0,10)+".csv", csv);
+  toast("已导出 "+items.length+" 条换版影响");
+}
+
+/* 换版后要跟着改什么：按标准类别给方向 */
+function impactAdvice(x){
+  const c = x.cat;
+  if(c==="test") return "检验作业指导书 / 原始记录模板 / 报告模板的方法引用；新旧数据不可直接比较，需做方法比对";
+  if(c==="product") return "产品检验方案 / 放行标准 / 标签营养成分表；判定限值可能变化";
+  if(c==="prod") return "生产工艺规程 / 作业指导书；生产控制点与验证方案";
+  if(c==="sys") return "体系文件（手册、程序文件）/ 内审检查表 / 管理评审输入";
+  if(c==="assoc") return "相关联的检验文件与供应商要求清单";
+  return "相关的技术文件与作业指导书";
+}
+
+/* 影响分析面板 */
+function showImpactPanel(){
+  const el = $("#impactPanel");
+  if(!el) return;
+  const items = impactItems();
+  const subHit = items.filter(x=>x.subsHit);
+  if(!items.length){
+    el.innerHTML = `<div class="card empty" style="margin-top:14px">当前没有待实施的换版或新发布标准。</div>`;
+    el.scrollIntoView({behavior:"smooth", block:"nearest"});
+    return;
+  }
+  el.innerHTML = `
+  <div class="card" style="margin-top:14px">
+    <div class="card-h"><h3>换版影响分析</h3>
+      <span class="muted">共 ${items.length} 项 · 其中 <b style="color:var(--high)">${subHit.length} 项在你的订阅范围</b></span></div>
+    <div class="notice" style="margin-bottom:12px">
+      <span>⚠</span>
+      <div>「被代替」列是老标准 —— 老标准作废后，<b>所有引用它的地方都要改</b>：
+        检验作业指导书、原始记录模板、检验报告的方法引用、产品检验方案。
+        换版当年做的数据不能和换版后的直接比，必要时做<b>方法比对</b>。</div>
+    </div>
+    <div class="twrap"><table>
+      <thead><tr>
+        <th style="width:56px">类型</th><th style="width:120px">新标准</th>
+        <th>名称</th><th style="width:130px">被代替</th>
+        <th style="width:92px">实施日期</th><th style="width:64px">剩余</th>
+        <th style="width:74px">订阅内</th><th>要跟着改什么</th>
+      </tr></thead>
+      <tbody>
+      ${items.map(x=>`<tr class="${x.days!==null&&x.days<=30?"warn":""}">
+        <td><span class="tag ${x.type==="换版"?"t-high":"t-mid"}">${x.type}</span></td>
+        <td><span class="no">${x.newNo}</span></td>
+        <td>${x.newTitle}<div class="muted">${x.sub||""}</div></td>
+        <td class="muted">${x.oldNo}</td>
+        <td class="muted">${x.imp}</td>
+        <td class="num">${x.days===null?"—":x.days+" 天"}</td>
+        <td>${x.subsHit?`<span class="tag t-soon">是</span>`:`<span class="muted">否</span>`}</td>
+        <td style="font-size:12px">${impactAdvice(x)}</td>
+      </tr>`).join("")}
+      </tbody>
+    </table></div>
+  </div>`;
+  el.scrollIntoView({behavior:"smooth", block:"nearest"});
 }
 
 /* ===== 法律法规与体系标准 ===== */
@@ -3252,29 +3715,291 @@ function renderDetail(){
   </div>`;
 }
 
+/* ================================================================
+   我的订阅（2026-11-01 重做：真落盘 + 与提醒联动）
+   ================================================================
+   之前的问题（实测确认）：
+     勾掉一个订阅 → 刷新 → 勾回来了（localStorage 里什么都没有）。
+     也就是说「订阅」这个功能等于没有 —— 但首页/提醒都用它算覆盖率，
+     数字全是假的。
+   现在：
+     · 勾选立即落盘，刷新保留
+     · 每项订阅显示「近期有无变更」——订阅的真正意义就在这
+     · 组标题显示该组已订阅数
+     · 与提醒中心联动：订阅范围内有未处理提醒 → 首页置顶
+   ================================================================ */
+
+/* 订阅项 → 标准号（"GB 10765 婴儿通则" → "GB 10765"） */
+function subStdNo(item){
+  const m = String(item).match(/(GB(?:\/T)?\s*\d+(?:\.\d+)?(?:\-\d+)?)/);
+  return m ? m[1].replace(/\s+/g," ") : null;
+}
+/* 该标准近期有无变更（从 ALERTS + ERATA 查） */
+function subHasChange(no){
+  if(!no) return null;
+  const norm = no.replace(/\s+/g,"");
+  const hitA = ALERTS.find(a=>{
+    const n = String(a.no).replace(/\s+/g,"");
+    return n.indexOf(norm)>=0 || norm.indexOf(n.split(" ")[0])>=0;
+  });
+  const hitE = ERATA.find(e=>String(e.no).replace(/\s+/g,"").indexOf(norm)>=0);
+  if(hitA) return {type:"换版", lvl:hitA.lvl, title:hitA.title, no:hitA.no};
+  if(hitE) return {type:"勘误", lvl:hitE.lvl, title:"第 "+hitE.sec+" 章节勘误", no:hitE.no};
+  return null;
+}
+
+/* 从存储恢复订阅状态（覆盖数据里的默认值） */
+function restoreSubs(){
+  const saved = Store.subs.get();
+  if(!saved) return false;
+  let any = false;
+  SUBS.forEach((g,gi)=>{
+    const s = saved[g.g];
+    if(!s) return;
+    g.on = s.map(v=>v?1:0);
+    any = true;
+  });
+  return any;
+}
+/* 写回存储 */
+function persistSubs(){
+  const map = {};
+  SUBS.forEach(g=>{ map[g.g] = (g.on||[]).slice(); });
+  Store.subs.set(map);
+  return map;
+}
+
 function renderSubs(){
-  $("#subGrid").innerHTML = SUBS.map((g,gi)=>`
+  const saved = Store.subs.get();
+  $("#subGrid").innerHTML = SUBS.map((g,gi)=>{
+    const onCnt = (g.on||[]).filter(Boolean).length;
+    const hasSaved = saved && saved[g.g] ? "已保存" : "默认";
+    return `
     <div class="sub-box">
-      <div class="hd"><input type="checkbox" ${g.on.every(Boolean)?"checked":""} style="accent-color:var(--brand)"
-        onchange="toggleGroup(${gi},this.checked)"><h4>${g.g}</h4></div>
-      ${g.items.map((it,ii)=>`<label class="chk"><input type="checkbox" ${g.on[ii]?"checked":""} onchange="this.parentElement.classList.toggle('off')">
-        <div><div class="nm">${it}</div></div></label>`).join("")}
-    </div>`).join("");
+      <div class="hd">
+        <input type="checkbox" ${(g.on||[]).every(Boolean) && g.on.length?"checked":""}
+          style="accent-color:var(--brand)" onchange="toggleGroup(${gi},this.checked)">
+        <h4>${g.g}</h4>
+        <span class="muted" style="font-size:11.5px">${onCnt}/${g.items.length}</span>
+        <div class="sp" style="flex:1"></div>
+        <span class="muted" style="font-size:10.5px">${hasSaved}</span>
+      </div>
+      ${g.items.map((it,ii)=>{
+        const on = !!(g.on && g.on[ii]);
+        const no = subStdNo(it);
+        const chg = on ? subHasChange(no) : null;
+        return `<label class="chk ${on?"":"off"}">
+          <input type="checkbox" ${on?"checked":""} onchange="toggleSub(${gi},${ii},this.checked)">
+          <div><div class="nm">${it}</div>
+          ${chg?`<div class="muted" style="font-size:11px;color:var(--high)">⚠ ${chg.type}：${chg.title}</div>`:""}
+          </div></label>`;
+      }).join("")}
+    </div>`;
+  }).join("");
   updSubStat();
 }
-function toggleGroup(gi,v){ SUBS[gi].on = SUBS[gi].on.map(()=>v?1:0); renderSubs(); }
-function subAll(v){ SUBS.forEach(g=>g.on=g.on.map(()=>v?1:0)); renderSubs(); }
-function saveSubs(){ updSubStat(); toast("订阅已保存，提醒范围已按当前勾选生效"); }
-function updSubStat(){ let on=0,tot=0; SUBS.forEach(g=>g.on.forEach(v=>{tot++;if(v)on++})); $("#subStat").innerHTML=`当前订阅 <b class="mono">${on}/${tot}</b> 项 · 勾选仅影响提醒推送，不影响标准库收录`; }
+function toggleSub(gi,ii,v){
+  SUBS[gi].on = SUBS[gi].on || [];
+  SUBS[gi].on[ii] = v?1:0;
+  persistSubs();
+  renderSubs();
+  updateAlertBadge();
+}
+function toggleGroup(gi,v){
+  SUBS[gi].on = (SUBS[gi].on||[]).map(()=>v?1:0);
+  persistSubs();
+  renderSubs();
+}
+function subAll(v){
+  SUBS.forEach(g=>g.on=(g.on||[]).map(()=>v?1:0));
+  persistSubs();
+  renderSubs();
+}
+function saveSubs(){
+  persistSubs();
+  toast("订阅已保存（刷新后仍生效）");
+}
+/* 已订阅的标准里，有多少条还有未处理的变更 */
+function subPendingCount(){
+  const doneMap = Store.alerts.doneMap();
+  let n = 0;
+  SUBS.forEach(g=>(g.on||[]).forEach((on,ii)=>{
+    if(!on) return;
+    const no = subStdNo(g.items[ii]);
+    if(!no) return;
+    const hitA = ALERTS.find(a=>String(a.no).replace(/\s+/g,"").indexOf(no.replace(/\s+/g,""))>=0);
+    if(hitA && !doneMap[hitA.no]) n++;
+  }));
+  return n;
+}
+/* 导出订阅清单 */
+function exportSubsCsv(){
+  const csv = [["分组","订阅项","标准号","已订阅","近期变更"]];
+  SUBS.forEach(g=>g.items.forEach((it,ii)=>{
+    const no = subStdNo(it);
+    const chg = subHasChange(no);
+    csv.push([g.g, it, no||"", (g.on&&g.on[ii])?"是":"否",
+      chg ? (chg.type+"："+chg.title) : "无"]);
+  }));
+  downloadCsv("我的订阅_"+new Date().toISOString().slice(0,10)+".csv", csv);
+  toast("已导出订阅清单");
+}
+function updSubStat(){
+  let on=0,tot=0; SUBS.forEach(g=>(g.on||[]).forEach(v=>{tot++;if(v)on++}));
+  const pending = subPendingCount();
+  $("#subStat").innerHTML =
+    `当前订阅 <b class="mono">${on}/${tot}</b> 项` +
+    (pending?` · <b style="color:var(--high)">${pending} 项有未处理变更</b>`:" · 订阅范围内无未处理变更") +
+    ` · 勾选立即保存在本机，刷新不丢`;
+}
+
+/* ================================================================
+   提醒中心（2026-11-01 重做：闭环）
+   ================================================================
+   之前的问题（实测确认）：
+     · 「标记已处理」只弹一个 toast，什么都没改 → 假装能干活
+     · 筛选标签上的数字（3/4/1/8）写死，数据变了不跟着变
+     · 周报里的 12 / 3 / 2 / 6 全部写死
+     · 顶栏「7 条待处理」写死
+   现在：
+     · 已处理 / 忽略 真正落盘（localStorage），刷新保留、可撤销
+     · 所有数字实算
+     · 顶栏数字随待处理量实时变
+   ================================================================ */
+
+/* 提醒的唯一键：ALERTS 用标准号，ERATA 用「标准号+章节」 */
+function alertKey(no, sec){ return sec ? (no + " §" + sec) : no; }
+
+/* 标记处理（真落盘） */
+function markAlertDone(no, sec){
+  const k = alertKey(no, sec);
+  Store.alerts.markDone(k, sec ? {kind:"erata", sec:sec} : {kind:"alert"});
+  toast("已标记处理：" + no + "（已保存，可在「已处理」里撤销）");
+  renderAlerts(); updateAlertBadge();
+}
+/* 撤销处理 */
+function unmarkAlertDone(no, sec){
+  const k = alertKey(no, sec);
+  Store.alerts.unmark(k);
+  toast("已撤销：" + no);
+  renderAlerts(); updateAlertBadge();
+}
+/* 忽略 = 30 天内不再提醒（真落盘） */
+function snoozeAlert(no, sec, days){
+  const d = days || 30;
+  const until = new Date(Date.now() + d*86400000).toISOString().slice(0,10);
+  Store.alerts.snooze(alertKey(no, sec), until);
+  toast("已忽略 " + no + "，" + until + " 前不再提醒");
+  renderAlerts(); updateAlertBadge();
+}
+
+/* 顶栏待处理数字：实算（高优 + 中优，未处理未忽略） */
+function updateAlertBadge(){
+  const btn = $("#alertBtn");
+  if(!btn) return;
+  const pend = Store.alerts.pending(ALERTS);
+  const hi = pend.filter(a=>a.lvl==="high").length;
+  const mid = pend.filter(a=>a.lvl==="mid").length;
+  btn.textContent = pend.length ? ("🔔 " + pend.length + " 条待处理") : "🔔 已清空";
+  btn.title = "高优 " + hi + " 条 · 中优 " + mid + " 条";
+}
+
+/* 低优提醒批量标记已处理 */
+function markAllLowDone(){
+  const low = ALERTS.filter(a=>a.lvl==="low" && !Store.alerts.isDone(a.no));
+  if(!low.length){ toast("没有待处理的低优提醒"); return; }
+  low.forEach(a=>Store.alerts.markDone(a.no, {kind:"alert", batch:true}));
+  toast("已标记 " + low.length + " 条低优提醒为已处理");
+  renderAlerts(); updateAlertBadge();
+}
+
+/* 导出待办 CSV：含标准号、级别、内容、要做什么、官方链接 */
+function exportAlertCsv(){
+  const pend = Store.alerts.pending(ALERTS);
+  const rows = [["标准号","级别","发生了什么","为什么重要","实验室要做什么","官方链接"]];
+  pend.forEach(a=>rows.push([
+    a.no, a.lvl==="high"?"高优":a.lvl==="mid"?"中":"低",
+    a.title, String(a.why||"").replace(/\*\*/g,""),
+    (a.acts||[]).join(" / "), stdUrl(a.no)
+  ]));
+  ERATA.forEach(e=>{
+    if(Store.alerts.isDone(alertKey(e.no,e.sec))) return;
+    rows.push([e.no, e.lvl==="high"?"高优":"中",
+      "第 "+e.sec+" 章节勘误："+String(e.after).slice(0,120),
+      String(e.why||"").replace(/\*\*/g,""),
+      (e.acts||[]).join(" / "), CFSA_SEARCH(e.no)]);
+  });
+  if(rows.length===1){ toast("没有待导出的待办"); return; }
+  downloadCsv("提醒待办_"+new Date().toISOString().slice(0,10)+".csv", rows);
+  toast("已导出 " + (rows.length-1) + " 条待办");
+}
+
+/* 重置处理记录（全部回到未处理） */
+function resetAlertState(){
+  const n = Object.keys(Store.alerts.doneMap()).length
+          + Object.keys(Store.alerts.snoozeMap()).length;
+  if(!n){ toast("当前没有任何处理记录"); return; }
+  dlg({
+    kind:"danger",
+    title:"确认清空处理记录？",
+    body:"已处理 "+n+" 条记录将被清除，所有提醒会回到「待处理」。此操作不可撤销。",
+    buttons:[{t:"取消", val:"cancel"}, {t:"确认清空", cls:"pri"}],
+    onClose: function(v){
+      if(!v) return;
+      Store.set("alerts.done", {});
+      Store.set("alerts.snooze", {});
+      toast("处理记录已清空");
+      renderAlerts(); updateAlertBadge();
+    }
+  });
+}
+
+/* 提醒筛选标签的数字：全部实算 */
+function renderAlertFilters(){
+  const doneMap = Store.alerts.doneMap();
+  const pend = Store.alerts.pending(ALERTS);
+  const cnt = {
+    all:    ALERTS.length,
+    erata:  ERATA.length,
+    high:   pend.filter(a=>a.lvl==="high").length,
+    mid:    pend.filter(a=>a.lvl==="mid").length,
+    low:    pend.filter(a=>a.lvl==="low").length,
+    unread: pend.length,
+    done:   Object.keys(doneMap).length
+  };
+  const labels = {
+    all:"全部", erata:"勘误", high:"换版·高优", mid:"中", low:"低",
+    unread:"待处理", done:"已处理"
+  };
+  const el = $("#alertFilters");
+  if(!el) return;
+  const order = ["all","erata","high","mid","low","unread","done"];
+  el.innerHTML = order.map(k=>
+    `<button class="chip ${curAlertLvl===k?"on":""}" data-lvl="${k}">${labels[k]} ${cnt[k]}</button>`
+  ).join("");
+  $$("#alertFilters .chip").forEach(b=>b.onclick=()=>{
+    curAlertLvl = b.dataset.lvl;
+    renderAlerts();
+  });
+}
 
 function renderAlerts(){
-  // 勘误单独渲染（改动前/后并排）
+  renderAlertFilters();
+  const doneMap = Store.alerts.doneMap();
+  const AL = $("#alertList");
+  if(!AL) return;
+
+  /* ---------- 勘误视图 ---------- */
   if(curAlertLvl==="erata"){
-    $("#alertList").innerHTML = ERATA.map(e=>`
-      <div class="alert a-${e.lvl}">
+    AL.innerHTML = ERATA.map(e=>{
+      const k = alertKey(e.no, e.sec);
+      const done = !!doneMap[k];
+      return `
+      <div class="alert a-${e.lvl} ${done?"is-done":""}">
         <div class="h"><span class="no">${e.no}</span><div class="t">第 ${e.sec} 章节勘误</div>
           <span class="tag ${e.lvl==="high"?"t-high":"t-mid"}">${e.lvl==="high"?"高优":"中"}</span>
-          <span class="tag t-gray">勘误</span></div>
+          <span class="tag t-gray">勘误</span>
+          ${done?`<span class="tag t-low">已处理</span>`:""}</div>
         <div style="margin:9px 0;font-size:12.5px">
           <div style="background:#fdeceb;border:1px solid #f7cfcb;border-radius:5px;padding:7px 10px;margin-bottom:5px">
             <span class="muted" style="display:block;margin-bottom:2px">改前</span>${e.before}</div>
@@ -3284,18 +4009,69 @@ function renderAlerts(){
         <div class="why"><span class="lb">为什么重要</span>${e.why}</div>
         <div class="act"><span class="lb">实验室要做什么</span><ul>${e.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
         <div class="foot">${offLink("官方勘误记录", CFSA_SEARCH(e.no))}
-          <div class="sp" style="flex:1"></div><button class="btn sm" onclick="toast('已标记处理')">标记已处理</button></div>
-      </div>`).join("") || `<div class="empty">没有符合条件的勘误</div>`;
+          <div class="sp" style="flex:1"></div>
+          ${done
+            ? `<button class="btn sm" onclick="unmarkAlertDone('${e.no}','${e.sec}')">撤销处理</button>`
+            : `<button class="btn sm" onclick="markAlertDone('${e.no}','${e.sec}')">标记已处理</button>
+               <button class="btn sm" onclick="snoozeAlert('${e.no}','${e.sec}',30)">忽略 30 天</button>`}
+        </div>
+      </div>`;
+    }).join("") || `<div class="empty">没有符合条件的勘误</div>`;
     renderWeekly();
     return;
   }
 
-  let list = ALERTS.filter(a=>curAlertLvl==="all" || (curAlertLvl==="unread"?a.unread:a.lvl===curAlertLvl));
-  $("#alertList").innerHTML = list.map(a=>`
-    <div class="alert a-${a.lvl}">
+  /* ---------- 已处理视图 ---------- */
+  if(curAlertLvl==="done"){
+    const keys = Object.keys(doneMap);
+    const items = keys.map(k=>{
+      const m = doneMap[k];
+      const src = ALERTS.find(a=>a.no===k) || ERATA.find(e=>alertKey(e.no,e.sec)===k);
+      if(!src) return "";
+      const isEr = (m.kind==="erata") || (!!src.sec && !ALERTS.some(a=>a.no===k));
+      const title = isEr ? ("第 "+(m.sec||src.sec)+" 章节勘误") : src.title;
+      const no = isEr ? src.no : k;
+      const sec = isEr ? (m.sec||src.sec) : "";
+      return `
+      <div class="alert a-low is-done">
+        <div class="h"><span class="no">${no}</span><div class="t">${title}</div>
+          <span class="tag t-low">已处理</span>
+          ${isEr?`<span class="tag t-gray">勘误</span>`:""}</div>
+        <div class="kv">${isEr?("处理时间 "+m.at):src.body}</div>
+        <div class="act"><span class="lb">实验室要做什么</span><ul>${(src.acts||[]).map(x=>`<li>${x}</li>`).join("")}</ul></div>
+        <div class="foot">
+          ${isEr?offLink("官方勘误记录", CFSA_SEARCH(src.no))
+                 :offLink("官方详情页", stdUrl(k))}
+          <div class="sp" style="flex:1"></div>
+          <span class="muted">处理于 ${m.at}</span>
+          <button class="btn sm" onclick="unmarkAlertDone('${no}','${sec}')">撤销处理</button>
+        </div>
+      </div>`;
+    }).filter(Boolean);
+    AL.innerHTML = items.join("") ||
+      `<div class="card empty">还没有处理过任何提醒。<br><span class="muted">在「待处理」里点「标记已处理」，这里会保留记录，可随时撤销。</span></div>`;
+    renderWeekly();
+    return;
+  }
+
+  /* ---------- 待处理 / 按级别 ---------- */
+  const pend = Store.alerts.pending(ALERTS);
+  let list;
+  if(curAlertLvl==="all")        list = ALERTS;
+  else if(curAlertLvl==="unread") list = pend;
+  else                            list = ALERTS.filter(a=>a.lvl===curAlertLvl);
+
+  AL.innerHTML = list.map(a=>{
+    const k = a.no;
+    const done = !!doneMap[k];
+    const snz  = Store.alerts.isSnoozed(k);
+    return `
+    <div class="alert a-${a.lvl} ${done?"is-done":""} ${snz?"is-snoozed":""}">
       <div class="h"><span class="no">${a.no}</span><div class="t">${a.unread?"● ":""}${a.title}</div>
         <span class="tag ${a.lvl==="high"?"t-high":a.lvl==="mid"?"t-mid":"t-low"}">${a.lvl==="high"?"高优":a.lvl==="mid"?"中":"低"}</span>
-        ${a.unread?`<span class="tag t-gray">未读</span>`:""}</div>
+        ${a.unread?`<span class="tag t-gray">未读</span>`:""}
+        ${done?`<span class="tag t-low">已处理</span>`:""}
+        ${snz?`<span class="tag t-gray">已忽略</span>`:""}</div>
       <div class="kv">${a.body}</div>
       <div class="why"><span class="lb">为什么重要</span>${a.why}</div>
       <div class="act"><span class="lb">实验室要做什么</span><ul>${a.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
@@ -3303,34 +4079,60 @@ function renderAlerts(){
         ${offLink("官方详情页", stdUrl(a.no))}
         <a class="btn sm" href="#detail" onclick="openDetail('${a.no}')">变更摘要</a>
         <div class="sp" style="flex:1"></div><span class="muted">${a.time}</span>
-        <button class="btn sm" onclick="toast('已标记处理')">标记已处理</button>
-        <button class="btn sm" onclick="toast('已忽略，同一标准 30 天内不再提醒')">忽略</button>
+        ${done
+          ? `<button class="btn sm" onclick="unmarkAlertDone('${a.no}')">撤销处理</button>`
+          : `<button class="btn sm" onclick="markAlertDone('${a.no}')">标记已处理</button>
+             <button class="btn sm" onclick="snoozeAlert('${a.no}','',30)">忽略 30 天</button>`}
       </div>
-    </div>`).join("") || `<div class="empty">没有符合条件的提醒</div>`;
+    </div>`;
+  }).join("") || `<div class="empty">没有符合条件的提醒</div>`;
 
-  const hi=ALERTS.filter(a=>a.lvl==="high").length, mid=ALERTS.filter(a=>a.lvl==="mid").length, low=ALERTS.filter(a=>a.lvl==="low").length;
-  $("#weekly").innerHTML = `
-    <div class="muted" style="margin-bottom:10px">周报周期：2026-09-27 ~ 2026-10-03 ｜ 收件人：实验室 QC 组</div>
-    <div class="grid g4" style="margin-bottom:14px">
-      <div class="kpi"><div class="k">本周变更</div><div class="v">12</div></div>
-      <div class="kpi hi"><div class="k">高优</div><div class="v">3</div></div>
-      <div class="kpi"><div class="k">90 天内实施</div><div class="v">2</div></div>
-      <div class="kpi"><div class="k">已处理</div><div class="v">6</div></div>
-    </div>
-    <div class="twrap"><table><thead><tr><th style="width:110px">标准号</th><th>本周发生了什么</th><th style="width:70px">级别</th><th style="width:80px">是否已处理</th></tr></thead>
-      <tbody>
-      ${ALERTS.map(a=>`<tr><td><span class="no">${a.no}</span></td><td>${a.title}<div class="muted">${a.body}</div></td>
-      <td><span class="tag ${a.lvl==="high"?"t-high":a.lvl==="mid"?"t-mid":"t-low"}">${a.lvl==="high"?"高优":a.lvl==="mid"?"中":"低"}</span></td>
-      <td><span class="tag ${a.unread?"t-soon":"t-low"}">${a.unread?"待处理":"已处理"}</span></td></tr>`).join("")}
-      ${ERATA.slice(0,5).map(e=>`<tr><td><span class="no">${e.no}</span></td>
-        <td><span class="tag t-gray">勘误</span> 第 ${e.sec} 节内容更正
-          <div class="muted">${e.before.slice(0,44)} → ${e.after.slice(0,44)}</div></td>
-        <td><span class="tag ${e.lvl==="high"?"t-high":"t-mid"}">${e.lvl==="high"?"高优":"中"}</span></td>
-        <td><span class="tag t-soon">待处理</span></td></tr>`).join("")}
-      </tbody></div></table>
-    </div>
-        <div class="muted" style="margin-top:10px">导出格式：PDF / Excel ／ 邮件正文与上表一致，不含标准全文，仅含官方链接。勘误另附「改前 / 改后」对照表。</div>`;
+  renderWeekly();
+  updateAlertBadge();
 }
+
+/* 周报：数字全部实算 */
+function renderWeekly(){
+  const el = $("#weekly");
+  if(!el) return;
+  const doneMap = Store.alerts.doneMap();
+  const pend = Store.alerts.pending(ALERTS);
+  const hi  = pend.filter(a=>a.lvl==="high").length;
+  const doneCnt = Object.keys(doneMap).filter(k=>
+    ALERTS.some(a=>a.no===k) || ERATA.some(e=>alertKey(e.no,e.sec)===k)
+  ).length;
+  const soon90 = STD.filter(s=>s.impState==="即将实施" && daysTo(s.imp)!==null && daysTo(s.imp)<=90).length;
+
+  el.innerHTML = `
+    <div class="muted" style="margin-bottom:10px">收件人：实验室 QC 组 ｜ 数字按当前提醒数据实时统计</div>
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi"><div class="k">待处理</div><div class="v">${pend.length}</div></div>
+      <div class="kpi hi"><div class="k">其中高优</div><div class="v">${hi}</div></div>
+      <div class="kpi"><div class="k">90 天内实施</div><div class="v">${soon90}</div></div>
+      <div class="kpi"><div class="k">已处理</div><div class="v">${doneCnt}</div></div>
+    </div>
+    <div class="twrap"><table><thead><tr><th style="width:110px">标准号</th><th>本周发生了什么</th><th style="width:70px">级别</th><th style="width:80px">处理状态</th></tr></thead>
+      <tbody>
+      ${ALERTS.map(a=>{
+        const done = !!doneMap[a.no];
+        return `<tr><td><span class="no">${a.no}</span></td><td>${a.title}<div class="muted">${a.body}</div></td>
+        <td><span class="tag ${a.lvl==="high"?"t-high":a.lvl==="mid"?"t-mid":"t-low"}">${a.lvl==="high"?"高优":a.lvl==="mid"?"中":"低"}</span></td>
+        <td><span class="tag ${done?"t-low":"t-soon"}">${done?"已处理":"待处理"}</span></td></tr>`;
+      }).join("")}
+      ${ERATA.map(e=>{
+        const k = alertKey(e.no, e.sec);
+        const done = !!doneMap[k];
+        return `<tr><td><span class="no">${e.no}</span></td>
+        <td><span class="tag t-gray">勘误</span> 第 ${e.sec} 节内容更正
+          <div class="muted">${String(e.before).slice(0,44)} → ${String(e.after).slice(0,44)}</div></td>
+        <td><span class="tag ${e.lvl==="high"?"t-high":"t-mid"}">${e.lvl==="high"?"高优":"中"}</span></td>
+        <td><span class="tag ${done?"t-low":"t-soon"}">${done?"已处理":"待处理"}</span></td></tr>`;
+      }).join("")}
+      </tbody></table>
+    </div>
+    <div class="muted" style="margin-top:10px">导出格式：PDF / Excel ／ 邮件正文与上表一致，不含标准全文，仅含官方链接。勘误另附「改前 / 改后」对照表。</div>`;
+}
+
 
 /* ================= 后台权限 =================
    ★ 为什么前台做权限 ★
@@ -3469,11 +4271,11 @@ function renderRunState(){
   // ---- 侧栏 ----
   const foot = $("#sideFoot");
   if(foot){
+    /* 深色侧栏上不用刺眼的纯红，用柔和的琥珀色 —— 仍然醒目但不扎眼 */
     foot.innerHTML =
       '检查频率：' + st.schedule + '<br>' +
       '上次检查：' + st.lastRun + '<br>' +
-      '<span class="' + (st.healthy ? "muted" : "") + '" style="'
-        + (st.healthy ? "" : "color:var(--high);font-weight:600") + '">'
+      '<span class="' + (st.healthy ? "" : "warn") + '">'
         + (st.healthy ? "下次：" + st.nextRun : st.nextRun) + '</span>';
   }
   // ---- 首页醒目提示：只在异常时出 ----
@@ -3695,6 +4497,145 @@ function renderAdmin(){
   $("#logBox").innerHTML = LOGS.map(([t,lv,m])=>`<div><span class="tm">${t}</span> <span class="${lv}">${lv==="ok"?"[OK]":lv==="wr"?"[WARN]":"[ERR]"}</span> ${m}</div>`).join("");
   $("#histBody").innerHTML = HIST.map(h=>`<tr><td class="muted">${h[0]}</td><td><span class="no">${h[1]}</span></td>
     <td>${h[2]}</td><td class="muted">${h[3]}</td><td class="mono muted">${h[4]}</td></tr>`).join("");
+  renderLocalState();
+}
+
+/* ================================================================
+   本机数据管理（2026-11-01 新增）
+   ================================================================
+   既然用户的状态存在本机，就必须让用户看得见、管得住：
+     · 每一类存了多少条
+     · 一键导出备份（JSON，换电脑用）
+     · 一键导入恢复
+     · 按类清空（不用清整个浏览器）
+   ================================================================ */
+function renderLocalState(){
+  const el = $("#localStateBox");
+  if(!el) return;
+  const u = Store.usage();
+  const doneMap = Store.alerts.doneMap();
+  const todoMap = Store.todo.get();
+  const custom = getCustomTodos();
+  const subsMap = Store.subs.get();
+  let subOn = 0, subTot = 0;
+  if(subsMap) for(var g in subsMap){ (subsMap[g]||[]).forEach(function(v){ subTot++; if(v) subOn++; }); }
+  const drafts = Store.keys().filter(k=>k.indexOf("draft.")===0 || k.indexOf("qw.")===0);
+  const subsCount = Store.subs.count();
+
+  const card = (title, n, detail, actions) => `
+    <div class="rem-item" style="padding:11px 0;border-bottom:1px solid var(--line)">
+      <div class="dot" style="background:${n?"var(--brand)":"var(--ink3)"}"></div>
+      <div class="tx"><b>${title}</b><div class="muted">${detail}</div></div>
+      <div class="tm" style="text-align:right;white-space:nowrap">
+        <b style="font-size:17px">${n}</b>
+        <div style="margin-top:4px">${actions||""}</div>
+      </div>
+    </div>`;
+
+  el.innerHTML = `
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi"><div class="k">订阅勾选</div><div class="v">${subsCount===null?"—":subOn}</div><div class="d">共 ${subTot} 项可订阅</div></div>
+      <div class="kpi"><div class="k">已处理提醒</div><div class="v">${Object.keys(doneMap).length}</div><div class="d">${Object.keys(Store.alerts.snoozeMap()).length} 项已忽略</div></div>
+      <div class="kpi"><div class="k">待办完成</div><div class="v">${Object.keys(todoMap).length}</div><div class="d">自建 ${custom.length} 条</div></div>
+      <div class="kpi"><div class="k">工具草稿</div><div class="v">${drafts.length}</div><div class="d">${(u.bytes/1024).toFixed(1)} KB / ${u.keys} 键</div></div>
+    </div>
+
+    ${card("订阅范围", subOn, "决定哪些标准进提醒队列、首页待办",
+      `<button class="btn sm" onclick="clearLocal('subs')">清空</button>`)}
+    ${card("提醒处理记录", Object.keys(doneMap).length, "已处理 / 已忽略，可撤销", 
+      `<button class="btn sm" onclick="clearLocal('alerts')">清空</button>`)}
+    ${card("待办勾选与自建任务", Object.keys(todoMap).length, "首页「下一步该做什么」的完成状态", 
+      `<button class="btn sm" onclick="clearLocal('todo')">清空</button>`)}
+    ${card("工具草稿", drafts.length, "配方、帕累托、SPC 等工具填过的数据", 
+      `<button class="btn sm" onclick="clearLocal('draft')">清空</button>`)}
+
+    <div class="flex" style="margin-top:14px;flex-wrap:wrap;gap:8px">
+      <button class="btn pri" onclick="exportLocalBackup()">⬇ 导出全部备份（JSON）</button>
+      <button class="btn" onclick="document.getElementById('restoreFile').click()">⬆ 导入备份</button>
+      <input type="file" id="restoreFile" accept="application/json,.json" style="display:none" onchange="importLocalBackup(this)">
+      <div class="sp" style="flex:1"></div>
+      <button class="btn" style="color:var(--high);border-color:#f7cfcb" onclick="wipeLocalAll()">清空本机全部数据</button>
+    </div>
+    <div class="muted" style="margin-top:8px;font-size:11.5px">
+      备份文件里只有勾选状态与你自己填的数据，不含标准全文、不含任何抓取到的官方原文。
+    </div>`;
+}
+
+/* 按类清空 */
+function clearLocal(kind){
+  const names = {subs:"订阅勾选", alerts:"提醒处理记录", todo:"待办与自建任务", draft:"工具草稿"};
+  dlg({
+    kind:"danger",
+    title:"确认清空「"+names[kind]+"」？",
+    body:"这一类数据会被删除且不可撤销（其余类别不受影响）。",
+    buttons:[{t:"取消", val:"cancel"}, {t:"确认清空", cls:"pri"}],
+    onClose: function(v){
+      if(!v) return;
+      if(kind==="subs")      { Store.set("subs", {}); SUBS.forEach(g=>g.on=(g.on||[]).map(()=>0)); }
+      else if(kind==="alerts"){ Store.set("alerts.done", {}); Store.set("alerts.snooze", {}); }
+      else if(kind==="todo") { Store.set("todo.done", {}); Store.set("todo.custom", []); }
+      else if(kind==="draft") { Store.draft.clearAll(); Store.keys().forEach(k=>{ if(k.indexOf("qw.")===0) Store.del(k); }); }
+      toast("已清空"+names[kind]);
+      renderLocalState(); renderSubs(); renderAlerts(); renderHome();
+    }
+  });
+}
+
+/* 导出备份 */
+function exportLocalBackup(){
+  const dump = Store.dump();
+  const blob = new Blob([JSON.stringify(dump,null,1)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "食品质量管理系统_本机备份_"+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+  toast("备份已导出");
+}
+
+/* 导入备份 */
+function importLocalBackup(input){
+  const f = input.files && input.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = function(){
+    let obj = null;
+    try { obj = JSON.parse(rd.result); }
+    catch(e){ toast("文件格式不对，不是有效的备份 JSON", "warn"); input.value=""; return; }
+    if(!obj || !obj.data){ toast("这个文件不是本系统的备份", "warn"); input.value=""; return; }
+    const n = Store.restore(obj);
+    input.value = "";
+    dlg({
+      title:"导入备份",
+      body:"已恢复 "+n+" 项数据。订阅与工具草稿需要刷新页面才会显示。",
+      buttons:[{t:"知道了", cls:"pri"}],
+      onClose: function(){
+        restoreSubs();
+        renderSubs(); renderAlerts(); renderHome(); renderLocalState();
+        toast("已恢复 "+n+" 项");
+      }
+    });
+  };
+  rd.readAsText(f);
+}
+
+/* 清空全部 */
+function wipeLocalAll(){
+  const u = Store.usage();
+  dlg({
+    kind:"danger",
+    title:"确认清空本机全部数据？",
+    body:"订阅、已处理记录、待办、工具草稿 —— 全部会被删除，无法恢复。<br>建议先「导出全部备份」。",
+    buttons:[{t:"取消", val:"cancel"}, {t:"确认全部清空", cls:"pri"}],
+    onClose: function(v){
+      if(!v) return;
+      Store.wipe();
+      SUBS.forEach(g=>g.on=(g.on||[]).map(()=>0));
+      toast("本机数据已全部清空");
+      renderSubs(); renderAlerts(); renderHome(); renderLocalState();
+    }
+  });
 }
 function runNow(){
   if(!guard("run","立即执行一次检查")) return;
@@ -3787,10 +4728,10 @@ if(window.addEventListener){
 })();
 
 /* 路由 */
-const TITLES={home:"今日待办",list:"标准清单",law:"法规与体系",cnas:"认可规范（CNAS）",refs:"通则引用标准",detail:"标准详情",method:"检测方法原理",mdetail:"方法原理详情",jsa:"工作安全分析 JSA",qmtools:"质量管理工具",rdtools:"研发管理",subs:"我的订阅",alerts:"提醒中心",admin:"管理后台"};
+const TITLES={home:"今日待办",list:"标准清单",law:"法规与体系",cnas:"认可规范（CNAS）",refs:"通则引用标准",detail:"标准详情",method:"检测方法原理",mdetail:"方法原理详情",lab:"实验室管理",jsa:"工作安全分析 JSA",qmtools:"质量管理工具",rdtools:"研发管理",subs:"我的订阅",alerts:"提醒中心",admin:"管理后台"};
 function route(){
   const h=(location.hash||"#home").slice(1);
-  const OK=["home","list","law","cnas","refs","detail","method","mdetail","jsa","qmtools","rdtools","subs","alerts","admin"];
+  const OK=["home","list","law","cnas","refs","detail","method","mdetail","lab","jsa","qmtools","rdtools","subs","alerts","admin"];
   const v = OK.includes(h) ? h : "home";
   $$(".nav a").forEach(a=>a.classList.toggle("on",a.dataset.v===v
       || (v==="mdetail"&&a.dataset.v==="method")));
@@ -3803,6 +4744,7 @@ function route(){
   if(v==="law") renderLaw();
   if(v==="cnas") renderCnas();
   if(v==="method") renderMethod();
+  if(v==="lab") renderLab();
   if(v==="jsa") renderJsa();
   if(v==="qmtools") renderQmTools();
   if(v==="rdtools") renderRdTools();
@@ -3819,6 +4761,19 @@ $$("#alertFilters .chip").forEach(b=>b.onclick=()=>{
 });
 window.addEventListener("hashchange",route);
 PERM_STATE = loadPerm();          // 恢复本机已授权状态（8 小时内有效）
+
+/* ★ 启动时恢复本机状态（2026-11-01）★
+   ★ 位置很关键：必须在 renderSubs() 之前 ★
+   否则界面先用默认订阅状态画一遍，用户看到的是「勾选没生效」，
+   哪怕数据其实已经恢复了（实测踩过：DOM 24 个勾 vs 数组 22 个勾）。
+   顺序：恢复订阅 → 恢复工具草稿 → 渲染 → 算徽标。 */
+(function restoreLocal(){
+  try{
+    restoreSubs();                                // 订阅勾选
+    if(typeof QW_restore === "function") QW_restore();   // 34 个工具的草稿
+  }catch(e){ console.warn("恢复本机状态失败", e); }
+})();
+
 renderSubs(); renderKw(); renderAdmin(); renderRunState();
 /* ★ 侧栏徽标在启动时全部填上 ★
    原来只有「进入某个页面」时才会给对应徽标赋值，
@@ -3833,8 +4788,16 @@ renderSubs(); renderKw(); renderAdmin(); renderRunState();
   /* 新增两个模块的徽标 —— 不加的话首次打开显示「—」，像坏了 */
   set("qmBadge", QM ? QM.tools.length : "—");
   set("rdBadge", RD ? RD.modules.length : "—");
+  /* 实验室管理徽标（2026-11-01）：可检项目数 */
+  set("labBadge", (window.LABDATA && window.LABDATA.CAPABILITY) ? window.LABDATA.CAPABILITY.length : "—");
 })();
+
+/* ★ 启动时恢复本机状态（2026-11-01）★ 见上方 restoreLocal —— 必须在 renderSubs 之前 */
+
 route();
+/* 顶栏待处理数字：随状态实时变 */
+setTimeout(updateAlertBadge, 0);
+
 </script>
 </body>
 </html>

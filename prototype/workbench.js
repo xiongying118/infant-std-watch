@@ -19,9 +19,64 @@
      QW_sensory     感官评价统计
    ================================================================ */
 
-/* 通用：各工具的工作台数据（key → {type, rows, ...}） */
-const QWD = {};   // 工作台状态：toolKey → 运行时数据
+/* 通用：各工具的工作台数据（key → {type, rows, ...}）
+   ★ 2026-11-01：改为自动落盘 ★
+   之前 QWD 只在内存里，用户在工具里填的配方、帕累托数据、SPC 数据
+   一刷新全丢（实测确认）。现在：
+     · 写入时通过 Proxy 自动触发保存（防抖 400ms）
+     · 启动时从 localStorage 恢复
+     · 任何输入框改动（input/change 事件委托）也会触发保存
+   好处：调平一下午的配方刷新还在。 */
+const _QWD_MEM = {};
+const QWD = new Proxy(_QWD_MEM, {
+  set(target, k, v){
+    target[k] = v;
+    QW_persist();
+    return true;
+  },
+  deleteProperty(target, k){
+    delete target[k];
+    QW_persist();
+    return true;
+  }
+});
 let QW_ACTIVE = null;
+
+/* 落盘：整个 QWD 序列化到一个键（工具状态可能很大，单键更省配额） */
+let _qwSaveTimer = null;
+function QW_persist(){
+  if(typeof Store === "undefined" || !Store.qw) return;
+  clearTimeout(_qwSaveTimer);
+  _qwSaveTimer = setTimeout(function(){
+    try{
+      Store.qw.set("all", JSON.parse(JSON.stringify(_QWD_MEM)));
+    }catch(e){ /* 循环引用等，忽略 */ }
+  }, 400);
+}
+/* 从存储恢复（页面启动时调一次） */
+function QW_restore(){
+  if(typeof Store === "undefined" || !Store.qw) return;
+  const saved = Store.qw.get("all");
+  if(!saved) return;
+  Object.keys(saved).forEach(function(k){
+    if(!(k in _QWD_MEM)) _QWD_MEM[k] = saved[k];
+  });
+}
+/* 清掉全部工具草稿 */
+function QW_clearDrafts(){
+  Object.keys(_QWD_MEM).forEach(function(k){ delete _QWD_MEM[k]; });
+  if(typeof Store !== "undefined" && Store.qw) Store.qw.del("all");
+}
+
+/* 输入框改动 → 触发保存（覆盖那些「只改值不重渲染」的处理器） */
+document.addEventListener("input", function(e){
+  const host = e.target && e.target.closest && e.target.closest("[data-qw-host]");
+  if(host) QW_persist();
+}, true);
+document.addEventListener("change", function(e){
+  const host = e.target && e.target.closest && e.target.closest("[data-qw-host]");
+  if(host) QW_persist();
+}, true);
 
 /* ------------------------------------------------------------
    通用表格

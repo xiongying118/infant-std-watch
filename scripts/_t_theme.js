@@ -1,0 +1,30 @@
+const {chromium}=require('playwright-core');
+const B='file:///D:/workbuddy%E5%AD%98%E5%82%A8%E6%95%B0%E6%8D%AE/2026-10-03-11-07-27/std-watch/prototype';
+(async()=>{
+ const b=await chromium.launch({executablePath:'C://Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',headless:true});
+ const p=await (await b.newContext()).newPage();
+ const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+ await p.goto(B+'/index.html',{waitUntil:'networkidle'});
+ await p.waitForTimeout(2200);
+ console.log('JS 错误:', errs.length?errs.join(' | '):'无');
+ console.log('theme.css 已加载:', await p.evaluate(()=>{
+   const s=[...document.styleSheets].find(x=>(x.href||'').indexOf('theme.css')>=0);
+   return s? '是':'否';
+ }));
+ console.log('主色:', await p.evaluate(()=>getComputedStyle(document.documentElement).getPropertyValue('--brand').trim()));
+ console.log('强调色:', await p.evaluate(()=>getComputedStyle(document.documentElement).getPropertyValue('--gold').trim()));
+ console.log('侧栏宽:', await p.evaluate(()=>Math.round(document.querySelector('.side').getBoundingClientRect().width)));
+ await p.screenshot({path:'_th_home.png', clip:{x:0,y:0,width:1440,height:1000}});
+ await p.evaluate(()=>{location.hash='#lab';});
+ await p.waitForTimeout(1600);
+ await p.screenshot({path:'_th_lab.png', clip:{x:0,y:0,width:1440,height:1000}});
+ await p.evaluate(()=>{location.hash='#qmtools';});
+ await p.waitForTimeout(1400);
+ await p.evaluate(()=>{const b=[...document.querySelectorAll('#qmTabs button')].find(y=>y.dataset.jsa==='zones'); if(b)b.click();});
+ await p.waitForTimeout(500);
+ await p.screenshot({path:'_th_qm.png', clip:{x:0,y:0,width:1440,height:1000}});
+ await p.evaluate(()=>{location.hash='#alerts';});
+ await p.waitForTimeout(1400);
+ await p.screenshot({path:'_th_alerts.png', clip:{x:0,y:0,width:1440,height:1000}});
+ await b.close();
+})();

@@ -16,6 +16,8 @@ from __future__ import annotations
 import io
 import json
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import re
 import sys
 
@@ -262,15 +264,25 @@ def main() -> int:
     #   JSA 本身是嵌套对象 → 外面包一层 `[...]`，页面侧取 `JSA[0]`。
     #   ★ 别写成 `window.STDWATCH_DATA.JSA = {...}`，那会整体塞进括号里，
     #     报 SyntaxError: Unexpected token ';'。
+    # ★★ 2026-11-01：扩充层 ★★
+    #   xlsx 源里的分区只有 5 个 22 步，明显不够用（用户：「内容还是太少」）。
+    #   扩充内容放在 scripts/jsa_expand.py 里，与源解耦：
+    #   源更新时只要扩充层还在，就会自动合并上去。
+    try:
+        from jsa_expand import apply_expansion
+        out = apply_expansion(out)
+    except Exception as e:      # 扩充层缺失不该让主流程挂掉
+        print("[!] 扩充层未应用：%s" % e)
+
     js = json.dumps([out], ensure_ascii=False, indent=1)
 
     p = os.path.join(DATA, "_jsajs.txt")
     io.open(p, "w", encoding="utf-8").write(js)
     print("JSA 数据已写入 %s（%d 字节）" % (p, os.path.getsize(p)))
     print("  分区 %d 个 · 作业步骤 %d 条 · 红线 %d 条 · 危害分析示例 %d 条"
-          % (len(zones), sum(len(z["steps"]) for z in zones),
-             len(guide["redlines"]), len(wha_rows)))
-    for z in zones:
+          % (len(out["zones"]), sum(len(z["steps"]) for z in out["zones"]),
+             len(out["guide"]["redlines"]), len(wha_rows)))
+    for z in out["zones"]:
         print("    %s %s（%d 步）" % (z["icon"], z["title"], len(z["steps"])))
     return 0
 

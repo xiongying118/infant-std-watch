@@ -18,7 +18,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "01be897e80733e0f",
-  "days_to_implement": -24
+  "days_to_implement": -35
  },
  "CNAS-R01:2023": {
   "std_no": "CNAS-R01:2023",
@@ -39,7 +39,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "074d2e392b5aaeb4",
-  "days_to_implement": -1275
+  "days_to_implement": -1286
  },
  "CNAS-R02:2023": {
   "std_no": "CNAS-R02:2023",
@@ -60,7 +60,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "654a2de66c1d0d44",
-  "days_to_implement": -1275
+  "days_to_implement": -1286
  },
  "CNAS-RL01:2025": {
   "std_no": "CNAS-RL01:2025",
@@ -81,7 +81,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "c0c57f1ddaf1e7bc",
-  "days_to_implement": -479
+  "days_to_implement": -490
  },
  "CNAS-RL02:2023": {
   "std_no": "CNAS-RL02:2023",
@@ -102,7 +102,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "5572445e8225e672",
-  "days_to_implement": -1120
+  "days_to_implement": -1131
  },
  "CNAS-RL05:2016": {
   "std_no": "CNAS-RL05:2016",
@@ -123,7 +123,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "2cb2af4dd9cea690",
-  "days_to_implement": -2507
+  "days_to_implement": -2518
  },
  "CNAS-RL06:2018": {
   "std_no": "CNAS-RL06:2018",
@@ -144,7 +144,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "889a77b79ce44616",
-  "days_to_implement": -2235
+  "days_to_implement": -2246
  },
  "CNAS-RL07:2018": {
   "std_no": "CNAS-RL07:2018",
@@ -165,7 +165,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "d5a6ef83adc88a6f",
-  "days_to_implement": -2235
+  "days_to_implement": -2246
  },
  "CNAS-RL08:2017": {
   "std_no": "CNAS-RL08:2017",
@@ -186,7 +186,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "8421ac4e8b9b3024",
-  "days_to_implement": -2235
+  "days_to_implement": -2246
  },
  "CNAS-RL09:2019": {
   "std_no": "CNAS-RL09:2019",
@@ -207,7 +207,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "9bdcde43c7930408",
-  "days_to_implement": -2778
+  "days_to_implement": -2789
  },
  "CNAS-RL10:2026": {
   "std_no": "CNAS-RL10:2026",
@@ -228,7 +228,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "985b39e43343d746",
-  "days_to_implement": -294
+  "days_to_implement": -305
  },
  "CNAS-CL01:2018": {
   "std_no": "CNAS-CL01:2018",
@@ -249,7 +249,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "53b58b51aaab522e",
-  "days_to_implement": -2108
+  "days_to_implement": -2119
  },
  "CNAS-CL02:2023": {
   "std_no": "CNAS-CL02:2023",
@@ -270,7 +270,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "5f75c644a65e700c",
-  "days_to_implement": -1239
+  "days_to_implement": -1250
  },
  "CNAS-CL03:2024": {
   "std_no": "CNAS-CL03:2024",
@@ -291,7 +291,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "fc4c3b07b1e5905b",
-  "days_to_implement": -862
+  "days_to_implement": -873
  },
  "CNAS-CL04:2017": {
   "std_no": "CNAS-CL04:2017",
@@ -312,7 +312,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "1dc3474420767adc",
-  "days_to_implement": -2379
+  "days_to_implement": -2390
  },
  "CNAS-CL05:2009": {
   "std_no": "CNAS-CL05:2009",
@@ -333,7 +333,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "e842949557015125",
-  "days_to_implement": -645
+  "days_to_implement": -656
  },
  "CNAS-CL06:2018": {
   "std_no": "CNAS-CL06:2018",
@@ -354,7 +354,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "4bca2a084044edcb",
-  "days_to_implement": -2379
+  "days_to_implement": -2390
  },
  "CNAS-CL07:2021": {
   "std_no": "CNAS-CL07:2021",
@@ -375,7 +375,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "b061cd2a3e0f4e9b",
-  "days_to_implement": -1959
+  "days_to_implement": -1970
  },
  "CNAS-CL09:2019": {
   "std_no": "CNAS-CL09:2019",
@@ -396,7 +396,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "cea06325c0773c36",
-  "days_to_implement": -2064
+  "days_to_implement": -2075
  },
  "CNAS-CL10:2020": {
   "std_no": "CNAS-CL10:2020",
@@ -417,7 +417,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "5162922495d957e2",
-  "days_to_implement": -2117
+  "days_to_implement": -2128
  },
  "CNAS-CL01-G001:2024": {
   "std_no": "CNAS-CL01-G001:2024",
@@ -438,7 +438,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "52c19c9f966f1073",
-  "days_to_implement": -841
+  "days_to_implement": -852
  },
  "CNAS-CL01-G002:2021": {
   "std_no": "CNAS-CL01-G002:2021",
@@ -459,7 +459,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "4fc14220a4d7a1eb",
-  "days_to_implement": -1906
+  "days_to_implement": -1917
  },
  "CNAS-CL01-G003:2021": {
   "std_no": "CNAS-CL01-G003:2021",
@@ -480,7 +480,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "db1c4cb6bb9e39dd",
-  "days_to_implement": -1382
+  "days_to_implement": -1393
  },
  "CNAS-CL01-G004:2023": {
   "std_no": "CNAS-CL01-G004:2023",
@@ -501,7 +501,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "a5f07b62d34b1a6e",
-  "days_to_implement": -1358
+  "days_to_implement": -1369
  },
  "CNAS-CL01-G005:2018": {
   "std_no": "CNAS-CL01-G005:2018",
@@ -522,7 +522,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "1efcfdd2cbc4c13c",
-  "days_to_implement": -3157
+  "days_to_implement": -3168
  },
  "CNAS-CL01-A001:2022": {
   "std_no": "CNAS-CL01-A001:2022",
@@ -543,7 +543,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "62c3dfeb63b8c9ec",
-  "days_to_implement": -1396
+  "days_to_implement": -1407
  },
  "CNAS-CL01-A002:2020": {
   "std_no": "CNAS-CL01-A002:2020",
@@ -564,7 +564,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "6a9b3473e9a0e498",
-  "days_to_implement": -2134
+  "days_to_implement": -2145
  },
  "CNAS-CL01-A003:2019": {
   "std_no": "CNAS-CL01-A003:2019",
@@ -585,7 +585,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "2fc0f3bfc83752b1",
-  "days_to_implement": -2487
+  "days_to_implement": -2498
  },
  "CNAS-CL01-A004:2026": {
   "std_no": "CNAS-CL01-A004:2026",
@@ -606,28 +606,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "295840137b9eee47",
-  "days_to_implement": -185
- },
- "CNAS-CL01-A004:2018": {
-  "std_no": "CNAS-CL01-A004:2018",
-  "title": "实验室能力认可准则在医疗器械检测领域的应用说明",
-  "category": "sys",
-  "status": "现行",
-  "publish_date": "2018-03-01",
-  "implement_date": "2018-03-01",
-  "abolish_date": "",
-  "replaces": [],
-  "replaced_by": "",
-  "jurisdiction_org": "CNAS",
-  "issuer_org": "中国合格评定国家认可委员会",
-  "official_url": "https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_7da633893e69433697fca84de7677e03.html",
-  "hcno": "",
-  "download_allowed": false,
-  "is_iso": false,
-  "is_mandatory": false,
-  "source_code": "SRC-11",
-  "row_hash": "638499f2024fe8f6",
-  "days_to_implement": -3157
+  "days_to_implement": -196
  },
  "CNAS-CL01-A005:2020": {
   "std_no": "CNAS-CL01-A005:2020",
@@ -648,7 +627,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "190d1238d774c267",
-  "days_to_implement": -2131
+  "days_to_implement": -2142
  },
  "CNAS-CL01-A006:2021": {
   "std_no": "CNAS-CL01-A006:2021",
@@ -669,7 +648,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "fe7971ab98727112",
-  "days_to_implement": -1756
+  "days_to_implement": -1767
  },
  "CNAS-CL01-A007:2021": {
   "std_no": "CNAS-CL01-A007:2021",
@@ -690,7 +669,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "0dbed4a043cb6efe",
-  "days_to_implement": -2082
+  "days_to_implement": -2093
  },
  "CNAS-CL01-A008:2023": {
   "std_no": "CNAS-CL01-A008:2023",
@@ -711,7 +690,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "ef04f745a3d43fa5",
-  "days_to_implement": -1290
+  "days_to_implement": -1301
  },
  "CNAS-CL01-A009:2018": {
   "std_no": "CNAS-CL01-A009:2018",
@@ -732,7 +711,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "461c989c66255c2f",
-  "days_to_implement": -3157
+  "days_to_implement": -3168
  },
  "CNAS-CL01-A010:2023": {
   "std_no": "CNAS-CL01-A010:2023",
@@ -753,7 +732,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "21350681a82a7810",
-  "days_to_implement": -1332
+  "days_to_implement": -1343
  },
  "CNAS-CL01-A011:2018": {
   "std_no": "CNAS-CL01-A011:2018",
@@ -774,7 +753,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "2ff91799da2113a1",
-  "days_to_implement": -3157
+  "days_to_implement": -3168
  },
  "CNAS-CL01-A012:2018": {
   "std_no": "CNAS-CL01-A012:2018",
@@ -795,7 +774,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "054c9775d3e942e2",
-  "days_to_implement": -3157
+  "days_to_implement": -3168
  },
  "CNAS-CL01-A013:2018": {
   "std_no": "CNAS-CL01-A013:2018",
@@ -816,7 +795,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "cd8ca98988e21009",
-  "days_to_implement": -3157
+  "days_to_implement": -3168
  },
  "CNAS-CL01-A014:2024": {
   "std_no": "CNAS-CL01-A014:2024",
@@ -837,7 +816,28 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "c121847655243972",
-  "days_to_implement": -843
+  "days_to_implement": -854
+ },
+ "CNAS-CL01-A015:2018": {
+  "std_no": "CNAS-CL01-A015:2018",
+  "title": "检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明",
+  "category": "sys",
+  "status": "现行",
+  "publish_date": "2018-03-01",
+  "implement_date": "2018-03-01",
+  "abolish_date": "",
+  "replaces": [],
+  "replaced_by": "",
+  "jurisdiction_org": "CNAS",
+  "issuer_org": "中国合格评定国家认可委员会",
+  "official_url": "https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_ae18369a0d80415ca08e4e13c2e0a10b.html",
+  "hcno": "",
+  "download_allowed": false,
+  "is_iso": false,
+  "is_mandatory": false,
+  "source_code": "SRC-11",
+  "row_hash": "faf8b149c2792ab3",
+  "days_to_implement": -3168
  },
  "CNAS-GL001:2018": {
   "std_no": "CNAS-GL001:2018",
@@ -858,7 +858,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "9c8310c79b8c7a76",
-  "days_to_implement": -3157
+  "days_to_implement": -3168
  },
  "CNAS-GL002:2018": {
   "std_no": "CNAS-GL002:2018",
@@ -879,7 +879,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "af11917d691e936e",
-  "days_to_implement": -2052
+  "days_to_implement": -2063
  },
  "CNAS-GL003:2018": {
   "std_no": "CNAS-GL003:2018",
@@ -900,7 +900,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "9fbf26cb9c5c698a",
-  "days_to_implement": -2235
+  "days_to_implement": -2246
  },
  "CNAS-GL006:2019": {
   "std_no": "CNAS-GL006:2019",
@@ -921,7 +921,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "14d1401e48046e1b",
-  "days_to_implement": -2753
+  "days_to_implement": -2764
  },
  "CNAS-GL007:2020": {
   "std_no": "CNAS-GL007:2020",
@@ -942,7 +942,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "7913de291a43dd16",
-  "days_to_implement": -2235
+  "days_to_implement": -2246
  },
  "CNAS-GL008:2018": {
   "std_no": "CNAS-GL008:2018",
@@ -963,7 +963,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "902d0a9046524210",
-  "days_to_implement": -3157
+  "days_to_implement": -3168
  },
  "CNAS-GL009:2018": {
   "std_no": "CNAS-GL009:2018",
@@ -984,7 +984,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "1586d2947201c2f8",
-  "days_to_implement": -3157
+  "days_to_implement": -3168
  },
  "CNAS-GL014:2025": {
   "std_no": "CNAS-GL014:2025",
@@ -1005,7 +1005,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "17a8a883ca9c80e8",
-  "days_to_implement": -645
+  "days_to_implement": -656
  },
  "CNAS-GL015:2022": {
   "std_no": "CNAS-GL015:2022",
@@ -1026,7 +1026,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "cb84842b7ac500d7",
-  "days_to_implement": -1736
+  "days_to_implement": -1747
  },
  "CNAS-GL016:2020": {
   "std_no": "CNAS-GL016:2020",
@@ -1047,7 +1047,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "7aa0c69f63edbe00",
-  "days_to_implement": -1864
+  "days_to_implement": -1875
  },
  "CNAS-GL018:2018": {
   "std_no": "CNAS-GL018:2018",
@@ -1068,7 +1068,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "a54d0bd09df82444",
-  "days_to_implement": -2235
+  "days_to_implement": -2246
  },
  "CNAS-GL019:2018": {
   "std_no": "CNAS-GL019:2018",
@@ -1089,7 +1089,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "3df7a0bf866b2285",
-  "days_to_implement": -2235
+  "days_to_implement": -2246
  },
  "CNAS-GL021:2018": {
   "std_no": "CNAS-GL021:2018",
@@ -1110,7 +1110,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "971225a40974b4c0",
-  "days_to_implement": -2235
+  "days_to_implement": -2246
  },
  "CNAS-GL022:2018": {
   "std_no": "CNAS-GL022:2018",
@@ -1131,7 +1131,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "7b48e0e94e154d5a",
-  "days_to_implement": -3157
+  "days_to_implement": -3168
  },
  "CNAS-GL023:2018": {
   "std_no": "CNAS-GL023:2018",
@@ -1152,7 +1152,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "844f1d32b21506fc",
-  "days_to_implement": -3157
+  "days_to_implement": -3168
  },
  "CNAS-GL025:2023": {
   "std_no": "CNAS-GL025:2023",
@@ -1173,7 +1173,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "b98f952415460e17",
-  "days_to_implement": -1028
+  "days_to_implement": -1039
  },
  "CNAS-CL01-S01:2023": {
   "std_no": "CNAS-CL01-S01:2023",
@@ -1194,7 +1194,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "d4355a56307b5c38",
-  "days_to_implement": -1382
+  "days_to_implement": -1393
  },
  "CNAS-CL01-S02:2022": {
   "std_no": "CNAS-CL01-S02:2022",
@@ -1215,7 +1215,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "fb63353f7e7a0b28",
-  "days_to_implement": -1484
+  "days_to_implement": -1495
  },
  "CNAS-CL01-S03:2020": {
   "std_no": "CNAS-CL01-S03:2020",
@@ -1236,7 +1236,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "b1302ac293651e60",
-  "days_to_implement": -2260
+  "days_to_implement": -2271
  },
  "CNAS-CL01-S04:2018": {
   "std_no": "CNAS-CL01-S04:2018",
@@ -1257,7 +1257,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "391445cc8e362a31",
-  "days_to_implement": -2978
+  "days_to_implement": -2989
  },
  "CNAS-CL01-S05:2020": {
   "std_no": "CNAS-CL01-S05:2020",
@@ -1278,7 +1278,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "3e55a78df3b55489",
-  "days_to_implement": -2339
+  "days_to_implement": -2350
  },
  "CNAS-CL01-S06:2024": {
   "std_no": "CNAS-CL01-S06:2024",
@@ -1299,7 +1299,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "578c595bb98f9d8a",
-  "days_to_implement": -849
+  "days_to_implement": -860
  },
  "CNAS-EL-02:2020": {
   "std_no": "CNAS-EL-02:2020",
@@ -1320,7 +1320,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "84dab05910afeb1b",
-  "days_to_implement": -2117
+  "days_to_implement": -2128
  },
  "CNAS-EL-03:2023": {
   "std_no": "CNAS-EL-03:2023",
@@ -1341,7 +1341,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "44ad76f3237e6846",
-  "days_to_implement": -1178
+  "days_to_implement": -1189
  },
  "CNAS-EL-04:2020": {
   "std_no": "CNAS-EL-04:2020",
@@ -1362,7 +1362,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "4ca2c0dcbb655666",
-  "days_to_implement": -2452
+  "days_to_implement": -2463
  },
  "CNAS-EL-05:2013": {
   "std_no": "CNAS-EL-05:2013",
@@ -1383,7 +1383,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "e1058d2aa7ea2059",
-  "days_to_implement": -4159
+  "days_to_implement": -4170
  },
  "CNAS-EL-06:2013": {
   "std_no": "CNAS-EL-06:2013",
@@ -1404,7 +1404,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "15fb6efb3aef4bc5",
-  "days_to_implement": -4159
+  "days_to_implement": -4170
  },
  "CNAS-EL-07:2020": {
   "std_no": "CNAS-EL-07:2020",
@@ -1425,7 +1425,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "2d13fb1c532cfb05",
-  "days_to_implement": -2402
+  "days_to_implement": -2413
  },
  "CNAS-EL-08:2018": {
   "std_no": "CNAS-EL-08:2018",
@@ -1446,7 +1446,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "5eb0b1db08f2e259",
-  "days_to_implement": -3123
+  "days_to_implement": -3134
  },
  "CNAS-EL-09:2021": {
   "std_no": "CNAS-EL-09:2021",
@@ -1467,7 +1467,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "bc772485a267e007",
-  "days_to_implement": -2123
+  "days_to_implement": -2134
  },
  "CNAS-EL-10:2014": {
   "std_no": "CNAS-EL-10:2014",
@@ -1488,7 +1488,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "31a8a59fa8e67cbe",
-  "days_to_implement": -4159
+  "days_to_implement": -4170
  },
  "CNAS-EL-11:2016": {
   "std_no": "CNAS-EL-11:2016",
@@ -1509,7 +1509,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "8da5370a68f2421f",
-  "days_to_implement": -3760
+  "days_to_implement": -3771
  },
  "CNAS-EL-12:2018": {
   "std_no": "CNAS-EL-12:2018",
@@ -1530,7 +1530,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "37705de1b6274545",
-  "days_to_implement": -3158
+  "days_to_implement": -3169
  },
  "CNAS-EL-13:2019": {
   "std_no": "CNAS-EL-13:2019",
@@ -1551,7 +1551,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "9bebbaf03a8f3e8e",
-  "days_to_implement": -2487
+  "days_to_implement": -2498
  },
  "CNAS-EL-14:2023": {
   "std_no": "CNAS-EL-14:2023",
@@ -1572,7 +1572,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "0ab0c9f0ef044ec2",
-  "days_to_implement": -1178
+  "days_to_implement": -1189
  },
  "CNAS-EL-15:2020": {
   "std_no": "CNAS-EL-15:2020",
@@ -1593,7 +1593,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "c41003e62e36fa4a",
-  "days_to_implement": -1945
+  "days_to_implement": -1956
  },
  "CNAS-EL-17:2020": {
   "std_no": "CNAS-EL-17:2020",
@@ -1614,7 +1614,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "65852ee4af8a7737",
-  "days_to_implement": -2117
+  "days_to_implement": -2128
  },
  "CNAS-EL-18:2021": {
   "std_no": "CNAS-EL-18:2021",
@@ -1635,7 +1635,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "53e3971c84ebda4f",
-  "days_to_implement": -2082
+  "days_to_implement": -2093
  },
  "CNAS-EL-19:2021": {
   "std_no": "CNAS-EL-19:2021",
@@ -1656,7 +1656,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "e10ce219e6be89db",
-  "days_to_implement": -1995
+  "days_to_implement": -2006
  },
  "CNAS-TRL-002:2020": {
   "std_no": "CNAS-TRL-002:2020",
@@ -1677,7 +1677,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "52fcf28bfa7aace8",
-  "days_to_implement": -2402
+  "days_to_implement": -2413
  },
  "CNAS-TRL-003:2015": {
   "std_no": "CNAS-TRL-003:2015",
@@ -1698,7 +1698,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "71754b3d5c1c5e6a",
-  "days_to_implement": -4073
+  "days_to_implement": -4084
  },
  "CNAS-TRL-005:2018": {
   "std_no": "CNAS-TRL-005:2018",
@@ -1719,7 +1719,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "cd2614184ec055b3",
-  "days_to_implement": -3194
+  "days_to_implement": -3205
  },
  "CNAS-TRL-006:2018": {
   "std_no": "CNAS-TRL-006:2018",
@@ -1740,7 +1740,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "52f89b9f44bc918b",
-  "days_to_implement": -3194
+  "days_to_implement": -3205
  },
  "CNAS-TRL-007:2018": {
   "std_no": "CNAS-TRL-007:2018",
@@ -1761,7 +1761,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "578eed08e50c3245",
-  "days_to_implement": -2905
+  "days_to_implement": -2916
  },
  "CNAS-TRL-008:2025": {
   "std_no": "CNAS-TRL-008:2025",
@@ -1782,7 +1782,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "180021bfa99cc92a",
-  "days_to_implement": -325
+  "days_to_implement": -336
  },
  "CNAS-TRL-009:2025": {
   "std_no": "CNAS-TRL-009:2025",
@@ -1803,7 +1803,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "3c0fd5cb23fca0b4",
-  "days_to_implement": -325
+  "days_to_implement": -336
  },
  "CNAS-TRL-010:2019": {
   "std_no": "CNAS-TRL-010:2019",
@@ -1824,7 +1824,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "4f71488dfb4400ca",
-  "days_to_implement": -2758
+  "days_to_implement": -2769
  },
  "CNAS-TRL-011:2020": {
   "std_no": "CNAS-TRL-011:2020",
@@ -1845,7 +1845,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "96746c0d62c8122d",
-  "days_to_implement": -2357
+  "days_to_implement": -2368
  },
  "CNAS-TRL-012:2020": {
   "std_no": "CNAS-TRL-012:2020",
@@ -1866,7 +1866,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "73d80557ae549707",
-  "days_to_implement": -2117
+  "days_to_implement": -2128
  },
  "CNAS-TRL-013:2020": {
   "std_no": "CNAS-TRL-013:2020",
@@ -1887,7 +1887,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "ede6a80bad906616",
-  "days_to_implement": -2117
+  "days_to_implement": -2128
  },
  "CNAS-TRL-014:2021": {
   "std_no": "CNAS-TRL-014:2021",
@@ -1908,7 +1908,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "e45838f1c9d95147",
-  "days_to_implement": -2123
+  "days_to_implement": -2134
  },
  "CNAS-TRL-015:2021": {
   "std_no": "CNAS-TRL-015:2021",
@@ -1929,7 +1929,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "46b0f5a4f6960311",
-  "days_to_implement": -2081
+  "days_to_implement": -2092
  },
  "CNAS-TRL-016:2021": {
   "std_no": "CNAS-TRL-016:2021",
@@ -1950,7 +1950,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "e2e39a750c580bb9",
-  "days_to_implement": -2081
+  "days_to_implement": -2092
  },
  "CNAS-TRL-017:2021": {
   "std_no": "CNAS-TRL-017:2021",
@@ -1971,7 +1971,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "d3c3aee29735fa02",
-  "days_to_implement": -1919
+  "days_to_implement": -1930
  },
  "CNAS-TRL-018:2022": {
   "std_no": "CNAS-TRL-018:2022",
@@ -1992,7 +1992,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "d186776291fa59d9",
-  "days_to_implement": -1696
+  "days_to_implement": -1707
  },
  "CNAS-TRL-019:2022": {
   "std_no": "CNAS-TRL-019:2022",
@@ -2013,7 +2013,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "32fa439eda8a4dcf",
-  "days_to_implement": -1388
+  "days_to_implement": -1399
  },
  "CNAS-TRL-020:2022": {
   "std_no": "CNAS-TRL-020:2022",
@@ -2034,7 +2034,7 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "26b5afa1b0d12181",
-  "days_to_implement": -1388
+  "days_to_implement": -1399
  },
  "CNAS-TRL-021:2022": {
   "std_no": "CNAS-TRL-021:2022",
@@ -2055,6 +2055,6 @@
   "is_mandatory": false,
   "source_code": "SRC-11",
   "row_hash": "e75d8cfa19095e8b",
-  "days_to_implement": -1388
+  "days_to_implement": -1399
  }
 }

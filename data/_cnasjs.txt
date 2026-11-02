@@ -1,6 +1,7 @@
 [
   {no:"CNAS-CL01-A001:2022", title:"检测和校准实验室能力认可准则在微生物检测领域的应用说明", kind:"CL", kindName:"认可准则", pub:"2022-12-26", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_7687a14d2585467488a995da9074aa88.html"},
   {no:"CNAS-CL01-A002:2020", title:"检测和校准实验室能力认可准则在化学检测领域的应用说明", kind:"CL", kindName:"认可准则", pub:"2020-12-18", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_8688f3a11fb7404ba643467d17187ea1.html"},
+  {no:"CNAS-CL01-A015:2018", title:"检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明", kind:"CL", kindName:"认可准则", pub:"2018-03-01", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_ae18369a0d80415ca08e4e13c2e0a10b.html"},
   {no:"CNAS-CL01-G001:2024", title:"检测和校准实验室能力认可准则的应用要求", kind:"CL", kindName:"认可准则", pub:"2024-07-03", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_72245f37cbac480697079c8cf78d8b4b.html"},
   {no:"CNAS-CL01-G003:2021", title:"测量不确定度的要求（2023-1-1第一次修订）", kind:"CL", kindName:"认可准则", pub:"2023-01-09", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_69a6ecdcb8634b33ab6acbb6c335f56f.html"},
   {no:"CNAS-CL01-G005:2018", title:"检测和校准实验室能力认可准则在非固定场所检测活动中的应用说明", kind:"CL", kindName:"认可准则", pub:"2018-03-01", url:"https://www.cnas.org.cn/rkgf/sysrk/rkyyzz/art/2024/art_e8a801dc7a2e43c8bd97b772740dc3c0.html"},

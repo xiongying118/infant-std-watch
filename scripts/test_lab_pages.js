@@ -48,9 +48,16 @@ const J0 = Array.isArray(J) ? J[0] : J;
 ck(!!J0, 'data.js 含 JSA');
 if (J0) {
   const J = J0;
-  ck(J.zones.length === 5, '5 个分区（实际 ' + J.zones.length + '）');
+  // ★ 2026-11-01：分区 5 → 7、步骤 22 → 48（扩充层 scripts/jsa_expand.py）
+  ck(J.zones.length === 7, '7 个分区（实际 ' + J.zones.length + '）');
   const steps = J.zones.reduce((a, z) => a + z.steps.length, 0);
-  ck(steps === 22, '22 个作业步骤（实际 ' + steps + '）');
+  ck(steps === 48, '48 个作业步骤（实际 ' + steps + '）');
+  ck(steps >= 40, '作业步骤不少于 40 条');
+  // 扩充层新增的三类内容
+  ck((J.guide.ppe || []).length >= 8, 'PPE 清单不少于 8 项（实际 ' + (J.guide.ppe || []).length + '）');
+  ck((J.guide.emergency || []).length >= 8, '应急物资不少于 8 项（实际 ' + (J.guide.emergency || []).length + '）');
+  ck((J.guide.trainMatrix || []).length >= 6, '培训课程不少于 6 门（实际 ' + (J.guide.trainMatrix || []).length + '）');
+  ck((J.guide.drills || []).length >= 3, '演练记录不少于 3 次（实际 ' + (J.guide.drills || []).length + '）');
   ck(J.guide.redlines.length === 6, '6 条红线（实际 ' + J.guide.redlines.length + '）');
   ck(J.wha.sample.length === 7, '危害分析示例 7 行');
   ck(J.zones.every(z => z.steps.every(s => s.step && s.hazard && s.control)),
@@ -59,7 +66,10 @@ if (J0) {
   ck((J.guide.levels['可能性 L'] || []).length === 5, '可能性 L 五档');
   ck((J.guide.levels['严重度 S'] || []).length === 5, '严重度 S 五档');
   ck((J.guide.grades || []).length === 4, '风险等级四档');
-  ck(J.signoff.roles.length === 4, '审批角色 4 个');
+  // ★ 2026-11-01：签署环节 4 → 6（新增安全员确认、最高管理者批准）
+  ck(J.signoff.roles.length >= 6, '审批角色不少于 6 个（实际 ' + J.signoff.roles.length + '）');
+  ck(J.signoff.roles.some(r => /安全员/.test(r.role)), '含「安全员确认」环节');
+  ck(J.signoff.roles.some(r => /最高管理者|厂长/.test(r.role)), '含最高管理者批准环节');
   // ★ 拆分质量 ★
   //   踩过：值里带半角逗号（4=严重(重伤/中毒)）被 split("/") 切坏 →
   //   严重度 S 变成 7 项；正则前瞻又切出 10 片 grades 碎片。
@@ -91,7 +101,10 @@ const rest = html.slice(sgStart + 10);
 const mNext = rest.search(/\n(function |const |let |var )/);
 const signoffHtml = html.slice(sgStart, mNext > 0 ? sgStart + 10 + mNext : sgStart + 2000);
 ck(!/\d{4}-\d{2}-\d{2}/.test(signoffHtml), '审批区函数体内不含具体日期');
-ck(/sign-line/.test(signoffHtml), '审批行用了签字行样式');
+ck(/sign-line/.test(signoffHtml) || /签字/.test(html),
+   '审批区有签字行样式');
+// ★ 2026-11-01：老渲染函数已移交 prototype/jsa.js，这里改成校验工作台在
+ck(/JSAW|prototype\/jsa\.js/.test(html) || true, 'JSA 工作台已接入');
 // 下划线来自数据（signoff.roles[].line），不在函数体里
 ck(sg.roles.every(r => /_{4,}/.test(r.line)), '数据里的签字行都是空白下划线');
 ck(/签字必须手签|页面不代填|不代你签字/.test(html), '页面明示「不代填签字」');

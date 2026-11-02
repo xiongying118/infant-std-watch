@@ -247,6 +247,32 @@
   "source_code": "SRC-05"
  },
  {
+  "std_no": "GB 5009.304-2025",
+  "std_name": "食品安全国家标准 食品中三价铬和六价铬的测定",
+  "section": "附录B图B.1",
+  "before": "<p><span style=\"color: rgb(61, 61, 61);\">b）中文字“六价铬的EDTA络合物”</span></p>",
+  "after": "<p>改为“六价铬”</p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-27",
+  "guid": "9CC7644F-244C-4641-8F53-A0878EF55FBD",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=9CC7644F-244C-4641-8F53-A0878EF55FBD",
+  "source_code": "SRC-05"
+ },
+ {
+  "std_no": "GB 4806.7-2023",
+  "std_name": "食品安全国家标准 食品接触用塑料材料及制品",
+  "section": "附表A.1序号116",
+  "before": "<p>0.05（2,6-二甲基-1,4-苯酚：SML）</p>",
+  "after": "<p>0.05（2,6-二甲基苯酚：SML）</p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-28",
+  "guid": "AC1FD245-9967-4961-AF6B-086D9ACCA064",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=AC1FD245-9967-4961-AF6B-086D9ACCA064",
+  "source_code": "SRC-05"
+ },
+ {
   "std_no": "GB 5009.3-2016",
   "std_name": "食品安全国家标准 食品中水分的测定",
   "section": "前言",
@@ -985,6 +1011,19 @@
   "log_date": "2025-05-22",
   "guid": "A2D82FFE-41CC-4188-ACCA-24C9C99B763D",
   "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=A2D82FFE-41CC-4188-ACCA-24C9C99B763D",
+  "source_code": "SRC-05"
+ },
+ {
+  "std_no": "GB 4806.7-2023",
+  "std_name": "食品安全国家标准 食品接触用塑料材料及制品",
+  "section": "附表A.1序号73",
+  "before": "<p style=\"text-align: center;\">SML（T）：5（以1,4-丁二醇计）</p><p style=\"text-align: center;\">SML（T）分组编号：30</p>",
+  "after": "<p style=\"text-align: center;\">SML（T）：7.5（以对苯二甲酸计）；5（以1,4-丁二醇计）</p><p style=\"text-align: center;\">SML（T）分组编号：28；30</p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-28",
+  "guid": "D0233B52-C464-4B0D-8574-1F115B91E116",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=D0233B52-C464-4B0D-8574-1F115B91E116",
   "source_code": "SRC-05"
  },
  {
@@ -1755,6 +1794,19 @@
   "source_code": "SRC-05"
  },
  {
+  "std_no": "GB 5009.304-2025",
+  "std_name": "食品安全国家标准 食品中三价铬和六价铬的测定",
+  "section": "附录B图B.1",
+  "before": "<p>图B.1 &nbsp;三价铬和六价铬标准溶液（10ng/mL，经EDTA络合）液相色谱-电感耦合等离子体质谱图</p>",
+  "after": "<p>图B.1 &nbsp;三价铬（10 ng/mL，经EDTA络合）和六价铬（10 ng/mL）标准溶液液相色谱-电感耦合等离子体质谱图</p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-28",
+  "guid": "064AAA95-D4C0-4AC1-980F-D1E530BF4F80",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=064AAA95-D4C0-4AC1-980F-D1E530BF4F80",
+  "source_code": "SRC-05"
+ },
+ {
   "std_no": "GB 31604.32-2016",
   "std_name": "食品安全国家标准 食品接触材料及制品木质材料中二氧化硫的测定",
   "section": "附录A",
@@ -1843,6 +1895,71 @@
   "log_date": "2025-09-15",
   "guid": "1D078ECB-62EB-42C2-B56D-13649FD39C92",
   "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=1D078ECB-62EB-42C2-B56D-13649FD39C92",
+  "source_code": "SRC-05"
+ },
+ {
+  "std_no": "GB 1886.384-2025",
+  "std_name": "食品安全国家标准 食品添加剂 植物炭黑",
+  "section": "A.3.3中公式A.1",
+  "before": "<p><img src=\"/resources/script/ueditor/jsp/upload/20261102/1793610431154.png\" alt=\"\" data-href=\"\" style=\"\"/></p>",
+  "after": "<p><img src=\"/resources/script/ueditor/jsp/upload/20261102/1793610435232.png\" alt=\"\" data-href=\"\" style=\"\"/></p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-27",
+  "guid": "FDA09879-F510-40FC-889D-1F23D20388BF",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=FDA09879-F510-40FC-889D-1F23D20388BF",
+  "source_code": "SRC-05"
+ },
+ {
+  "std_no": "GB 5009.235-2016",
+  "std_name": "食品安全国家标准 食品中氨基酸态氮的测定",
+  "section": "5.2",
+  "before": "<p style=\"text-align: center;\">同时取80 mL水，……做试剂空白试验。</p>",
+  "after": "<p style=\"text-align: center;\">同时取70 mL水，……做试剂空白试验。</p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-28",
+  "guid": "54491D33-B76C-4BD7-A09A-1E1E894F418C",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=54491D33-B76C-4BD7-A09A-1E1E894F418C",
+  "source_code": "SRC-05"
+ },
+ {
+  "std_no": "GB 4806.7-2023",
+  "std_name": "食品安全国家标准 食品接触用塑料材料及制品",
+  "section": "表2通用理化指标第二行",
+  "before": "<p>蒸馏水（60℃，2h）</p>",
+  "after": "<p>水（60℃，2h）</p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-28",
+  "guid": "97237926-A9F9-4BC8-8864-E996467D6DAF",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=97237926-A9F9-4BC8-8864-E996467D6DAF",
+  "source_code": "SRC-05"
+ },
+ {
+  "std_no": "GB 4806.7-2023",
+  "std_name": "食品安全国家标准 食品接触用塑料材料及制品",
+  "section": "附表A.1序号33",
+  "before": "<p>ND(1,3-苯二胺：SML，DL=0.01 mg/kg）</p>",
+  "after": "<p>ND(1,3-苯二胺：SML，DL=0.002 mg/kg）</p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-28",
+  "guid": "60258ADE-BE9C-4300-8E77-DEB930878B8E",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=60258ADE-BE9C-4300-8E77-DEB930878B8E",
+  "source_code": "SRC-05"
+ },
+ {
+  "std_no": "GB 5009.235-2016",
+  "std_name": "食品安全国家标准 食品中氨基酸态氮的测定",
+  "section": "9.2.4",
+  "before": "<p>显色剂：15mL37%甲醇与7.8 mL 乙酰丙酮混合……</p>",
+  "after": "<p>显色剂：15mL37%甲醛与7.8 mL 乙酰丙酮混合……</p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-29",
+  "guid": "97A32698-4C87-4530-8AAD-1F0ED2DAE860",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=97A32698-4C87-4530-8AAD-1F0ED2DAE860",
   "source_code": "SRC-05"
  },
  {
@@ -2285,6 +2402,32 @@
   "log_date": "2025-05-23",
   "guid": "ABDE85BB-3000-4BFE-98DB-F926B5256E04",
   "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=ABDE85BB-3000-4BFE-98DB-F926B5256E04",
+  "source_code": "SRC-05"
+ },
+ {
+  "std_no": "GB 5009.33-2025",
+  "std_name": "食品安全国家标准 食品中亚硝酸盐与硝酸盐的测定",
+  "section": "12.2.1",
+  "before": "<p>乳及乳制品、婴幼儿配方食品、特殊医学用途配方食品：称取液体试样45g~90g(精确至0.01 g)，固体试样1g~10g(精确至0.01 g)</p>",
+  "after": "<p>乳及乳制品、婴幼儿配方食品、特殊医学用途配方食品：称取液体试样45g~90g(精确至0.01 g)，其他试样1g~10g(精确至0.01 g)</p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-28",
+  "guid": "9C3E5418-63C9-45A3-A03B-7C296CAB63CC",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=9C3E5418-63C9-45A3-A03B-7C296CAB63CC",
+  "source_code": "SRC-05"
+ },
+ {
+  "std_no": "GB 5009.235",
+  "std_name": "食品安全国家标准 食品中氨基酸态氮的测定",
+  "section": "9.1.3",
+  "before": "<p>甲醇(CH3OH)。</p>",
+  "after": "<p>甲醛(HCHO)：37%。</p>",
+  "reason": "编辑性错误",
+  "erata_date": "2026-10-28",
+  "log_date": "2026-10-29",
+  "guid": "555C9C70-A0F0-4AEE-B47C-F016FFD09DAD",
+  "official_url": "https://sppt.cfsa.net.cn:8086/db?type=2&guid=555C9C70-A0F0-4AEE-B47C-F016FFD09DAD",
   "source_code": "SRC-05"
  }
 ]

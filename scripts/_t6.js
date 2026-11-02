@@ -1,0 +1,21 @@
+const {chromium}=require('playwright-core');
+const B='file:///D:/workbuddy%E5%AD%98%E5%82%A8%E6%95%B0%E6%8D%AE/2026-10-03-11-07-27/std-watch/prototype';
+(async()=>{
+ const b=await chromium.launch({executablePath:'C://Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',headless:true});
+ const p=await (await b.newContext()).newPage();
+ await p.goto(B+'/index.html',{waitUntil:'networkidle'});
+ await p.waitForTimeout(1500);
+ await p.evaluate(()=>{location.hash='#subs';}); await p.waitForTimeout(800);
+ await p.evaluate(()=>{ document.querySelectorAll('#subGrid .chk input[type=checkbox]')[0].click(); });
+ await p.waitForTimeout(600);
+ console.log('点击后 storage:', await p.evaluate(()=>localStorage.getItem('swd:subs')));
+ console.log('点击后 SUBS[0].on:', await p.evaluate(()=>JSON.stringify(SUBS[0].on)));
+ await p.reload({waitUntil:'networkidle'});
+ await p.waitForTimeout(1800);
+ console.log();
+ console.log('刷新后 storage:', await p.evaluate(()=>localStorage.getItem('swd:subs')));
+ console.log('刷新后 Store.subs.get():', await p.evaluate(()=>JSON.stringify(Store.subs.get())));
+ console.log('刷新后 SUBS[0].on:', await p.evaluate(()=>JSON.stringify(SUBS[0].on)));
+ console.log('刷新后手动 restoreSubs:', await p.evaluate(()=>{const r=restoreSubs(); return JSON.stringify({r:r,on:SUBS[0].on});}));
+ await b.close();
+})();
