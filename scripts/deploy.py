@@ -89,6 +89,9 @@ INJECT_TRIGGERS = [
     "data/_soonjs.txt",
     "data/general_refs.json",
     "scripts/build_jsa.py",
+    # ★ 2026-11-02：JSA 扩充层也影响 data.js 的内容，必须跟着触发 inject ★
+    "scripts/jsa_expand.py",
+    "scripts/jsa_expand2.py",
     "scripts/build_refgroups.py",
     "scripts/sync_std_to_proto.py",
     "scripts/inject_refdata.py",

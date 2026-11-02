@@ -59,11 +59,20 @@ ck(!hrefs.includes('card-editor.html'), '「录入经验」已下线');
 //   （设备、试剂、留样、QC、原始记录），比 JSA 更常打开。
 const inLab = rows.filter(r => r.group === '实验室管理').map(r => r.href);
 ck(inLab.includes('#lab') && inLab.includes('#jsa') && inLab.includes('#method'),
-   'JSA / 日常台账 / 检测方法原理都在「实验室管理」组');
+   'JSA / 日常管理 / 检测方法原理都在「实验室管理」组');
 ck(inLab[0] === '#jsa', '★ JSA 排在实验室管理组第一位（实际 ' + inLab[0] + '）');
-ck(inLab[1] === '#lab', '★ 日常台账排在 JSA 之后（实际 ' + inLab[1] + '）');
+ck(inLab[1] === '#lab', '★ 日常管理排在 JSA 之后（实际 ' + inLab[1] + '）');
 ck(inLab[2] === '#method', '★ 检测方法原理排第三（实际 ' + inLab[2] + '）');
 ck(rows.find(r => r.href === '#alerts').group === '提醒', '提醒中心归属「提醒」组');
+
+// ★ 2026-11-02 用户定名：#lab 这一项叫「日常管理」（原「日常台账」）★
+//   注意：上面的通用正则抓不到这个 <a> 的文字（文本在 <span class="tx"> 里，
+//   后面还跟着 badge），所以这里直接从原始 HTML 里精确取。
+const labA = (nav.match(/<a href="#lab"[^>]*>[\s\S]*?<\/a>/) || [''])[0];
+ck(labA.indexOf('>日常管理<') >= 0, '★ #lab 的导航文字是「日常管理」（实际「' +
+   (labA.match(/<span class="tx">([^<]*)<\/span>/) || [, '?'])[1] + '」）');
+ck(labA.indexOf('日常台账') < 0, '★ 旧名「日常台账」已不再出现');
+ck((nav.match(/data-v="lab"/) || []).length === 1, '#lab 导航项唯一');
 
 // ★ 2026-10-22 用户截图：长导航名折行，把徽标挤成竖条 ★
 //   → 文字必须包在 .tx 里（单行+省略号），徽标 flex:0 0 auto 永不压缩。

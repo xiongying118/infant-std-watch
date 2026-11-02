@@ -258,21 +258,51 @@ def main() -> int:
         "wha": {"fields": wha_head, "sample": wha_rows},
     }
 
+    # ★★ 数据版本号（2026-11-02）★★
+    #   页面端 jsa.js 的 load() 用它判断「本地旧副本是否需要合并新预填内容」。
+    #   每次扩充分区/步骤就把这个数 +1，用户刷新后自动增量合并，
+    #   老用户改过的内容不会被覆盖，同时能拿到新增的分区与步骤。
+    out["__v"] = 2
+
     # ★ 产物格式：必须是**裸 JSON 数组** ★
     #   inject_refdata.py 的注入器只支持数组值（扫到 `  KEY: [` 后按数组
     #   边界替换，遇到 `{` 直接报 "[x] JSA 的值不是数组"）。
     #   JSA 本身是嵌套对象 → 外面包一层 `[...]`，页面侧取 `JSA[0]`。
     #   ★ 别写成 `window.STDWATCH_DATA.JSA = {...}`，那会整体塞进括号里，
     #     报 SyntaxError: Unexpected token ';'。
-    # ★★ 2026-11-01：扩充层 ★★
+    # ★★ 2026-11-01：扩充层 ①★★
     #   xlsx 源里的分区只有 5 个 22 步，明显不够用（用户：「内容还是太少」）。
     #   扩充内容放在 scripts/jsa_expand.py 里，与源解耦：
     #   源更新时只要扩充层还在，就会自动合并上去。
-    try:
-        from jsa_expand import apply_expansion
-        out = apply_expansion(out)
-    except Exception as e:      # 扩充层缺失不该让主流程挂掉
-        print("[!] 扩充层未应用：%s" % e)
+    # ★★ 2026-11-02：扩充层 ② ★★
+    #   用户：「作业步骤数量还是少，你帮我再找资料增加完善」。
+    #   第①层只有 7 区 48 步，缺取样、复原、常规理化、营养素、污染物、
+    #   微生物常规、过敏原、校准、报告、洗消、准入这些环节。
+    #   第②层补 11 个分区 60 步 → 合计 18 区 108 步。
+    for mod, fn in (("jsa_expand", "apply_expansion"),
+                    ("jsa_expand2", "apply_expansion2")):
+        try:
+            m = __import__(mod)
+            out = getattr(m, fn)(out)
+        except Exception as e:      # 扩充层缺失不该让主流程挂掉
+            print("[!] 扩充层 %s 未应用：%s" % (mod, e))
+
+    # ★★ 给每个作业步骤打稳定 sid（2026-11-02）★★
+    #   为什么需要：页面端增量合并原本按「步骤标题」匹配，
+    #   用户把步骤名改了就匹配不上 → 同一条被当成新步骤再追加一次（重复）。
+    #   sid = md5(分区标题|步骤标题)，与页面无关、跨次构建稳定；
+    #   用户改名只改 step 字段、不动 sid → 合并时仍能对上，编辑不会丢。
+    #   ★ 必须放在**扩充层之后** ★
+    #     扩充层 apply_expansion 会把 out["zones"] 整个换成新的列表，
+    #     之前打的 sid 全被冲掉（实测 sid 一个都没进产物）。
+    import hashlib
+
+    def _sid(zone_title, step_title):
+        return hashlib.md5(("%s|%s" % (zone_title, step_title)).encode("utf-8")).hexdigest()[:10]
+
+    for z in out.get("zones", []):
+        for st in z.get("steps", []):
+            st["sid"] = _sid(z.get("title", ""), st.get("step", ""))
 
     js = json.dumps([out], ensure_ascii=False, indent=1)
 

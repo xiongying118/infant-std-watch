@@ -171,12 +171,28 @@ a:hover{color:var(--brand);text-decoration:none}
    ================================================================ */
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
 
+/* ★ 顶栏（2026-11-02 用户截图标注 + 「滚动头牌不动太占空间」反馈）★
+   结构：一级标题（品牌头）正常流随页面滚走 → 二级标题行吸顶。
+   → 滚动时只占 52px（原来两行都吸顶是 128px，省 76px）
+   → 而且**零布局位移**：品牌头滚走是正常的文档流滚动，
+     不像「滚动时折叠顶栏」那样把下方内容整体上移 76px
+     （会让用户正在输入时页面猛跳一下，实测滚动位移 77px）。 */
+
+/* 二级标题行：吸顶 */
 .top{
-  background:rgba(255,255,255,.86);backdrop-filter:blur(14px);
+  background:rgba(255,255,255,.94);backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line);
-  padding:13px 28px;display:flex;align-items:center;gap:18px;
+  padding:9px 30px;display:flex;align-items:center;gap:18px;
   position:sticky;top:0;z-index:20;box-shadow:0 1px 3px rgba(16,24,40,.03);
+}
+/* 窄屏补一个系统名小标识（侧栏在窄屏收进抽屉，看不到系统名了） */
+.mbrand{
+  display:none;font-size:12px;color:var(--ink3);letter-spacing:.3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
+}
+@media(max-width:900px){
+  .mbrand{display:block;max-width:40vw}
 }
 .top h2{
   font-size:17px;font-weight:700;color:var(--brand-ink);letter-spacing:.2px;margin:0;
@@ -201,14 +217,19 @@ a:hover{color:var(--brand);text-decoration:none}
 .search input{border:0;background:transparent;outline:none;font-size:13px;width:100%;font-family:inherit;color:var(--ink)}
 .search input::placeholder{color:var(--ink3)}
 
-/* 居中品牌头 */
+/* 品牌头（2026-11-02 顶栏重排）
+   ★ 用户要求「品牌头放中间」→ logo + 系统名 + 副标题 整组水平居中 ★
+   用 flex + justify-content:center 实现；
+   .tt 内部左对齐（标题与副标题左对齐更好看），但整组在页面正中。
+   ★ 它**不吸顶**，随页面自然滚走（滚走才不占空间，且零布局位移）。 */
 .topbrand{
   display:flex;align-items:center;justify-content:center;gap:14px;
-  padding:20px 24px 18px;
-  background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,0));
+  padding:12px 24px 10px;
+  background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0));
+  border-bottom:1px dashed var(--line2);
 }
 .topbrand .logo{
-  font-size:25px;width:46px;height:46px;border-radius:14px;
+  font-size:21px;width:38px;height:38px;border-radius:12px;
   display:flex;align-items:center;justify-content:center;
   background:linear-gradient(140deg,var(--brand-3),var(--brand));
   box-shadow:0 6px 18px rgba(27,58,107,.26), inset 0 1px 0 rgba(255,255,255,.20);
@@ -219,7 +240,7 @@ a:hover{color:var(--brand);text-decoration:none}
   font-size:11.5px;color:var(--ink3);letter-spacing:.6px;margin-top:1px;
 }
 .topbrand h1{
-  margin:0;font-size:22px;font-weight:700;letter-spacing:1.4px;
+  margin:0;font-size:19px;font-weight:700;letter-spacing:1.1px;
   background:linear-gradient(96deg,var(--brand-ink) 0%,var(--brand-3) 46%,var(--gold-2) 108%);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
 }
@@ -579,7 +600,7 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
    且金色用深一档的 --gold-2，保证在浅底上清晰。
    ================================================================ */
 .topbrand h1{
-  margin:0;font-size:22px;font-weight:700;letter-spacing:1.4px;
+  margin:0;font-size:20px;font-weight:700;letter-spacing:1.4px;
   background:linear-gradient(96deg,#0E2748 0%,#1B3A6B 34%,#2C5697 62%,#B08D1C 100%);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
 }

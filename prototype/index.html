@@ -46,38 +46,30 @@ a:hover{text-decoration:underline}
 .brand h1{font-size:15px;font-weight:600;letter-spacing:.2px}
 .brand p{font-size:12px;color:var(--ink3);margin-top:3px}
 
-/* ★★ 居中的品牌头（2026-10-22 用户要求）★★
-   原来标题只在左侧栏顶部，太角落了。检测员打开第一眼看不到系统叫什么。
-   现在在页头放一个居中的品牌区：徽标 + 系统名 + 副标题，
-   视觉上把「这是什么系统」放在第一屏正中。 */
-.topbrand{
-  display:flex;align-items:center;justify-content:center;gap:13px;
-  padding:15px 24px 14px;
-  background:
-    linear-gradient(180deg,rgba(37,99,235,.06),rgba(37,99,235,0)),
-    var(--panel);
-  border-bottom:1px solid var(--line2);
-  text-align:left;
-}
-.topbrand .logo{
-  width:38px;height:38px;flex:0 0 38px;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;font-size:20px;
-  background:linear-gradient(135deg,#2563eb,#0ea5e9);
-  box-shadow:0 3px 10px rgba(37,99,235,.28);
-}
-.topbrand .tt{display:flex;flex-direction:column;gap:2px;min-width:0}
-.topbrand h1{
-  margin:0;font-size:19px;font-weight:700;letter-spacing:.6px;
-  color:var(--ink);line-height:1.25;
-}
-.topbrand p{
-  margin:0;font-size:12px;color:var(--ink3);letter-spacing:.3px;
-}
+/* ★ 品牌头样式已迁到 theme.css（.topbar .topbrand）★
+   2026-11-02 顶栏重排：品牌头进了 .topbar，要跟二级标题一起吸顶，
+   颜色与阴影统一由主题文件管，index.html 不再重复定义。
+   ------------------------------------------------------------------ */
 @media(max-width:720px){
-  .topbrand{padding:12px 14px;gap:10px}
-  .topbrand .logo{width:32px;height:32px;flex:0 0 32px;font-size:17px}
-  .topbrand h1{font-size:16px}
+  .topbar .topbrand{padding:10px 14px;gap:10px}
+  .topbar .topbrand .logo{width:31px;height:31px;flex:0 0 31px;font-size:16px}
+  .topbar .topbrand h1{font-size:15px}
   .topbrand p{font-size:11px}
+}
+/* ★★ 顶栏重排（2026-11-02 用户截图标注）★★
+   用户原话标注：
+     「一级标题放顶部」   → 品牌头（系统名 + 副标题）放最上面
+     「二级标题放下方」   → 页面标题（今日待办 / JSA …）放在品牌头下面
+     「滚动两个标题都不动」→ 两行都吸顶，滚内容时标题不跑
+     「品牌头放中间」      → logo + 系统名 + 副标题 整组水平居中
+     「搜标准号，放标准清单里」→ 顶栏只留一个搜索入口，回车跳标准清单
+     「这个删」            → 删掉右上角「N 条待处理」按钮（提醒中心在侧栏已能进）
+   实现：品牌头与原 .top 合并成 .topbar（sticky），内部两行。
+   ★ 具体样式统一放在 theme.css（.topbar / .topbar .topbrand / .topbar .top），
+     这里只留说明，避免两处样式打架。
+   ------------------------------------------------------------------ */
+@media(max-width:720px){
+  .topbar .top{padding:8px 14px}
 }
 .nav{padding:10px 10px;flex:1;overflow-y:auto}
 .nav-label{font-size:11px;color:var(--ink3);padding:10px 8px 5px;letter-spacing:.5px}
@@ -127,6 +119,8 @@ a:hover{text-decoration:underline}
 }
 .search input{border:0;background:transparent;outline:none;font-size:13px;width:100%;font-family:inherit}
 .view{padding:22px 24px 60px;max-width:1180px}
+/* ★ JSA 是唯一要横向铺开的视图：一行 10 列，窄容器必然裁切 ★ */
+#v-jsa{max-width:1560px}
 .view.hide{display:none}
 
 /* 通用块 */
@@ -863,14 +857,26 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .jcard-step:hover{border-color:var(--line);background:var(--panel)}
 .jcard-step:focus{outline:none;border-color:var(--brand);background:#fff;
   box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent)}
-/* ★ 主体：所有字段一行到底，列宽明确指定，不再有 3+1 的断行 ★ */
+/* ★ 主体：所有字段一行到底，列宽明确指定，不再有 3+1 的断行 ★
+   ★ 2026-11-02 修：原来 10 列最小宽合计 1119px + 卡片内边距 = 1151px，
+     超过 .view 可视宽度(1132px)，卡片又是 overflow:hidden →
+     「期限」列被切一半、「操作」列（删除/落实按钮）整列看不见，也没法滚。
+     现在三管齐下：
+       ① 列最小宽收紧到 960px 以内（文字域仍是 minmax，屏幕宽时自动铺开）
+       ② 兜底加 overflow-x:auto，窄屏可以横向滚，不会再"消失"
+       ③ #v-jsa 单独放宽容器到 1560px，宽屏下每列都宽敞 */
 .jcard-body{
   display:grid;
   grid-template-columns:
-    minmax(150px,1.05fr) minmax(140px,1fr) minmax(160px,1.15fr) minmax(160px,1.15fr)
-    50px 50px 62px minmax(92px,.68fr) minmax(112px,.78fr) 44px;
-  gap:9px 11px;align-items:start;min-width:0;
+    minmax(120px,1.05fr) minmax(110px,1fr) minmax(130px,1.15fr) minmax(130px,1.15fr)
+    50px 50px 54px minmax(78px,.68fr) minmax(108px,.78fr) 40px;
+  gap:9px 10px;align-items:start;min-width:0;
+  overflow-x:auto;                 /* ★ 兜底：再窄也能横向滚到最后一列 ★ */
+  scrollbar-width:thin;
 }
+.jcard-body::-webkit-scrollbar{height:7px}
+.jcard-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+.jcard-body::-webkit-scrollbar-track{background:transparent}
 .jfield{display:flex;flex-direction:column;gap:3px;min-width:0}
 .jfield>label{
   font-size:10.5px;color:var(--ink3);font-weight:600;letter-spacing:.2px;
@@ -886,7 +892,12 @@ td .no{font-family:ui-monospace,Consolas,monospace}
   resize:vertical;
 }
 .jfield textarea{overflow:hidden;min-height:40px}
-.jfield input[type=date]{font-size:11.5px;padding:5px 6px}
+/* ★ 日期框有固有最小宽度（Chrome 约 120px），会把「期限」列撑破 → 整行溢出 ★
+   必须显式 min-width:0 并缩窄内边距，否则最后两列被切掉 */
+.jfield input[type=date]{font-size:11px;padding:5px 3px;min-width:0;width:100%;
+  box-sizing:border-box;letter-spacing:-.2px}
+.jfield input[type=date]::-webkit-calendar-picker-indicator{
+  padding:0;margin-left:0;width:12px;height:12px;opacity:.65;cursor:pointer}
 .jfield textarea:hover,.jfield input:hover{border-color:var(--brand)}
 .jfield textarea:focus,.jfield input:focus{
   outline:none;border-color:var(--brand);background:#fff;
@@ -900,8 +911,9 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 }
 .jrisk .lvl-in{
   width:50px;min-width:50px;max-width:50px;      /* ★ 锁死宽度 ★ */
+  box-sizing:border-box;                         /* ★ 不加这个会因 padding 溢出列宽 ★ */
   text-align:center;font-weight:700;font-size:16px;
-  border:1px solid var(--line);border-radius:6px;padding:5px 2px;
+  border:1px solid var(--line);border-radius:6px;padding:5px 0;
   font-family:inherit;color:var(--ink);background:var(--panel);
   -moz-appearance:textfield;
 }
@@ -1315,12 +1327,13 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
            位置：从「质量管理」后面提到**前面**。
            理由：实验室是质量与研发的落地环节，检测员每天真正动手的地方；
            质量管理与研发管理是它的上游方法与规范。
-           组内顺序：JSA（动手之前先看风险）→ 日常台账 → 方法原理。 -->
+           组内顺序：JSA（动手之前先看风险）→ 日常管理 → 方法原理。 -->
       <div class="nav-label">实验室管理</div>
       <a href="#jsa" data-v="jsa"><span class="ic">⚠️</span><span class="tx">工作安全分析 (JSA)</span><span class="badge" id="jsaBadge" style="background:var(--high)">—</span></a>
-      <!-- 原「实验室管理」与外层组重名 → 改叫「日常台账」
-           （里面是设备/试剂/样品/QC/PT/CAPA/内审/排班/环境这些每天要记的账） -->
-      <a href="#lab" data-v="lab"><span class="ic">🏢</span><span class="tx">日常台账</span><span class="badge" id="labBadge" style="background:var(--brand)">—</span></a>
+      <!-- 原「实验室管理」与外层组重名 → 改叫「日常管理」
+           （里面是设备/试剂/样品/QC/PT/CAPA/内审/排班/环境这些每天要记的账；
+             2026-11-02 用户定名：日常管理） -->
+      <a href="#lab" data-v="lab"><span class="ic">🏢</span><span class="tx">日常管理</span><span class="badge" id="labBadge" style="background:var(--brand)">—</span></a>
       <a href="#method" data-v="method"><span class="ic">🧪</span><span class="tx">检测方法原理</span><span class="badge" id="methodBadge" style="background:var(--brand)">—</span></a>
       <!-- ★★ 质量管理工具（2026-10-22 用户要求新增）★★
            16 个工具覆盖体系 / 分析 / 过程 / 现场 / 风险五类。 -->
@@ -1344,25 +1357,43 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 
   <!-- ============ 主区 ============ -->
   <div class="main">
-    <header class="top">
-      <!-- 汉堡：仅 ≤900px 显示（桌面由 CSS 隐藏） -->
-      <button class="burger" id="burger" onclick="toggleNav()"
-              aria-label="打开导航菜单" aria-expanded="false"
-              aria-controls="side"><span></span><span></span><span></span></button>
-      <h2 id="pgTitle">今日待办</h2>
-      <div class="sp"></div>
-      <div class="search"><span class="muted">🔍</span><input placeholder="搜标准号，如 GB 10765" onkeydown="if(event.key==='Enter'){location.hash='#list';doSearch(this.value)}"></div>
-      <button class="btn pri" id="alertBtn" onclick="location.hash='#alerts'">🔔 待处理</button>
-    </header>
-
-    <!-- ★★ 居中品牌头（2026-10-22 用户要求）★★
-         原先系统名只在左侧栏顶部，第一眼看不到。现在固定在页头正中。
-         ★ 副标题那一行已按用户要求删掉，只留徽标 + 系统名。 ★ -->
+    <!-- ★★ 顶栏重排（2026-11-02 用户截图标注）★★
+         ① 一级标题（系统名 + 副标题）放顶部
+         ② 二级标题（当前页面名）放下方
+         ③ 搜索框回车 → 跳「标准清单」并在那里检索
+         ④ 右上角「N 条待处理」按钮删除（提醒中心在侧栏已能进）
+         ⑤ ★ 品牌头**随页面自然滚走**，只有二级标题行吸顶 ★
+            用户反馈：「滚动头牌不动是否太占用空间」——
+            品牌头原本也吸顶，两行一起钉在顶部，竖向吃掉 128px。
+            改成品牌头滚走、二级标题留下 → 只占 52px，省 76px。
+            ★★ 为什么不用「滚动时折叠品牌头」★★
+              折叠 = 顶栏高度从 128 变 52 → 下方内容整体上移 76px
+              → 用户正在输入框打字时页面会猛地跳一下（实测滚动位移 77px，
+                focus 测试直接挂）。滚动省空间与零位移不可兼得，
+                这里选「零位移」——滚走方案同样省空间且不产生任何跳动。 -->
+    <!-- 一级标题：随页面滚走 -->
     <div class="topbrand">
       <div class="logo">🛡️</div>
       <div class="tt">
         <h1>食品质量与安全管理系统</h1>
         <div class="tt-sub">标准变更 · 实验室管理 · 质量管理 · 研发管理</div>
+      </div>
+    </div>
+    <!-- 二级标题 + 搜索：吸顶 -->
+    <div class="top">
+      <!-- 汉堡：仅 ≤900px 显示（桌面由 CSS 隐藏） -->
+      <button class="burger" id="burger" onclick="toggleNav()"
+              aria-label="打开导航菜单" aria-expanded="false"
+              aria-controls="side"><span></span><span></span><span></span></button>
+      <h2 id="pgTitle">今日待办</h2>
+      <!-- 窄屏侧栏收进抽屉，看不到系统名了 → 顶栏补一个小标识 -->
+      <span class="mbrand">食品质量与安全管理系统</span>
+      <div class="sp"></div>
+      <div class="search" title="回车后在「标准清单」里检索">
+        <span class="muted">🔍</span>
+        <input placeholder="搜标准号，如 GB 10765（回车在标准清单里找）"
+               aria-label="搜标准号"
+               onkeydown="if(event.key==='Enter'){location.hash='#list';doSearch(this.value)}">
       </div>
     </div>
 
@@ -1611,12 +1642,12 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
       <div id="qmDetail"></div>
     </div>
 
-    <!-- ===== 实验室管理（2026-11-01 新增）===== -->
+    <!-- ===== 实验室管理 · 日常管理（2026-11-01 新增，2026-11-02 定名）===== -->
     <div class="view hide" id="v-lab">
       <div class="notice">
         <span>🏢</span>
         <div>
-          <b>这一页是实验室的日常作业台账 —— 设备、试剂、留样、质控、能力验证、原始记录。</b>
+          <b>这一页是实验室的日常管理 —— 设备、试剂、留样、质控、能力验证、原始记录。</b>
           以前这些全靠 Excel 和脑子，谁负责、什么时候到期、出了什么问题，全靠人记。
           <br><br>
           <b>七件工具：</b>
@@ -1654,6 +1685,11 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
           改完 <b>R 值、风险等级、顶部统计、风险矩阵会立即跟着变</b>；
           填了建议措施并标记「已落实」，残余风险自动算出来。
           <b>导出 CSV / Word / 打印视图</b>，拿去签字归档。
+          <br><br>
+          <b>覆盖实验室完整作业链</b>：取样 → 复原 → 常规理化 → 营养素 →
+          污染物与抗生素 → 微生物常规 → 过敏原与标签 → 计量校准 →
+          报告数据 → 洗消卫生 → 人员准入，每个分区都有主管 / 备份 / 复核人。
+          <b>「作业前确认卡」</b>是开工前逐条打勾签字的表 —— JSA 写完不是结束。
           <br><br>
           <b>⚠ 签字与日期必须手签</b> —— 这是要留档的正式记录；
           本工具帮你把表填完整、把风险算对，<b>不代你签字</b>。
@@ -3997,14 +4033,11 @@ function snoozeAlert(no, sec, days){
 
 /* 顶栏待处理数字：实算（高优 + 中优，未处理未忽略） */
 function updateAlertBadge(){
-  const btn = $("#alertBtn");
   const pend = Store.alerts.pending(ALERTS);
   const hi = pend.filter(a=>a.lvl==="high").length;
   const mid = pend.filter(a=>a.lvl==="mid").length;
-  if(btn){
-    btn.textContent = pend.length ? ("🔔 " + pend.length + " 条待处理") : "🔔 已清空";
-    btn.title = "高优 " + hi + " 条 · 中优 " + mid + " 条";
-  }
+  /* ★ 2026-11-02：顶栏「N 条待处理」按钮已按用户要求删除 ★
+     这里不再去改它，只维护侧栏徽标（提醒中心在侧栏可进）。 */
   /* ★ 侧栏徽标也必须实算 ★
      原来是写死的 <span class="badge">7</span>，永远不变 ——
      顶栏按钮改了，侧栏这个漏了。用户一眼就看出来是假数。 */
@@ -4840,7 +4873,7 @@ if(window.addEventListener){
 })();
 
 /* 路由 */
-const TITLES={home:"今日待办",list:"标准清单",law:"法规与体系",cnas:"认可规范（CNAS）",refs:"通则引用标准",detail:"标准详情",method:"检测方法原理",mdetail:"方法原理详情",lab:"日常台账",jsa:"工作安全分析 JSA",qmtools:"质量管理工具",rdtools:"研发管理",subs:"我的订阅",alerts:"提醒中心",admin:"管理后台"};
+const TITLES={home:"今日待办",list:"标准清单",law:"法规与体系",cnas:"认可规范（CNAS）",refs:"通则引用标准",detail:"标准详情",method:"检测方法原理",mdetail:"方法原理详情",lab:"日常管理",jsa:"工作安全分析 JSA",qmtools:"质量管理工具",rdtools:"研发管理",subs:"我的订阅",alerts:"提醒中心",admin:"管理后台"};
 function route(){
   const h=(location.hash||"#home").slice(1);
   const OK=["home","list","law","cnas","refs","detail","method","mdetail","lab","jsa","qmtools","rdtools","subs","alerts","admin"];

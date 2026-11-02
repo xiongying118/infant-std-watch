@@ -196,10 +196,11 @@ function ck(cond,msg){
   ck(jsa.tabs>=7, 'JSA 页签 ≥ 7 个');
   ck(jsa.inputs>50, 'JSA 可编辑控件 ≥ 50 个（实际 '+jsa.inputs+'）');
   const jsaZones=await p.evaluate(()=>window.JSAW ? window.JSAW._state().zones.length : 0);
-  ck(jsaZones===7, 'JSA 7 个分区（实际 '+jsaZones+'）');
+  /* ★ 2026-11-02：分区 7 → 18、步骤 48 → 108（扩充层 scripts/jsa_expand2.py）★ */
+  ck(jsaZones===18, 'JSA 18 个分区（实际 '+jsaZones+'）');
   const jsaSteps=await p.evaluate(()=>window.JSAW ?
     window.JSAW._state().zones.reduce((a,z)=>a+z.steps.length,0) : 0);
-  ck(jsaSteps===48, 'JSA 48 个作业步骤（实际 '+jsaSteps+'）');
+  ck(jsaSteps===108, 'JSA 108 个作业步骤（实际 '+jsaSteps+'）');
 
   console.log('\n=== ⑪ 主题 ===');
   const theme=await p.evaluate(()=>({

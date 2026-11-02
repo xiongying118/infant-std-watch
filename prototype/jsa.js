@@ -59,12 +59,75 @@
   /* ================================================================
      载入 / 保存
      ================================================================ */
+  /* ★ 版本合并（2026-11-02）★
+     用户本地已存了「7 区 48 步」的旧副本（Store["jsa.work"]）。
+     预填数据扩到「18 区 108 步」后，若直接用 saved 覆盖，新分区永远出不来。
+     做法：按分区标题 + 步骤 sid 做**增量合并** ——
+       · 预填里有、本地没有的分区 → 追加到本地
+       · 预填里有、本地同分区没有的步骤 → 追加进该分区
+       · 双方都有的 → 保留本地版本（用户的编辑不能被覆盖）
+     这样用户改过的内容一个不丢，同时能拿到新增的分区与步骤。
+
+     ★ 为什么按 sid 而不是标题 ★
+       用户把「样品接收与登记」改成「【用户改过的步骤名】」后，
+       按标题就匹配不上 → 同一条会被当成新步骤再追加一次（页面出现重复行）。
+       sid 是构建期算出的稳定指纹（md5(分区标题|步骤标题)），
+       用户改名只改 step 字段、不动 sid → 合并时仍然对得上。 */
+  function mergePreset(saved, raw){
+    if(!saved || !raw) return saved;
+    var sv = saved.__v || 0, rv = raw.__v || 0;
+    if(rv <= sv) return saved;              // 已是最新，不动
+
+    saved.zones = saved.zones || [];
+    var byTitle = {};
+    saved.zones.forEach(function(z){ byTitle[z.title] = z; });
+
+    (raw.zones||[]).forEach(function(rz){
+      var sz = byTitle[rz.title];
+      if(!sz){
+        saved.zones.push(JSON.parse(JSON.stringify(rz)));
+        return;
+      }
+      sz.steps = sz.steps || [];
+      var haveSid = {}, haveTitle = {};
+      sz.steps.forEach(function(s){
+        if(s.sid) haveSid[s.sid] = true;
+        if(s.step) haveTitle[s.step] = true;
+      });
+      (rz.steps||[]).forEach(function(rs){
+        /* 已有同 sid → 用户改过，跳过（保住用户版本） */
+        if(rs.sid && haveSid[rs.sid]) return;
+        /* 已有同标题 → 也跳过（兼容没有 sid 的老数据） */
+        if(rs.step && haveTitle[rs.step]) return;
+        sz.steps.push(JSON.parse(JSON.stringify(rs)));
+      });
+    });
+
+    /* guide 里新增的三张表（作业前确认卡 / 责任矩阵 / 培训与演练）也合并 */
+    var sg = saved.guide = saved.guide||{}, rg = raw.guide||{};
+    ["preJobCheck","zoneOwners"].forEach(function(k){
+      if(rg[k] && !sg[k]) sg[k] = JSON.parse(JSON.stringify(rg[k]));
+    });
+    if(rg.trainMatrix && sg.trainMatrix){
+      var hc = {};
+      sg.trainMatrix.forEach(function(t){ hc[t.course]=true; });
+      rg.trainMatrix.forEach(function(t){ if(!hc[t.course]) sg.trainMatrix.push(t); });
+    }
+    if(rg.drills && sg.drills){
+      var hd = {};
+      sg.drills.forEach(function(d){ hd[d.type+"|"+d.date]=true; });
+      rg.drills.forEach(function(d){ if(!hd[d.type+"|"+d.date]) sg.drills.push(d); });
+    }
+    saved.__v = rv;
+    return saved;
+  }
+
   function load(){
     var src = (global.STDWATCH_DATA && global.STDWATCH_DATA.JSA) || null;
     var raw = src && src[0] ? src[0] : src;
     if(!raw) return null;
     var saved = global.Store ? global.Store.get("jsa.work", null) : null;
-    ST = saved ? saved : JSON.parse(JSON.stringify(raw));
+    ST = saved ? mergePreset(saved, raw) : JSON.parse(JSON.stringify(raw));
     // 兜底：旧结构补字段
     ST.zones = (ST.zones||[]).map(function(z){
       z.steps = (z.steps||[]).map(function(s){
@@ -83,6 +146,24 @@
     if(!ST.basic) ST.basic = {fields:[],sample:{}};
     if(!ST.signoff) ST.signoff = {roles:[],revisions:[]};
     if(!ST.guide) ST.guide = {};
+    if(ST.__v === undefined && raw && raw.__v !== undefined) ST.__v = raw.__v;
+
+    /* ★ 给本地步骤补 sid ★
+       合并时追加进来的步骤带 sid；用户自己新建的步骤没有 →
+       这里按 raw 的同标题步骤回填 sid（没有同名就不给）。
+       目的：用户改过的步骤名，下次合并仍能靠 sid 对上，不会被当成新步骤重复追加。 */
+    try{
+      var rawSteps = {};
+      ((raw && raw.zones) || []).forEach(function(rz){
+        (rz.steps||[]).forEach(function(rs){ if(rs.step) rawSteps[rs.step] = rs.sid; });
+      });
+      (ST.zones||[]).forEach(function(z){
+        (z.steps||[]).forEach(function(s){
+          if(!s.sid && s.step && rawSteps[s.step]) s.sid = rawSteps[s.step];
+        });
+      });
+    }catch(e){}
+
     return ST;
   }
 
@@ -185,6 +266,21 @@
   }
   function setZoneTitle(zi, v){ ST.zones[zi].title = v; save(); render(); }
 
+  /* ---------- 作业前确认卡（2026-11-02 新增） ---------- */
+  function setPreCheck(i, field, v){
+    var g = ST.guide = ST.guide || {};
+    var list = g.preJobCheck = g.preJobCheck || [];
+    if(!list[i]) return;
+    list[i][field] = v;
+    save(); render();
+  }
+  function resetPreCheck(){
+    var list = (ST.guide && ST.guide.preJobCheck) || [];
+    list.forEach(function(c){ c.ok = false; c.sign = ""; c.time = ""; c.job = ""; });
+    save(); render();
+    global.toast("已清空确认卡");
+  }
+
   /* ================================================================
      校验（导出前必过）
      ================================================================ */
@@ -243,6 +339,8 @@
       ["redlines","实验室红线"],
       ["ppe",     "个体防护装备"],
       ["drill",   "应急物资与演练"],
+      ["precheck","作业前确认卡"],
+      ["owners",  "分区责任矩阵"],
       ["signoff", "审批与修订"],
       ["guide",   "培训与填表指引"],
     ];
@@ -258,6 +356,8 @@
     else if(TAB==="redlines")host.innerHTML = viewRedlines();
     else if(TAB==="ppe")     host.innerHTML = viewPPE();
     else if(TAB==="drill")   host.innerHTML = viewDrill();
+    else if(TAB==="precheck")host.innerHTML = viewPreCheck();
+    else if(TAB==="owners")  host.innerHTML = viewOwners();
     else if(TAB==="signoff") host.innerHTML = viewSignoff();
     else host.innerHTML = viewGuide();
 
@@ -621,6 +721,105 @@
     </div>`;
   }
 
+  /* ---------- 作业前确认卡（2026-11-02 新增） ----------
+     JSA 做完不是结束 —— 开工前要照着这张卡逐条确认，
+     确认完签字，这张卡才是「事前控制」而不是「事后补记」。 */
+  function viewPreCheck(){
+    var list = (ST.guide && ST.guide.preJobCheck) || [];
+    var done = 0;
+    list.forEach(function(c){ if(c.ok) done++; });
+    var pct = list.length ? Math.round(done*100/list.length) : 0;
+    return `
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-h"><h3>作业前风险确认卡</h3>
+        <span class="muted">${done} / ${list.length} 项已确认 · 开工前逐条打勾，签字后才允许动手</span>
+        <div class="sp"></div>
+        <span class="pill">${pct}%</span>
+        <button class="btn sm" onclick="JSAW.resetPreCheck()">清空勾选</button>
+      </div>
+      <div class="twrap"><table>
+        <thead><tr><th style="width:44px">序</th><th>确认事项</th>
+          <th style="width:120px">确认人</th><th style="width:100px">签字</th>
+          <th style="width:150px">时间</th><th style="width:52px">已确认</th></tr></thead>
+        <tbody>
+        ${list.map(function(c,i){
+          return `<tr>
+            <td class="mono">${esc(c.no)}</td>
+            <td><b>${esc(c.item)}</b><div class="muted">责任岗位：${esc(c.who||"—")}</div></td>
+            <td><input type="text" value="${esc(c.sign||"")}" placeholder="签字"
+              style="width:100%;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-family:inherit;font-size:12.5px"
+              oninput="JSAW.setPreCheck(${i},'sign',this.value)"></td>
+            <td><input type="text" value="${esc(c.time||"")}" placeholder="—"
+              style="width:100%;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-family:inherit;font-size:12.5px"
+              oninput="JSAW.setPreCheck(${i},'time',this.value)"></td>
+            <td><input type="text" value="${esc(c.job||"")}" placeholder="—"
+              style="width:100%;border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-family:inherit;font-size:12.5px"
+              oninput="JSAW.setPreCheck(${i},'job',this.value)"></td>
+            <td style="text-align:center">
+              <input type="checkbox" ${c.ok?"checked":""} style="accent-color:var(--brand)"
+                onchange="JSAW.setPreCheck(${i},'ok',this.checked)">
+            </td></tr>`;
+        }).join("")}
+        </tbody>
+      </table></div>
+      <div class="muted" style="margin-top:10px">
+        中等及以上风险的步骤，补充措施未落实前不得开工 —— 这一条是 JSA 与实际生产的接口。
+      </div>
+    </div>`;
+  }
+
+  /* ---------- 分区责任矩阵（2026-11-02 新增） ----------
+     把「谁负责」落成矩阵：每个分区的主管、备份、复核人。
+     与「作业步骤」页里的责任人字段互相印证。 */
+  function viewOwners(){
+    var ow = (ST.guide && ST.guide.zoneOwners) || [];
+    var s = stats();
+    /* 逐区统计：步数 / 最高风险 / 中高风险条数 */
+    var per = {};
+    (ST.zones||[]).forEach(function(z,zi){
+      var mx = 0, mh = 0, mid = 0;
+      (z.steps||[]).forEach(function(st){
+        var r = (+st.L||1)*(+st.S||1);
+        if(r>mx) mx = r;
+        if(r>=15) mh++;
+        else if(r>=10) mid++;
+      });
+      per[z.title] = {n:(z.steps||[]).length, mx:mx, mh:mh, mid:mid};
+    });
+    return `
+    <div class="card">
+      <div class="card-h"><h3>分区责任矩阵</h3>
+        <span class="muted">${ow.length} 个分区 · 主管 / 备份 / 复核人，缺岗时按备份顶</span></div>
+      <div class="twrap"><table>
+        <thead><tr><th style="width:250px">分区</th><th style="width:62px">步数</th>
+          <th style="width:70px">最高 R</th><th style="width:96px">中高风险</th>
+          <th style="width:110px">主管</th><th style="width:130px">备份</th>
+          <th style="width:110px">复核</th></tr></thead>
+        <tbody>
+        ${ow.map(function(o){
+          var p = per[o.zone] || {n:0,mx:0,mh:0,mid:0};
+          var g = gradeOf(p.mx);
+          return `<tr>
+            <td><b>${esc(o.zone)}</b></td>
+            <td class="mono">${p.n}</td>
+            <td><span style="color:${g.color};font-weight:700">${p.mx}</span>
+              <span class="tag ${g.cls==="g-crit"?"t-high":g.cls==="g-hi"?"t-soon":g.cls==="g-mid"?"t-mid":"t-low"}"
+                style="background:${g.color}1a;color:${g.color}">${g.k}</span></td>
+            <td>${(p.mh+p.mid)?`<span style="color:var(--high);font-weight:600">${p.mh+p.mid} 条</span>
+              <span class="muted">（高 ${p.mh} · 中 ${p.mid}）</span>`:`<span class="muted">无</span>`}</td>
+            <td><b>${esc(o.head)}</b></td>
+            <td class="muted">${esc(o.backup)}</td>
+            <td class="muted">${esc(o.review)}</td>
+          </tr>`;
+        }).join("")}
+        </tbody>
+      </table></div>
+      <div class="muted" style="margin-top:10px">
+        合计 ${s.total} 个作业步骤。高风险步骤必须指定到人，不能只写部门。
+      </div>
+    </div>`;
+  }
+
   /* ---------- 签署 ---------- */
   function viewSignoff(){
     var so = ST.signoff || {roles:[],revisions:[]};
@@ -771,6 +970,18 @@
       rows.push([r.ver, r.what, r.who]);
     });
     rows.push([]);
+    rows.push(["分区责任矩阵"]);
+    rows.push(["分区","主管","备份","复核"]);
+    ((ST.guide && ST.guide.zoneOwners) || []).forEach(function(o){
+      rows.push([o.zone, o.head, o.backup, o.review]);
+    });
+    rows.push([]);
+    rows.push(["作业前风险确认卡"]);
+    rows.push(["序","确认事项","责任岗位","确认人签字","时间","作业/工单号","已确认"]);
+    ((ST.guide && ST.guide.preJobCheck) || []).forEach(function(c){
+      rows.push([c.no, c.item, c.who||"", c.sign||"", c.time||"", c.job||"", c.ok?"是":"否"]);
+    });
+    rows.push([]);
     rows.push(["说明","风险值 R = 可能性 L × 严重度 S；低风险 R=1~4 / 一般风险 R=5~9 / 中等风险 R=10~14 / 高风险 R=15~25。"]);
     rows.push(["", "残余风险在「建议补充措施落实」后评定；残余风险未降低的，须升级硬件控制或暂停作业。"]);
     rows.push(["", "本表由「食品质量与安全管理系统」导出，不含标准正文。"]);
@@ -858,6 +1069,38 @@
       h.push("<tr><td style='width:170pt'><b>"+esc(r.role)+"</b></td><td style='width:230pt'>"+esc(r.line)+"</td><td>"+esc(r.note)+"</td></tr>");
     });
     h.push("</table>");
+
+    /* ★ 作业前风险确认卡（2026-11-02 新增）——
+       JSA 做完不算完，开工前要逐条确认并签字，这才是「事前控制」。 */
+    var pc = (ST.guide && ST.guide.preJobCheck) || [];
+    if(pc.length){
+      h.push("<h2>作业前风险确认卡</h2>");
+      h.push("<table><thead><tr><th style='width:34pt'>序</th><th>确认事项</th>"
+        + "<th style='width:70pt'>责任岗位</th><th style='width:80pt'>确认人签字</th>"
+        + "<th style='width:90pt'>时间</th><th style='width:80pt'>作业/工单号</th>"
+        + "<th style='width:50pt'>已确认</th></tr></thead><tbody>");
+      pc.forEach(function(c){
+        h.push("<tr><td align='center'>"+esc(c.no)+"</td><td>"+esc(c.item)+"</td>"
+          + "<td>"+esc(c.who||"")+"</td><td>"+esc(c.sign||"")+"</td>"
+          + "<td>"+esc(c.time||"")+"</td><td>"+esc(c.job||"")+"</td>"
+          + "<td align='center'>"+(c.ok?"是":"否")+"</td></tr>");
+      });
+      h.push("</tbody></table>");
+    }
+
+    /* ★ 分区责任矩阵（2026-11-02 新增） */
+    var zw = (ST.guide && ST.guide.zoneOwners) || [];
+    if(zw.length){
+      h.push("<h2>分区责任矩阵</h2>");
+      h.push("<table><thead><tr><th>分区</th><th style='width:60pt'>主管</th>"
+        + "<th style='width:80pt'>备份</th><th style='width:80pt'>复核</th></tr></thead><tbody>");
+      zw.forEach(function(o){
+        h.push("<tr><td>"+esc(o.zone)+"</td><td>"+esc(o.head)+"</td>"
+          + "<td>"+esc(o.backup)+"</td><td>"+esc(o.review)+"</td></tr>");
+      });
+      h.push("</tbody></table>");
+    }
+
     h.push("<h2>修订记录</h2>");
     h.push("<table><thead><tr><th style='width:80pt'>版本</th><th>修订内容</th><th style='width:110pt'>修订人</th></tr></thead><tbody>");
     (ST.signoff.revisions||[]).forEach(function(r){
@@ -893,10 +1136,15 @@
   }
 
   function resetAll(){
+    /* ★ 文案里的分区数与步骤数必须实时取，不能写死 ★
+       （原来写死「7 个分区 48 个步骤」，扩充到 18 区 108 步后这行就在骗人） */
+    var zn = (ST && ST.zones) ? ST.zones.length : 0;
+    var sn = 0;
+    ((ST && ST.zones) || []).forEach(function(z){ sn += (z.steps||[]).length; });
     global.dlg({
       kind:"danger",
       title:"恢复预填内容？",
-      body:"你在本机做的全部修改（改写的文字、评级、增删的步骤）都会丢失，恢复成系统预填的 7 个分区 48 个步骤。",
+      body:"你在本机做的全部修改（改写的文字、评级、增删的步骤）都会丢失，恢复成系统预填的 "+zn+" 个分区 "+sn+" 个步骤。",
       buttons:[{t:"取消", val:"cancel"}, {t:"确认恢复", cls:"pri"}],
       onClose:function(v){
         if(!v) return;
@@ -999,6 +1247,8 @@
     setRedline: setRedline,
     setPpe: setPpe,
     setEmergency: setEmergency,
+    setPreCheck: setPreCheck,
+    resetPreCheck: resetPreCheck,
     setRev: setRev,
     addRevision: addRevision,
     delRev: delRev,

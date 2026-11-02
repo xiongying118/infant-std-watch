@@ -49,10 +49,11 @@ ck(!!J0, 'data.js 含 JSA');
 if (J0) {
   const J = J0;
   // ★ 2026-11-01：分区 5 → 7、步骤 22 → 48（扩充层 scripts/jsa_expand.py）
-  ck(J.zones.length === 7, '7 个分区（实际 ' + J.zones.length + '）');
+  // ★ 2026-11-02：分区 7 → 18、步骤 48 → 108（扩充层 scripts/jsa_expand2.py）
+  ck(J.zones.length === 18, '18 个分区（实际 ' + J.zones.length + '）');
   const steps = J.zones.reduce((a, z) => a + z.steps.length, 0);
-  ck(steps === 48, '48 个作业步骤（实际 ' + steps + '）');
-  ck(steps >= 40, '作业步骤不少于 40 条');
+  ck(steps === 108, '108 个作业步骤（实际 ' + steps + '）');
+  ck(steps >= 100, '作业步骤不少于 100 条');
   // 扩充层新增的三类内容
   ck((J.guide.ppe || []).length >= 8, 'PPE 清单不少于 8 项（实际 ' + (J.guide.ppe || []).length + '）');
   ck((J.guide.emergency || []).length >= 8, '应急物资不少于 8 项（实际 ' + (J.guide.emergency || []).length + '）');
