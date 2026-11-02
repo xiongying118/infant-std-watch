@@ -260,6 +260,9 @@
     else if(TAB==="drill")   host.innerHTML = viewDrill();
     else if(TAB==="signoff") host.innerHTML = viewSignoff();
     else host.innerHTML = viewGuide();
+
+    /* textarea 渲染完按内容增高，保证一个字都不裁 */
+    if(typeof autoGrowAll === "function") autoGrowAll();
   }
 
   /* ---------- 顶部：基础信息 + KPI ---------- */
@@ -335,69 +338,93 @@
       </div>
     </div>`;
 
-    /* 步骤表 —— 可编辑 */
+    /* 步骤卡 —— 一个作业步骤一张卡（12 列表格在窄屏没法看） */
     html += `<div class="card" style="padding:0;overflow:hidden">
-      <div class="twrap">
-      <table class="jsa-tbl jsa-edit">
-        <thead><tr>
-          <th style="width:150px">作业步骤</th>
-          <th style="width:180px">潜在危害</th>
-          <th style="width:150px">可能导致的事件</th>
-          <th style="width:210px">现有控制措施</th>
-          <th style="width:60px">L</th>
-          <th style="width:60px">S</th>
-          <th style="width:74px">R=L×S</th>
-          <th style="width:66px">等级</th>
-          <th style="width:170px">建议补充措施</th>
-          <th style="width:88px">责任人</th>
-          <th style="width:110px">期限</th>
-          <th style="width:52px"></th>
-        </tr></thead>
-        <tbody>
-        ${(z.steps||[]).map(function(s,si){
-          var r = (+s.L||1)*(+s.S||1);
-          var g = gradeOf(r);
-          var rr = residualR(s);
-          var rg = rr!=null ? gradeOf(rr) : null;
-          var hl = (CUR_STEP && CUR_STEP.zi===CUR_ZONE && CUR_STEP.si===si) ? "hl" : "";
-          return `<tr class="${hl} ${g.cls}">
-            <td><input type="text" value="${esc(s.step)}" oninput="JSAW.setStep(${CUR_ZONE},${si},'step',this.value)"></td>
-            <td><textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'hazard',this.value)">${esc(s.hazard)}</textarea></td>
-            <td><textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'event',this.value)">${esc(s.event)}</textarea></td>
-            <td><textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'control',this.value)">${esc(s.control)}</textarea></td>
-            <td><input type="number" min="1" max="5" value="${s.L}" class="lvl-in"
-              oninput="JSAW.setStep(${CUR_ZONE},${si},'L',this.value)"></td>
-            <td><input type="number" min="1" max="5" value="${s.S}" class="lvl-in"
-              oninput="JSAW.setStep(${CUR_ZONE},${si},'S',this.value)"></td>
-            <td class="num"><b class="rv" style="color:${g.color}">${r}</b></td>
-            <td><span class="tag ${g.cls==="g-crit"?"t-high":g.cls==="g-hi"?"t-soon":g.cls==="g-mid"?"t-mid":"t-low"}"
-                 style="background:${g.color}1a;color:${g.color}">${g.k}</span></td>
-            <td><textarea rows="2" placeholder="${r>=10?"必须填":"可选"}" oninput="JSAW.setStep(${CUR_ZONE},${si},'add',this.value)">${esc(s.add)}</textarea></td>
-            <td><input type="text" value="${esc(s.owner)}" oninput="JSAW.setStep(${CUR_ZONE},${si},'owner',this.value)"></td>
-            <td><input type="date" value="${esc(s.due)}" oninput="JSAW.setStep(${CUR_ZONE},${si},'due',this.value)"></td>
-            <td style="text-align:center;white-space:nowrap">
-              ${s.add && String(s.add).trim()
-                ? `<button class="btn xs ${s.done?"ok":""}" title="${s.done?"已落实，点击撤销":"标记措施已落实"}"
-                     onclick="JSAW.toggleDone(${CUR_ZONE},${si})">${s.done?"✓":"○"}</button>`
-                : ""}
-              <button class="x" onclick="JSAW.delStep(${CUR_ZONE},${si})" title="删除">×</button>
-            </td>
-          </tr>
-          ${s.done ? `<tr class="res-row"><td colspan="12">
+      <div class="jcards">
+      ${(z.steps||[]).map(function(s,si){
+        var r = (+s.L||1)*(+s.S||1);
+        var g = gradeOf(r);
+        var rr = residualR(s);
+        var rg = rr!=null ? gradeOf(rr) : null;
+        var hl = (CUR_STEP && CUR_STEP.zi===CUR_ZONE && CUR_STEP.si===si) ? "hl" : "";
+        return `<div class="jcard ${hl} ${g.cls}" id="jstep-${CUR_ZONE}-${si}">
+          <div class="jcard-h">
+            <span class="jcard-no">${si+1}</span>
+            <input type="text" class="jcard-step" value="${esc(s.step)}"
+              placeholder="这一步做什么"
+              oninput="JSAW.setStep(${CUR_ZONE},${si},'step',this.value)">
+            <span class="tag ${g.cls==="g-crit"?"t-high":g.cls==="g-hi"?"t-soon":g.cls==="g-mid"?"t-mid":"t-low"}"
+                  style="background:${g.color}1a;color:${g.color};flex-shrink:0">${g.k}</span>
+          </div>
+          <div class="jcard-body">
+            <div class="jcard-fields">
+              <div class="jfield">
+                <label>潜在危害</label>
+                <textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'hazard',this.value);JSAW.autoGrow(this)">${esc(s.hazard)}</textarea>
+              </div>
+              <div class="jfield">
+                <label>可能导致的事件</label>
+                <textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'event',this.value);JSAW.autoGrow(this)">${esc(s.event)}</textarea>
+              </div>
+              <div class="jfield">
+                <label>现有控制措施</label>
+                <textarea rows="2" oninput="JSAW.setStep(${CUR_ZONE},${si},'control',this.value);JSAW.autoGrow(this)">${esc(s.control)}</textarea>
+              </div>
+              <div class="jfield">
+                <label>建议补充措施${r>=10?"（必须填）":"（可选）"}</label>
+                <textarea rows="2" placeholder="${r>=10?"这一步风险高，建议措施必填":"没有就留空"}"
+                  oninput="JSAW.setStep(${CUR_ZONE},${si},'add',this.value);JSAW.autoGrow(this)">${esc(s.add)}</textarea>
+              </div>
+            </div>
+            <div class="jcard-risk">
+              <div class="jrisks">
+                <div class="jrisk">
+                  <label>L</label>
+                  <input type="number" min="1" max="5" value="${s.L}" class="lvl-in"
+                    oninput="JSAW.setStep(${CUR_ZONE},${si},'L',this.value)">
+                </div>
+                <div class="jrisk">
+                  <label>S</label>
+                  <input type="number" min="1" max="5" value="${s.S}" class="lvl-in"
+                    oninput="JSAW.setStep(${CUR_ZONE},${si},'S',this.value)">
+                </div>
+                <div class="jrisk">
+                  <label>R = L×S</label>
+                  <div class="rv" style="color:${g.color}">${r}</div>
+                </div>
+              </div>
+              <div class="jfield jfield-inline">
+                <label>责任人</label>
+                <input type="text" value="${esc(s.owner)}"
+                  oninput="JSAW.setStep(${CUR_ZONE},${si},'owner',this.value)">
+              </div>
+              <div class="jfield jfield-inline">
+                <label>期限</label>
+                <input type="date" value="${esc(s.due)}"
+                  oninput="JSAW.setStep(${CUR_ZONE},${si},'due',this.value)">
+              </div>
+              <div class="jcard-act">
+                ${s.add && String(s.add).trim()
+                  ? `<button class="btn xs ${s.done?"ok":""}" title="${s.done?"已落实，点击撤销":"标记措施已落实"}"
+                       onclick="JSAW.toggleDone(${CUR_ZONE},${si})">${s.done?"✓ 已落实":"○ 标记落实"}</button>`
+                  : ""}
+                <button class="x" onclick="JSAW.delStep(${CUR_ZONE},${si})" title="删除这一步">×</button>
+              </div>
+            </div>
+          </div>
+          ${s.done ? `<div class="jcard-res">
             <span class="pill" style="background:#eaf4ee;color:#15803d">措施已落实</span>
-            <span class="muted">残余风险：L=${s.rL} × S=${s.rS} =
+            <span>残余风险：L=${s.rL} × S=${s.rS} =
               <b style="color:${rg.color}">${rr}</b>
               <span class="tag ${rg.cls==="g-crit"?"t-high":rg.cls==="g-hi"?"t-soon":rg.cls==="g-mid"?"t-mid":"t-low"}"
                     style="background:${rg.color}1a;color:${rg.color}">${rg.k}</span>
             </span>
-            ${rr<r?`<span class="muted" style="margin-left:10px">↓ 降 ${r-rr} 级</span>`:""}
-            ${rr>=r?`<span class="muted" style="margin-left:10px;color:var(--high)">↑ 未降低风险，需升级硬件控制或暂停作业</span>`:""}
+            ${rr<r?`<span class="muted">↓ 降 ${r-rr} 级</span>`:`<span style="color:var(--high)">↑ 未降低风险，需升级硬件控制或暂停作业</span>`}
             <button class="btn xs" onclick="JSAW.setStep(${CUR_ZONE},${si},'rL',${s.L})">残余L=当前L</button>
             <button class="btn xs" onclick="JSAW.setStep(${CUR_ZONE},${si},'rS',${s.S})">残余S=当前S</button>
-          </td></tr>` : ""}`;
-        }).join("")}
-        </tbody>
-      </table>
+          </div>` : ""}
+        </div>`;
+      }).join("")}
       </div>
       <div style="padding:11px 14px;border-top:1px solid var(--line)">
         <button class="btn sm" onclick="JSAW.addStep(${CUR_ZONE})">+ 加一个作业步骤</button>
@@ -933,8 +960,20 @@
     ST.signoff.revisions.splice(i,1); save(); render();
   }
   function gotoZone(zi){ CUR_ZONE=zi; CUR_STEP=null; render(); }
+  /* textarea 自动增高：内容多少就显示多少，绝不裁字 */
+  function autoGrow(el){
+    if(!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.max(44, el.scrollHeight + 2) + "px";
+  }
+  function autoGrowAll(){
+    var root = document.getElementById("jsaBody");
+    if(!root) return;
+    var list = root.querySelectorAll("textarea");
+    for(var i=0;i<list.length;i++) autoGrow(list[i]);
+  }
   function jump(zi, si){ CUR_ZONE=zi; CUR_STEP={zi:zi,si:si}; render(); setTimeout(function(){
-    var el=document.querySelector(".jsa-edit tr.hl");
+    var el=document.querySelector(".jcard.hl");
     if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
   },60); }
   function jumpRisk(L,S){
@@ -976,6 +1015,8 @@
     resetAll: resetAll,
     stats: stats,
     validate: validate,
+    autoGrow: autoGrow,
+    autoGrowAll: autoGrowAll,
     _state: function(){ return ST; }
   };
 

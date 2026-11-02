@@ -77,6 +77,7 @@
     if(!host) return;
 
     var TABS = [
+      ["board",     "需要处理"],
       ["capability","检测能力矩阵"],
       ["equip",     "计量设备台账"],
       ["reagent",   "试剂与危化品"],
@@ -95,8 +96,10 @@
     ];
     var el = document.getElementById("labTabs");
     if(el){
+      var nb = linkBoard().length;
       el.innerHTML = TABS.map(function(t){
-        return `<button class="tab ${TAB===t[0]?"on":""}" data-lab="${t[0]}">${t[1]}</button>`;
+        var cnt = (t[0]==="board" && nb) ? `<span class="cnt">${nb}</span>` : "";
+        return `<button class="tab ${TAB===t[0]?"on":""}" data-lab="${t[0]}">${t[1]}${cnt}</button>`;
       }).join("");
       [].forEach.call(el.querySelectorAll("button"), function(b){
         b.onclick = function(){ TAB = b.dataset.lab; render(); };
@@ -110,16 +113,49 @@
        反过来会被 Ledger 的 innerHTML 赋值冲掉。 */
     var LEDGER_TABS = ["equip","reagent","prep","sample","flows","orders",
                        "capa","audit","schedule","env","qcplan","qcrec","pt"];
+    if(TAB==="board"){ host.innerHTML = boardView(); return; }
     if(LEDGER_TABS.indexOf(TAB) >= 0){
       global.Ledger.render(TAB);
-      prependBoard(host);
       return;
     }
-    if(TAB==="capability"){ host.innerHTML = viewCapability(); prependBoard(host); }
+    if(TAB==="capability"){ host.innerHTML = viewCapability(); }
     else host.innerHTML = viewRecord();
   }
 
-  /* 把联动看板插到页面最前面 */
+  /* 「需要处理」独立页 —— 不再在每个台账页重复出现 */
+  function boardView(){
+    var board = linkBoard();
+    var hi = board.filter(function(b){ return b.lvl==="高"; }).length;
+    var mid = board.filter(function(b){ return b.lvl==="中"; }).length;
+    var lo = board.filter(function(b){ return b.lvl==="低"; }).length;
+    var head = `<div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi hi"><div class="k">高优</div><div class="v">${hi}</div><div class="d">设备超期、环境超限这类必须马上处理</div></div>
+      <div class="kpi"><div class="k">中</div><div class="v">${mid}</div><div class="d">内审不符合未转 NC、QC 超限未闭环</div></div>
+      <div class="kpi"><div class="k">低</div><div class="v">${lo}</div><div class="d">留样到期、委托单积压</div></div>
+      <div class="kpi"><div class="k">合计</div><div class="v">${board.length}</div><div class="d">台账之间互相牵动出来的</div></div>
+    </div>`;
+    if(!board.length){
+      return head + `<div class="card empty">当前没有需要处理的事 —— 各台账之间没有发现互相牵动的问题。</div>`;
+    }
+    var html = board.map(function(b){
+        return `<div class="alert a-${b.lvl==="高"?"high":(b.lvl==="中"?"mid":"low")}" style="margin-bottom:9px">
+          <div class="h"><div class="t">${b.t}</div>
+            <span class="tag ${b.lvl==="高"?"t-high":(b.lvl==="中"?"t-mid":"t-low")}">${b.lvl}</span>
+            ${b.tab?`<span class="tag t-gray">${b.tab}</span>`:""}</div>
+          <div class="kv">${b.d}</div>
+          <div class="foot"><div class="sp" style="flex:1"></div>
+            ${b.go?`<button class="btn sm" onclick="LAB.go(&quot;${b.go}&quot;)">去处理 →</button>`:""}
+          </div></div>`;
+      }).join("");
+    return head + `<div class="card">
+      <div class="card-h"><h3>需要处理</h3>
+        <span class="muted">这些是台账之间互相牵动出来的，单看一个表看不出来</span></div>
+      ${html}</div>`;
+  }
+
+  /* 旧版：把联动看板插到每个台账页最前面。
+     2026-11-02 用户反馈「每个功能区都出现这个需要处理的，重复了」，
+     改成独立的「需要处理」页签，这里只留函数不再调用。 */
   function prependBoard(host){
     var board = linkBoard();
     if(!board.length) return;
@@ -689,25 +725,100 @@
   }
 
   /* ---------- ⑦ 原始记录生成器 ---------- */
+  /* ================================================================
+     方法候选清单
+     ================================================================
+     三个来源合并去重，只剔除**明确被替代**的版本。
+     ★ 教训：不能因为「抓取源没收录」就判过期 ——
+       GB 5413.x（乳与乳制品）在标准清单里只有 14 条，
+       但 GB 5413.30-2016 等全是现行有效的，用来做原始记录完全没问题。 */
+  function methodOptions(){
+    var D = global.STDWATCH_DATA || {};
+    var L = global.LABDATA || {};
+    var norm = function(s){ return String(s||"").replace(/\s+/g,"").toUpperCase(); };
+
+    /* ① 明确被替代的标准号 */
+    var sup = {};
+    (D.REFGROUPS||[]).forEach(function(g){
+      (g.items||[]).forEach(function(it){
+        String(it.olds||"").split(/[、,，;；]/).forEach(function(x){
+          x=x.trim(); if(x) sup[norm(x)]=1;
+        });
+      });
+    });
+    (D.STD||[]).forEach(function(s){ if(s.status!=="现行有效") sup[norm(s.no)]=1; });
+
+    var map = L.METHOD_TPL_MAP || {};
+    var tplOf = function(text){
+      var key=null;
+      Object.keys(map).forEach(function(k){ if(text && text.indexOf(k)>=0) key=k; });
+      return key||"通用";
+    };
+    /* 官方标题里「食品安全国家标准 」是废话，列表里去掉 */
+    var cleanTitle = function(s){
+      return String(s||"").replace(/^食品安全国家标准\s*/,"").trim();
+    };
+    var STDRE = /(GB|GB\/T|JJF|QB|SN)\s*[\/]?\s*[A-Z0-9.]+(?:-\d{4})?/i;
+
+    var byNo = {}, order = [];
+    function put(no, title, method, group, src){
+      no = String(no||"").trim();
+      if(!no) return;
+      /* 方法名里常带完整标准号（"GB 5009.4-2016 550℃ 灼烧法"），
+         列表里标准号已经单独一列，这里去掉重复的部分 */
+      method = String(method||"").replace(STDRE, function(m0){
+        return norm(m0)===norm(no) ? "" : m0;
+      }).trim();
+      var key = norm(no);
+      if(sup[key]) return;                       /* 过期：直接剔除 */
+      if(!byNo[key]){
+        byNo[key] = {no:no, title:cleanTitle(title), method:method||"",
+                     group:group||"", src:src||"",
+                     tpl:tplOf((method||"")+" "+(title||""))};
+        order.push(key);
+      } else {
+        var o = byNo[key];
+        if(!o.title && title) o.title = cleanTitle(title);
+        if(!o.method && method) o.method = method;
+        if(!o.group && group) o.group = group;
+        if(o.src.indexOf(src)<0) o.src += "+"+src;
+      }
+    }
+
+    /* ② 通则引用标准（用户明确要求加进来） */
+    (D.REFGROUPS||[]).forEach(function(g){
+      (g.items||[]).forEach(function(it){
+        if(it.validity && it.validity!=="现行有效") return;
+        put(it.no, it.title, "", g.g, "通则");
+      });
+    });
+    /* ③ 方法原理（方法名在这里） */
+    (D.METHODS||[]).forEach(function(m){
+      put(m.stdNo, m.title, m.method, "方法原理", "原理");
+    });
+    /* ④ 能力矩阵（补漏） */
+    (L.CAPABILITY||[]).forEach(function(c){
+      var mm = String(c.method||"").match(STDRE);
+      if(!mm) return;
+      put(mm[0], c.item, c.method, "能力矩阵", "矩阵");
+    });
+
+    return order.map(function(k){ return byNo[k]; });
+  }
+
+  /* 人工添加的方法（本次会话内有效，不写进种子数据） */
+  var MANUAL = [];
+
   function viewRecord(){
     var tpls = global.LABDATA.RECORD_TEMPLATES || {};
-    var map = global.LABDATA.METHOD_TPL_MAP || {};
-    var methods = global.METHODS || [];
+    var opts = methodOptions();
 
-    /* 汇总可用模板（从方法原理数据里提取方法名） */
-    var opts = [];
-    methods.forEach(function(m){
-      var key = null;
-      Object.keys(map).forEach(function(k){ if(m.method && m.method.indexOf(k)>=0) key=k; });
-      opts.push({stdNo:m.stdNo, title:m.title, method:m.method||"", tpl:key||"通用"});
-    });
-    /* 能力矩阵里的方法也算 */
-    data("CAPABILITY").forEach(function(c){
-      if(!opts.some(function(o){ return c.method.indexOf(o.stdNo)>=0; })){
-        var key=null;
-        Object.keys(map).forEach(function(k){ if(c.method.indexOf(k)>=0) key=k; });
-        opts.push({stdNo:c.method, title:c.item, method:c.method, tpl:key||"通用"});
-      }
+    /* 按分组归类，没有分组的放「其它」 */
+    var groups = {}, gorder = [];
+    opts.forEach(function(o){
+      var g = o.group || "其它方法";
+      if(!groups[g]){ groups[g]=[]; gorder.push(g); }
+      groups[g].push(o);
     });
 
     var html = `<div class="card" style="margin-bottom:14px">
@@ -717,26 +828,70 @@
         <div><b>原始记录不能事后补记。</b>这里出的是<b>空白表单框架</b>，
           检验时按实际情况手填并签字 —— 不能在电脑上填完再打印，那不叫原始记录。</div></div>
       <div class="flex" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
-        <label style="flex:1 1 320px">
+        <label style="flex:1 1 240px;min-width:200px">
+          <span class="muted" style="font-size:12px;display:block;margin-bottom:4px">搜索方法</span>
+          <input type="search" id="recSearch" placeholder="输入标准号或名称，如 5009.5 / 蛋白 / 维生素"
+            style="width:100%" oninput="LAB.filterMethods(this.value)">
+        </label>
+        <label style="flex:2 1 380px;min-width:260px">
           <span class="muted" style="font-size:12px;display:block;margin-bottom:4px">选检测方法</span>
           <select id="recMethod" onchange="LAB.pickMethod(this.value)" style="width:100%">
             <option value="">— 选择方法 —</option>
-            ${opts.map(function(o,i){
-              return `<option value="${i}">${esc(o.stdNo)} ${esc(o.title)}${o.method?"（"+esc(o.method)+"）":""}</option>`;
+            ${gorder.map(function(g){
+              return `<optgroup label="${esc(g)}">`+
+                groups[g].map(function(o){
+                  var sel = (REC && REC.opt===o.no) ? " selected" : "";
+                  /* 标准号 · 标准名称 · 方法名（有的才带） */
+                  var parts = [o.no, o.title, o.method].filter(Boolean);
+                  var label = parts.join(" · ");
+                  return `<option value="${esc(o.no)}"${sel}>${esc(label)}</option>`;
+                }).join("") + `</optgroup>`;
             }).join("")}
+            ${MANUAL.map(function(o,i){
+              var sel = (REC && REC.manual && REC.opt===("__m"+i+"__")) ? " selected" : "";
+              return `<option value="__m${i}__"${sel}>✏️ ${esc(o.no+" "+(o.title||""))}</option>`;
+            }).join("")}
+            <option value="__manual__">✏️ 人工添加方法…</option>
           </select>
         </label>
       </div>
+      <div class="muted" style="margin-top:8px;font-size:11.5px" id="recCount"></div>
     </div>`;
+    /* 初始就把「共 N 个方法」显示出来（不然要手动输入才有提示） */
+    setTimeout(function(){ if(global.LAB) global.LAB.filterMethods(""); }, 0);
+
+    /* 人工添加表单 */
+    if(REC && REC.manualForm){
+      html += `<div class="card" style="margin-bottom:14px">
+        <div class="card-h"><h3>人工添加方法</h3>
+          <span class="muted">标准库里没有的、但你们实验室在用的方法</span></div>
+        <div class="flex" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
+          <label style="flex:1 1 200px"><span class="muted" style="font-size:12px;display:block;margin-bottom:4px">标准号</span>
+            <input type="text" id="mNo" placeholder="如 GB 5009.5-2025" style="width:100%"
+              value="${esc(REC.manualForm.no||"")}" oninput="LAB.setManualField('no',this.value)"></label>
+          <label style="flex:2 1 260px"><span class="muted" style="font-size:12px;display:block;margin-bottom:4px">方法名称</span>
+            <input type="text" id="mTitle" placeholder="如 第一法 凯氏定氮法" style="width:100%"
+              value="${esc(REC.manualForm.title||"")}" oninput="LAB.setManualField('title',this.value)"></label>
+          <label style="flex:1 1 170px"><span class="muted" style="font-size:12px;display:block;margin-bottom:4px">记录表模板</span>
+            <select id="mTpl" style="width:100%" onchange="LAB.setManualField('tpl',this.value)">
+              ${Object.keys(tpls).map(function(k){
+                return `<option value="${esc(k)}"${REC.manualForm.tpl===k?" selected":""}>${esc(k)}</option>`;
+              }).join("")}
+            </select></label>
+          <button class="btn pri" onclick="LAB.addManualMethod()">生成记录表</button>
+          <button class="btn" onclick="LAB.cancelManual()">取消</button>
+        </div>
+      </div>`;
+    }
 
     if(!REC){
-      html += `<div class="card empty">先在上面选一个方法，就出来对应的原始记录表。</div>`;
+      html += `<div class="card empty">先在上面选一个方法（可以直接搜），就出来对应的原始记录表。</div>`;
       return html;
     }
 
     var tpl = tpls[REC.tpl] || tpls["通用"];
     html += `<div class="card">
-      <div class="card-h"><h3>${esc(REC.stdNo)} · ${esc(REC.title)}</h3>
+      <div class="card-h"><h3>${esc(REC.stdNo)} · ${esc(REC.title||"")}</h3>
         <span class="muted">模板：${esc(REC.tpl)}</span>
         <div class="sp"></div>
         <button class="btn sm" onclick="LAB.printRecord()">🖨 打印空白表</button>
@@ -777,31 +932,83 @@
   /* ================================================================
      交互
      ================================================================ */
-  function pickMethod(i){
-    if(i===""){ REC=null; render(); return; }
-    var methods = global.METHODS || [];
-    var opts = [];
-    methods.forEach(function(m){
-      var key=null;
-      var map = global.LABDATA.METHOD_TPL_MAP || {};
-      Object.keys(map).forEach(function(k){ if(m.method && m.method.indexOf(k)>=0) key=k; });
-      opts.push({stdNo:m.stdNo, title:m.title, tpl:key||"通用"});
-    });
-    data("CAPABILITY").forEach(function(c){
-      if(!opts.some(function(o){ return c.method.indexOf(o.stdNo)>=0; })){
-        var key=null;
-        var map = global.LABDATA.METHOD_TPL_MAP || {};
-        Object.keys(map).forEach(function(k){ if(c.method.indexOf(k)>=0) key=k; });
-        opts.push({stdNo:c.method, title:c.item, tpl:key||"通用"});
+  /* 选中方法。value 是标准号（不是索引），所以重渲染后能保持选中。 */
+  function pickMethod(val){
+    if(val===""){ REC=null; render(); return; }
+    if(val==="__manual__"){
+      REC = {manualForm:{no:"", title:"", tpl:"通用"}, vals:{}, sign:{}};
+      render();
+      return;
+    }
+    var o = null;
+    var mi = /^__m(\d+)__$/.exec(val);
+    if(mi){ o = MANUAL[+mi[1]]; }
+    else{
+      var opts = methodOptions();
+      for(var i=0;i<opts.length;i++){
+        if(opts[i].no===val){ o=opts[i]; break; }
       }
-    });
-    var o = opts[+i];
+    }
     if(!o) return;
-    /* 恢复草稿 */
-    var saved = global.Store ? global.Store.get("lab.record."+o.stdNo, null) : null;
-    REC = {stdNo:o.stdNo, title:o.title, tpl:o.tpl, vals:(saved&&saved.vals)||{}, sign:(saved&&saved.sign)||{}};
+    var saved = global.Store ? global.Store.get("lab.record."+o.no, null) : null;
+    REC = {stdNo:o.no, title:o.title||"", method:o.method||"", tpl:o.tpl||"通用",
+           opt:val, manual:!!mi,
+           vals:(saved&&saved.vals)||{}, sign:(saved&&saved.sign)||{}};
     render();
   }
+
+  /* 搜索过滤：只改 select 的 option，不重渲染整页（否则会丢焦点） */
+  function filterMethods(kw){
+    kw = String(kw||"").trim().toUpperCase();
+    var sel = document.getElementById("recMethod");
+    if(!sel) return;
+    var opts = methodOptions();
+    var shown = 0;
+    for(var i=0;i<sel.options.length;i++){
+      var op = sel.options[i];
+      if(op.value==="" || op.value==="__manual__"){ continue; }
+      var hit = !kw || (op.textContent||"").toUpperCase().indexOf(kw)>=0;
+      op.hidden = !hit;
+      op.disabled = !hit;
+      if(hit) shown++;
+    }
+    var cnt = document.getElementById("recCount");
+    if(cnt){
+      cnt.textContent = kw
+        ? ("匹配 " + shown + " 个方法（标准库里共 " + opts.length + " 个现行有效方法）")
+        : ("标准库里共 " + opts.length + " 个现行有效方法，已按分组归类；找不到就用「✏️ 人工添加方法」");
+    }
+  }
+
+  /* 人工添加方法的表单 */
+  function setManualField(k, v){
+    if(!REC) return;
+    if(!REC.manualForm || typeof REC.manualForm!=="object"){
+      REC.manualForm = {no:"", title:"", tpl:"通用"};
+    }
+    REC.manualForm[k] = v;
+  }
+  function cancelManual(){
+    REC = null;
+    render();
+  }
+  function addManualMethod(){
+    var f = (REC && REC.manualForm) || {};
+    if(!String(f.no||"").trim()){
+      global.toast("先填标准号", "warn"); return;
+    }
+    var no = String(f.no).trim();
+    /* 同号已存在就不重复加 */
+    for(var i=0;i<MANUAL.length;i++){
+      if(MANUAL[i].no===no){ pickMethod("__m"+i+"__"); return; }
+    }
+    MANUAL.push({no:no, title:String(f.title||"").trim(), tpl:f.tpl||"通用"});
+    REC = null;
+    render();
+    setTimeout(function(){ LAB.pickMethod("__m"+(MANUAL.length-1)+"__"); }, 30);
+    global.toast("已添加：" + no);
+  }
+
   function setRec(k,v){
     if(!REC) return;
     REC.vals[k]=v;
@@ -1014,6 +1221,11 @@
     addCapability: addCapability,
     delCap: delCap,
     pickMethod: pickMethod,
+    filterMethods: filterMethods,
+    setManualField: setManualField,
+    cancelManual: cancelManual,
+    addManualMethod: addManualMethod,
+    methodOptions: methodOptions,
     setRec: setRec,
     setSign: setSign,
     openMethod: openMethod,

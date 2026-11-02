@@ -98,16 +98,16 @@ function ck(cond,msg){
   });
   ck(redTip, '标红行给出「暂停接单」提示');
 
-  console.log('\n=== ⑤ 联动看板 ===');
+  console.log('\n=== ⑤ 联动看板（独立页签「需要处理」）===');
   await p.evaluate(()=>{
-    const btn=[...document.querySelectorAll('#labTabs button')].find(y=>y.dataset.lab==='equip');
+    const btn=[...document.querySelectorAll('#labTabs button')].find(y=>y.dataset.lab==='board');
     if(btn) btn.click();
   });
   await p.waitForTimeout(800);
   const board=await p.evaluate(()=>{
     const el=document.getElementById('labBody');
-    const h=el.querySelector('.card-h h3');
-    if(!h||h.textContent.indexOf('需要处理')<0) return null;
+    const hs=[...el.querySelectorAll('.card-h h3')].map(h=>h.textContent);
+    if(!hs.some(x=>x.indexOf('需要处理')>=0)) return null;
     return [...el.querySelectorAll('.alert')].map(a=>a.innerText.replace(/\s+/g,' '));
   });
   ck(!!board, '联动看板已显示');
@@ -210,6 +210,111 @@ function ck(cond,msg){
   ck(theme.loaded, 'theme.css 已加载');
   ck(theme.brand.toUpperCase()==='#1B3A6B', '主色为深墨蓝');
   ck(theme.gold.toUpperCase()==='#C9A227', '强调色为翡翠金');
+
+  console.log('\n=== ⑫ LAB 公开 API 完整性（防误删同级函数）===');
+  /* 2026-11-02 教训：用脚本替换某个函数时把中间 17 个函数一起删了，
+     页面直接白屏（setCap is not defined）。这里逐个点名断言。 */
+  const API=['render','pickMethod','filterMethods','setManualField','cancelManual',
+    'addManualMethod','methodOptions','setRec','setSign','openMethod',
+    'setCap','addCapability','delCap',
+    'exportCapability','exportEquip','exportReagent','exportSample',
+    'exportQCPlan','exportQCRec','exportPT','exportRecord','printRecord'];
+  const missing=await p.evaluate((list)=>list.filter(k=>typeof window.LAB[k]!=='function'), API);
+  ck(missing.length===0, missing.length?
+      ('LAB 缺少这些 API：'+missing.join(', ')):
+      ('LAB 公开 API '+API.length+' 个齐全'));
+  /* 内部函数没导出到 window，但必须在源码里存在 ——
+     2026-11-02 我替换 pickMethod 时把中间 17 个函数一起删了。 */
+  const src=fs.readFileSync(path.join(ROOT,'prototype','labbench.js'),'utf8');
+  const INNER=['capData','saveCap','dl','linkBoard','boardView','prependBoard'];
+  const gone=INNER.filter(k=>src.indexOf('function '+k+'(')<0);
+  ck(gone.length===0, gone.length?
+      ('labbench.js 里这些函数不见了：'+gone.join(', ')):
+      ('内部函数 '+INNER.length+' 个都在源码里'));
+
+  console.log('\n=== ⑬ 原始记录生成器 · 方法选择器 ===');
+  await p.evaluate(()=>{location.hash='#lab';});
+  await p.waitForTimeout(900);
+  await p.evaluate(()=>{
+    const b=[...document.querySelectorAll('#labTabs button')].find(y=>y.dataset.lab==='record');
+    if(b)b.click();
+  });
+  await p.waitForTimeout(900);
+  const mo=await p.evaluate(()=>{
+    const o=window.LAB.methodOptions();
+    const nos=o.map(x=>String(x.no).replace(/\s+/g,'').toUpperCase());
+    return {
+      total:o.length,
+      groups:new Set(o.map(x=>x.group||'其它')).size,
+      tongze:o.filter(x=>x.src.indexOf('通则')>=0).length,
+      expired:['GB5413.17-2010','GB5413.16-2010','GB5413.12-2010','GB5413.14-2010',
+               'GB5413.19-2010','GB4789.3-2016','GB4789.4-2016','GB5009.89-2016']
+               .filter(x=>nos.indexOf(x)>=0),
+      dupText:o.filter(x=>x.method && x.method.indexOf(String(x.no).replace(/\s/g,''))===0).length
+    };
+  });
+  ck(mo.total>=70, '方法清单 ≥ 70 个（实际 '+mo.total+'）');
+  ck(mo.tongze>=55, '通则方法已加入 ≥ 55 条（实际 '+mo.tongze+'）');
+  ck(mo.expired.length===0, mo.expired.length?
+      ('过期方法还在：'+mo.expired.join(', ')):
+      '8 个被替代的旧版本已全部剔除');
+  ck(mo.dupText===0, '选项文字不重复标准号');
+
+  // 选中后能保持（原来会跳回占位符）
+  const keep=await p.evaluate(async ()=>{
+    const s=document.getElementById('recMethod');
+    if(!s) return {err:'没有 recMethod'};
+    const opt=[...s.options].find(o=>o.value && o.value!=='__manual__');
+    if(!opt) return {err:'没有可选方法'};
+    s.value=opt.value;
+    s.dispatchEvent(new Event('change',{bubbles:true}));
+    await new Promise(r=>setTimeout(r,600));
+    const s2=document.getElementById('recMethod');
+    return {picked:opt.value, now:s2?s2.value:'(无)',
+            rows:document.querySelectorAll('#labBody tbody tr').length};
+  });
+  ck(!keep.err && keep.now===keep.picked,
+     '选中方法后重渲染仍保持选中（原来会跳回「— 选择方法 —」）');
+  ck(keep.rows>0, '选中后生成了原始记录表（'+keep.rows+' 行）');
+
+  // 人工添加
+  const man=await p.evaluate(async ()=>{
+    const s=document.getElementById('recMethod');
+    s.value='__manual__';
+    s.dispatchEvent(new Event('change',{bubbles:true}));
+    await new Promise(r=>setTimeout(r,600));
+    const hasForm=!!document.getElementById('mNo');
+    window.LAB.setManualField('no','GB/T 9999-2026');
+    window.LAB.setManualField('title','企业内部方法');
+    window.LAB.addManualMethod();
+    await new Promise(r=>setTimeout(r,800));
+    const s2=document.getElementById('recMethod');
+    return {hasForm:hasForm, val:s2?s2.value:'(无)',
+            rows:document.querySelectorAll('#labBody tbody tr').length};
+  });
+  ck(man.hasForm, '「✏️ 人工添加方法」能打开输入表单');
+  ck(man.val.indexOf('__m')===0, '人工添加的方法能选中并出表（'+man.val+'）');
+
+  console.log('\n=== ⑭ 「需要处理」不重复出现在各台账页 ===');
+  const dupTabs=[];
+  for(const t2 of ['capability','equip','reagent','sample','orders','capa','audit','env']){
+    await p.evaluate(x=>{
+      const b=[...document.querySelectorAll('#labTabs button')].find(y=>y.dataset.lab===x);
+      if(b)b.click();
+    }, t2);
+    await p.waitForTimeout(600);
+    const n=await p.evaluate(()=>[...document.querySelectorAll('#labBody .card-h h3')]
+      .filter(h=>h.textContent.indexOf('需要处理')>=0).length);
+    if(n>0) dupTabs.push(t2);
+  }
+  ck(dupTabs.length===0, dupTabs.length?
+      ('这些页还出现「需要处理」：'+dupTabs.join(', ')):
+      '各台账页不再重复出现「需要处理」');
+  const boardTab=await p.evaluate(()=>{
+    const b=[...document.querySelectorAll('#labTabs button')].find(y=>y.dataset.lab==='board');
+    return b?b.textContent.trim():'(无)';
+  });
+  ck(boardTab.indexOf('需要处理')===0, '「需要处理」是独立页签（'+boardTab+'）');
 
   console.log('\n=== ⑫ 无 JS 错误 ===');
   ck(errs.length===0, errs.length?('有错误：'+errs.join(' | ')):'全程无 JS 错误');

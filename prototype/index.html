@@ -833,6 +833,88 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .jsa-edit tr.g-hi td:first-child{box-shadow:inset 3px 0 0 #c2410c}
 .jsa-edit tr.g-mid td:first-child{box-shadow:inset 3px 0 0 #b45309}
 .jsa-edit tr.g-low td:first-child{box-shadow:inset 3px 0 0 #15803d}
+
+/* ===== JSA 步骤卡（2026-11-02）=====
+   12 列表格在窄屏会把 L/S 压成 15px、数字完全看不见，
+   改成「一步一卡」，数字框锁死宽度，文本框按内容增高。 */
+.jcards{display:flex;flex-direction:column}
+.jcard{
+  padding:13px 16px;border-bottom:1px solid var(--line2);
+  border-left:3px solid transparent;min-width:0;
+}
+.jcard:last-child{border-bottom:none}
+.jcard.g-crit{border-left-color:#b91c1c}
+.jcard.g-hi{border-left-color:#c2410c}
+.jcard.g-mid{border-left-color:#b45309}
+.jcard.g-low{border-left-color:#15803d}
+.jcard.hl{background:#fffbea}
+.jcard-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.jcard-no{
+  flex:0 0 24px;width:24px;height:24px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--brand);color:#fff;font-size:12.5px;font-weight:700;
+}
+.jcard-step{
+  flex:1 1 auto;min-width:0;font-size:14px;font-weight:600;
+  border:1px solid transparent;background:transparent;border-radius:6px;
+  padding:5px 8px;font-family:inherit;color:var(--ink);
+}
+.jcard-step:hover{border-color:var(--line);background:var(--panel)}
+.jcard-step:focus{outline:none;border-color:var(--brand);background:#fff;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent)}
+.jcard-body{display:flex;gap:16px;align-items:flex-start;min-width:0}
+.jcard-fields{
+  flex:1 1 auto;min-width:0;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:11px 14px;
+}
+.jfield{display:flex;flex-direction:column;gap:4px;min-width:0}
+.jfield>label{font-size:11px;color:var(--ink3);font-weight:600;letter-spacing:.2px}
+.jfield textarea,.jfield input{
+  width:100%;min-width:0;font-family:inherit;font-size:12.5px;line-height:1.65;color:var(--ink);
+  border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:var(--panel);
+  resize:vertical;
+}
+.jfield textarea{overflow:hidden}
+.jfield textarea:hover,.jfield input:hover{border-color:var(--brand)}
+.jfield textarea:focus,.jfield input:focus{
+  outline:none;border-color:var(--brand);background:#fff;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent);
+}
+/* 右侧风险列：L / S / R 固定宽度，数字永远看得见 */
+.jcard-risk{
+  flex:0 0 224px;width:224px;min-width:224px;
+  display:flex;flex-direction:column;gap:9px;
+  padding:11px 12px;border:1px solid var(--line2);border-radius:9px;background:rgba(0,0,0,.015);
+}
+.jrisks{display:flex;gap:9px;align-items:flex-end}
+.jrisk{display:flex;flex-direction:column;gap:3px;align-items:center}
+.jrisk>label{font-size:10.5px;color:var(--ink3);font-weight:700;letter-spacing:.3px}
+.jrisk .lvl-in{
+  width:52px;min-width:52px;max-width:52px;      /* ★ 锁死宽度，数字不会被压没 ★ */
+  text-align:center;font-weight:700;font-size:16px;
+  border:1px solid var(--line);border-radius:6px;padding:5px 2px;
+  font-family:inherit;color:var(--ink);background:var(--panel);
+  -moz-appearance:textfield;
+}
+.jrisk .lvl-in::-webkit-outer-spin-button,
+.jrisk .lvl-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.jrisk .lvl-in:focus{outline:none;border-color:var(--brand);background:#fff;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 14%,transparent)}
+.jrisk .rv{font-size:22px;font-weight:700;line-height:1.25;font-variant-numeric:tabular-nums}
+.jfield-inline{gap:3px}
+.jfield-inline input{font-size:12.5px;padding:5px 8px}
+.jcard-act{display:flex;gap:6px;align-items:center;margin-top:auto;padding-top:3px}
+.jcard-act .x{margin-left:auto}
+.jcard-res{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  margin-top:11px;padding:9px 11px;border-radius:7px;
+  background:#eaf4ee;border:1px solid #c9e0d4;font-size:12px;
+}
+@media (max-width:1100px){
+  .jcard-body{flex-direction:column}
+  .jcard-risk{flex:1 1 auto;width:100%;min-width:0}
+}
+
 .jsa-edit tr.res-row td{background:#f4faf6;padding:7px 12px;font-size:12px}
 .jsa-edit tr.res-row .btn.xs{margin-left:6px}
 .btn.xs{padding:2px 7px;font-size:11px;border-radius:5px}
