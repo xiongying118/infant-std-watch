@@ -121,6 +121,21 @@ function judge(html){
   console.log('\n=== ④ 页面自身无 JS 错误 ===');
   ck(errs.length===0,'无页面错误'+(errs.length?('：'+errs.slice(0,3).join(' | ')):''));
 
+  console.log('\n=== ⑤ rel 必须含 noreferrer（cfsa 防盗链）===');
+  /* ★ 这一条是「点官方 404」的真正根因 ★
+     cfsa 对带 Referer 的请求返回 404；rel 只写 noopener 时 Referer 仍会带上。
+     → 所有外链必须 rel="noopener noreferrer"。 */
+  const relInfo=await p.evaluate(()=>{
+    const bad=[];
+    document.querySelectorAll('a[target="_blank"]').forEach(a=>{
+      const rel=(a.getAttribute('rel')||'').toLowerCase();
+      if(rel.indexOf('noreferrer')<0) bad.push({rel:rel||'(空)', href:(a.getAttribute('href')||'').slice(0,60)});
+    });
+    return {total:document.querySelectorAll('a[target="_blank"]').length, bad};
+  });
+  ck(relInfo.bad.length===0,'★ 所有新窗口链接都带 noreferrer（检查 '+relInfo.total+' 个，异常 '+relInfo.bad.length+' 个）');
+  relInfo.bad.slice(0,6).forEach(x=>console.log('      缺 noreferrer: rel="'+x.rel+'" '+x.href));
+
   console.log('\n=== 汇总 ===');
   if(bad.length){
     console.log('  ✗ '+bad.length+' 处有问题：');

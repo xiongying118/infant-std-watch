@@ -1565,7 +1565,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
       <div class="flex" style="margin-bottom:14px">
         <span class="muted">来源：中国合格评定国家认可委员会官网（cnas.org.cn）· 每日自动抓取</span>
         <div class="sp" style="flex:1"></div>
-        <a class="btn sm" href="https://www.cnas.org.cn/rkgf/sysrk/index.html" target="_blank">CNAS 认可规范栏目</a>
+        <a class="btn sm" href="https://www.cnas.org.cn/rkgf/sysrk/index.html" target="_blank" rel="noopener noreferrer">CNAS 认可规范栏目</a>
       </div>
       <div class="tabs" id="cnasTabs"></div>
       <div class="chips" id="cnasKindDesc" style="margin-bottom:12px"></div>
@@ -1994,7 +1994,17 @@ const REFGROUPS = (window.STDWATCH_DATA && window.STDWATCH_DATA.REFGROUPS) || []
    ★ 其它站点（samr / openstd / ttbz / cnas / flk）本来就是普通 GET，保持不变。
 
    详情页（?type=2&guid=）**不再作为用户可点的链接**——
-   它在浏览器里必然 404，留着只会误导人。*/
+   它在浏览器里必然 404，留着只会误导人。
+
+   ★★ 关键：rel 必须写 noreferrer，不能只写 noopener ★★
+   cfsa 站点有**防盗链**：带 Referer 的请求一律返回 404 页（2492 字符）。
+     实测（2026-11-03，真实浏览器）：
+       rel="noopener"           → Referer 保留 → 站点返回 404
+       rel="noopener noreferrer" → Referer 丢弃 → 正常返回检索页（26438 字符）
+     noopener 只管 window.opener 的安全，不清 Referer；noreferrer 才清。
+   ★ 这是「点官方 404」的最后一块拼图 ——
+     前两次修的是 URL 形态（guid 直链 → POST 表单），这次才发现是 Referer 防盗链。
+     ★★ 也说明：本地 file:// 测通不算数，必须在**线上 https 页面**里真点一次。*/
 const CFSA_PORTAL = "https://sppt.cfsa.net.cn:8086/db?task=index";
 /** 生成一个「点开官方详情页」的可点元素。
     cfsa → 跳官方检索页（纯 GET）；其它站点 → 普通 href。 */
@@ -2009,10 +2019,10 @@ function offLink(label, url, cls, style, stdNo){
       ? "打开官方检索页（食品安全国家标准数据检索平台），在检索框输入 " + stdNo + " 即可"
       : "打开官方检索页（食品安全国家标准数据检索平台）";
     return `<a class="${cls}"${style?' style="'+style+'"':""} href="${CFSA_PORTAL}"
-           target="_blank" rel="noopener" title="${tip.replace(/"/g,'&quot;')}">${label}</a>`;
+           target="_blank" rel="noopener noreferrer" title="${tip.replace(/"/g,'&quot;')}">${label}</a>`;
   }
   return `<a class="${cls}"${style?' style="'+style+'"':""} href="${url}"
-         target="_blank" rel="noopener" title="${label}">${label}</a>`;
+         target="_blank" rel="noopener noreferrer" title="${label}">${label}</a>`;
 }
 /** 该URL 是否必须走 POST —— cfsa 的详情页与检索页都要 POST。 */
 function isCfsaPost(url){

@@ -228,7 +228,7 @@
       ${sib ? `<div class="sib"><details><summary>同类其他方法（${c.siblings.length}）</summary>
         <ul>${sib}</ul></details></div>` : ""}
 
-      ${c.url ? `<a class="src" href="${esc(c.url)}" target="_blank" rel="noopener">官方在线查阅 ↗</a>` : ""}
+      ${c.url ? `<a class="src" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">官方在线查阅 ↗</a>` : ""}
     </article>`;
   }
 
