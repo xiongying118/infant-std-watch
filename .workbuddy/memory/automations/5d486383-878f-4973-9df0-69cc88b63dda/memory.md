@@ -1084,3 +1084,100 @@
 8. `crawler.py:612-620` fetch 用裸 print 吞掉逐关键词异常
 9. **发布决策扩展**：本地 prototype 是新版应用（7 个 js/css 从未上线），发布前需确认是否整体上线
 10. `scripts/selfcheck_page.js` 陈旧（`GB` → `GBNUTRITION`），应修或标注为失效
+
+## 2026-11-03
+- 管线退出码 0，校验通过（还原后）：STD=348 LAWS=42 ERATA=15 REFGROUPS=13 ALERTS=2 SOONPOOL=4
+  CNASDOCS=19 CNASKINDS=6 METHODS=18
+- **判定情况 C → 未发布**。两条独立理由：
+  1. **SRC-07（工信部）ERROR**：fails 18 → **19**，`last_fail=2026-11-03T18:20:25`，
+     落在运行窗口 18:17:13–18:22:31 内 → **本日真实尝试并失败**，非冷却跳过
+  2. data.js 首跑 STD **348 → 346，removed 2 / added 0**（静默掉条第 **11** 次复现），
+     还原后与基线逐块比对**唯一实质变化 = RUNSTATE.lastRun** → 没有新数据可发
+- 各源（还原后真实条数）：SRC-01=3 SRC-02=7 SRC-05=373 SRC-06=4 SRC-07=0 SRC-08=57 SRC-11=98
+  公告=56 勘误=187 法规 LAWS=42
+- **真实新增/换版/废止/勘误全 0**；change_events 今日 0 行（总计仍 27，max 停在 10-08 10:10:25）；
+  alerts 今日 0 行（总计 27）；6 条 MOD 修改单为重复推送，去重后 0
+- 线上**未动**：curl 实测 data.js Last-Modified 仍是 `Thu, 29 Oct 2026 11:36:55 GMT`（Content-Length 414600）；
+  index.html 仍是 10-22 18:32 版（194,227 字节）；`jsa.js` 线上仍 404 → 本地仍是未上线的新版应用
+
+### ★ SRC-06「沿用上次快照」兜底今日首次生效（连续第 9 天采不到公告）
+- 今日 SRC-06 返回 0 条，但爬虫**不再静默覆盖快照**，而是沿用上次的 4 条 → 快照保住 4 条
+  （前几日是直接掉到 0 条，需人工从基线还原）。这是本轮唯一的好消息
+- 但 SRC-06 仍**连续第 9 天采集不到任何公告**（4 条分散在 `tssps/`/`spcjs/`/`zfjcs/` 三栏目，
+  适配器只抓一个固定栏目页）→ 总局公告渠道实质仍是盲区，靠旧快照撑
+
+### ★ SRC-08 掉条明细（与 10-21/23/26/28/29/30 同型，第 11 次复现）
+- 抓取 55 条（基线 57），丢 `T/CDZX 003-2023`《乳粉中磷脂酰胆碱的测定 高效液相色谱法》
+  与 `T/HGMIF 001-2021`《绿色设计产品评价技术规范 婴幼儿配方乳粉》
+- 今日回官方团标平台核验（`POST /cms-proxy/ms/portal/standardInfo/getPortalStandardList`）：
+  `CDZX`/`乳粉中磷脂酰胆碱的测定`/`磷脂酰胆碱` 全 total=0；`HGMIF` total=26 但不含目标、
+  `绿色设计产品评价技术规范` total=100 也不含目标 → **平台侧不可检索，不能判定废止**
+  对照组 `HHPA` total=10、`婴幼儿肠造口` total=2 正常 → 不是我方被墙
+- 处置：`cp` 从 `.workbuddy/tmp/baseline_20261103/snapshots/` 还原 SRC-08(57)，
+  再 `daily_check.py --skip-fetch` 重建 → **STD 恢复 348，added=0 removed=0**
+- 还原后逐块实测（Node vm + 数字归一化）：STD/ERATA/ALERTS/KWS/SUBS/HIST/LAWS/CATS/LAW_KINDS/
+  SRCS/CNASDOCS/CNASKINDS/METHODS/JSA/QMTOOLS/RDTOOLS/GBNUTRITION **全 IDENTICAL**；
+  REFGROUPS 仅「N 天前」日计数、SOONPOOL 仅 `d` 倒计时天数 →
+  **唯一实质变化 = RUNSTATE.lastRun（11-02 18:15 → 11-03 18:31）+ nextRun**
+
+### ★ 官方源直连全库核验（本次结论：官方今天确实无新标准/新勘误/新公告）
+- **标准库 1808 行 / 1753 条有效**，**PDATE 上限 2026-08-18**；`PDATE>=2026-10-01` = **0** 条
+  （与 11-02 核验完全一致 → 官方标准库自 8 月中旬起没再发过新的食品安全国标）
+- **勘误库 187 条**：与本地 erata 快照 **GUID 完全相同（官方有本地无 0 / 本地有官方无 0）**；KWSJ 上限 2026-10-28
+- **公告库 56 条**：与本地 notice 快照 **GUID 完全相同、标题零差异**；PDATE 上限 2026-08-18
+- SRC-05 快照 373 vs 基线 373：**标准号集合差异 0/0、7 个受监控字段差异 0**（status/implement_date/
+  publish_date/replaced_by/title/abolish_date/replaces）→ 零新增、零换版、零废止
+- → **官方今天确实没有新标准/新勘误/新公告**，此结论来自直连核验，不是来自管线
+
+### ★ 抓取日志「变更 16 条」的真实含义（今日新查明，勿再当增量看）
+- SRC-05 crawl_logs 写「抓取 355 条，变更 16 条」，一度疑似有 16 条变更
+- 实测 = **16 条倒计时（UPCOMING）提醒事件**，不是换版：GB 5009.312/310/311/111/96/190/253/24/22/
+  222/209/206/185-2026（d=107）、GB 25596-2025（d=133）、GB 5009.168-2026（d=288）、GB 29922-2025（d=303）
+- 校验法：快照里 `status=即将实施` 且 `0 <= days_to_implement <= 365` 的条数 **恰好 = 16**
+- 这些是「已知的即将实施标准」，30 天去重桶（今日桶 = 2026-10-31）已推过 → change_events/alerts 不新增行
+
+### 复核（旧问题）
+- healthy 假阳性**第 14 天复现**：RUNSTATE `healthy: true`，今日 crawl_logs 明确有 `error / SRC-07`，fails=19
+- SRC-06 日期兜底造号：本地与线上今日皆无（连续第 16 天）
+- 音译三条（GB 5009.276/292/303）为历史遗留，未扩散
+- CNAS 筛选项缺口仍在（连续第 4 天）：`CNAS-CL01-A015:2018`《检测和校准实验室能力认可准则在
+  珠宝玉石、贵金属检测领域的应用说明》仍进了本地 CNASDOCS（19 条），线上 18 条（线上反而是对的）
+- **8 月批次仍有两个婴配相关标准本地缺失**（检索词表缺口，10-31 记录至今未补）：
+  `GB22570-2026`《辅食营养补充品和学龄前儿童营养补充品》、`GB31688-2026`《牛乳蛋白》、
+  以及 `GB5413.36-2026`《特殊膳食用食品中脂肪酸和反式脂肪酸的测定》——
+  这三条官方 PDATE=2026-08-18，**不是今日新增**，是长期漏采
+
+### 工具备忘（本日新增/修正）
+- **CFSA 空 keyword 全库拉法**（10-31 首记、今日第 4 次验证）：`GET /db?task=indexSearch&isLength=9999&num_tn={2|4|1}&standard_type=&keyword=`
+  今日实测 标准库 3.2s / 勘误库 0.7s / 公告库 2.1s → 站点正常
+- **团标平台正确接口**：`POST https://www.ttbz.org.cn/cms-proxy/ms/portal/standardInfo/getPortalStandardList`
+  body=`searchKey/pageNo/pageSize`，需带 `Referer: https://www.ttbz.org.cn/standard.html` +
+  `X-Requested-With: XMLHttpRequest`；返回 `data.rows[]`（字段 `standardNo`/`standardTitleCn`/
+  `standardStatusName`/`publishDate`）与 `data.total`。**用 GET 访问 `/standard.html?key=` 拿不到 total**
+- **快照 JSON 结构**：SRC-* 快照是 `dict[标准号(无空格)] = {std_no(有空格), title, status, ...}`；
+  勘误/公告快照是 `list`。比对本地标准号时要用 `std_no` 并去掉空格，且**不能只取 `items/records/rows`，
+  否则 SRC-* 快照会返回空**（今日第一次就踩了这个坑，误判成「本地 0 个标准号」）
+- CFSA 标准库 `CODE` 对「解读材料/修改单」会把标准号重复拼在 `TITLE` 里（如 `GB4481.1-2016`），
+  这类行不是新标准，统计时排除
+- **判断线上是否落后**用 `curl -I` 逐文件看 Last-Modified + HTTP 码（今日复测：data.js 10-29、index.html 10-22、jsa.js 404）
+
+### 待修（优先级排序）
+1. **★ SRC-07 判定逻辑**（连续 **19** fails，10-10 已诊断为「0 条属正常业务结果、crawler 误报为 error」）：
+   修 `crawler.py:859`，0 条记 ok 并正常写空快照 → 否则每 24h 冷却到期即触发，部委公告渠道持续失明
+2. **★ 静默掉条闸门**（10-06 首次，10-19 事故，10-21/23/26/28/29/30/11-02/11-03 复现，**今日第 11 次**）：
+   `sanity_guard.py` 必须校验各源快照条数**环比跌幅**（>20% 判失败并阻断发布）；
+   今日 SRC-08 抓到 55 < 基线 57 仍记 `ok` → 建议同时**把 SRC-06 的「沿用上次快照」兜底推广到所有源**
+   （SRC-06 今天靠这条兜底保住了 4 条，SRC-08 没有，掉 2 条）
+3. **★ SRC-06 多栏目轮询**（连续 **9** 天造成实际掉条）：4 条公告分散在 `tssps/`/`spcjs/`/`zfjcs/`
+   三栏目，适配器只抓一个固定栏目页且 `currPage` 翻页无效 → 改多 pageId/多目录路径轮询 +
+   对快照内已有 `official_url` 做存活校验兜底
+4. **SRC-08 检索词选取**：`SOURCE_OWN_TERMS['SRC-08']` 需补 `HHPA` 等号段词；
+   `HGMIF 001-2021`、`CDZX 003-2023` 平台侧不可检索，**不要因检索不到就判定废止**
+5. **检索词表缺口**（10-31 首次，至今未修）：需补「辅食营养补充品」「牛乳蛋白」等词，
+   否则 `GB22570-2026`、`GB31688-2026`、`GB5413.36-2026` 永远采不到（官方 PDATE=2026-08-18，非当日新增）
+6. **healthy 假阳性**（10-15 发现，已连续 14 天）：`build_runstate.py` 需读 `crawl_logs` 当日 error
+   与 `source_health.json` fails，反映到 healthy 与 logs
+7. **CNAS 筛选项口径**：`CNAS_DROP` 补 `珠宝玉石|贵金属|宝石|首饰`（已验证只命中 A015 一条、误伤 0 条）
+8. `crawler.py:612-620` fetch 用裸 print 吞掉逐关键词异常
+9. **发布决策扩展**：本地 prototype 是新版应用（7 个 js/css 从未上线），发布前需确认是否整体上线
+10. `scripts/selfcheck_page.js` 陈旧（`GB` → `GBNUTRITION`），应修或标注为失效

@@ -199,10 +199,21 @@ function QW_addRow(key){
   st.rows.push(row);
   QW_render(key);
 }
+/* ★ 删除行 → 二次确认（2026-11-03）★ */
 function QW_delRow(key,i){
   const st = QWD[key]; if(!st) return;
-  st.rows.splice(i,1);
-  QW_render(key);
+  const cfg = QW_CFG[key] || {};
+  const cols = cfg.cols||[];
+  const r = st.rows[i] || {};
+  const first = cols.length ? (r[cols[0].key]==null?"":String(r[cols[0].key])) : "";
+  window.Guard.ask("确定删除这一行？"
+    + (first?"<br><b style='color:var(--ink)'>"+window.Guard.esc(first)+"</b>":"")
+    + "<br><span class='muted'>"+window.Guard.esc(cfg.title||"质量管理工具")+"</span>", {
+    onOk:function(){
+      st.rows.splice(i,1);
+      QW_render(key);
+    }
+  });
 }
 function QW_copyTable(key){
   const st = QWD[key]; if(!st) return;
@@ -695,7 +706,15 @@ function QW_fishbone(key, cfg){
 function QW_fbSet(key,v){ QWD[key].root = v; QW_render(key); }
 function QW_fbSetItem(key,b,j,v){ QWD[key].items[b][j] = v; }
 function QW_fbAdd(key,b){ QWD[key].items[b] = QWD[key].items[b]||[]; QWD[key].items[b].push(""); QW_render(key); }
-function QW_fbDel(key,b,j){ QWD[key].items[b].splice(j,1); QW_render(key); }
+function QW_fbDel(key,b,j){
+  /* ★ 删除条目 → 二次确认（2026-11-03）★ */
+  const items = (QWD[key].items[b]) || [];
+  const txt = items[j]==null ? "" : String(items[j]);
+  window.Guard.ask("确定删除这一条？"
+    + (txt?"<br><b style='color:var(--ink)'>"+window.Guard.esc(txt.slice(0,120))+"</b>":""), {
+    onOk:function(){ QWD[key].items[b].splice(j,1); QW_render(key); }
+  });
+}
 function QW_fbPick(key,b,j,v){ QWD[key].picked[b+"|"+j] = v; }
 
 /* ------------------------------------------------------------

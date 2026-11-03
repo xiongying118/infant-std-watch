@@ -823,9 +823,12 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .jsa-edit .lvl-in{text-align:center;font-weight:700;font-size:14px;max-width:56px}
 .jsa-edit .rv{font-size:15px}
 .jsa-edit tr.hl{background:#fffbea!important;box-shadow:inset 3px 0 0 var(--mid)}
+/* ★ 风险四档色条（2026-11-03 与 jsa.js 的 GRADES 配色严格对齐）★
+   色相拉开：低=绿 #15803d → 一般=黄棕 #a16207 → 中等=橙 #c2410c → 高=红 #b91c1c
+   （原来「一般」是 #b45309，与新的 GRADES 对不上，两处颜色会不一致） */
 .jsa-edit tr.g-crit td:first-child{box-shadow:inset 3px 0 0 #b91c1c}
 .jsa-edit tr.g-hi td:first-child{box-shadow:inset 3px 0 0 #c2410c}
-.jsa-edit tr.g-mid td:first-child{box-shadow:inset 3px 0 0 #b45309}
+.jsa-edit tr.g-mid td:first-child{box-shadow:inset 3px 0 0 #a16207}
 .jsa-edit tr.g-low td:first-child{box-shadow:inset 3px 0 0 #15803d}
 
 /* ===== JSA 步骤卡（2026-11-02）=====
@@ -839,7 +842,7 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .jcard:last-child{border-bottom:none}
 .jcard.g-crit{border-left-color:#b91c1c}
 .jcard.g-hi{border-left-color:#c2410c}
-.jcard.g-mid{border-left-color:#b45309}
+.jcard.g-mid{border-left-color:#a16207}
 .jcard.g-low{border-left-color:#15803d}
 .jcard.hl{background:#fffbea}
 /* 卡头：序号 · 作业步骤 · 等级 */
@@ -958,10 +961,12 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .jsa-matrix th{padding:6px 8px;font-weight:600;font-size:11.5px;color:var(--ink2);
   background:var(--panel);border-radius:5px;white-space:nowrap}
 .jsa-matrix td{padding:8px 9px;border-radius:6px;vertical-align:top;
-  border:1px solid var(--line2);min-width:86px;transition:filter .12s}
+  min-width:86px;transition:filter .12s}
+/* ★ 有内容的格子靠 inset 阴影描一圈等级色（由 jsa.js 内联），
+   所以这里**不要**再画 1px 灰边框 —— 灰线会把四档底色切碎、看着更乱 */
 .jsa-matrix td:hover{filter:brightness(.97)}
 .lg{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2)}
-.lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.lg i{width:12px;height:12px;border-radius:3px;display:inline-block;flex:0 0 12px}
 .warn-line{
   padding:9px 12px;margin:0 0 12px;font-size:12.5px;line-height:1.75;
   background:#fffbeb;border:1px solid #fde68a;border-radius:6px;color:#92400e;
@@ -1311,14 +1316,14 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
     <nav class="nav">
       <div class="nav-label">日常</div>
       <a href="#home" class="on" data-v="home"><span class="ic">◎</span><span class="tx">今日待办<span class="sub">（标准更新提醒）</span></span></a>
-      <a href="#refs" data-v="refs"><span class="ic">⚗</span><span class="tx">通则引用标准</span><span class="badge" id="refBadge" style="background:var(--brand)">—</span></a>
+      <a href="#refs" data-v="refs"><span class="ic">⚗</span><span class="tx">通则引用标准</span><span class="badge" id="refBadge" style="background:var(--brand);color:#fff">—</span></a>
       <a href="#list" data-v="list"><span class="ic">▤</span><span class="tx">标准清单</span></a>
       <a href="#law" data-v="law"><span class="ic">⚖</span><span class="tx">法规与体系</span></a>
       <!-- ★ CNAS 认可规范：独立一组，位置紧跟「法规与体系」（用户 2026-10-07 要求）★
           刻意不放在「通则引用标准」下：通则引用页的每一条都来自产品标准正文，
            CNAS 不在任何产品标准正文里，放那儿等于谎称「通则引用了它」。
            它与法规体系同属「资质/体系」维度，故紧随其后。 -->
-      <a href="#cnas" data-v="cnas"><span class="ic">🎖</span><span class="tx">认可规范（CNAS）</span><span class="badge" id="cnasBadge" style="background:var(--brand)">—</span></a>
+      <a href="#cnas" data-v="cnas"><span class="ic">🎖</span><span class="tx">认可规范（CNAS）</span><span class="badge" id="cnasBadge" style="background:var(--brand);color:#fff">—</span></a>
       <a href="#subs" data-v="subs"><span class="ic">★</span><span class="tx">我的订阅</span></a>
       <!-- ★ 实验室组排在提醒之上（用户 2026-10-07 要求）★
            理由：这一组是检验员每天真正动手用的东西（方法卡片 / 录经验），
@@ -1329,22 +1334,22 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
            质量管理与研发管理是它的上游方法与规范。
            组内顺序：JSA（动手之前先看风险）→ 日常管理 → 方法原理。 -->
       <div class="nav-label">实验室管理</div>
-      <a href="#jsa" data-v="jsa"><span class="ic">⚠️</span><span class="tx">工作安全分析 (JSA)</span><span class="badge" id="jsaBadge" style="background:var(--high)">—</span></a>
+      <a href="#jsa" data-v="jsa"><span class="ic">⚠️</span><span class="tx">工作安全分析 (JSA)</span><span class="badge" id="jsaBadge" style="background:var(--high);color:#fff">—</span></a>
       <!-- 原「实验室管理」与外层组重名 → 改叫「日常管理」
            （里面是设备/试剂/样品/QC/PT/CAPA/内审/排班/环境这些每天要记的账；
              2026-11-02 用户定名：日常管理） -->
-      <a href="#lab" data-v="lab"><span class="ic">🏢</span><span class="tx">日常管理</span><span class="badge" id="labBadge" style="background:var(--brand)">—</span></a>
-      <a href="#method" data-v="method"><span class="ic">🧪</span><span class="tx">检测方法原理</span><span class="badge" id="methodBadge" style="background:var(--brand)">—</span></a>
+      <a href="#lab" data-v="lab"><span class="ic">🏢</span><span class="tx">日常管理</span><span class="badge" id="labBadge" style="background:var(--brand);color:#fff">—</span></a>
+      <a href="#method" data-v="method"><span class="ic">🧪</span><span class="tx">检测方法原理</span><span class="badge" id="methodBadge" style="background:var(--brand);color:#fff">—</span></a>
       <!-- ★★ 质量管理工具（2026-10-22 用户要求新增）★★
            16 个工具覆盖体系 / 分析 / 过程 / 现场 / 风险五类。 -->
       <div class="nav-label">质量管理</div>
-      <a href="#qmtools" data-v="qmtools"><span class="ic">🧰</span><span class="tx">质量管理工具</span><span class="badge" id="qmBadge" style="background:var(--brand)">—</span></a>
+      <a href="#qmtools" data-v="qmtools"><span class="ic">🧰</span><span class="tx">质量管理工具</span><span class="badge" id="qmBadge" style="background:var(--brand);color:#fff">—</span></a>
       <!-- ★★ 研发管理（2026-10-22 用户要求新增）★★
            理由：研发是婴配厂的主线业务（配方 → 中试 → 注册 → 上市）。 -->
       <div class="nav-label">研发管理</div>
-      <a href="#rdtools" data-v="rdtools"><span class="ic">🧬</span><span class="tx">研发管理工具</span><span class="badge" id="rdBadge" style="background:var(--brand)">—</span></a>
+      <a href="#rdtools" data-v="rdtools"><span class="ic">🧬</span><span class="tx">研发管理工具</span><span class="badge" id="rdBadge" style="background:var(--brand);color:#fff">—</span></a>
       <div class="nav-label">提醒</div>
-      <a href="#alerts" data-v="alerts"><span class="ic">🔔</span><span class="tx">提醒中心</span><span class="badge" id="alertBadge" style="background:var(--high)" title="待处理提醒数">—</span></a>
+      <a href="#alerts" data-v="alerts"><span class="ic">🔔</span><span class="tx">提醒中心</span><span class="badge" id="alertBadge" style="background:var(--high);color:#fff" title="待处理提醒数">—</span></a>
       <div class="nav-label">配置</div>
       <a href="#admin" data-v="admin"><span class="ic">⚙</span><span class="tx">管理后台</span></a>
     </nav>
@@ -1653,7 +1658,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
           <b>七件工具：</b>
           ① <b>检测能力矩阵</b> —— 客户问「能测什么、什么方法、多久、多少钱」，直接给这张表；
           ② <b>计量设备台账</b> —— 校准超期自动标红，溯源证书号可查；
-          ③ <b>试剂与危化品</b> —— 效期预警 + GB 13690 危险品分类；
+          ③ <b>试剂与危化品</b> —— 效期预警 + GB 30000 危险品分类；
           ④ <b>样品与留样</b> —— 留存期限、到期处置提醒；
           ⑤ <b>质量控制</b> —— 空白/平行样/加标/标准物质四件套，QC 超限必须闭环；
           ⑥ <b>能力验证</b> —— PT 与实验室间比对的计划、结果、可疑值分析；
@@ -1868,6 +1873,10 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 <link rel="stylesheet" href="theme.css">
 <!-- ★ 用户状态持久化（2026-11-01）★ 必须排在 workbench.js 之前 -->
 <script src="store.js"></script>
+<!-- ★ 删除权限与二次确认（2026-11-03）★
+     必须在 store.js 之后（它用 Store 存密码），
+     且在 jsa/ledger/workbench/labbench 之前（那些模块调用 Guard）。 -->
+<script src="guard.js"></script>
 <!-- ★ 实验室台账数据（2026-11-01）★ 设备/试剂/留样/质控/人员/能力矩阵 -->
 <script src="labdata.js"></script>
 <!-- ★ 实验室新增 8 个模块的种子数据（2026-11-01）★ 委托单/CAPA/排班/配制/出入库/报告/内审/环境 -->
@@ -1955,7 +1964,7 @@ function renderCnas(){
         </div>
         <div style="text-align:right;white-space:nowrap">
           <div class="muted" style="font-size:11.5px">官方文件</div>
-          ${x.url?offLink("官网查看", x.url, "btn sm", "margin-top:5px"):""}
+          ${x.url?offLink("官网查看", x.url, "btn sm", "margin-top:5px", x.no||x.title):""}
         </div>
       </div>
     </div>`).join("");
@@ -1963,61 +1972,47 @@ function renderCnas(){
 
 const REFGROUPS = (window.STDWATCH_DATA && window.STDWATCH_DATA.REFGROUPS) || [];
 
-/*★★ 官方查询：必须用 POST 表单跳转，不能用普通链接 ★★
-   2026-10-21 用户两次报「链接到食品安全国家标准数据检索平台都是错的」。
-   根因（踩了两轮才看清）：
+/*★★ 官方查询入口（2026-11-03 第三次修，这次做了真实浏览器验证）★★
 
-   sppt.cfsa.net.cn 对**任何 GET** 都返回同一个 597 字符的空壳 HTML，
-   大意是：页面里有个 form（method=post，action=/db，隐藏域 task=index），
-   并在 window.onload 里调用 document.getElementById("form1").submit()。
+   ---- 前两次为什么没修好（这次必须写清楚，别再犯）----
+   第一次：把 guid 拼在 href 上做普通 GET  → 浏览器执行空壳页的自动表单，
+          guid 被丢掉，落到 /db，用户看到「全是错的」。
+   第二次：改成 POST 表单跳详情页 → **服务端测试通过**（POST 拿到 9612 字符真页面），
+          但**真实浏览器里点击仍然是 404**。
+          ★ 教训：服务端 curl 能通 ≠ 浏览器点得通 ★
+            本地 file:// 页面点击是好的（9621 字符有效页），
+            线上 https://xiongying118.github.io 点击 → 404 页（2492 字符）。
+            跨域 POST 表单在新标签页被浏览器拦截/降级了，
+            只有 file:// 这种同源环境才走得通。
 
-   ★ 这里的描述刻意不写成带尖括号的真实标签 ★
-     HTML 解析器见到「左尖括号 + 斜杠」就开始解析闭合标签，
-     哪怕后面是反引号、哪怕中间夹了加号，**script 块都会被当场截断** ——
-     后半段脚本变成正文文本，页面直接崩。
-     （实测踩过：注释里贴了完整的 script 标签示例，
-       提取出来的内联脚本只剩 3536 字符，而完整的是 5.7 万。）
-     所以这里全用文字描述。
+   ---- 现在的做法（用户指定：「不能不要勉强」）----
+   cfsa（食品安全国家标准数据检索平台）的链接**一律跳官方检索页**：
+       https://sppt.cfsa.net.cn:8086/db?task=index
+   ★ 这个纯 GET，浏览器一定能打开（实测 26438 字符、标题正确、非 404）★
+   ★ 检索框不预填（页面是 Vue 组件，keyword 参数不生效），
+     所以按钮的 title 写明要搜哪个标准号，用户照着搜一下就行。
+   ★ 其它站点（samr / openstd / ttbz / cnas / flk）本来就是普通 GET，保持不变。
 
-   注意两点：
-     ① 空壳里的 action 是 /db，隐藏域 task 的值是 index——
-        即使 URL 上带了?type=2&guid=xxx，浏览器 JS 执行后也只会
-        POST 出 task=index，**guid 被整个丢掉，回到首页**。
-     ② 所以「把 guid 拼在 href 上」在浏览器里**根本走不通**，
-        只会把你送到首页 —— 这正是用户看到「全是错的」的原因。
-        （第一版修法正是这么错的。）
-
-   真正的详情页要 POST：action=/db?type=2&guid=<ID>，body task=goto。
-   实测**不需要 cookie**，所以可以直接用一个自动提交的跨站表单，
-   在新标签页打开官方详情页。
-
-   → 凡是要跳 cfsa 的按钮，一律渲染成 <a> + onClick 走 postJump()。
-     其它站点（samr / ttbz / jjg）是普通 GET，用 href 即可。*/
-function postJump(url){
-  const f = document.createElement("form");
-  f.method = "POST";
-  f.action = url;
-  f.target = "_blank";
-  f.style.display = "none";
-  const i = document.createElement("input");
-  i.type = "hidden"; i.name = "task"; i.value = "goto";
-  f.appendChild(i);
-  document.body.appendChild(f);
-  f.submit();
-  setTimeout(()=>f.remove(), 1000);
-}
+   详情页（?type=2&guid=）**不再作为用户可点的链接**——
+   它在浏览器里必然 404，留着只会误导人。*/
+const CFSA_PORTAL = "https://sppt.cfsa.net.cn:8086/db?task=index";
 /** 生成一个「点开官方详情页」的可点元素。
-    isPost=true 时用 POST 表单（cfsa），否则用普通 href。 */
-function offLink(label, url, cls, style){
+    cfsa → 跳官方检索页（纯 GET）；其它站点 → 普通 href。 */
+function offLink(label, url, cls, style, stdNo){
   cls = cls || "btn sm";
   if(!url) return "";
+  /* ★ cfsa 的详情链接一律换成官方检索页 ★
+     原来这里走 postJump（POST 表单），线上被浏览器拦成 404。
+     现在直接给检索页，浏览器一定能打开。 */
   if(isCfsaPost(url)){
-    return `<a class="${cls}"${style?' style="'+style+'"':""} href="javascript:void(0)"
-             onclick="postJump('${url.replace(/'/g,"%27")}');return false;"
-             rel="noopener">${label}</a>`;
+    const tip = stdNo
+      ? "打开官方检索页（食品安全国家标准数据检索平台），在检索框输入 " + stdNo + " 即可"
+      : "打开官方检索页（食品安全国家标准数据检索平台）";
+    return `<a class="${cls}"${style?' style="'+style+'"':""} href="${CFSA_PORTAL}"
+           target="_blank" rel="noopener" title="${tip.replace(/"/g,'&quot;')}">${label}</a>`;
   }
   return `<a class="${cls}"${style?' style="'+style+'"':""} href="${url}"
-           target="_blank" rel="noopener">${label}</a>`;
+         target="_blank" rel="noopener" title="${label}">${label}</a>`;
 }
 /** 该URL 是否必须走 POST —— cfsa 的详情页与检索页都要 POST。 */
 function isCfsaPost(url){
@@ -2034,7 +2029,9 @@ const _urlByNo = (()=>{
 })();
 function officialUrl(no){
   const k = String(no||"").replace(/\s+/g,"");
-  return _urlByNo[k] || CFSA_SEARCH(k);
+  /* 找不到对应的官方记录时给检索页（纯 GET，浏览器能开），
+     不要给 indexSearch 接口（浏览器打开是纯 JSON，读起来别扭） */
+  return _urlByNo[k] || CFSA_PORTAL;
 }
 
 /* ===== 检测方法原理（2026-10-10 用户提供 18 份 docx）=====
@@ -3014,9 +3011,9 @@ function impTag(impState, imp){
 }
 function dlBtn(s){
   // 严格规则：只有官方明确支持免费下载才给"下载"；否则只给官方阅读
-  if(s.dl===true) return offLink("⬇ 官方下载", s.url);
-  if(/iso\.org|fssc\.com/i.test(s.url)) return offLink("官方阅读/购买", s.url);
-  return offLink("官方在线阅读", s.url);
+  if(s.dl===true) return offLink("⬇ 官方下载", s.url, "btn sm", "", s.no);
+  if(/iso\.org|fssc\.com/i.test(s.url)) return offLink("官方阅读/购买", s.url, "btn sm", "", s.no);
+  return offLink("官方在线阅读", s.url, "btn sm", "", s.no);
 }
 
 /* ================================================================
@@ -3091,7 +3088,7 @@ function renderRefs(){
             ${x.altsSoon?`<div class="muted" style="margin-top:3px;color:var(--mid);font-weight:600">⚠ 将换版：${x.altsSoon}　—— 现在仍执行上面这版，但作业文件要提前准备切换</div>`:""}
           </div>
           <div class="tm">实施 ${x.imp}<br><span class="muted">发布 ${x.pub}</span></div>
-          ${offLink("官方", officialUrl(x.no))}
+          ${offLink("官方", officialUrl(x.no), "btn sm", "", x.no)}
         </div>`).join("")}
       </div>
     </div>`).join("");
@@ -3237,9 +3234,9 @@ function renderErata(){
            </div>
          </div>`;
     const link = isMod
-      ? offLink("官方修改单详情页", e.url || CFSA_SEARCH(e.no))
+      ? offLink("官方修改单详情页", e.url || CFSA_SEARCH(e.no), "btn sm", "", e.no)
       /* 勘误：不是落到整个勘误专库首页，而是带标准号去检索该标准的勘误记录 */
-      : offLink("官方勘误记录", CFSA_SEARCH(e.no));
+      : offLink("官方勘误记录", CFSA_SEARCH(e.no), "btn sm", "", e.no);
     return `
     <div class="alert a-high">
       <div class="h"><span class="no">${e.no}</span><div class="t">${e.stdName || "（标准名待补）"}</div>
@@ -3293,7 +3290,7 @@ function renderHome(){
       <div class="kv">${a.body}</div>
       <div class="why"><span class="lb">为什么重要</span>${a.why}</div>
       <div class="act"><span class="lb">实验室要做什么</span><ul>${a.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
-      <div class="foot">${offLink("官方详情页", stdUrl(a.no))}
+      <div class="foot">${offLink("官方详情页", stdUrl(a.no), "btn sm", "", a.no)}
         <a class="btn sm" href="#detail" onclick="openDetail('${a.no}')">查看变更摘要</a>
         <div class="sp" style="flex:1"></div><span class="muted">${a.time}</span>
         ${done
@@ -3371,9 +3368,16 @@ function addTodoItem(){
   });
 }
 function removeTodoItem(id){
-  const list = getCustomTodos().filter(t=>t.id!==id);
-  Store.set("todo.custom", list);
-  renderTodoList();
+  const item = getCustomTodos().find(t=>t.id===id);
+  /* ★ 删除自建待办 → 二次确认（2026-11-03）★ */
+  Guard.ask("确定删除这条自建待办？"
+    + (item?"<br><b style='color:var(--ink)'>"+Guard.esc(item.t||item.title||"")+"</b>":""), {
+    onOk:function(){
+      const list = getCustomTodos().filter(t=>t.id!==id);
+      Store.set("todo.custom", list);
+      renderTodoList();
+    }
+  });
 }
 function toggleTodo(id){
   Store.todo.toggle(id);
@@ -3537,7 +3541,7 @@ function renderList(kw){
       <td class="muted">${s.pub||"—"}</td>
       <td class="muted">${s.imp||"—"}<br>${impTag(s.impState, s.imp)}</td>
       <td class="muted">${s.replace||"—"}</td>
-      <td>${offLink("官方页", s.url || "https://openstd.samr.gov.cn/bzgk/gb/")}
+      <td>${offLink("官方页", s.url || "https://openstd.samr.gov.cn/bzgk/gb/", "btn sm", "", s.no)}
           <span onclick="event.stopPropagation()"></span>
         ${dlBtn(s)}</td></tr>`;
   $("#listBody").innerHTML = groupBy
@@ -3742,7 +3746,7 @@ function renderLaw(){
         </div>
         <div style="text-align:right;white-space:nowrap">
           <div class="muted" style="font-size:11.5px">${x.pub?"公布 "+x.pub:"—"}</div>
-          ${offLink("官方查询", x.url, "btn sm", "margin-top:5px")}
+          ${offLink("官方查询", x.url, "btn sm", "margin-top:5px", x.no||x.title)}
         </div>
       </div>
     </div>`;
@@ -3798,7 +3802,7 @@ function renderDetail(){
       <span class="mono" style="font-size:17px;font-weight:600">${s.no}</span>${stTag(s.status, s.newer)}
       <span class="tag ${s.cat==="product"?"t-high":s.cat==="test"?"t-mid":"t-gray"}">${catName(s.cat)}</span>
       <div class="sp"></div>${dlBtn(s)}
-      ${offLink("官方详情页 ↗", s.url || "https://openstd.samr.gov.cn/bzgk/gb/")}
+      ${offLink("官方详情页 ↗", s.url || "https://openstd.samr.gov.cn/bzgk/gb/", "btn sm", "", s.no)}
     </div>
     <div style="font-size:15px;font-weight:600;margin-bottom:14px">${s.title}</div>
     ${sourceCaveat(s)}
@@ -4045,6 +4049,7 @@ function updateAlertBadge(){
   if(nb){
     nb.textContent = pend.length ? String(pend.length) : "0";
     nb.title = "待处理 " + pend.length + " 条（高优 " + hi + " · 中优 " + mid + "）";
+    /* 背景色照旧按优先级变（用户：「改下数字颜色就行」→ 背景不动） */
     nb.style.background = hi ? "var(--high)" : (pend.length ? "var(--mid)" : "var(--ink3)");
   }
 }
@@ -4084,13 +4089,11 @@ function resetAlertState(){
   const n = Object.keys(Store.alerts.doneMap()).length
           + Object.keys(Store.alerts.snoozeMap()).length;
   if(!n){ toast("当前没有任何处理记录"); return; }
-  dlg({
-    kind:"danger",
-    title:"确认清空处理记录？",
-    body:"已处理 "+n+" 条记录将被清除，所有提醒会回到「待处理」。此操作不可撤销。",
-    buttons:[{t:"取消", val:"cancel"}, {t:"确认清空", cls:"pri"}],
-    onClose: function(v){
-      if(!v) return;
+  /* ★ 清空处理记录 → 二次确认 + 密码（2026-11-03）★ */
+  Guard.ask("已处理 "+n+" 条记录将被清除，所有提醒会回到「待处理」。<br>"+
+    "<b style='color:var(--high)'>此操作不可撤销</b>", {
+    pwd:true,
+    onOk:function(){
       Store.set("alerts.done", {});
       Store.set("alerts.snooze", {});
       toast("处理记录已清空");
@@ -4153,7 +4156,7 @@ function renderAlerts(){
         </div>
         <div class="why"><span class="lb">为什么重要</span>${e.why}</div>
         <div class="act"><span class="lb">实验室要做什么</span><ul>${e.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
-        <div class="foot">${offLink("官方勘误记录", CFSA_SEARCH(e.no))}
+        <div class="foot">${offLink("官方勘误记录", CFSA_SEARCH(e.no), "btn sm", "", e.no)}
           <div class="sp" style="flex:1"></div>
           ${done
             ? `<button class="btn sm" onclick="unmarkAlertDone('${e.no}','${e.sec}')">撤销处理</button>`
@@ -4186,7 +4189,7 @@ function renderAlerts(){
         <div class="act"><span class="lb">实验室要做什么</span><ul>${(src.acts||[]).map(x=>`<li>${x}</li>`).join("")}</ul></div>
         <div class="foot">
           ${isEr?offLink("官方勘误记录", CFSA_SEARCH(src.no))
-                 :offLink("官方详情页", stdUrl(k))}
+                 :offLink("官方详情页", stdUrl(k), "btn sm", "", k)}
           <div class="sp" style="flex:1"></div>
           <span class="muted">处理于 ${m.at}</span>
           <button class="btn sm" onclick="unmarkAlertDone('${no}','${sec}')">撤销处理</button>
@@ -4221,7 +4224,7 @@ function renderAlerts(){
       <div class="why"><span class="lb">为什么重要</span>${a.why}</div>
       <div class="act"><span class="lb">实验室要做什么</span><ul>${a.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
       <div class="foot">
-        ${offLink("官方详情页", stdUrl(a.no))}
+        ${offLink("官方详情页", stdUrl(a.no), "btn sm", "", a.no)}
         <a class="btn sm" href="#detail" onclick="openDetail('${a.no}')">变更摘要</a>
         <div class="sp" style="flex:1"></div><span class="muted">${a.time}</span>
         ${done
@@ -4299,6 +4302,11 @@ const PERM = {
     return (h>>>0).toString(16); },
   want(){ return this.hash(this.salt + "|" + this.pass); }
 };
+/* ★ 挂到 window（2026-11-03）★
+   const 声明的顶层变量**不会**挂到 window，
+   而 guard.js（删除密码校验）要读 PERM.want() 才能比对口令。
+   → 这里显式挂一次，两边用同一份定义，改口令只改一处。 */
+window.PERM = PERM;
 // 两种角色：viewer 只读；editor 可新增/删除/改配置/触发检查
 const ROLES = {
   viewer: {label:"只读查看", can:{view:true, add:false, del:false, cfg:false, run:false}},
@@ -4582,10 +4590,22 @@ function renderKw(){
 }
 async function delKw(w){
   if(!guard("del","删除关键词")) return;
-  // ★ 二次确认：自绘 danger 弹窗（红色系，与其它操作一眼区分）★
-  if(!await askDelete(w)) return;
-  const i=KWS.findIndex(k=>k.w===w);
-  if(i>=0){KWS.splice(i,1);renderKw();}
+  /* ★ 二次确认 + 密码（2026-11-03）★
+     删除监控关键词 = 以后不再收到这个标准的换版提醒，属于"悄悄停掉一件事"，
+     光点一下就删掉太危险 → 必须输密码。 */
+  const kw = KWS.find(k=>k.w===w);
+  Guard.ask(
+    `删除后，每日检查将<b style='color:var(--high)'>不再监控</b>它对应的标准，<br>`+
+    `相关标准的换版 / 勘误提醒会停止推送。<br><br>`+
+    `<b style='color:var(--ink)'>${escHtml(w)}</b>`+
+    (kw?`　类别 <b>${escHtml(kw.cat)}</b>　优先级 <b>${escHtml(kw.p)}</b>`:"")+
+    `<br><span class='muted'>如果只是暂时不想收提醒，建议到「我的订阅」取消勾选，更方便恢复。</span>`, {
+    pwd:true,
+    onOk:function(){
+      const i=KWS.findIndex(k=>k.w===w);
+      if(i>=0){KWS.splice(i,1);renderKw();}
+    }
+  });
 }
 async function addKw(){
   if(!guard("add","新增关键词")) return;
@@ -4709,13 +4729,11 @@ function renderLocalState(){
 /* 按类清空 */
 function clearLocal(kind){
   const names = {subs:"订阅勾选", alerts:"提醒处理记录", todo:"待办与自建任务", draft:"工具草稿"};
-  dlg({
-    kind:"danger",
-    title:"确认清空「"+names[kind]+"」？",
-    body:"这一类数据会被删除且不可撤销（其余类别不受影响）。",
-    buttons:[{t:"取消", val:"cancel"}, {t:"确认清空", cls:"pri"}],
-    onClose: function(v){
-      if(!v) return;
+  /* ★ 清空一整类数据 → 二次确认 + 密码（2026-11-03）★ */
+  Guard.ask("「<b style='color:var(--ink)'>"+names[kind]+"</b>」这一类数据会被删除"
+    +"且<b style='color:var(--high)'>不可撤销</b>（其余类别不受影响）。", {
+    pwd:true,
+    onOk:function(){
       if(kind==="subs")      { Store.set("subs", {}); SUBS.forEach(g=>g.on=(g.on||[]).map(()=>0)); }
       else if(kind==="alerts"){ Store.set("alerts.done", {}); Store.set("alerts.snooze", {}); }
       else if(kind==="todo") { Store.set("todo.done", {}); Store.set("todo.custom", []); }
@@ -4768,13 +4786,12 @@ function importLocalBackup(input){
 /* 清空全部 */
 function wipeLocalAll(){
   const u = Store.usage();
-  dlg({
-    kind:"danger",
-    title:"确认清空本机全部数据？",
-    body:"订阅、已处理记录、待办、工具草稿 —— 全部会被删除，无法恢复。<br>建议先「导出全部备份」。",
-    buttons:[{t:"取消", val:"cancel"}, {t:"确认全部清空", cls:"pri"}],
-    onClose: function(v){
-      if(!v) return;
+  /* ★ 清空本机全部数据 → 二次确认 + 密码（2026-11-03）★
+     这是最狠的操作：订阅、已处理记录、待办、工具草稿全没。 */
+  Guard.ask("订阅、已处理记录、待办、工具草稿 —— 全部会被删除，"
+    +"<b style='color:var(--high)'>无法恢复</b>。<br>建议先「导出全部备份」。", {
+    pwd:true,
+    onOk:function(){
       Store.wipe();
       SUBS.forEach(g=>g.on=(g.on||[]).map(()=>0));
       toast("本机数据已全部清空");

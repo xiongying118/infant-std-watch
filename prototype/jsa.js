@@ -38,11 +38,21 @@
   var CUR_STEP = null;        // 高亮的步骤（分区索引 + 步骤索引）
   var TAB = "work";           // work | matrix | redlines | ppe | drill | signoff | guide
 
+  /* ★ 风险四档配色（2026-11-03 用户反馈：「这个颜色要不一样」）★
+     原来四档用的是「同一个色相 + 不同透明度」：
+       低 #15803d / 一般 #b45309 / 中等 #c2410c / 高 #b91c1c
+     → 一般(黄棕) 和 中等(橙) 色相几乎一样，中等(橙) 和 高(红) 更是贴脸，
+       浅底上（alpha 22）四档看着几乎同一片肉粉，肉眼分不出等级。
+     改法：每档给**固定的浅底色 bg**（色相拉开：黄 → 橙 → 红），
+       文字仍用深色 color 保证对比。
+       bg  = 该格有步骤时的底色（有内容 = 该风险真的存在）
+       bgE = 该格无步骤时的底色（很淡，只示意"这格没人"）
+     */
   var GRADES = [
-    {k:"低",     min:1,  max:4,  cls:"g-low",  color:"#15803d"},
-    {k:"一般",   min:5,  max:9,  cls:"g-mid",  color:"#b45309"},
-    {k:"中等",   min:10, max:14, cls:"g-hi",   color:"#c2410c"},
-    {k:"高",     min:15, max:25, cls:"g-crit", color:"#b91c1c"}
+    {k:"低",     min:1,  max:4,  cls:"g-low",  color:"#15803d", bg:"#dcf0e4", bgE:"#f2faf5"},
+    {k:"一般",   min:5,  max:9,  cls:"g-mid",  color:"#a16207", bg:"#fbeec2", bgE:"#fdfaef"},
+    {k:"中等",   min:10, max:14, cls:"g-hi",   color:"#c2410c", bg:"#fcd9b8", bgE:"#fef5ee"},
+    {k:"高",     min:15, max:25, cls:"g-crit", color:"#b91c1c", bg:"#f8c9c9", bgE:"#fdf1f1"}
   ];
 
   function esc(s){
@@ -238,9 +248,19 @@
     });
     save(); render();
   }
+  /* ★ 删除一律走 Guard（2026-11-03）★
+     单行删除 → 只要二次确认；
+     删分区这种牵连一整块内容的 → 二次确认 + 密码。 */
   function delStep(zi, si){
-    ST.zones[zi].steps.splice(si, 1);
-    save(); render();
+    var st = (ST.zones[zi].steps||[])[si];
+    var nm = st ? st.step : "";
+    global.Guard.ask("确定删除这一步？<br><b style='color:var(--ink)'>"+esc(nm)+"</b>", {
+      onOk:function(){
+        ST.zones[zi].steps.splice(si, 1);
+        save(); render();
+        global.toast("已删除这一步");
+      }
+    });
   }
   function addZone(){
     ST.zones.push({
@@ -253,9 +273,20 @@
   }
   function delZone(zi){
     if(ST.zones.length<=1) return;
-    ST.zones.splice(zi,1);
-    if(CUR_ZONE>=ST.zones.length) CUR_ZONE = ST.zones.length-1;
-    save(); render();
+    var z = ST.zones[zi];
+    var n = (z.steps||[]).length;
+    /* ★ 删分区会连带删掉里面全部步骤 → 二次确认 + 密码 ★ */
+    global.Guard.ask(
+      "删除整个分区？<br><b style='color:var(--ink)'>"+esc(z.title)+"</b> 及其 "+
+      n+" 个作业步骤<b style='color:var(--high)'>（不可撤销）</b>", {
+      pwd:true,
+      onOk:function(){
+        ST.zones.splice(zi,1);
+        if(CUR_ZONE>=ST.zones.length) CUR_ZONE = ST.zones.length-1;
+        save(); render();
+        global.toast("已删除分区");
+      }
+    });
   }
   function dupZone(zi){
     var c = JSON.parse(JSON.stringify(ST.zones[zi]));
@@ -566,10 +597,16 @@
           return `<tr><th>L=${L}</th>` + [1,2,3,4,5].map(function(S){
             var r=L*S, g=gradeOf(r);
             var list=counts[r]||[];
-            return `<td style="background:${g.color}${list.length?"22":"0d"};cursor:${list.length?"pointer":"default"}"
-              onclick="JSAW.jumpRisk(${L},${S})">
+            /* ★ 底色改用每档固定色（bg / bgE），不再用 color+alpha ★
+               原来四档都是「同一个色相 + 不同透明度」，
+               浅底上（alpha 22）低/一般/中等/高 全是同一片肉粉，肉眼分不出等级。
+               现在色相拉开：绿 → 黄 → 橙 → 红，四档一眼能分。
+               有步骤的格子再套一圈该档深色边框（inset shadow），突出"这格真的有风险"。 */
+            var has=list.length;
+            return `<td style="background:${has?g.bg:g.bgE};${has?"box-shadow:inset 0 0 0 1px "+g.color+"66;":""}cursor:${has?"pointer":"default"}"
+              ${has?`onclick="JSAW.jumpRisk(${L},${S})"`:""}>
               <div style="font-weight:700;color:${g.color}">${r} ${g.k}</div>
-              ${list.length?`<div style="font-size:10.5px;line-height:1.4">${list.slice(0,3).map(x=>esc(x.st.step)).join("<br>")}${list.length>3?`<br>+${list.length-3} 项`:""}</div>`:""}
+              ${has?`<div style="font-size:10.5px;line-height:1.4;color:var(--ink2)">${list.slice(0,3).map(x=>esc(x.st.step)).join("<br>")}${list.length>3?`<br>+${list.length-3} 项`:""}</div>`:""}
             </td>`;
           }).join("") + `</tr>`;
         }).join("")}
@@ -578,7 +615,8 @@
       </div>
       <div class="flex" style="margin-top:12px;flex-wrap:wrap;gap:12px">
         ${GRADES.map(function(g){
-          return `<span class="lg"><i style="background:${g.color}"></i>${g.k} R=${g.min}~${g.max}</span>`;
+          /* 图例色块用该档的固定底色 + 深色描边，跟矩阵格子一模一样 */
+          return `<span class="lg"><i style="background:${g.bg};box-shadow:inset 0 0 0 1px ${g.color}66"></i><b style="color:${g.color}">${g.k}</b> R=${g.min}~${g.max}</span>`;
         }).join("")}
       </div>
     </div>`;
@@ -1141,13 +1179,12 @@
     var zn = (ST && ST.zones) ? ST.zones.length : 0;
     var sn = 0;
     ((ST && ST.zones) || []).forEach(function(z){ sn += (z.steps||[]).length; });
-    global.dlg({
-      kind:"danger",
-      title:"恢复预填内容？",
-      body:"你在本机做的全部修改（改写的文字、评级、增删的步骤）都会丢失，恢复成系统预填的 "+zn+" 个分区 "+sn+" 个步骤。",
-      buttons:[{t:"取消", val:"cancel"}, {t:"确认恢复", cls:"pri"}],
-      onClose:function(v){
-        if(!v) return;
+    /* ★ 恢复预填 = 丢掉本机全部修改 → 二次确认 + 密码（2026-11-03）★ */
+    global.Guard.ask(
+      "你在本机做的全部修改（改写的文字、评级、增删的步骤）都会丢失，<br>"+
+      "恢复成系统预填的 <b style='color:var(--ink)'>"+zn+" 个分区 "+sn+" 个步骤</b>。", {
+      pwd:true,
+      onOk:function(){
         if(global.Store) global.Store.del("jsa.work");
         load(); CUR_ZONE=0; CUR_STEP=null; render();
         global.toast("已恢复预填内容");
@@ -1199,7 +1236,14 @@
     save(); render();
   }
   function delRev(i){
-    ST.signoff.revisions.splice(i,1); save(); render();
+    var r = (ST.signoff.revisions||[])[i];
+    global.Guard.ask("删除这条修订记录？<br><b style='color:var(--ink)'>"+
+      esc(r?(r.ver||"")+" "+(r.what||""):"")+"</b>", {
+      onOk:function(){
+        ST.signoff.revisions.splice(i,1); save(); render();
+        global.toast("已删除修订记录");
+      }
+    });
   }
   function gotoZone(zi){ CUR_ZONE=zi; CUR_STEP=null; render(); }
   /* textarea 自动增高：内容多少就显示多少，绝不裁字 */

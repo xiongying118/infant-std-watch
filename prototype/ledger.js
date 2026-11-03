@@ -105,10 +105,23 @@
     }, 60);
   }
 
+  /* ★ 删除台账行 → 二次确认（2026-11-03）★
+     台账里的行是设备、试剂、样品、委托单……删错了要重录半天，
+     所以必须有确认。 */
   function delRow(key, idx){
-    rows(key).splice(idx,1);
-    save(key);
-    render();
+    var rs = rows(key);
+    var r = rs[idx] || {};
+    var label = r.name || r.item || r.title || r.id || ("第 "+(idx+1)+" 行");
+    var def = DEFS[key] || {};
+    global.Guard.ask("确定删除这一行？<br><b style='color:var(--ink)'>"+esc(label)+"</b>"
+      + "<br><span class='muted'>"+esc(def.title||"台账")+"</span>", {
+      onOk:function(){
+        rs.splice(idx,1);
+        save(key);
+        render();
+        global.toast("已删除");
+      }
+    });
   }
 
   function dupRow(key, idx){
