@@ -488,7 +488,7 @@
 
     html += `<div class="card">
       <div class="card-h"><h3>试剂、耗材与标准物质台账</h3>
-        <span class="muted">按 GB 30000 分类；标准物质看证书有效期</span>
+        <span class="muted">按 GB 30000.1 分类；标准物质看证书有效期</span>
         <div class="sp"></div>
         <button class="btn sm" onclick="LAB.exportReagent()">⬇ 导出</button></div>
       <div class="twrap"><table>

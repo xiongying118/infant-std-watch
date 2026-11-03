@@ -176,7 +176,7 @@
     key:"reagent",
     cardMode:true,
     title:"试剂、耗材与标准物质台账",
-    subtitle:"按 GB 30000 分类；标准物质看证书有效期",
+    subtitle:"按 GB 30000.1 分类；标准物质看证书有效期",
     exportName:"试剂与危化品台账",
     seed: seedOf("reagent"),
     hint:"改「有效期」→ 预警自动重算",
@@ -192,7 +192,7 @@
       {k:"location",label:"储存位置", w:130},
       {k:"hazard",label:"危险品", w:110, type:"select",
        opts:["无","易燃液体","氧化剂","腐蚀品","毒害品","压缩气体","易制毒","易燃液体 毒性"]},
-      {k:"hazardClass",label:"GB 30000 类别", w:100, ph:"如 ①④"},
+      {k:"hazardClass",label:"GB 30000.1 类别", w:100, ph:"如 ①④"},
       {k:"maker",label:"生产厂家", w:130},
       {k:"prodNo",label:"批号", w:120},
       {k:"mfgDate",label:"配制日", w:104, type:"date"},
@@ -215,11 +215,11 @@
       return [
         {k:"试剂在库", v:rs.length, d:"含标准物质"},
         {k:"60 天内到期", v:exp.length, d:exp.length?"过期须作废隔离":"无", cls:exp.length?"hi":""},
-        {k:"危险品", v:haz.length, d:"按 GB 30000 分区存放"},
+        {k:"危险品", v:haz.length, d:"按 GB 30000.1 分区存放"},
         {k:"自配试剂", v:rs.filter(function(r){return r.isPrepared||/配制/.test(r.maker||"");}).length, d:"按配制日算效期"}
       ];
     },
-    exportNote:"危险品分类依据 GB 30000（GB 13690-2009 已于 2025-08-01 废止）。过期试剂应贴「作废」标签移入废弃区，不得退回货架。"
+    exportNote:"危险品分类依据 GB 30000.1（GB 13690-2009 已于 2025-08-01 废止）。过期试剂应贴「作废」标签移入废弃区，不得退回货架。"
   });
 
   /* ================================================================
