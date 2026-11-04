@@ -475,7 +475,20 @@ function QW_pareto(key, cfg){
     `${(PL + bw*i + bw/2).toFixed(1)},${(PT + ih - ih*r.cum/100).toFixed(1)}`).join(" ");
   const svgId = "qwsvg_pareto_"+key;
 
+  /* ★ 公式与术语（帕累托）★ */
+  const parFormulas = [
+    { name:"占比%", expr:"占比%ᵢ = 该项次数 nᵢ ÷ 总次数 Σn × 100%",
+      note:"每一项在全部问题里占多大比重。",
+      vars:[{k:"nᵢ",v:"第 i 项的发生次数"},{k:"Σn",v:"所有项次数加起来"}] },
+    { name:"累计%", expr:"累计%ᵢ = Σ(j≤i) 占比%ⱼ",
+      note:"从第一项起逐项累加。哪一项的累计%刚好跨过 80%，说明<b>到这一项为止</b>的问题就占了八成 —— 这就是帕累托要回答的问题。" },
+    { name:"梯队划分", expr:"A：累计% ≤ 80%\nB：80% < 累计% ≤ 95%\nC：累计% > 95%",
+      note:"A 梯队是关键少数（必须解决）；B 是次要问题（资源不够往后放）；C 是个别偶发（常规管理兜住）。" }
+  ];
+  const parTerms = ["pareto.pct","pareto.cum","pareto.tier","pareto.8020","pareto.vital"];
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("pareto", cfg):""}
     <div class="qwt-h">
       <b>${escHtml(cfg.title||"帕累托分析")}</b>
       <span class="muted">合计 ${total} ${escHtml(cfg.unit||"")}</span>
@@ -536,6 +549,7 @@ function QW_pareto(key, cfg){
       </div>
     </div>
     <div class="qwflag ok">✓ A 梯队（累计 ≤80%）共 ${rows.filter(r=>r.tier==="A").length} 项 —— <b>只集中改这几项</b>，其余放第二梯队。</div>
+    ${window.QWForm?window.QWForm.box({title:"帕累托图的计算公式与术语",formulas:parFormulas,terms:["pareto.pct","pareto.cum","pareto.tier","pareto.8020","pareto.vital"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
 function QW_pSet(key,i,col,v,el){
@@ -657,14 +671,47 @@ function QW_spc(key, cfg){
   rules.forEach(r=>{ const k=r.i+"|"+r.t; if(!uniq.some(x=>x.i===r.i&&x.t===r.t)) uniq.push(r); });
 
   const statsHtml = `<div class="qwt-stats">
-      <span class="qws"><b>${mean.toFixed(3)}</b><i>中心线 CL</i></span>
-      <span class="qws"><b>${ucl.toFixed(3)}</b><i>UCL (+3σ)</i></span>
-      <span class="qws"><b>${lcl.toFixed(3)}</b><i>LCL (−3σ)</i></span>
-      <span class="qws ${sd?"":"bad"}"><b>${sd.toFixed(4)}</b><i>σ</i></span>
-      <span class="qws ${uniq.length?"bad":"ok"}"><b>${uniq.length}</b><i>失控信号</i></span>
+      <span class="qws" title="${window.QWForm?window.QWForm.term("spc.CL"):""}"><b>${mean.toFixed(3)}</b><i>中心线 CL</i></span>
+      <span class="qws" title="${window.QWForm?window.QWForm.term("spc.UCL"):""}"><b>${ucl.toFixed(3)}</b><i>UCL (+3σ)</i></span>
+      <span class="qws" title="${window.QWForm?window.QWForm.term("spc.LCL"):""}"><b>${lcl.toFixed(3)}</b><i>LCL (−3σ)</i></span>
+      <span class="qws ${sd?"":"bad"}" title="${window.QWForm?window.QWForm.term("spc.sigma"):""}"><b>${sd.toFixed(4)}</b><i>σ</i></span>
+      <span class="qws ${uniq.length?"bad":"ok"}" title="${window.QWForm?window.QWForm.term("spc.ooc"):""}"><b>${uniq.length}</b><i>失控信号</i></span>
     </div>`;
 
+  /* ★ 公式与术语面板（SPC）★ */
+  const spcFormulas = [
+    { name:"中心线 CL（过程平均值）", expr:"CL = Σxᵢ / n",
+      note:"所有数据点的算术平均值，代表过程的<b>常态水平</b>。CL 本身漂移 = 过程中心移动了。",
+      vars:[{k:"xᵢ",v:"第 i 个点的测量值"},{k:"n",v:"数据点个数"},{k:"Σ",v:"求和符号，逐个累加"}] },
+    { name:"标准差 σ（波动大小）", expr:"σ = √[ Σ(xᵢ − CL)² / (n − 1) ]",
+      note:"衡量数据有多分散。σ 越大 → 过程越不稳定 → 越容易出不合格品。<br>除以 <b>n−1</b> 而不是 n：样本标准差，是总体方差的无偏估计。",
+      vars:[{k:"√",v:"开平方"},{k:"(xᵢ − CL)²",v:"每个点偏离中心线的距离的平方"}] },
+    { name:"控制上限 UCL", expr:"UCL = CL + 3σ",
+      note:"<b>不是合格线</b>，是「过程受控时数据不会跑到的地方」。超出 = 过程出现系统性变化。" },
+    { name:"控制下限 LCL", expr:"LCL = CL − 3σ",
+      note:"同理。若算出负数，说明这批数据波动本身很小，可取 0 作下限。" },
+    { name:"失控判异规则（4 条）", expr:"① xᵢ > UCL 或 xᵢ < LCL\n② 连续 9 点全部 > CL（或全部 < CL）\n③ 连续 6 点递增（或递减）",
+      note:"为什么是 3σ：正态分布下约 99.73% 的点落在 CL±3σ 内，落在外面的概率不到 0.3%。<br>偶尔跑出一个点可能是偶然，连续出现就是信号。" }
+  ];
+  const spcTerms = [
+    {k:"spc.CL", name:"CL 中心线"},
+    {k:"spc.sigma", name:"σ 标准差"},
+    {k:"spc.UCL", name:"UCL 控制上限"},
+    {k:"spc.LCL", name:"LCL 控制下限"},
+    {k:"spc.3sigma", name:"±3σ 原则"},
+    {k:"spc.ooc", name:"失控"},
+    {k:"spc.spec", name:"规格限"},
+    {k:"spc.internal", name:"内控限"},
+    {k:"spc.rule1", name:"规则① 单点超限"},
+    {k:"spc.rule2", name:"规则② 连续9点同侧"},
+    {k:"spc.rule3", name:"规则③ 连续6点递增/递减"},
+    {k:"spc.cp", name:"Cp 过程能力"},
+    {k:"spc.cpk", name:"Cpk 过程能力指数"},
+    {k:"spc.sigmaIdx", name:"σ 水平"}
+  ].map(t=>window.QWForm?window.QWForm.DICT[t.k]:null).filter(Boolean);
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("spc", cfg):""}
     <div class="qwt-h">
       <b>${escHtml(cfg.title||"SPC 控制图")}</b>
       <span class="muted">n=${n} · ${escHtml(cfg.unit||"")}</span>
@@ -679,6 +726,7 @@ function QW_spc(key, cfg){
     </div>
     ${st.edit ? QW_numGrid(key, "原始数据（改任意一个数，控制限和失控判定立刻重算）",
         "也可以用「导入数据」从 Excel 整列贴进来。") : statsHtml}
+    ${window.QWForm?window.QWForm.box({title:"SPC 控制图的计算公式与术语",formulas:spcFormulas,terms:spcTerms}):""}
     <svg class="qwsvg" id="${svgId}" viewBox="0 0 ${W} ${H}">
       ${[0,0.25,0.5,0.75,1].map(f=>{
         const y = PT + ih*f;
@@ -788,7 +836,22 @@ function QW_histogram(key, cfg){
       <span class="qws"><b>${gN}</b><i>组数</i></span>
       <span class="qws ${shapeCls}"><b style="font-size:12px">${escHtml(shape)}</b><i>形态判读</i></span>
     </div>`;
+  /* ★ 公式与术语（直方图）★ */
+  const hisFormulas = [
+    { name:"组数（分几堆）", expr:"g = √n，然后限制在 5 ~ 12 之间",
+      note:"经验公式。组数太少看不出形状，太多则每堆只有一两个点、噪声大。",
+      vars:[{k:"n",v:"数据点个数"},{k:"√n",v:"n 的平方根"}] },
+    { name:"组距（每堆多宽）", expr:"w = (最大值 − 最小值) ÷ g",
+      note:"组距太大会掩盖细节，太小会把一个峰拆成几个假峰。",
+      vars:[{k:"w",v:"组距"},{k:"g",v:"组数"}] },
+    { name:"各组频数", expr:"nᵢ = 落入第 i 个区间的数据个数",
+      note:"把每个数据点按 (x − 最小值) ÷ 组距 定位到区间，累计计数。",
+      vars:[{k:"nᵢ",v:"第 i 组的点数"}] }
+  ];
+  const hisTerms = ["pareto.hist","pareto.group","pareto.binw","pareto.bimod","pareto.skew","pareto.trunc","pareto.normal"];
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("histogram", cfg):""}
     <div class="qwt-h"><b>${escHtml(cfg.title||"直方图")}</b>
       <span class="muted">n=${d.length} · ${escHtml(cfg.unit||"")}</span>
       <div class="sp"></div>
@@ -817,6 +880,7 @@ function QW_histogram(key, cfg){
     </svg>
     ${st.edit ? `<div class="qwflag ok">✓ 数据已改 —— 收起数据即可看新的分组与形态判读。</div>` : ""}
     <div class="qwfoot">双峰时先查：是否同一台设备两个时段？两台设备？两种原料？批间混料？</div>
+    ${window.QWForm?window.QWForm.box({title:"直方图的计算公式与术语",formulas:hisFormulas,terms:["pareto.hist","pareto.group","pareto.binw","pareto.bimod","pareto.skew","pareto.trunc","pareto.normal"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
 function QW_histEdit(key){
@@ -846,7 +910,20 @@ function QW_strata(key, cfg){
   const usedDims = st.rows.map(r=>r.dim).filter((v,i,a)=>a.indexOf(v)===i);
   const nextDims = (cfg.dims||[]).filter(d=>usedDims.indexOf(d)<0);
 
+  /* ★ 公式与术语（层别）★ */
+  const strFormulas = [
+    { name:"合格率", expr:"合格率 = 合格数 ÷ 样本数 × 100%",
+      note:"该组里合格的比例。分层分析看的不是总合格率，而是<b>组与组之间</b>的差距。",
+      vars:[{k:"合格数",v:"该组判定合格的个数"},{k:"样本数",v:"该组检验的总个数"}] },
+    { name:"组间差距", expr:"差距 = 最好组合格率 − 最差组合格率（单位：百分点 pp）",
+      note:"例：95% 与 90% 差距是 <b>5 个百分点</b>，不是 5%。<br>相对变化才是百分比：(95−90)/95 = 5.3%。差这一点，结论会完全反过来。" },
+    { name:"判定阈值（工具内）", expr:"差距 > 5 pp → 该维度是嫌疑维度\n差距 ≤ 5 pp → 该维度不是主因，换下一个拆",
+      note:"5 个百分点是经验阈值：低于它说明这个维度解释不了问题，高于它说明存在「局部问题」。" }
+  ];
+  const strTerms = ["strata.rate","strata.pp","strata.gap","strata.cross","strata.simu"];
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("strata", cfg):""}
     <div class="qwt-h"><b>${escHtml(cfg.title||"层别分析")}</b>
       <div class="sp"></div>
       <div class="qwt-tools">
@@ -900,6 +977,7 @@ function QW_strata(key, cfg){
       </tbody>
     </table>
     </div>
+    ${window.QWForm?window.QWForm.box({title:"层别分析的计算公式与术语",formulas:strFormulas,terms:["strata.rate","strata.pp","strata.gap","strata.cross","strata.simu"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
 function QW_stSet(key,i,col,v){
@@ -995,7 +1073,10 @@ function QW_fishbone(key, cfg){
   });
 
   const svgId = "qwsvg_fb_"+key;
+  const fbTerms = ["fish.mmf","fish.cand","fish.verify","fish.4m1e"];
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("fishbone", cfg):""}
     <div class="qwt-h"><b>${escHtml(cfg.title||"鱼骨图")}</b>
       <div class="sp"></div>
       <div class="qwt-tools">
@@ -1067,6 +1148,7 @@ function QW_fishbone(key, cfg){
       </div>
     </div>
     <div class="qwfoot">勾选的是<b>候选根因</b>（图上标红）—— 还要去现场验证：能不能观察到？测得到吗？验证过的才是真根因。</div>
+    ${window.QWForm?window.QWForm.box({title:"鱼骨图的术语说明",formulas:[],terms:["fish.mmf","fish.cand","fish.verify","fish.4m1e"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
 /* ★ 下面这几个函数原来只写数据、不重绘 → 图永远不动（用户说的"死"）★
@@ -1192,7 +1274,10 @@ function QW_why(key, cfg){
   const last = chain[chain.length-1]||{};
   const canFix = /清单|制度|设计|防错|流程|规范|标准|周期|配置|锁定/.test(last.why||"");
 
+  const whyTerms = ["why.deadend","why.fixable","why.spread","why.evi"];
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("why", cfg):""}
     <div class="qwt-h"><b>${escHtml(cfg.title||"5Why")}</b>
       <div class="sp"></div>
       <div class="qwt-tools">
@@ -1232,6 +1317,7 @@ function QW_why(key, cfg){
       <textarea rows="2" style="width:100%" oninput="QW_whySet('${key}','spread',this.value)"
         placeholder="例：全厂三个粉料间均未配置除湿机">${escHtml(st.spread||"")}</textarea>
     </div>
+    ${window.QWForm?window.QWForm.box({title:"5Why 的术语说明",formulas:[],terms:["why.deadend","why.fixable","why.spread","why.evi"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
 function QW_whySet(key,col,v){
@@ -1265,7 +1351,10 @@ function QW_whyExport(key){
 function QW_flow(key, cfg){
   const st = QWD[key] || (QWD[key] = { step: 0, vals: {} });
   const ph = cfg.phases||[];
+  const flowTerms = ["flow.pdca"];
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("flow", cfg):""}
     <div class="qwt-h"><b>${escHtml(cfg.title||"流程")}</b>
       <div class="sp"></div>
       <div class="qwt-tools">
@@ -1291,6 +1380,7 @@ function QW_flow(key, cfg){
       ${cfg.keyPoint?`<br><br><b>要点：</b>${escHtml(cfg.keyPoint)}`:""}
     </div>
     <div class="qwfoot">改完内容点「下一个环节」，内容会跟着走 —— 每个环节的记录都会留在本页。</div>
+    ${window.QWForm?window.QWForm.box({title:"流程推进的术语说明",formulas:[],terms:["flow.pdca"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
 function QW_flowStep(key,i){ QWD[key].step = i; QW_render(key); }
@@ -1335,7 +1425,21 @@ function QW_sub(key, cfg){
             dCost: costNew-costCur,
             costPct: costCur? (costNew-costCur)/costCur*100 : 0};
   });
+  const subFormulas = [
+    { name:"营养素变化量", expr:"Δ = 替代后含量 − 现状含量",
+      note:"正数表示该营养素增加，负数表示减少。<br>Δ 不是「好/坏」—— 还要看法规限量（钙铁锌有上下限）、工艺可行性、口感影响。",
+      vars:[{k:"Δ",v:"差值（delta）"}] },
+    { name:"成本变化率", expr:"Δ% = Δ成本 ÷ 现状成本 × 100%",
+      note:"用百分比才能横向比较不同用量规模的原料。",
+      vars:[{k:"Δ%",v:"成本相对变化"}] },
+    { name:"替代量与保留量", expr:"替代量 = 用量 × 替代比例\n保留量 = 用量 − 替代量",
+      note:"所有营养素和成本都按这两部分分别计算后再相加。",
+      vars:[{k:"用量",v:"每 1000kg 产品的该原料用量（kg）"}] }
+  ];
+  const subTerms = ["sub.delta","sub.deltaPct","sub.per100kg","sub.stability"];
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("sub", cfg):""}
     <div class="qwt-h"><b>${escHtml(cfg.title||"替代测算")}</b>
       <div class="sp"></div>
       <span class="muted">现状：${escHtml(cur.name)}（${escHtml(cur.sup)}）</span></div>
@@ -1378,6 +1482,7 @@ function QW_sub(key, cfg){
     <div class="qwflag">Δ 为「替代后 − 现状」，正数表示该营养素增加。
       蛋白掉超过 3g/100kg、钙变化超 500mg/100kg 都要重新算配方并验稳定性。</div>
     <div class="qwfoot">只算「营养+成本」不够 —— 还要看工艺影响（溶解性、喷雾干燥条件）与货架期（易氧化成分）。</div>
+    ${window.QWForm?window.QWForm.box({title:"原料替代测算的计算公式与术语",formulas:subFormulas,terms:["sub.delta","sub.deltaPct","sub.per100kg","sub.stability"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
 function QW_subSet(key,col,v){
@@ -1440,7 +1545,23 @@ function QW_shelf(key, cfg){
   const safe = shelfMonths!=null ? Math.floor(shelfMonths*0.85) : null;
   const isIndicative = !hasRoom;
 
+  /* ★ 公式与术语（货架期）★ */
+  const shfFormulas = [
+    { name:"Q10 加速因子", expr:"Q10 = 2 ^ ( (T₂ − T₁) / 10 )",
+      note:"温度每升高 10℃，反应速率约快一倍。所以 37℃ 的试验大致相当于 25℃ 的 4 倍时长。<br>★ 这个「2 倍」是经验假设，不同产品差别很大（脂肪氧化、蛋白变性各自不同）。",
+      vars:[{k:"T₁",v:"低温组温度（℃）"},{k:"T₂",v:"高温组温度（℃）"},{k:"^",v:"乘方运算"}] },
+    { name:"指示性推算（折算回参考温度）", expr:"折算时长 = 加速组劣化时点 ÷ 加速因子",
+      note:"用加速数据折算回常温得到的保质期。<b>只能当佐证，不能当依据</b> —— 加速条件下反应路径可能改变、包装吸氧、基质变了，结果会偏保守（短得离谱）。" },
+    { name:"保质期（依据实时留样）", expr:"保质期 = 常温组最早出现劣变的时点",
+      note:"实时留样（标示储存条件下的留样检测）是<b>唯一合法依据</b>。",
+      vars:[{k:"劣变",v:"过氧化值超限 或 感官异常"}] },
+    { name:"建议保质期（打 85 折）", expr:"建议 = 推算保质期 × 0.85",
+      note:"推到理论极限那天，产品状态通常已不如刚到期时，留余量给批次波动和运输条件。" }
+  ];
+  const shfTerms = ["shelf.q10","shelf.indic","shelf.retain","shelf.85","shelf.vp"];
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("shelf", cfg):""}
     <div class="qwt-h"><b>${escHtml(cfg.title||"货架期")}</b>
       <div class="sp"></div>
       <div class="qwt-tools">
@@ -1498,6 +1619,7 @@ function QW_shelf(key, cfg){
     </div>` : `<div class="qwflag">数据不足，还推不出保质期。</div>`}
     <div class="qwfoot">★ 加速结论必须被实时留样数据支持 ★ 两者不一致时，以实时留样为准。<br>
       另：保质期是「在标示储存条件下」才成立，条件要写清（温度、避光、干燥）。</div>
+    ${window.QWForm?window.QWForm.box({title:"货架期推算的计算公式与术语",formulas:shfFormulas,terms:["shelf.q10","shelf.indic","shelf.retain","shelf.85","shelf.vp"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
 /* 货架期的样品行可编辑（原来完全是死数据，一个输入框都没有） */
@@ -1556,7 +1678,10 @@ function QW_shelfExport(key){
 function QW_trace(key, cfg){
   const st = QWD[key] || (QWD[key] = JSON.parse(JSON.stringify(cfg.seed||{})));
   const fw = st.forward||{}, bk = st.backward||{};
+  const trTerms = ["trace.fwd","trace.bwd","trace.drill","trace.lot"];
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("trace", cfg):""}
     <div class="qwt-h"><b>${escHtml(cfg.title||"批次追溯")}</b>
       <div class="sp"></div>
       <span class="muted">正向 + 反向都要能查</span>
@@ -1607,6 +1732,7 @@ function QW_trace(key, cfg){
       </div>
     </div>
     <div class="qwfoot">★ 演练：随机选一个成品批号，要求 2 小时内倒推出全部原料批号 ★ 不演练等于没做追溯。</div>
+    ${window.QWForm?window.QWForm.box({title:"批次追溯的术语说明",formulas:[],terms:["trace.fwd","trace.bwd","trace.drill","trace.lot"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
 function QW_trSet(key,col,v){ QWD[key][col]=v; }
@@ -1659,7 +1785,21 @@ function QW_sensory(key, cfg){
   });
   const spread = all.length>1 ? (Math.max.apply(null,all.map(x=>x.total)) -
                                 Math.min.apply(null,all.map(x=>x.total))) : 0;
+  /* ★ 公式与术语（感官）★ */
+  const senFormulas = [
+    { name:"均值（该样品的综合分）", expr:"x̄ = Σxᵢ / n",
+      note:"一个样品在各维度上的打分平均。",
+      vars:[{k:"xᵢ",v:"第 i 个维度的打分"},{k:"n",v:"维度个数"}] },
+    { name:"标准差（评价员一致吗）", expr:"s = √[ Σ(xᵢ − x̄)² / (n − 1) ]",
+      note:"s 小 = 大家意见一致；s 大 = 有人吃出了别人没吃出的东西，要看是谁。",
+      vars:[{k:"s",v:"标准差"}] },
+    { name:"极差（样品差多少）", expr:"极差 = 最大样品均值 − 最小样品均值",
+      note:"极差大 = 不同样品确实不一样；极差小 = 要么真差不多，要么<b>评价员分辨不出来</b>（用描述性分析补）。" }
+  ];
+  const senTerms = ["sensory.mean","sensory.sd","sensory.range","sensory.anchor","sensory.abs"];
+
   return `<div class="qwt">
+    ${window.QWGuide?window.QWGuide.box("sensory", cfg):""}
     <div class="qwt-h"><b>${escHtml(cfg.title||"感官评价")}</b>
       <div class="sp"></div>
       <div class="qwt-tools">
@@ -1695,6 +1835,7 @@ function QW_sensory(key, cfg){
       补做描述性分析，找出差异到底在哪个维度 —— 「差不多」不等于「没差别」。</div>`
       : `<div class="qwflag ok">✓ 样品间差异在可接受范围，评价员一致性良好。</div>`}
     <div class="qwfoot">感官结论要与理化结果并列看，<b>不单独下结论</b>。用标样 + 竞品做锚定，避免绝对评价漂移。</div>
+    ${window.QWForm?window.QWForm.box({title:"感官评价的计算公式与术语",formulas:senFormulas,terms:["sensory.mean","sensory.sd","sensory.range","sensory.anchor","sensory.abs"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
 /* ★ 感官的数据在 st.samples，不是 st.rows ★
@@ -1789,4 +1930,22 @@ function QW_render(key, host){
   host.innerHTML = fn(key, cfg);
   /* 插入 DOM 之后再渲染计算型工具（它要往自己的容器里写） */
   if(cfg.type === "calc") gbRender();
+  /* ★ 通用表格 / 清单类工具的「怎么用」引导 ★
+     这两类是通用组件，没在各自的渲染函数里写引导（9 个 table 工具 + 1 个 checklist），
+     统一在这里按 toolKey 补上。 */
+  if(cfg.type === "table" || cfg.type === "checklist"){
+    if(window.QWGuide && window.QWGuide.box){
+      const g = window.QWGuide.box(cfg.type === "checklist" ? "checklist" : "table",
+                                  Object.assign({toolKey:key}, cfg));
+      if(g){
+        const w = host.querySelector(".qwt");
+        if(w) w.insertAdjacentHTML("afterbegin", g);
+        else host.insertAdjacentHTML("afterbegin", g);
+      }
+    }
+  }
+  /* ★ 工具关联区块（2026-11-04 晚）★
+     放在工具卡片的最后 —— 告诉用户「这个工具和别的怎么串起来用」。
+     关联表是异步载入的，QWLink.attach 会在数据到达后补插。 */
+  if(window.QWLink && window.QWLink.attach) window.QWLink.attach(key, host);
 }

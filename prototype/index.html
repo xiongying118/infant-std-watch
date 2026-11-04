@@ -512,6 +512,152 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .qwt-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .qwt-tools .btn.sm{white-space:nowrap}
 
+/* ================================================================
+   qwguide.js / qwform.js 的样式（2026-11-04 晚）
+   小白引导层 + 公式与术语说明
+   ================================================================ */
+
+/* ---------- 小白引导（怎么用） ---------- */
+/* ★ 用 flex + order 调整区块顺序 ★
+   · 引导（怎么用）→ 留在最上面：小白第一眼就要知道点哪里、粘什么、看什么
+   · 公式与术语   → 排到下面：属于「进阶参考」，主流程不需要先看
+   · 工具关联     → 排到最后：了解整个体系时才看 */
+.qwt{display:flex;flex-direction:column}
+.qwt > .qwf-box{order:90}
+.qwt > .qwl-box{order:91}
+.qwg-box{margin:11px 13px;border:1px solid #dbeafe;border-radius:10px;
+  background:linear-gradient(180deg,#f8fbff,#fff);overflow:hidden}
+.qwg-sum{display:flex;align-items:center;gap:9px;padding:10px 13px;cursor:pointer;
+  list-style:none;user-select:none;font-size:13px}
+.qwg-sum::-webkit-details-marker{display:none}
+.qwg-sum:hover{background:#f0f7ff}
+.qwg-ico{font-size:15px;flex-shrink:0}
+.qwg-sum b{color:var(--brand-ink)}
+.qwg-who{font-size:11.5px;color:var(--ink3);flex:1;min-width:0}
+.qwg-toggle{font-size:11.5px;color:var(--ink3);flex-shrink:0;
+  border:1px solid var(--line);border-radius:14px;padding:2px 9px;background:#fff}
+.qwg-box[open] .qwg-toggle::after{}
+.qwg-body{padding:2px 13px 13px;border-top:1px dashed #dbeafe}
+
+.qwg-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));
+  gap:10px;margin:11px 0 4px}
+.qwg-step{display:flex;gap:9px;background:#fff;border:1px solid var(--line2);
+  border-radius:9px;padding:10px 11px}
+.qwg-sn{flex:0 0 21px;height:21px;border-radius:50%;background:var(--brand);color:#fff;
+  font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.qwg-sc{min-width:0;flex:1}
+.qwg-st{font-size:12.5px;font-weight:700;color:var(--brand-ink);margin-bottom:3px}
+.qwg-sd{font-size:11.8px;line-height:1.65;color:var(--ink2)}
+.qwg-sd b{color:var(--ink);font-weight:600}
+
+.qwg-sec{margin-top:11px}
+.qwg-sh{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.qwg-pre{margin:0;padding:9px 11px;background:#f8fafc;border:1px solid var(--line2);
+  border-radius:7px;font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:11.5px;line-height:1.6;color:#334155;overflow-x:auto;white-space:pre}
+.qwg-note{margin-top:6px;font-size:11.8px;line-height:1.7;color:#7c4a03;
+  background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 11px}
+.qwg-note b{color:#92400e}
+
+.qwg-read{display:flex;gap:9px;font-size:11.8px;line-height:1.7;
+  padding:5px 0;border-bottom:1px dashed var(--line2)}
+.qwg-read:last-child{border-bottom:none}
+.qwg-read b{flex:0 0 118px;color:var(--brand-ink);font-weight:600}
+.qwg-read span{flex:1;min-width:0;color:var(--ink2)}
+
+.qwg-act{display:flex;gap:9px;font-size:11.8px;line-height:1.7;
+  padding:6px 0;border-bottom:1px dashed var(--line2)}
+.qwg-act:last-child{border-bottom:none}
+.qwg-aw{flex:0 0 132px;font-weight:600;color:#15803d}
+.qwg-ad{flex:1;min-width:0;color:var(--ink2)}
+.qwg-ad b{color:var(--ink)}
+.qwg-warn{margin-top:11px;font-size:11.8px;line-height:1.7;color:#92400e;
+  background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 11px}
+
+/* ---------- 工具关联（qwlink.js） ---------- */
+.qwl-box{margin:11px 13px 13px;border:1px solid #e0e7ff;border-radius:10px;
+  background:linear-gradient(180deg,#f7f8ff,#fff);overflow:hidden}
+.qwl-head{display:flex;align-items:center;gap:8px;padding:9px 13px;
+  border-bottom:1px solid #e0e7ff;font-size:12.5px;color:#3730a3}
+.qwl-ico{font-size:14px}
+.qwl-row{display:flex;gap:10px;padding:8px 13px 0;align-items:flex-start}
+.qwl-label{flex:0 0 76px;font-size:11.5px;font-weight:700;color:var(--ink3);
+  padding-top:3px;text-align:right}
+.qwl-items{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px}
+.qwl-link{display:inline-flex;align-items:center;font-size:12px;color:var(--brand);
+  background:#eff6ff;border:1px solid #dbeafe;border-radius:14px;
+  padding:2px 11px;text-decoration:none;cursor:pointer;transition:background .12s}
+.qwl-link:hover{background:#dbeafe;color:var(--brand-ink)}
+.qwl-before .qwl-link{border-color:#fed7aa;background:#fff7ed;color:#c2410c}
+.qwl-before .qwl-link:hover{background:#ffedd5}
+.qwl-after .qwl-link{border-color:#bbf7d0;background:#f0fdf4;color:#15803d}
+.qwl-after .qwl-link:hover{background:#dcfce7}
+.qwl-with .qwl-link{border-color:#ddd6fe;background:#f5f3ff;color:#6d28d9}
+.qwl-with .qwl-link:hover{background:#ede9fe}
+.qwl-why{margin:8px 13px 0;padding:8px 11px;background:#fff;border:1px solid var(--line2);
+  border-radius:8px}
+.qwl-w{font-size:11.5px;line-height:1.7;color:var(--ink2);padding:2px 0}
+.qwl-w b{color:var(--ink)}
+.qwl-note{margin:8px 13px 12px;font-size:11.8px;line-height:1.75;color:#7c4a03;
+  background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 11px}
+.qwl-note b{color:#92400e}
+@media(max-width:720px){
+  .qwl-row{flex-direction:column;gap:4px}
+  .qwl-label{flex:none;text-align:left}
+}
+
+/* ---------- 公式与术语 ---------- */
+.qwf-box{margin:11px 13px;border:1px solid var(--line2);border-radius:10px;
+  background:#fcfcfd;overflow:hidden}
+.qwf-sum{display:flex;align-items:center;gap:9px;padding:9px 13px;cursor:pointer;
+  list-style:none;user-select:none;font-size:12.5px}
+.qwf-sum::-webkit-details-marker{display:none}
+.qwf-sum:hover{background:#f6f8fa}
+.qwf-ico{font-size:14px}
+.qwf-sum b{color:var(--ink)}
+.qwf-badge{font-size:10.5px;color:var(--ink3);background:#f1f5f9;border-radius:9px;
+  padding:1px 7px;white-space:nowrap}
+.qwf-toggle{margin-left:auto;font-size:11.5px;color:var(--ink3);
+  border:1px solid var(--line);border-radius:14px;padding:2px 9px;background:#fff}
+.qwf-box[open] .qwf-badge{background:#e0e7ff;color:#3730a3}
+.qwf-body{padding:4px 13px 13px;border-top:1px solid var(--line2)}
+.qwf-sec{margin-top:11px}
+.qwf-sh{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:7px;
+  padding-bottom:4px;border-bottom:1px solid var(--line2)}
+
+.qwf-row{margin-bottom:11px;padding:8px 10px;background:#fff;
+  border:1px solid var(--line2);border-radius:8px}
+.qwf-name{font-size:12px;font-weight:700;color:var(--brand-ink);margin-bottom:4px}
+.qwf-expr code{display:block;padding:6px 10px;background:#f1f5f9;border-radius:6px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#0f172a;
+  line-height:1.6;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.qwf-note{margin-top:5px;font-size:11.5px;line-height:1.7;color:var(--ink2)}
+.qwf-note b{color:var(--ink)}
+.qwf-vars{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.qwf-var{font-size:11px;background:#eff6ff;color:#1e40af;border-radius:5px;
+  padding:2px 7px;font-family:ui-monospace,Menlo,Consolas,monospace}
+
+.qwt-term{display:flex;gap:10px;font-size:11.8px;line-height:1.75;
+  padding:6px 0;border-bottom:1px dashed var(--line2)}
+.qwt-term:last-child{border-bottom:none}
+.qwt-tk{flex:0 0 132px;font-weight:700;color:var(--ink)}
+.qwt-td{flex:1;min-width:0;color:var(--ink2)}
+.qwt-td b{color:var(--ink)}
+
+/* 正文里的悬停解释 */
+.qw-tip{border-bottom:1px dotted var(--brand);cursor:help;text-decoration:none}
+
+/* ---------- 统计卡片带解释 ---------- */
+.qws i.qw-si{font-style:normal}
+.qws:hover i{color:var(--brand-ink)}
+
+@media(max-width:720px){
+  .qwg-steps{grid-template-columns:1fr}
+  .qwg-read,.qwg-act{flex-direction:column;gap:2px}
+  .qwg-read b,.qwg-aw{flex:none}
+  .qwt-tk{flex:none}
+}
+
 /* ================= 营养素配比计算（2026-10-22）=================
    按用户给的参考图做的：左录入、右核算、下方版本流转。 */
 .gbc-head{padding:12px 15px;background:linear-gradient(180deg,#eff6ff,#fff);
@@ -1943,6 +2089,12 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 <script src="workbench.js"></script>
 <!-- ★ 工具工作台的导入/导出/复制图（2026-11-04）★ 必须排在 workbench.js 之后 -->
 <script src="qwio.js"></script>
+<!-- ★ 小白引导 + 公式术语（2026-11-04 晚）★ -->
+<script src="qwform.js"></script>
+<script src="qwguide.js"></script>
+<!-- ★ 工具之间的关联性（2026-11-04 晚）★ -->
+<script src="qwlink.data.js"></script>
+<script src="qwlink.js"></script>
 <!-- data.js 缺失时给出明确提示，不能静默空白 -->
 <script>
 if(!window.STDWATCH_DATA){

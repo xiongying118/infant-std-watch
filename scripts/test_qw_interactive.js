@@ -22,7 +22,9 @@ const fs = require('fs');
 
 const ROOT = path.resolve(__dirname, '..');
 const PROT = path.join(ROOT, 'prototype');
-const URL = 'file:///' + PROT.replace(/\\/g, '/') + '/index.html';
+const LOCAL = 'file:///' + PROT.replace(/\\/g, '/') + '/index.html';
+const URL = process.env.STD_TARGET === 'local' ? LOCAL
+  : 'https://xiongying118.github.io/infant-std-watch/';
 const OUT = path.join(PROT, '_shots');
 
 let pass = 0, fail = 0;
