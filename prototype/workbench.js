@@ -135,8 +135,12 @@ function QW_table(key, cfg){
       <b>${escHtml(cfg.title||"工作表")}</b>
       <span class="muted">共 ${st.rows.length} 行</span>
       <div class="sp"></div>
-      <button class="btn sm" onclick="QW_addRow('${key}')">+ ${escHtml(cfg.addLabel||"加一行")}</button>
-      <button class="btn sm" onclick="QW_copyTable('${key}')">复制表格</button>
+      <div class="qwt-tools">
+        <button class="btn sm" onclick="QW_addRow('${key}')">+ ${escHtml(cfg.addLabel||"加一行")}</button>
+        <button class="btn sm" onclick="QW_importDlg('${key}','table')">⬆ 导入数据</button>
+        <button class="btn sm" onclick="QW_tExport('${key}')">⬇ 导出数据</button>
+        <button class="btn sm" onclick="QW_copyTable('${key}')">复制表格</button>
+      </div>
     </div>
     <div class="qwt-stats">${stats}</div>
     ${flags}
@@ -224,6 +228,51 @@ function QW_copyTable(key){
     .join("\n");
   copyText(txt);
 }
+/* 通用表格导出 CSV（表头用中文列名，Excel 直开） */
+function QW_tExport(key){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key] || {};
+  const cols = cfg.cols||[];
+  if(!cols.length){ toast("这个表没有可导出的列", "warn"); return; }
+  const rows = [cols.map(c=>c.label)]
+    .concat(st.rows.map(r=>cols.map(c=>r[c.key]==null?"":r[c.key])));
+  QWIO.downloadCsv((cfg.title||"表格")+"_"+QWIO.today()+".csv", rows);
+}
+/* 通用表格导入：按 cfg.cols 的顺序映射列 */
+function QW_tImport(key, m){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key] || {};
+  const cols = cfg.cols||[];
+  if(!cols.length){ toast("这个表不支持导入", "warn"); return; }
+  const tpl = st.rows[0] || {};
+  const out = [];
+  let start = 0;
+  if(m.length>1){
+    const f = m[0].map(x=>String(x==null?"":x).trim());
+    if(cols.some(c=>f.some(x=>x===c.label))) start = 1;
+  }
+  for(let i=start;i<m.length;i++){
+    const cells = m[i]||[];
+    if(!cells.length) continue;
+    const row = {};
+    let hasVal = false;
+    cols.forEach((c,ci)=>{
+      let v = cells[ci]==null ? "" : String(cells[ci]).trim();
+      if(c.type==="number"){
+        const n = parseFloat(v);
+        v = isNaN(n) ? "" : n;
+      }
+      if(v!=="") hasVal = true;
+      row[c.key] = v;
+    });
+    Object.keys(tpl).forEach(k=>{ if(!(k in row)) row[k] = tpl[k]; });
+    if(hasVal) out.push(row);
+  }
+  if(!out.length){ toast("没识别到数据行", "warn"); return; }
+  st.rows = out;
+  QW_render(key);
+  toast("已导入 "+out.length+" 行");
+}
 function copyText(txt){
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(()=>toast("已复制到剪贴板"),
@@ -254,7 +303,10 @@ function QW_checklist(key, cfg){
       <b>${escHtml(cfg.title||"核查表")}</b>
       <span class="muted">已判 ${done.length} / ${st.items.length}</span>
       <div class="sp"></div>
-      <button class="btn sm" onclick="QW_copyChecklist('${key}')">复制核查表</button>
+      <div class="qwt-tools">
+        <button class="btn sm" onclick="QW_clExport('${key}')">⬇ 导出核查表</button>
+        <button class="btn sm" onclick="QW_copyChecklist('${key}')">复制核查表</button>
+      </div>
     </div>
     <div class="qwt-stats">
       <span class="qws"><b>${done.length}/${st.items.length}</b><i>已判定</i></span>
@@ -306,6 +358,93 @@ function QW_copyChecklist(key){
   ).join("\n");
   copyText(txt);
 }
+/* 核查表导出 CSV —— 拿去打印签字或发整改通知 */
+function QW_clExport(key){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const out = [["序号","检查项目","判定", cfg.noteLabel||"问题描述", cfg.needAction||"整改要求"]];
+  st.items.forEach((it,i)=>{
+    out.push([i+1, it.t||"", it.r||"", it.note||"", it.act||""]);
+  });
+  QWIO.downloadCsv((cfg.title||"核查表")+"_"+QWIO.today()+".csv", out);
+}
+
+/* ================================================================
+   公共：数值序列编辑器（SPC / 直方图 共用）
+   ================================================================
+   2026-11-04 用户反馈：「SPC等图改数据也是死的」
+   真凶：QW_spcEdit 只设了 st.edit=true，而 QW_spc() 渲染时
+        **从头到尾没读过 st.edit** → 按钮点了等于没点。
+   现在真正实现：编辑态下展开可增删改的数据表 + 导入/导出 + 图复制，
+   改任何一个数，控制限、直方图、失控判定全部实时重算。
+
+   数据结构统一成 st.data = [数值, ...]（不是字符串），
+   导入时可接受 "3.2, 3.4\n3.5 3.6" 这类粘贴内容。
+   ================================================================ */
+
+/* 把一段文本解析成数字数组（容忍逗号/空格/换行/中文逗号/百分号） */
+function QW_parseNums(text){
+  if(Array.isArray(text)) return text.map(Number).filter(x=>!isNaN(x));
+  return String(text==null?"":text)
+    .split(/[,，;；\s\n\r\t]+/)
+    .map(s=>s.replace(/[^\d.\-+]/g,""))
+    .filter(s=>s!=="" && s!=="-" && s!=="+" && s!==".")
+    .map(Number)
+    .filter(x=>!isNaN(x));
+}
+
+/* 数值序列的数据表（编辑器里那张可增删改的表） */
+function QW_numGrid(key, title, hint){
+  const st = QWD[key];
+  const d = (st && st.data) || [];
+  const rows = d.map((v,i)=>`<tr>
+      <td class="num" style="width:44px">${i+1}</td>
+      <td><input type="number" step="any" value="${escHtml(v)}"
+           oninput="QW_numSet('${key}',${i},this.value)"></td>
+    </tr>`).join("");
+  return `<div class="qwio-grid">
+    <div class="qwio-gh"><b>${escHtml(title||"数据点")}</b>
+      <span class="muted">${d.length} 个</span>
+      <div class="sp"></div>
+      <button class="btn sm" onclick="QW_numAdd('${key}')">+ 加一个</button>
+      <button class="btn sm" onclick="QW_importDlg('${key}','num')">⬆ 导入数据</button>
+      <button class="btn sm" onclick="QW_numExport('${key}')">⬇ 导出数据</button>
+    </div>
+    <div class="qwio-gw"><table class="qwt-tbl">
+      <thead><tr><th>序号</th><th>数值</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="2" class="muted" style="text-align:center;padding:12px">还没有数据，点「导入数据」或「+ 加一个」</td></tr>'}</tbody>
+    </table></div>
+    ${hint?`<div class="qwfoot" style="padding:6px 12px">${hint}</div>`:""}
+  </div>`;
+}
+function QW_numSet(key,i,v){
+  const st=QWD[key]; if(!st) return;
+  const n = parseFloat(v);
+  st.data[i] = isNaN(n) ? "" : n;
+  QW_render(key);
+}
+function QW_numAdd(key){
+  const st=QWD[key]; if(!st) return;
+  st.data = (st.data||[]).slice();
+  st.data.push("");
+  QW_render(key);
+}
+function QW_numImport(key, m){
+  const st=QWD[key]; if(!st) return;
+  const nums = QWIO.flattenNumbers(m);
+  if(!nums.length){ toast("没有识别到数字", "warn"); return; }
+  st.data = nums;
+  st.edit = true;
+  QW_render(key);
+  toast("已导入 "+nums.length+" 个数据点");
+}
+function QW_numExport(key){
+  const st=QWD[key]; if(!st) return;
+  const d = (st.data||[]).map(x=>parseFloat(x)).filter(x=>!isNaN(x));
+  if(!d.length){ toast("没有可导出的数据", "warn"); return; }
+  const rows = [["序号","数值"]].concat(d.map((v,i)=>[i+1, v]));
+  QWIO.downloadCsv((QW_CFG[key]&&QW_CFG[key].title||"数值序列")+"_"+QWIO.today()+".csv", rows);
+}
 
 /* ------------------------------------------------------------
    帕累托图
@@ -314,6 +453,11 @@ function QW_pareto(key, cfg){
   const st = QWD[key] || (QWD[key] = {
     rows: (cfg.seed||[]).map(r=>Object.assign({}, r))
   });
+  /* ★ 给每行分配稳定 id ★
+     表格是按「次数」排序渲染的 → 改一个数字，整张表行序就变，
+     focus.js 靠兄弟索引找回焦点会失效（索引指向别的行）。
+     所以这里给每行一个不会变的 _rid，渲染后按 rid 找回原控件。 */
+  st.rows.forEach((r,i)=>{ if(r._rid==null) r._rid = "r"+(i+1)+"_"+(st.rows.length)+"_"+(r.cat||"").length; });
   // 排序 + 占比 + 累计
   const rows = st.rows.slice().sort((a,b)=>(b.n||0)-(a.n||0));
   const total = rows.reduce((s,r)=>s+(r.n||0),0) || 1;
@@ -329,13 +473,20 @@ function QW_pareto(key, cfg){
   const bw = iw / Math.max(1, rows.length);
   const cumPts = rows.map((r,i)=>
     `${(PL + bw*i + bw/2).toFixed(1)},${(PT + ih - ih*r.cum/100).toFixed(1)}`).join(" ");
+  const svgId = "qwsvg_pareto_"+key;
 
   return `<div class="qwt">
     <div class="qwt-h">
       <b>${escHtml(cfg.title||"帕累托分析")}</b>
       <span class="muted">合计 ${total} ${escHtml(cfg.unit||"")}</span>
       <div class="sp"></div>
-      <button class="btn sm" onclick="QW_addRow('${key}')">+ 加一项</button>
+      <div class="qwt-tools">
+        <button class="btn sm" onclick="QW_addRow('${key}')">+ 加一项</button>
+        <button class="btn sm" onclick="QW_importDlg('${key}','pareto')">⬆ 导入数据</button>
+        <button class="btn sm" onclick="QW_pExport('${key}')">⬇ 导出数据</button>
+        <button class="btn sm" onclick="QWIO.copySvg(document.getElementById('${svgId}'),'${escHtml(cfg.title||"帕累托图")}')">📋 复制图</button>
+        <button class="btn sm" onclick="QWIO.downloadSvg(document.getElementById('${svgId}'),'${escHtml(cfg.title||"帕累托图")}')">⬇ 下载图</button>
+      </div>
     </div>
     <div class="qwt-cols2">
       <div>
@@ -343,21 +494,22 @@ function QW_pareto(key, cfg){
         <table class="qwt-tbl">
           <thead><tr><th>类别</th><th style="width:70px">次数</th>
             <th style="width:66px">占比%</th><th style="width:66px">累计%</th>
-            <th style="width:52px">梯队</th></tr></thead>
+            <th style="width:52px">梯队</th><th style="width:34px"></th></tr></thead>
           <tbody>
           ${rows.map((r,i)=>`<tr class="${r.tier==="A"?"warn":""}">
-            <td><input type="text" value="${escHtml(r.cat)}" oninput="QW_pSet('${key}',${st.rows.indexOf(r)},'cat',this.value)"></td>
-            <td><input type="number" value="${r.n}" oninput="QW_pSet('${key}',${st.rows.indexOf(r)},'n',this.value)"></td>
+            <td><input type="text" data-rid="${r._rid}" data-col="cat" value="${escHtml(r.cat)}" oninput="QW_pSet('${key}',${st.rows.indexOf(r)},'cat',this.value,this)"></td>
+            <td><input type="number" data-rid="${r._rid}" data-col="n" value="${r.n}" oninput="QW_pSet('${key}',${st.rows.indexOf(r)},'n',this.value,this)"></td>
             <td class="num">${r.pct.toFixed(1)}</td>
             <td class="num">${r.cum.toFixed(1)}</td>
             <td><span class="tier tier${r.tier}">${r.tier}</span></td>
+            <td><button class="x" title="删除这一项" onclick="QW_pDel('${key}',${st.rows.indexOf(r)})">×</button></td>
           </tr>`).join("")}
           </tbody>
         </table>
         </div>
       </div>
       <div>
-        <svg class="qwsvg" viewBox="0 0 ${W} ${H}">
+        <svg class="qwsvg" id="${svgId}" viewBox="0 0 ${W} ${H}">
           ${[0,25,50,75,100].map(p=>{
             const y = PT + ih - ih*p/100;
             return `<line x1="${PL}" y1="${y}" x2="${W-12}" y2="${y}" stroke="#eef1f5"/>
@@ -386,25 +538,92 @@ function QW_pareto(key, cfg){
     <div class="qwflag ok">✓ A 梯队（累计 ≤80%）共 ${rows.filter(r=>r.tier==="A").length} 项 —— <b>只集中改这几项</b>，其余放第二梯队。</div>
   </div>`;
 }
-function QW_pSet(key,i,col,v){
+function QW_pSet(key,i,col,v,el){
   const st = QWD[key]; if(!st) return;
+  if(i<0 || i>=st.rows.length) return;
   st.rows[i][col] = (col==="n") ? (parseFloat(v)||0) : v;
+  /* ★ 关键：表格按「次数」排序渲染 → 改一次数字，整张表行序就变了，
+     用户正在编辑的那一行会跳走 → 焦点丢失、看着像抽风。
+     解法：按**行稳定 id + 列名**找回同一个输入框，并把光标放回原位。
+     ★ 不能只用行号找 ★ 一行有两个 input（类别/次数），
+       用行号会找到「类别」框，光标就跳到别的框里去了。 */
+  const rid = st.rows[i]._rid;
+  const pos = (el && el.selectionStart!=null) ? el.selectionStart : null;
   QW_render(key);
+  const host = document.querySelector(".view:not(.hide) [data-qw-host]");
+  if(host && rid!=null){
+    const t = host.querySelector("[data-rid='"+rid+"'][data-col='"+col+"']");
+    if(t){
+      try{
+        t.focus();
+        if(pos!=null && t.setSelectionRange) t.setSelectionRange(pos,pos);
+      }catch(e){}
+    }
+  }
+}
+/* 帕累托导入：两列（类别、次数），也兼容一列 */
+function QW_pImport(key, m){
+  const st = QWD[key]; if(!st) return;
+  const rows = [];
+  for(let i=0;i<m.length;i++){
+    const cells = m[i]||[];
+    const cat = String(cells[0]==null?"":cells[0]).trim();
+    const numStr = String(cells[1]==null?"":cells[1]).trim();
+    const n = parseFloat(numStr);
+    if(!isNaN(n)){
+      rows.push({cat: cat || ("项"+(i+1)), n:n});
+    } else if(cat && !/^(类别|category|项目|名称)$/i.test(cat)){
+      rows.push({cat:cat, n:1});
+    }
+  }
+  if(!rows.length){ toast("没识别到数据（需要「类别」和「次数」两列）", "warn"); return; }
+  st.rows = rows;
+  QW_render(key);
+  toast("已导入 "+rows.length+" 项");
+}
+function QW_pExport(key){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const rows = st.rows.slice().sort((a,b)=>(b.n||0)-(a.n||0));
+  const total = rows.reduce((s,r)=>s+(r.n||0),0)||1;
+  let cum=0;
+  const out = [["排名","类别","次数","占比%","累计%","梯队"]];
+  rows.forEach((r,i)=>{
+    const pct=(r.n||0)/total*100; cum+=pct;
+    const tier = cum<=80?"A":(cum<=95?"B":"C");
+    out.push([i+1, r.cat||"", r.n||0, pct.toFixed(1), cum.toFixed(1), tier]);
+  });
+  out.push([]);
+  out.push(["合计","",total,"100.0","",""]);
+  QWIO.downloadCsv((cfg.title||"帕累托分析")+"_"+QWIO.today()+".csv", out);
+}
+function QW_pDel(key,i){
+  const st = QWD[key]; if(!st) return;
+  if(i<0 || i>=st.rows.length) return;
+  const name = st.rows[i].cat || ("第"+(i+1)+"项");
+  window.Guard.ask("确定删除这一项？<br><b style='color:var(--ink)'>"+window.Guard.esc(String(name))+"</b>", {
+    onOk:function(){ st.rows.splice(i,1); QW_render(key); }
+  });
 }
 
 /* ------------------------------------------------------------
    SPC 控制图
    ------------------------------------------------------------ */
 function QW_spc(key, cfg){
-  const st = QWD[key] || (QWD[key] = { data: (cfg.seed||[]).slice() });
+  const st = QWD[key] || (QWD[key] = { data: (cfg.seed||[]).slice(), edit:false });
+  /* ★ st.data 可能是数字数组，也可能是用户粘贴的文本 → 统一归一化 */
+  if(!Array.isArray(st.data)) st.data = QW_parseNums(st.data);
   const d = st.data.map(Number).filter(x=>!isNaN(x));
   const n = d.length;
-  if(!n) return `<div class="qwt"><div class="qwt-h"><b>SPC 控制图</b></div>
-    <div class="qwt-wrap"><div class="qwinput">
-      <div class="muted" style="margin-bottom:5px">粘贴数据（逗号、空格或换行分隔）：</div>
-      <textarea oninput="QW_spcSet('${key}',this.value)" rows="4">${escHtml(st.data.join(", "))}</textarea>
-      <button class="btn sm pri" onclick="QW_spcCalc('${key}')">计算控制限</button>
-    </div></div></div>`;
+  if(!n) return `<div class="qwt"><div class="qwt-h">
+      <b>${escHtml(cfg.title||"SPC 控制图")}</b>
+      <div class="sp"></div>
+      <div class="qwt-tools">
+        <button class="btn sm pri" onclick="QW_importDlg('${key}','num')">⬆ 导入数据</button>
+      </div>
+    </div>
+    <div class="qwinput"><div class="muted">还没有数据 —— 点右上角「导入数据」把 Excel 里的数据贴进来，或手动添加。</div></div>
+  </div>`;
 
   const mean = d.reduce((a,b)=>a+b,0)/n;
   const sd = Math.sqrt(d.reduce((a,b)=>a+(b-mean)*(b-mean),0)/(n-1||1));
@@ -417,6 +636,7 @@ function QW_spc(key, cfg){
   const Y = v => PT + ih - ih*((v-(mn-pad))/((mx+pad)-(mn-pad)));
   const X = i => PL + (n>1 ? iw*i/(n-1) : iw/2);
   const pts = d.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+  const svgId = "qwsvg_spc_"+key;
 
   // 失控判定
   const rules = [];
@@ -436,21 +656,30 @@ function QW_spc(key, cfg){
   const uniq = [];
   rules.forEach(r=>{ const k=r.i+"|"+r.t; if(!uniq.some(x=>x.i===r.i&&x.t===r.t)) uniq.push(r); });
 
-  return `<div class="qwt">
-    <div class="qwt-h">
-      <b>${escHtml(cfg.title||"SPC 控制图")}</b>
-      <span class="muted">n=${n} · ${escHtml(cfg.unit||"")}</span>
-      <div class="sp"></div>
-      <button class="btn sm" onclick="QW_spcEdit('${key}')">改数据</button>
-    </div>
-    <div class="qwt-stats">
+  const statsHtml = `<div class="qwt-stats">
       <span class="qws"><b>${mean.toFixed(3)}</b><i>中心线 CL</i></span>
       <span class="qws"><b>${ucl.toFixed(3)}</b><i>UCL (+3σ)</i></span>
       <span class="qws"><b>${lcl.toFixed(3)}</b><i>LCL (−3σ)</i></span>
       <span class="qws ${sd?"":"bad"}"><b>${sd.toFixed(4)}</b><i>σ</i></span>
       <span class="qws ${uniq.length?"bad":"ok"}"><b>${uniq.length}</b><i>失控信号</i></span>
+    </div>`;
+
+  return `<div class="qwt">
+    <div class="qwt-h">
+      <b>${escHtml(cfg.title||"SPC 控制图")}</b>
+      <span class="muted">n=${n} · ${escHtml(cfg.unit||"")}</span>
+      <div class="sp"></div>
+      <div class="qwt-tools">
+        <button class="btn sm ${st.edit?"":"pri"}" onclick="QW_spcEdit('${key}')">${st.edit?"收起数据":"改数据"}</button>
+        <button class="btn sm" onclick="QW_importDlg('${key}','num')">⬆ 导入数据</button>
+        <button class="btn sm" onclick="QW_numExport('${key}')">⬇ 导出数据</button>
+        <button class="btn sm" onclick="QWIO.copySvg(document.getElementById('${svgId}'),'${escHtml(cfg.title||"SPC控制图")}')">📋 复制图</button>
+        <button class="btn sm" onclick="QWIO.downloadSvg(document.getElementById('${svgId}'),'${escHtml(cfg.title||"SPC控制图")}')">⬇ 下载图</button>
+      </div>
     </div>
-    <svg class="qwsvg" viewBox="0 0 ${W} ${H}">
+    ${st.edit ? QW_numGrid(key, "原始数据（改任意一个数，控制限和失控判定立刻重算）",
+        "也可以用「导入数据」从 Excel 整列贴进来。") : statsHtml}
+    <svg class="qwsvg" id="${svgId}" viewBox="0 0 ${W} ${H}">
       ${[0,0.25,0.5,0.75,1].map(f=>{
         const y = PT + ih*f;
         return `<line x1="${PL}" y1="${y}" x2="${W-14}" y2="${y}" stroke="#eef1f5"/>`;
@@ -464,7 +693,7 @@ function QW_spc(key, cfg){
       ${d.map((v,i)=>{
         const bad = uniq.some(r=>r.i===i+1);
         return `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${bad?4.5:3}"
-          fill="${bad?"#dc2626":"#334155"}"/>`;
+          fill="${bad?"#dc2626":"#334155"}"><title>第${i+1}点 ${v}</title></circle>`;
       }).join("")}
       <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+ih}" stroke="#cbd5e1"/>
       <line x1="${PL}" y1="${PT+ih}" x2="${W-14}" y2="${PT+ih}" stroke="#cbd5e1"/>
@@ -479,6 +708,7 @@ function QW_spc(key, cfg){
       <span class="lg"><i style="background:#f59e0b"></i>规格限</span>
       <span class="lg">红点 = 触发失控规则</span>
     </div>
+    ${st.edit ? `<div class="qwflag ok">✓ 数据已改 —— 收起数据即可看新的控制限与失控判定。</div>` : ""}
     ${uniq.length ? `<div class="qwflag">⚠ 检出 ${uniq.length} 处失控信号：
       ${uniq.slice(0,6).map(r=>`第 ${r.i} 点（${r.v.toFixed(3)}）${escHtml(r.t)}`).join("；")}
       ${uniq.length>6?" …":""}</div>
@@ -489,12 +719,13 @@ function QW_spc(key, cfg){
 }
 function QW_spcEdit(key){
   const st = QWD[key]; if(!st) return;
-  st.edit = true; QW_render(key);
+  st.edit = !st.edit;
+  QW_render(key);
 }
 function QW_spcSet(key,v){ QWD[key].data = v; }
 function QW_spcCalc(key){
   const st = QWD[key]; if(!st) return;
-  st.data = String(st.data||"").split(/[,，\s\n]+/).filter(x=>x!=="").map(Number).filter(x=>!isNaN(x));
+  st.data = QW_parseNums(st.data);
   st.edit = false; QW_render(key);
 }
 
@@ -502,9 +733,17 @@ function QW_spcCalc(key){
    直方图
    ------------------------------------------------------------ */
 function QW_histogram(key, cfg){
-  const st = QWD[key] || (QWD[key] = { data: (cfg.seed||[]).slice() });
+  const st = QWD[key] || (QWD[key] = { data: (cfg.seed||[]).slice(), edit:false });
+  if(!Array.isArray(st.data)) st.data = QW_parseNums(st.data);
   const d = st.data.map(Number).filter(x=>!isNaN(x));
-  if(!d.length) return `<div class="qwt"><div class="qwt-h"><b>直方图</b></div></div>`;
+  if(!d.length) return `<div class="qwt"><div class="qwt-h">
+      <b>${escHtml(cfg.title||"直方图")}</b>
+      <div class="sp"></div>
+      <div class="qwt-tools">
+        <button class="btn sm pri" onclick="QW_importDlg('${key}','num')">⬆ 导入数据</button>
+      </div></div>
+    <div class="qwinput"><div class="muted">还没有数据 —— 点「导入数据」把 Excel 里的数据贴进来。</div></div>
+  </div>`;
   const mn = Math.min.apply(null,d), mx = Math.max.apply(null,d);
   const gN = Math.max(5, Math.min(12, Math.round(Math.sqrt(d.length))));
   const w = (mx-mn)/gN || 1;
@@ -543,21 +782,32 @@ function QW_histogram(key, cfg){
   const W=640,H=210,PL=40,PB=42,PT=12;
   const iw=W-PL-14, ih=H-PT-PB;
   const bw=iw/gN;
+  const svgId = "qwsvg_hist_"+key;
+  const statsHtml = `<div class="qwt-stats">
+      <span class="qws"><b>${mn.toFixed(1)}~${mx.toFixed(1)}</b><i>范围</i></span>
+      <span class="qws"><b>${gN}</b><i>组数</i></span>
+      <span class="qws ${shapeCls}"><b style="font-size:12px">${escHtml(shape)}</b><i>形态判读</i></span>
+    </div>`;
   return `<div class="qwt">
     <div class="qwt-h"><b>${escHtml(cfg.title||"直方图")}</b>
       <span class="muted">n=${d.length} · ${escHtml(cfg.unit||"")}</span>
       <div class="sp"></div>
-      <button class="btn sm" onclick="QW_spcEdit('${key}')">改数据</button></div>
-    <div class="qwt-stats">
-      <span class="qws"><b>${mn.toFixed(1)}~${mx.toFixed(1)}</b><i>范围</i></span>
-      <span class="qws"><b>${gN}</b><i>组数</i></span>
-      <span class="qws ${shapeCls}"><b style="font-size:12px">${escHtml(shape)}</b><i>形态判读</i></span>
+      <div class="qwt-tools">
+        <button class="btn sm ${st.edit?"":"pri"}" onclick="QW_histEdit('${key}')">${st.edit?"收起数据":"改数据"}</button>
+        <button class="btn sm" onclick="QW_importDlg('${key}','num')">⬆ 导入数据</button>
+        <button class="btn sm" onclick="QW_numExport('${key}')">⬇ 导出数据</button>
+        <button class="btn sm" onclick="QWIO.copySvg(document.getElementById('${svgId}'),'${escHtml(cfg.title||"直方图")}')">📋 复制图</button>
+        <button class="btn sm" onclick="QWIO.downloadSvg(document.getElementById('${svgId}'),'${escHtml(cfg.title||"直方图")}')">⬇ 下载图</button>
+      </div>
     </div>
-    <svg class="qwsvg" viewBox="0 0 ${W} ${H}">
+    ${st.edit ? QW_numGrid(key, "原始数据（改任意一个数，分组和形态判读立刻重算）",
+        "分组数按 √n 自动定，也可以把数据整列从 Excel 贴进来。") : statsHtml}
+    <svg class="qwsvg" id="${svgId}" viewBox="0 0 ${W} ${H}">
       ${bins.map((b,i)=>{
         const bh = ih*b.n/maxN;
         return `<rect x="${(PL+bw*i+1).toFixed(1)}" y="${(PT+ih-bh).toFixed(1)}"
-          width="${(bw-2).toFixed(1)}" height="${bh.toFixed(1)}" fill="#3b82f6" rx="2"/>
+          width="${(bw-2).toFixed(1)}" height="${bh.toFixed(1)}" fill="#3b82f6" rx="2">
+          <title>${b.lo.toFixed(1)}~${b.hi.toFixed(1)}：${b.n} 个</title></rect>
           <text x="${(PL+bw*i+bw/2).toFixed(1)}" y="${(PT+ih+13).toFixed(1)}" class="ax" text-anchor="middle">${b.lo.toFixed(0)}</text>
           <text x="${(PL+bw*i+bw/2).toFixed(1)}" y="${(PT+ih-bh-3).toFixed(1)}" class="ax" text-anchor="middle">${b.n}</text>`;
       }).join("")}
@@ -565,8 +815,14 @@ function QW_histogram(key, cfg){
       <line x1="${PL}" y1="${PT+ih}" x2="${W-14}" y2="${PT+ih}" stroke="#cbd5e1"/>
       <text x="${(W/2).toFixed(0)}" y="${H-6}" class="ax" text-anchor="middle">${escHtml(cfg.unit||"")}</text>
     </svg>
+    ${st.edit ? `<div class="qwflag ok">✓ 数据已改 —— 收起数据即可看新的分组与形态判读。</div>` : ""}
     <div class="qwfoot">双峰时先查：是否同一台设备两个时段？两台设备？两种原料？批间混料？</div>
   </div>`;
+}
+function QW_histEdit(key){
+  const st = QWD[key]; if(!st) return;
+  st.edit = !st.edit;
+  QW_render(key);
 }
 
 /* ------------------------------------------------------------
@@ -593,6 +849,10 @@ function QW_strata(key, cfg){
   return `<div class="qwt">
     <div class="qwt-h"><b>${escHtml(cfg.title||"层别分析")}</b>
       <div class="sp"></div>
+      <div class="qwt-tools">
+        <button class="btn sm" onclick="QW_importDlg('${key}','strata')">⬆ 导入数据</button>
+        <button class="btn sm" onclick="QW_stExport('${key}')">⬇ 导出数据</button>
+      </div>
       <label class="qwl">分层维度
         <select onchange="QW_stSetDim('${key}',this.value)">
           ${(cfg.dims||[]).map(d=>`<option ${d===st.dim?"selected":""}>${escHtml(d)}</option>`).join("")}
@@ -627,7 +887,7 @@ function QW_strata(key, cfg){
     <div class="qwt-wrap">
     <table class="qwt-tbl">
       <thead><tr><th style="width:110px">维度</th><th style="width:130px">分组</th>
-        <th style="width:80px">样本数</th><th style="width:80px">合格数</th></tr></thead>
+        <th style="width:80px">样本数</th><th style="width:80px">合格数</th><th style="width:34px"></th></tr></thead>
       <tbody>
       ${st.rows.map((r,i)=>`<tr>
         <td><select onchange="QW_stSet('${key}',${i},'dim',this.value)">
@@ -635,6 +895,7 @@ function QW_strata(key, cfg){
         <td><input type="text" value="${escHtml(r.grp)}" oninput="QW_stSet('${key}',${i},'grp',this.value)"></td>
         <td><input type="number" value="${r.n}" oninput="QW_stSet('${key}',${i},'n',this.value)"></td>
         <td><input type="number" value="${r.ok}" oninput="QW_stSet('${key}',${i},'ok',this.value)"></td>
+        <td><button class="x" title="删除这一行" onclick="QW_stDel('${key}',${i})">×</button></td>
       </tr>`).join("")}
       </tbody>
     </table>
@@ -647,6 +908,45 @@ function QW_stSet(key,i,col,v){
   QW_render(key);
 }
 function QW_stSetDim(key,v){ QWD[key].dim = v; QW_render(key); }
+function QW_stDel(key,i){
+  const st=QWD[key]; if(!st) return;
+  if(i<0 || i>=st.rows.length) return;
+  const name = st.rows[i].grp || ("第"+(i+1)+"行");
+  window.Guard.ask("确定删除这一行？<br><b style='color:var(--ink)'>"+window.Guard.esc(String(name))+"</b>", {
+    onOk:function(){ st.rows.splice(i,1); QW_render(key); }
+  });
+}
+/* 层别导入：四列（维度/分组/样本数/合格数），也兼容三列 */
+function QW_stImport(key, m){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const dims = cfg.dims||[];
+  const rows = [];
+  for(let i=0;i<m.length;i++){
+    const c = (m[i]||[]).map(x=>String(x==null?"":x).trim());
+    if(!c.length) continue;
+    const dim = c[0], grp = c[1];
+    const n = parseFloat(c[2]), ok = parseFloat(c[3]);
+    if(i===0 && isNaN(n)) continue;
+    if(isNaN(n)) continue;
+    const d = (dim && dims.indexOf(dim)>=0) ? dim : st.dim;
+    rows.push({dim:d, grp: grp||("组"+(rows.length+1)), n:n, ok: isNaN(ok)?0:ok});
+  }
+  if(!rows.length){ toast("没识别到数据（需要「维度 / 分组 / 样本数 / 合格数」）", "warn"); return; }
+  st.rows = rows;
+  QW_render(key);
+  toast("已导入 "+rows.length+" 行");
+}
+function QW_stExport(key){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const out = [["维度","分组","样本数","合格数","合格率%"]];
+  st.rows.forEach(r=>{
+    const rate = (+r.n>0) ? (+r.ok/+r.n*100).toFixed(1) : "0.0";
+    out.push([r.dim||"", r.grp||"", r.n||0, r.ok||0, rate]);
+  });
+  QWIO.downloadCsv((cfg.title||"层别分析")+"_"+QWIO.today()+".csv", out);
+}
 
 /* ------------------------------------------------------------
    鱼骨图
@@ -657,65 +957,220 @@ function QW_fishbone(key, cfg){
     root: "", picked: {}
   });
   const br = cfg.branches||[];
-  const W=700,H=340, cx=W/2, cy=60;
+  const W=800, H=430, cx=W/2+46, cy=H/2;
+
+  /* ★ 鱼骨布局（标准石川图，第 2 版）★
+     主轴水平贯通 → 骨尖（问题）在右端；
+     每侧 3 根骨头斜插进主轴；
+     条目文字**水平排**（斜排会被裁），锚点在骨的外端往内排，
+     文字永远落在画布内。
+     上下两侧的条目分别在主轴上方 / 下方，互不干扰。 */
+  const SPINE_X0 = 24;            /* 主轴左端 */
+  const SPINE_X1 = cx - 26;        /* 主轴右端（骨尖前） */
+  const SPAN = SPINE_X1 - SPINE_X0;
+  const perSide = Math.max(1, Math.ceil(br.length/2));
+  const LINE_H = 15;               /* 条目行高 */
+  /* ★ 鱼骨布局：每根骨分到独立的一行区域 ★
+     上下各 perSide 行，行与行之间留够间距；
+     条目**水平排列**（不旋转、不斜排）→ 不会被裁、不会重叠；
+     骨头从主轴斜插到该行，分类名落在骨头外端，
+     条目从分类名右侧往右排。 */
+  const bones = br.map((b,i)=>{
+    const up = i < perSide;
+    const k = up ? i : (i - perSide);
+    const row = k;                                  /* 这根骨在第几行 */
+    /* 骨头插进主轴的位置：沿主轴等距，靠骨尖那根最靠右 */
+    const t = perSide>1 ? 0.22 + row*0.27 : 0.55;
+    const ax = SPINE_X0 + SPAN*t;
+    /* 该行的垂直位置 */
+    const ey = cy + (up ? -1 : 1) * (48 + row*62);
+    /* 骨头外端 x：给分类名+条目留出横向空间 */
+    const ex = Math.max(96, ax - 66);
+    const items = (st.items[b.key]||[]).filter(x=>String(x).trim()!=="");
+    const shown = items.slice(0,4);
+    const more = items.length - shown.length;
+    const pickedIdx = shown.map((x,j)=> st.picked[b.key+"|"+j] ? j : -1).filter(x=>x>=0);
+    return {b:b, up:up, ax:ax, ex:ex, ey:ey, items:shown, more:more,
+            pickedIdx:pickedIdx, lineH:LINE_H};
+  });
+
+  const svgId = "qwsvg_fb_"+key;
   return `<div class="qwt">
     <div class="qwt-h"><b>${escHtml(cfg.title||"鱼骨图")}</b>
       <div class="sp"></div>
-      <span class="muted">先写问题，再往下铺开</span></div>
+      <div class="qwt-tools">
+        <button class="btn sm" onclick="QW_importDlg('${key}','fishbone')">⬆ 导入数据</button>
+        <button class="btn sm" onclick="QW_fbExport('${key}')">⬇ 导出</button>
+        <button class="btn sm" onclick="QWIO.copySvg(document.getElementById('${svgId}'),'${escHtml(cfg.title||"鱼骨图")}')">📋 复制图</button>
+        <button class="btn sm" onclick="QWIO.downloadSvg(document.getElementById('${svgId}'),'${escHtml(cfg.title||"鱼骨图")}')">⬇ 下载图</button>
+      </div>
+    </div>
     <div class="qwt-cols2">
       <div>
         <div class="qwinput">
           <div class="muted" style="margin-bottom:5px">问题（骨尖）</div>
           <input type="text" style="width:100%" value="${escHtml(st.root)}"
             placeholder="例：灌装环节冲调异常率 3.2%，超过内控 1%"
-            oninput="QW_fbSet('root',this.value)">
+            oninput="QW_fbSet('${key}','root',this.value)">
         </div>
-        <svg class="qwsvg" viewBox="0 0 ${W} ${H}">
-          <line x1="18" y1="${cy}" x2="${cx-6}" y2="${cy}" stroke="#334155" stroke-width="2.5"/>
-          <text x="${cx+6}" y="${cy-8}" class="fbt">${escHtml(st.root||"问题")}</text>
-          ${br.map((b,i)=>{
-            const up = i%2===0;
-            const bx = cx-260 + (i%3)*150, by = up? cy-100 : cy+100;
-            return `<line x1="${bx}" y1="${by}" x2="${cx-20}" y2="${cy}" stroke="#94a3b8" stroke-width="1.6"/>
-              <text x="${bx-6}" y="${up?by-4:by+14}" class="fbb" text-anchor="end">${escHtml(b.name)}</text>
-              ${(st.items[b.key]||[]).slice(0,3).map((t,j)=>`
-                <text x="${bx-6}" y="${up?by+14+j*13:by-6-j*13}" class="fbi" text-anchor="end">· ${escHtml(t)}</text>`).join("")}
-              <circle cx="${bx}" cy="${by}" r="3" fill="#94a3b8"/>`;
-          }).join("")}
+        <svg class="qwsvg" id="${svgId}" viewBox="0 0 ${W} ${H}">
+          <!-- 主轴（脊） -->
+          <line x1="${SPINE_X0}" y1="${cy}" x2="${SPINE_X1}" y2="${cy}" stroke="#334155" stroke-width="2.5"/>
+          <!-- 骨尖箭头 -->
+          <polygon points="${SPINE_X1+14},${cy} ${SPINE_X1+2},${cy-6} ${SPINE_X1+2},${cy+6}" fill="#334155"/>
+          <!-- 骨尖文字（问题） -->
+          <text x="${SPINE_X1-4}" y="${cy+4}" class="fbt" text-anchor="end">${escHtml(st.root||"问题")}</text>
+          ${bones.map(o=>`
+            <!-- 骨头（从主轴斜插向外） -->
+            <line x1="${o.ax}" y1="${cy}" x2="${o.ex}" y2="${o.ey}" stroke="#94a3b8" stroke-width="1.8"/>
+            <circle cx="${o.ax}" cy="${cy}" r="3" fill="#94a3b8"/>
+            <!-- 分类名：画在骨的外端 -->
+            <text x="${(o.ex - 6).toFixed(1)}" y="${(o.ey + (o.up?-5:14)).toFixed(1)}" class="fbb"
+              text-anchor="end">${escHtml(o.b.name)}</text>
+            <!-- 条目：水平排列，从分类名右侧往右排（绝不裁切、绝不重叠） -->
+            ${o.items.map((t,j)=>{
+              const hot = o.pickedIdx.indexOf(j)>=0;
+              const px = o.ex + 4;
+              const py = o.ey + (o.up ? -4 : 12) + j*o.lineH;
+              return `<text x="${px.toFixed(1)}" y="${py.toFixed(1)}" class="fbi"
+                text-anchor="start" ${hot?'fill="#dc2626" font-weight="700"':''}
+                >${hot?"▶ ":""}${escHtml(t)}</text>`;
+            }).join("")}
+            ${o.more>0?`<text x="${(o.ex+4).toFixed(1)}" y="${(o.ey + (o.up?-4:12) + 4*o.lineH).toFixed(1)}"
+              class="fbi" text-anchor="start">…还有 ${o.more} 条</text>`:""}
+          `).join("")}
         </svg>
+        <div class="qwlegend" style="padding-left:13px">
+          <span class="lg"><i style="background:#dc2626"></i>▶ 标记 = 勾选的候选根因</span>
+          <span class="lg">未勾选的条是待排查项</span>
+        </div>
       </div>
       <div>
-        ${br.map(b=>`
+        ${br.map(b=>{
+          const items = st.items[b.key]||[];
+          return `
           <div class="qwfb-b">
             <div class="qwfb-h"><b>${escHtml(b.name)}</b><span class="muted">${escHtml(b.ph||"")}</span>
               <div class="sp"></div>
               <button class="btn sm" onclick="QW_fbAdd('${key}','${b.key}')">+ 加一条</button></div>
-            ${(st.items[b.key]||[]).map((t,j)=>`
+            ${items.map((t,j)=>`
               <div class="qwfb-i">
                 <input type="checkbox" ${st.picked[b.key+"|"+j]?"checked":""}
+                  title="勾上 = 标记为候选根因，图上会标红"
                   onchange="QW_fbPick('${key}','${b.key}',${j},this.checked)">
                 <input type="text" value="${escHtml(t)}" oninput="QW_fbSetItem('${key}','${b.key}',${j},this.value)">
                 <button class="x" onclick="QW_fbDel('${key}','${b.key}',${j})">×</button>
               </div>`).join("")}
-          </div>`).join("")}
+            ${items.length?"":`<div class="muted" style="font-size:11.5px;padding:2px 0">还没填，点「+ 加一条」</div>`}
+          </div>`;
+        }).join("")}
       </div>
     </div>
-    <div class="qwfoot">勾选的是<b>候选根因</b> —— 还要去现场验证：能不能观察到？测得到吗？验证过的才是真根因。</div>
+    <div class="qwfoot">勾选的是<b>候选根因</b>（图上标红）—— 还要去现场验证：能不能观察到？测得到吗？验证过的才是真根因。</div>
   </div>`;
 }
-function QW_fbSet(key,v){ QWD[key].root = v; QW_render(key); }
-function QW_fbSetItem(key,b,j,v){ QWD[key].items[b][j] = v; }
-function QW_fbAdd(key,b){ QWD[key].items[b] = QWD[key].items[b]||[]; QWD[key].items[b].push(""); QW_render(key); }
+/* ★ 下面这几个函数原来只写数据、不重绘 → 图永远不动（用户说的"死"）★
+   现在每一个都会触发重绘。 */
+function QW_fbSet(key,col,v){
+  const st = QWD[key]; if(!st) return;
+  st[col] = v;
+  QW_render(key);
+}
+function QW_fbSetItem(key,b,j,v){
+  const st = QWD[key]; if(!st) return;
+  st.items[b] = st.items[b]||[];
+  st.items[b][j] = v;
+  QW_render(key);
+}
+function QW_fbAdd(key,b){
+  const st = QWD[key]; if(!st) return;
+  st.items[b] = st.items[b]||[];
+  st.items[b].push("");
+  QW_render(key);
+}
 function QW_fbDel(key,b,j){
   /* ★ 删除条目 → 二次确认（2026-11-03）★ */
-  const items = (QWD[key].items[b]) || [];
+  const st = QWD[key]; if(!st) return;
+  const items = (st.items[b]) || [];
   const txt = items[j]==null ? "" : String(items[j]);
   window.Guard.ask("确定删除这一条？"
     + (txt?"<br><b style='color:var(--ink)'>"+window.Guard.esc(txt.slice(0,120))+"</b>":""), {
-    onOk:function(){ QWD[key].items[b].splice(j,1); QW_render(key); }
+    onOk:function(){
+      QWD[key].items[b].splice(j,1);
+      /* picked 的索引会整体前移，必须一起清掉，否则图上标红错位 */
+      const p = QWD[key].picked||{};
+      const np = {};
+      Object.keys(p).forEach(k=>{
+        const parts = k.split("|");
+        if(parts[0]===b){
+          const idx = parseInt(parts[1],10);
+          if(idx===j) return;
+          if(idx>j) np[b+"|"+(idx-1)] = p[k];
+          return;
+        }
+        np[k]=p[k];
+      });
+      QWD[key].picked = np;
+      QW_render(key);
+    }
   });
 }
-function QW_fbPick(key,b,j,v){ QWD[key].picked[b+"|"+j] = v; }
+function QW_fbPick(key,b,j,v){
+  const st = QWD[key]; if(!st) return;
+  st.picked = st.picked||{};
+  st.picked[b+"|"+j] = v;
+  QW_render(key);
+}
+/* 鱼骨图导出（文字版 + 候选根因标记） */
+function QW_fbExport(key){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const br = cfg.branches||[];
+  const rows = [["分支","方向","条目","是否候选根因"]];
+  br.forEach(b=>{
+    const items = st.items[b.key]||[];
+    if(!items.length) rows.push([b.name, b.ph||"", "（未填）", ""]);
+    items.forEach((t,j)=>{
+      rows.push([b.name, b.ph||"", t, st.picked[b.key+"|"+j]?"★ 候选根因":""]);
+    });
+  });
+  rows.push([]);
+  rows.push(["问题（骨尖）", st.root||""]);
+  QWIO.downloadCsv((cfg.title||"鱼骨图")+"_"+QWIO.today()+".csv", rows);
+}
+/* 鱼骨图导入：两列（分类 / 原因条目） */
+function QW_fbImport(key, m){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const br = cfg.branches||[];
+  const byName = {};
+  br.forEach(b=>{ byName[String(b.name).trim()] = b.key; });
+  const items = {};
+  let root = st.root || "";
+  let n = 0, unknown = [];
+  for(let i=0;i<m.length;i++){
+    const c = (m[i]||[]).map(x=>String(x==null?"":x).trim());
+    if(!c.length || !c[0]) continue;
+    const cat = c[0];
+    const txt = c.slice(1).filter(x=>x!=="").join(" / ");
+    if(i===0 && /^(分类|类别|类型|category)$/i.test(cat)) continue;
+    if(/^问题/.test(cat)){
+      root = txt || cat.replace(/^问题[:：]?\s*/,"");
+      continue;
+    }
+    const bk = byName[cat];
+    if(!bk){ unknown.push(cat); continue; }
+    if(!txt) continue;
+    items[bk] = items[bk]||[];
+    items[bk].push(txt);
+    n++;
+  }
+  if(!n){ toast("没识别到内容（第一列要填「人/机/料/法/环/测」之一）", "warn"); return; }
+  st.items = items;
+  if(root) st.root = root;
+  QW_render(key);
+  toast("已导入 "+n+" 条" + (unknown.length?("（"+unknown.length+" 行分类无法识别，已跳过）"):""));
+}
 
 /* ------------------------------------------------------------
    5Why
@@ -740,6 +1195,9 @@ function QW_why(key, cfg){
   return `<div class="qwt">
     <div class="qwt-h"><b>${escHtml(cfg.title||"5Why")}</b>
       <div class="sp"></div>
+      <div class="qwt-tools">
+        <button class="btn sm" onclick="QW_whyExport('${key}')">⬇ 导出</button>
+      </div>
       <span class="muted">${escHtml(cfg.stopHint||"")}</span></div>
     <div class="qwinput">
       <div class="muted" style="margin-bottom:5px">问题（第一问的起点）</div>
@@ -779,11 +1237,26 @@ function QW_why(key, cfg){
 function QW_whySet(key,col,v){
   const st = QWD[key]; if(!st) return;
   st[col] = v;
-  if(col==="problem" || col==="spread") QW_render(key);
+  QW_render(key);
 }
 function QW_whySetItem(key,i,col,v){
   const st=QWD[key]; if(!st) return;
   st.chain[i][col] = v;
+  /* ★ 2026-11-04：原来改链条不重绘 → 「死胡同」和「最后一层可整改」两条
+     判定永远停在初始状态，用户写完看到的是过期提示，等于没提示。
+     现在改任何一格都重绘，判定实时更新。 */
+  QW_render(key);
+}
+/* 5Why 导出 */
+function QW_whyExport(key){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const out = [["层","问题/为什么","证据","验证方式"]];
+  (st.chain||[]).forEach((c,i)=>{
+    out.push([i===0?"问题":("为什么 "+i), c.why||"", c.evi||"", c.veri||""]);
+  });
+  if(st.spread) out.push([],["横向展开", st.spread]);
+  QWIO.downloadCsv((cfg.title||"5Why")+"_"+QWIO.today()+".csv", out);
 }
 
 /* ------------------------------------------------------------
@@ -795,6 +1268,9 @@ function QW_flow(key, cfg){
   return `<div class="qwt">
     <div class="qwt-h"><b>${escHtml(cfg.title||"流程")}</b>
       <div class="sp"></div>
+      <div class="qwt-tools">
+        <button class="btn sm" onclick="QW_flowExport('${key}')">⬇ 导出</button>
+      </div>
       <span class="muted">${ph.length} 个环节</span></div>
     <div class="qwsteps">
       ${ph.map((p,i)=>`<button class="qws-b ${i===st.step?"on":""}" onclick="QW_flowStep('${key}',${i})">
@@ -819,6 +1295,21 @@ function QW_flow(key, cfg){
 }
 function QW_flowStep(key,i){ QWD[key].step = i; QW_render(key); }
 function QW_flowSet(key,k,v){ QWD[key].vals[k] = v; }
+/* 流程导出：把所有环节的字段值摊平成一张表 */
+function QW_flowExport(key){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const ph = cfg.phases||[];
+  const out = [["环节","字段","内容"]];
+  ph.forEach(p=>{
+    (p.fields||[]).forEach(f=>{
+      const k = (p.key||"")+"|"+f.k;
+      const v = st.vals[k]!=null ? st.vals[k] : (f.v||"");
+      out.push([p.name||"", f.k||"", v]);
+    });
+  });
+  QWIO.downloadCsv((cfg.title||"流程记录")+"_"+QWIO.today()+".csv", out);
+}
 
 /* ------------------------------------------------------------
    原料替代测算
@@ -952,6 +1443,11 @@ function QW_shelf(key, cfg){
   return `<div class="qwt">
     <div class="qwt-h"><b>${escHtml(cfg.title||"货架期")}</b>
       <div class="sp"></div>
+      <div class="qwt-tools">
+        <button class="btn sm" onclick="QW_shAdd('${key}')">+ 加一行</button>
+        <button class="btn sm" onclick="QW_importDlg('${key}','shelf')">⬆ 导入数据</button>
+        <button class="btn sm" onclick="QW_shelfExport('${key}')">⬇ 导出数据</button>
+      </div>
       <span class="muted">限值 ${limit}（过氧化值）</span></div>
     <div class="qwt-stats">
       <span class="qws ${shelfMonths==null?"":(isIndicative?"warn":"ok")}">
@@ -962,14 +1458,26 @@ function QW_shelf(key, cfg){
     </div>
     <div class="qwt-wrap">
     <table class="qwt-tbl">
-      <thead><tr><th>温度℃</th><th>周数</th><th>过氧化值</th><th>感官</th><th>判定</th></tr></thead>
+      <thead><tr><th style="width:80px">温度℃</th><th style="width:70px">周数</th>
+        <th style="width:90px">过氧化值</th><th style="width:110px">感官</th>
+        <th style="width:80px">判定</th><th style="width:34px"></th></tr></thead>
       <tbody>
       ${S.slice().sort((a,b)=>a.temp-b.temp||a.weeks-b.weeks).map(s=>{
         const bad = parseFloat(s.vp)>limit || s.sens!=="正常";
+        const si = S.indexOf(s);
         return `<tr class="${bad?"bad":""}">
-          <td class="num">${s.temp}</td><td class="num">${s.weeks}</td>
-          <td class="num">${s.vp}</td><td>${escHtml(s.sens)}</td>
+          <td class="num"><input type="number" step="any" value="${s.temp}"
+            oninput="QW_shSet('${key}',${si},'temp',this.value)"></td>
+          <td class="num"><input type="number" step="any" value="${s.weeks}"
+            oninput="QW_shSet('${key}',${si},'weeks',this.value)"></td>
+          <td class="num"><input type="number" step="any" value="${s.vp}"
+            oninput="QW_shSet('${key}',${si},'vp',this.value)"></td>
+          <td><select onchange="QW_shSet('${key}',${si},'sens',this.value)">
+            <option ${s.sens==="正常"?"selected":""}>正常</option>
+            <option ${s.sens!=="正常"?"selected":""}>${escHtml(s.sens||"异常")}</option>
+          </select></td>
           <td><span class="vd ${bad?"bad":"ok"}">${bad?"劣变":"正常"}</span></td>
+          <td><button class="x" title="删除这一行" onclick="QW_shDel('${key}',${si})">×</button></td>
         </tr>`;
       }).join("")}
       </tbody>
@@ -992,6 +1500,55 @@ function QW_shelf(key, cfg){
       另：保质期是「在标示储存条件下」才成立，条件要写清（温度、避光、干燥）。</div>
   </div>`;
 }
+/* 货架期的样品行可编辑（原来完全是死数据，一个输入框都没有） */
+function QW_shSet(key,i,col,v){
+  const st=QWD[key]; if(!st) return;
+  const s = (st.samples||[])[i]; if(!s) return;
+  if(col==="temp"||col==="weeks"||col==="vp") s[col] = parseFloat(v)||0;
+  else s[col] = v;
+  QW_render(key);
+}
+function QW_shAdd(key){
+  const st=QWD[key]; if(!st) return;
+  st.samples = st.samples||[];
+  st.samples.push({temp:25, weeks:0, vp:0, sens:"正常"});
+  QW_render(key);
+}
+function QW_shDel(key,i){
+  const st=QWD[key]; if(!st) return;
+  if(i<0 || i>=(st.samples||[]).length) return;
+  window.Guard.ask("确定删除这一行试验数据？", {
+    onOk:function(){ st.samples.splice(i,1); QW_render(key); }
+  });
+}
+function QW_shImport(key, m){
+  const st=QWD[key]; if(!st) return;
+  const rows = [];
+  for(let i=0;i<m.length;i++){
+    const c = (m[i]||[]).map(x=>String(x==null?"":x).trim());
+    if(!c.length) continue;
+    const temp = parseFloat(c[0]), weeks = parseFloat(c[1]), vp = parseFloat(c[2]);
+    if(isNaN(temp)) continue;
+    if(i===0 && isNaN(weeks)) continue;
+    rows.push({temp:temp, weeks: isNaN(weeks)?0:weeks, vp: isNaN(vp)?0:vp,
+                sens: c[3] || "正常"});
+  }
+  if(!rows.length){ toast("没识别到数据（需要「温度 / 周数 / 过氧化值 / 感官」）", "warn"); return; }
+  st.samples = rows;
+  QW_render(key);
+  toast("已导入 "+rows.length+" 行");
+}
+function QW_shelfExport(key){
+  const st=QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const limit = parseFloat(st.limit)||2.0;
+  const out = [["温度℃","周数","过氧化值","感官","判定"]];
+  (st.samples||[]).slice().sort((a,b)=>a.temp-b.temp||a.weeks-b.weeks).forEach(s=>{
+    const bad = parseFloat(s.vp)>limit || s.sens!=="正常";
+    out.push([s.temp, s.weeks, s.vp, s.sens||"", bad?"劣变":"正常"]);
+  });
+  QWIO.downloadCsv((cfg.title||"货架期试验")+"_"+QWIO.today()+".csv", out);
+}
 
 /* ------------------------------------------------------------
    批次追溯
@@ -1002,7 +1559,11 @@ function QW_trace(key, cfg){
   return `<div class="qwt">
     <div class="qwt-h"><b>${escHtml(cfg.title||"批次追溯")}</b>
       <div class="sp"></div>
-      <span class="muted">正向 + 反向都要能查</span></div>
+      <span class="muted">正向 + 反向都要能查</span>
+      <div class="qwt-tools">
+        <button class="btn sm" onclick="QW_trExport('${key}')">⬇ 导出</button>
+      </div>
+    </div>
     <div class="qwtrace">
       <div class="qwtrace-b">
         <div class="qwtrace-h">↓ 反向追溯（成品 → 原料）</div>
@@ -1010,11 +1571,16 @@ function QW_trace(key, cfg){
           <input type="text" style="width:100%" value="${escHtml(fw.batch||"")}"
             oninput="QW_trSet('${key}','fbatch',this.value)"></div>
         <div class="qwchain2">
-          ${(fw.chain||[]).map(c=>`
+          ${(fw.chain||[]).map((c,i)=>`
             <div class="qwtr">
               <div class="qwtr-l ${c.level==="成品批"?"l1":(c.level==="过程批"?"l2":"l3")}">${escHtml(c.level)}</div>
-              <div class="qwtr-b"><b>${escHtml(c.no)}</b>
-                <div class="muted" style="font-size:11.5px">${escHtml(c.info||"")}</div></div>
+              <div class="qwtr-b">
+                <input type="text" value="${escHtml(c.no)}" style="font-weight:700;width:100%"
+                  oninput="QW_trChain('${key}',${i},'no',this.value)">
+                <input type="text" value="${escHtml(c.info||"")}"
+                  style="width:100%;margin-top:3px;font-size:11.5px;color:var(--ink3);border:1px solid transparent;background:transparent;border-radius:4px;padding:2px 5px"
+                  oninput="QW_trChain('${key}',${i},'info',this.value)">
+              </div>
             </div>`).join("")}
         </div>
       </div>
@@ -1024,11 +1590,17 @@ function QW_trace(key, cfg){
           <input type="text" style="width:100%" value="${escHtml(bk.batch||"")}"
             oninput="QW_trSet('${key}','bbatch',this.value)"></div>
         <div class="qwchain2">
-          ${(bk.products||[]).map(p=>`
+          ${(bk.products||[]).map((p,i)=>`
             <div class="qwtr">
               <div class="qwtr-l l1">成品批</div>
-              <div class="qwtr-b"><b>${escHtml(p.no)}</b>
-                <div class="muted" style="font-size:11.5px">${escHtml(p.qty)} · ${escHtml(p.cust)}</div></div>
+              <div class="qwtr-b">
+                <input type="text" value="${escHtml(p.no)}" style="font-weight:700;width:100%"
+                  oninput="QW_trProd('${key}',${i},'no',this.value)">
+                <input type="text" value="${escHtml(p.qty)}" style="width:45%"
+                  oninput="QW_trProd('${key}',${i},'qty',this.value)">
+                <input type="text" value="${escHtml(p.cust)}" style="width:50%;margin-top:3px;font-size:11.5px;color:var(--ink3);border:1px solid transparent;background:transparent;border-radius:4px;padding:2px 5px"
+                  oninput="QW_trProd('${key}',${i},'cust',this.value)">
+              </div>
             </div>`).join("")}
         </div>
         <div class="qwflag">合计影响 <b>${(bk.products||[]).reduce((s,p)=>s+parseInt(p.qty)||0,0)}</b> 罐</div>
@@ -1038,6 +1610,31 @@ function QW_trace(key, cfg){
   </div>`;
 }
 function QW_trSet(key,col,v){ QWD[key][col]=v; }
+/* 追溯链条可编辑（原来批号和链条全是死的静态数据） */
+function QW_trChain(key,i,col,v){
+  const st=QWD[key]; if(!st) return;
+  const c = ((st.forward||{}).chain||[])[i]; if(!c) return;
+  c[col] = v;
+  QW_render(key);
+}
+function QW_trProd(key,i,col,v){
+  const st=QWD[key]; if(!st) return;
+  const p = ((st.backward||{}).products||[])[i]; if(!p) return;
+  p[col] = v;
+  QW_render(key);
+}
+function QW_trExport(key){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const out = [["方向","层级/类型","批号","数量","客户/说明"]];
+  ((st.forward||{}).chain||[]).forEach(c=>{
+    out.push(["反向（成品→原料）", c.level||"", c.no||"", "", c.info||""]);
+  });
+  ((st.backward||{}).products||[]).forEach(p=>{
+    out.push(["正向（原料→成品）", "成品批", p.no||"", p.qty||"", p.cust||""]);
+  });
+  QWIO.downloadCsv((cfg.title||"批次追溯")+"_"+QWIO.today()+".csv", out);
+}
 
 /* ------------------------------------------------------------
    感官评价
@@ -1065,7 +1662,12 @@ function QW_sensory(key, cfg){
   return `<div class="qwt">
     <div class="qwt-h"><b>${escHtml(cfg.title||"感官评价")}</b>
       <div class="sp"></div>
-      <button class="btn sm" onclick="QW_addRow('${key}')">+ 加样品</button></div>
+      <div class="qwt-tools">
+        <button class="btn sm" onclick="QW_snAdd('${key}')">+ 加样品</button>
+        <button class="btn sm" onclick="QW_importDlg('${key}','sensory')">⬆ 导入数据</button>
+        <button class="btn sm" onclick="QW_snExport('${key}')">⬇ 导出数据</button>
+      </div>
+    </div>
     <div class="qwt-stats">
       <span class="qws"><b>${st.samples.length}</b><i>样品数</i></span>
       <span class="qws ${spread>1.2?"bad":"ok"}"><b>${spread.toFixed(2)}</b><i>样品间极差</i></span>
@@ -1074,7 +1676,7 @@ function QW_sensory(key, cfg){
     <table class="qwt-tbl">
       <thead><tr><th style="width:110px">样品</th>
         ${dims.map(d=>`<th style="width:78px">${escHtml(d)}</th>`).join("")}
-        <th style="width:82px">均值</th><th style="width:82px">标准差</th></tr></thead>
+        <th style="width:82px">均值</th><th style="width:82px">标准差</th><th style="width:34px"></th></tr></thead>
       <tbody>
       ${all.map((x,si)=>`<tr>
         <td><input type="text" value="${escHtml(x.sc.sample)}"
@@ -1083,6 +1685,7 @@ function QW_sensory(key, cfg){
           oninput="QW_snScore('${key}',${si},${di},this.value)"></td>`).join("")}
         <td class="num">${x.total.toFixed(2)}</td>
         <td class="num">${x.s.sd.toFixed(2)}</td>
+        <td><button class="x" title="删除这个样品" onclick="QW_snDel('${key}',${si})">×</button></td>
       </tr>`).join("")}
       </tbody>
     </table>
@@ -1093,6 +1696,56 @@ function QW_sensory(key, cfg){
       : `<div class="qwflag ok">✓ 样品间差异在可接受范围，评价员一致性良好。</div>`}
     <div class="qwfoot">感官结论要与理化结果并列看，<b>不单独下结论</b>。用标样 + 竞品做锚定，避免绝对评价漂移。</div>
   </div>`;
+}
+/* ★ 感官的数据在 st.samples，不是 st.rows ★
+   原来这里调 QW_addRow（它读 st.rows）→ st.rows 是 undefined → 直接抛异常。
+   按钮一点就崩，等于死的。 */
+function QW_snAdd(key){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const dims = cfg.dims||[];
+  st.samples.push({sample:"样品"+(st.samples.length+1), scores:dims.map(()=>3)});
+  QW_render(key);
+}
+function QW_snDel(key,si){
+  const st = QWD[key]; if(!st) return;
+  if(si<0 || si>=st.samples.length) return;
+  const name = st.samples[si].sample || ("第"+(si+1)+"个样品");
+  window.Guard.ask("确定删除这个样品？<br><b style='color:var(--ink)'>"+window.Guard.esc(String(name))+"</b>", {
+    onOk:function(){ st.samples.splice(si,1); QW_render(key); }
+  });
+}
+function QW_snImport(key, m){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const dims = cfg.dims||[];
+  const rows = [];
+  for(let i=0;i<m.length;i++){
+    const cells = (m[i]||[]).map(c=>String(c==null?"":c).trim());
+    if(!cells.length || !cells[0]) continue;
+    const scores = cells.slice(1).map(v=>parseFloat(v)).filter(v=>!isNaN(v));
+    if(i===0 && !scores.length && dims.length) continue;
+    const sc = [];
+    for(let k=0;k<dims.length;k++) sc.push(scores[k]==null?0:scores[k]);
+    rows.push({sample:cells[0], scores:sc});
+  }
+  if(!rows.length){ toast("没识别到数据（第一列样品名，后面是各维度打分）", "warn"); return; }
+  st.samples = rows;
+  QW_render(key);
+  toast("已导入 "+rows.length+" 个样品");
+}
+function QW_snExport(key){
+  const st = QWD[key]; if(!st) return;
+  const cfg = QW_CFG[key]||{};
+  const dims = cfg.dims||[];
+  const out = [["样品"].concat(dims).concat(["均值","标准差"])];
+  st.samples.forEach(sc=>{
+    const arr = sc.scores.map(Number).filter(x=>!isNaN(x));
+    const mean = arr.reduce((a,b)=>a+b,0)/(arr.length||1);
+    const sd = Math.sqrt(arr.reduce((a,b)=>a+(b-mean)*(b-mean),0)/(arr.length-1||1));
+    out.push([sc.sample||""].concat(sc.scores).concat([mean.toFixed(2), sd.toFixed(2)]));
+  });
+  QWIO.downloadCsv((cfg.title||"感官评价")+"_"+QWIO.today()+".csv", out);
 }
 function QW_snSet(key,si,col,v){ QWD[key].samples[si][col]=v; }
 function QW_snScore(key,si,di,v){ QWD[key].samples[si].scores[di]=parseFloat(v)||0; QW_render(key); }
