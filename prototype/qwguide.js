@@ -179,6 +179,8 @@
         { t: "六路铺开", d: "按<b>人机料法环测</b>六个方向各列几条可能原因。<br>建议：人（培训/疲劳/交接）、机（设备/工装/维护）、料（原料/包材/供应商）、法（工艺/参数/标准）、环（温湿度/空间/交叉污染）、测（仪器/方法/抽样）" },
         { t: "勾嫌疑", d: "在图上<b>勾选</b>你认为最可能的几条 → 图上标红 ▶。<br>然后<b>一条一条去现场验证</b>，验不掉就划掉。" }
       ],
+      /* ★ 首行不是表头（是第一条数据）→ 用 noHead 标记 ★ */
+      dataHead: false,
       data: [
         "人\t操作未按 SOP 定时清洗",
         "人\t夜班人手不足，新人多",
@@ -450,11 +452,11 @@
         { t: "统计看趋势", d: "顶部看<b>符合率</b>和<b>不符合项数</b>。<br>同一个问题反复出现 → 不是执行问题，是<b>设计问题</b>（要改标准/做防错）。" }
       ],
       data: [
-        "（示例：换线清场检查表）",
-        "① 上一产品标签已撤除          → 符合",
-        "② 管道/料斗已按 SOP 清洗       → 符合",
-        "③ 过敏原工器具为专用专管       → 不符合  ← 用了通用勺",
-        "④ 首件标签与生产指令一致       → 符合"
+        "检查项目\t判定\t说明",
+        "① 上一产品标签已撤除\t符合\t",
+        "② 管道/料斗已按 SOP 清洗\t符合\t",
+        "③ 过敏原工器具为专用专管\t不符合\t用了通用勺",
+        "④ 首件标签与生产指令一致\t符合\t"
       ],
       dataNote: "★ <b>同一个不符合项出现 3 次以上，就不要再追着操作员跑了</b> ——<br>要么 SOP 没写清、要么工具有问题、要么人手不够。<br>这时候该改的是<b>系统</b>，不是人的态度。",
       read: [
@@ -587,12 +589,12 @@
         { t: "改成物理结构", d: "让「错的」在物理上不可能：<br>· 错的勺子孔径对不上料斗<br>· 错的标签版系统直接拦截<br>· 参数超范围机器报警锁机" }
       ],
       data: [
-        "（示例：婴配粉车间防错清单）",
-        "过敏原　通用勺 vs 专用勺　→ 改成不同颜色 + 专用料斗（装不进去）",
-        "标签　旧版标签贴在产线上　→ 标签系统版本不符直接不放行",
-        "参数　水分设定超内控限　→ 设定超范围机器锁定，需授权解锁",
-        "清洗　清场程序没做完想先生产　→ 清洗未完成不放行（程序互锁）",
-        "投料　粉料袋号打错　　　　→ 条码扫描，错袋系统报警"
+        "环节\t现状\t防错做法",
+        "过敏原\t通用勺 vs 专用勺\t改成不同颜色 + 专用料斗（装不进去）",
+        "标签\t旧版标签贴在产线上\t标签系统版本不符直接不放行",
+        "参数\t水分设定超内控限\t设定超范围机器锁定，需授权解锁",
+        "清洗\t清场程序没做完想先生产\t清洗未完成不放行（程序互锁）",
+        "投料\t粉料袋号打错\t条码扫描，错袋系统报警"
       ],
       dataNote: "★ <b>防错的唯一判定标准：让错误做不出来</b>。<br>「加强培训、贴提醒标签、增加检查」都是<b>弱防错</b> —— 它们把防错的责任又推回给了人。<br>★ 好的防错要满足：① 不依赖人记得 ② 不依赖人会不会 ③ 错了立刻能发现并挡住。",
       read: [
@@ -607,6 +609,55 @@
       ]
     }
   };
+
+  /* ================================================================
+     示例数据渲染
+     ================================================================
+     ★ 为什么必须用真表格，不能用 <pre> + 制表符 ★
+       原来的写法是把带 \t 的文本塞进 <pre>，靠制表位对齐。
+       但中文是**全角**字符（宽度是英文的两倍），
+       同一个制表位能装的中文字数 ≠ 英文，
+       → 每一行的列都错位，截图里就是这样歪的。
+       改成真 <table>：列宽由浏览器按内容算，
+       中英文都严格对齐，也不会因为改一个字就重排。
+
+     dataHead: false 表示首行不是表头（鱼骨图首行就是第一条数据）
+     ================================================================ */
+  function renderData(g) {
+    var rows = (g.data || []).map(function (x) { return String(x); });
+    if (!rows.length) return "";
+
+    /* 含制表符 → 渲染成表格 */
+    var hasTab = rows.some(function (r) { return r.indexOf("\t") >= 0; });
+    if (!hasTab) {
+      /* 纯文本（数值序列 / 句子 / 缩进树）→ 保持 <pre>，
+         但用 <div> + white-space:pre-wrap，窄屏不会横向溢出 */
+      return '<div class="qwg-pre">' + esc(rows.join("\n")) + "</div>";
+    }
+
+    var grid = rows.map(function (r) { return r.split("\t"); });
+    var ncol = 0;
+    grid.forEach(function (r) { if (r.length > ncol) ncol = r.length; });
+    /* 补齐每行缺的列 */
+    grid.forEach(function (r) { while (r.length < ncol) r.push(""); });
+
+    var noHead = (g.dataHead === false);
+    var head = noHead ? null : grid[0];
+    var body = noHead ? grid : grid.slice(1);
+
+    var h = '<div class="qwg-tablewrap"><table class="qwg-table">';
+    if (head) {
+      h += "<thead><tr>" + head.map(function (c) {
+        return "<th>" + esc(c) + "</th>";
+      }).join("") + "</tr></thead>";
+    }
+    h += "<tbody>" + body.map(function (r) {
+      return "<tr>" + r.map(function (c) {
+        return "<td>" + esc(c) + "</td>";
+      }).join("") + "</tr>";
+    }).join("") + "</tbody></table></div>";
+    return h;
+  }
 
   /* ================================================================
      渲染
@@ -643,8 +694,9 @@
     /* ② 行业示例数据 */
     if (g.data && g.data.length) {
       h += '<div class="qwg-sec">' +
-        '<div class="qwg-sh">📋 ' + esc((cfg && cfg.title) || "这个工具") + ' 的数据长什么样（可直接复制试用）</div>' +
-        '<pre class="qwg-pre">' + esc(g.data.join("\n")) + "</pre>";
+        '<div class="qwg-sh">📋 ' + esc((cfg && cfg.title) || "这个工具") + ' 的数据长什么样（可直接复制试用）' +
+        '<button class="qwg-copy" onclick="QWGuide.copyData(this)">📋 复制数据</button></div>' +
+        renderData(g);
       if (g.dataNote) h += '<div class="qwg-note">' + g.dataNote + "</div>";
       h += "</div>";
     }
@@ -672,7 +724,49 @@
     return h;
   }
 
+  /* ★ 把示例数据复制成「制表符分隔」的纯文本 ★
+     表格化之后没法像以前那样直接选中复制了，
+     所以给个按钮：点一下复制出来的就是 TSV，
+     可以直接粘进 Excel（自动分列）或粘进工具的导入框。 */
+  function copyData(btn) {
+    var box = btn && btn.closest ? btn.closest(".qwg-sec") : null;
+    var tbl = box ? box.querySelector(".qwg-table") : null;
+    var pre = box ? box.querySelector(".qwg-pre") : null;
+    var txt = "";
+    if (tbl) {
+      var lines = [];
+      tbl.querySelectorAll("tr").forEach(function (tr) {
+        var cells = [];
+        tr.querySelectorAll("th,td").forEach(function (td) {
+          cells.push((td.textContent || "").trim());
+        });
+        /* 去掉尾部全空的列（源数据里为了对齐补的空 tab） */
+        while (cells.length && cells[cells.length - 1] === "") cells.pop();
+        if (cells.length) lines.push(cells.join("\t"));
+      });
+      txt = lines.join("\n");
+    } else if (pre) {
+      txt = pre.textContent || "";
+    }
+    if (!txt) { if (global.toast) global.toast("没有可复制的数据"); return; }
+    function ok() { if (global.toast) global.toast("已复制，可以直接粘贴到 Excel 或工具的导入框"); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(ok).catch(function () { fallback(); });
+    } else { fallback(); }
+    function fallback() {
+      var ta = document.createElement("textarea");
+      ta.value = txt;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); ok(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  }
+
   global.QWGuide = {
+    copyData: copyData,
     get: function (type, cfg) {
       var k = (cfg && (cfg.key || cfg.toolKey));
       if (k && BY_KEY[k]) return BY_KEY[k];

@@ -13,6 +13,10 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>食品质量与安全管理系统 · 婴配标准变更提醒</title>
+<!-- ★ favicon（2026-11-04）★
+     不声明 favicon 时浏览器会自动去请求 /favicon.ico → 404，
+     控制台每次都报错。加上这个声明后就不会再请求了。 -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
 :root{
   --bg:#f5f6f8; --panel:#ffffff; --line:#e4e7ec; --line2:#eef1f5;
@@ -551,10 +555,34 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .qwg-sd b{color:var(--ink);font-weight:600}
 
 .qwg-sec{margin-top:11px}
-.qwg-sh{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px}
+/* ★ 小标题行：改成 flex，复制按钮才能靠右 ★ */
+.qwg-sh{display:flex;align-items:center;gap:9px;
+  font-size:12px;font-weight:700;color:var(--ink);margin-bottom:6px}
+/* ★ 示例数据：纯文本（数值序列/句子/缩进树）★
+   用 div + white-space:pre-wrap 而不是 <pre>：
+   <pre> 的 white-space:pre 在窄屏会横向溢出，把整个卡片撑破。 */
 .qwg-pre{margin:0;padding:9px 11px;background:#f8fafc;border:1px solid var(--line2);
   border-radius:7px;font-family:ui-monospace,Menlo,Consolas,monospace;
-  font-size:11.5px;line-height:1.6;color:#334155;overflow-x:auto;white-space:pre}
+  font-size:11.5px;line-height:1.7;color:#334155;
+  white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere}
+
+/* ★ 示例数据：真表格（列宽由浏览器算，中英文都对齐）★ */
+.qwg-tablewrap{margin:0;overflow-x:auto;border:1px solid var(--line2);
+  border-radius:7px;background:#fff}
+.qwg-table{border-collapse:collapse;width:100%;font-size:11.8px;line-height:1.6}
+.qwg-table th{background:#eef2f7;color:var(--ink);font-weight:700;text-align:left;
+  padding:7px 10px;border-bottom:1px solid var(--line2);white-space:nowrap}
+.qwg-table td{padding:6px 10px;border-bottom:1px solid #f1f5f9;color:var(--ink2);
+  vertical-align:top}
+.qwg-table tbody tr:last-child td{border-bottom:none}
+.qwg-table tbody tr:nth-child(even){background:#fbfcfd}
+.qwg-table td:empty{background:#fafbfc}
+
+/* 复制按钮（放在小标题右侧） */
+.qwg-copy{margin-left:auto;font-size:11px;color:var(--brand);background:#eff6ff;
+  border:1px solid #dbeafe;border-radius:13px;padding:2px 10px;cursor:pointer;
+  white-space:nowrap;font-weight:500}
+.qwg-copy:hover{background:#dbeafe;color:var(--brand-ink)}
 .qwg-note{margin-top:6px;font-size:11.8px;line-height:1.7;color:#7c4a03;
   background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:8px 11px}
 .qwg-note b{color:#92400e}
