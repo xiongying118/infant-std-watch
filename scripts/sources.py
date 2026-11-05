@@ -631,10 +631,20 @@ class CfsaSpptAdapter:
     #   编一个假 guid 只会得到空壳页，比首页更让人困惑。
     @staticmethod
     def detail_url(guid: str) -> str:
+        """官方详情页 URL。
+
+        ★ 2026-11-05 修正 ★
+        原来返回 `?type=2&guid=<GUID>` —— 那是**详情页的 POST 形态**，
+        用 GET 打开必然 404（站点对 GET 只回一个自动提交的表单空壳）。
+        实测：带 Referer 直接 GET → 500；不带 → 也 404。
+        而 `staticPages/<GUID>.html` 是**真正的静态详情页**，GET 直接能开
+        （实测 200、6303 字节、内容含"第1号修改单"）。
+        → 页面上的「官方」链接一律用这个。
+        """
         guid = (guid or "").strip()
         if not guid:
             return "https://sppt.cfsa.net.cn:8086/db?task=index"
-        return "https://sppt.cfsa.net.cn:8086/db?type=2&guid=" + guid
+        return "https://sppt.cfsa.net.cn:8086/staticPages/" + guid + ".html"
 
     def _status(self, it: dict, std_no: str, table: str) -> str:
         """推断状态。
@@ -737,7 +747,7 @@ class CfsaSpptAdapter:
                 "guid": guid,
                 "title": title,
                 "detail_url": f"https://sppt.cfsa.net.cn:8086/staticPages/{guid}.html",
-                "official_url": self.detail_url(guid),
+                "official_url": self.detail_url(guid),   # 现在 = staticPages/…（GET 可开）
                 "source_code": self.code,
             })
         return out

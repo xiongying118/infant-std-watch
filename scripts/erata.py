@@ -55,9 +55,123 @@ _WORD_FIXUP = re.compile(r"[A-Za-z]")
 _RICH_TAG = re.compile(r"<[^>]+>")
 
 
+def _fmt_std_no(no: str) -> str:
+    """统一标准号写法：GB 5009.235-2016 / GB 5009.296 -2023 → GB 5009.235-2016。
+
+    官方勘误记录里同一个标准有三种写法（带年份 / 不带年份 / 年份前多空格），
+    混着显示会让同一个标准看起来像好几个。统一成带年份的规范写法。
+    查不到年份时保留原样（不硬编）。
+    """
+    s = re.sub(r"\s+", " ", (no or "").strip())
+    s = re.sub(r"\s*-\s*(\d{4})\s*$", r"-\1", s)      # " -2023" → "-2023"
+    s = re.sub(r"\s+", "", s.replace(" ", ""))              # 去所有空格
+    m = re.match(r"^(GB/?T?[\d.]+)(-\d{4})?$", s, re.I)
+    if not m:
+        return s or (no or "")
+    main = m.group(1).upper()
+    # 归一后可能是 "GB5009.235" 或 "GB/T22388"（前缀与数字之间没有空格）
+    if main.startswith("GB/T"):
+        main = "GB/T " + main[4:]      # "GB/T22388"  → "GB/T 22388"
+    elif main.startswith("GBT"):
+        main = "GB/T " + main[3:]      # "GBT22388"   → "GB/T 22388"
+    elif main.startswith("GB"):
+        main = "GB " + main[2:]        # "GB5009.235" → "GB 5009.235"
+    year = m.group(2) or ""
+    if not year:
+        # 没写年份 → 查 STD 库里该标准的现行版本，补上
+        cur = _current_version(main)
+        return cur if cur else main + "（版本待补）"
+    return main + year
+
+
+# STD 库缓存（从 data.js 的 STD 段读「标准号 → 现行版本号」）
+_cur_ver_cache: dict[str, str] | None = None
+
+
+def _current_versions() -> dict[str, str]:
+    global _cur_ver_cache
+    if _cur_ver_cache is not None:
+        return _cur_ver_cache
+    out: dict[str, str] = {}
+    try:
+        base = os.path.dirname(os.path.abspath(__file__))
+        p = os.path.join(base, "..", "prototype", "data.js")
+        if not os.path.exists(p):
+            return out
+        txt = io.open(p, encoding="utf-8", newline="").read().replace("\r\n", "\n")
+        m = re.search(r"\n  STD: \[\n", txt)
+        if not m:
+            return out
+        end = txt.find("\n],", m.start())
+        seg = txt[m.start():end if end > 0 else len(txt)]
+        for obj in re.finditer(r"\{[^}]*\}", seg):
+            t = obj.group(0)
+            no_m = re.search(r'(?:^|[,\{])no:"([^"]+)"', t)
+            if not no_m:
+                continue
+            no = no_m.group(1)
+            # 只要「现行有效」的版本
+            if "现行有效" not in t and "现行" not in t:
+                continue
+            out.setdefault(_refkey(no), no)
+    except Exception:                              # noqa: BLE001
+        pass
+    _cur_ver_cache = out
+    return out
+
+
+def _current_version(main_no: str) -> str:
+    """查 STD 库里该标准的现行版本号（带年份），查不到返回空串。"""
+    k = _refkey(main_no)
+    return _current_versions().get(k, "")
+
+
 def _plain(s: str) -> str:
     """剥掉 HTML 标签，只留纯文本。"""
     return _RICH_TAG.sub(" ", s or "")
+
+
+# 勘误原文里的公式是**图片**（官方用富文本编辑器插入的）
+#   <img title="1.png" src="/resources/script/ueditor/jsp/upload/20180404/16456378901234567890.png">
+# 把 img 标签直接剥掉 → 公式内容**彻底丢失**（只剩空白），
+# 用户看到「改前：（空）改后：（空）」，根本不知道改了什么（2026-11-05 用户截图指出）。
+#   实测：GB 5009.154-2023「27公式（7）」这条，改前改后都是图片。
+#
+# 办法：把图片转成「公式图片 N（点此看官方原图）」并附上直链，
+# 页面上显示成可点的链接，用户一点就看到官方那张公式图。
+_IMG_TAG = re.compile(r'<img[^>]*?src="([^"]+)"[^>]*?>', re.I)
+_IMG_TITLE = re.compile(r'title="([^"]*)"', re.I)
+
+
+def _formula_text(s: str) -> str:
+    """把含图片的勘误原文转成「文字 + 可点公式链接」。
+
+    · 没有图片 → 原样返回（已剥标签的纯文本）
+    · 有图片   → 图片位置替换成「📐 公式图 N（点此看官方原图）」+ 直链
+    """
+    s = s or ""
+    if "<img" not in s.lower():
+        return " ".join(_plain(s).split())
+    out = []
+    idx = [0]
+    for m in _IMG_TAG.finditer(s):
+        # 图片前面的文字（可能是公式编号）
+        head = " ".join(_plain(s[idx[0]:m.start()]).split())
+        if head:
+            out.append(head)
+        url = m.group(1)
+        if url.startswith("/"):
+            url = "https://sppt.cfsa.net.cn:8086" + url
+        tm = _IMG_TITLE.search(m.group(0))
+        title = tm.group(1) if tm else ""
+        n = idx[0] + 1
+        idx[0] = m.end()
+        label = "公式图" if not title or title.lower().endswith(".png") else title
+        out.append("📐 %s %d（点此看官方原图：%s）" % (label, n, url))
+    tail = " ".join(_plain(s[idx[0]:]).split())
+    if tail:
+        out.append(tail)
+    return " ".join(out)
 
 
 def _is_pure_typo(before: str, after: str) -> bool:
@@ -202,6 +316,53 @@ def _refscope() -> set[str]:
     return _refscope_cache
 
 
+# ================================================================
+# ★ 号段兜底：检测方法类标准一律纳入（2026-11-05）★
+# ================================================================
+# 为什么需要这一层：
+#   范围表（refscope.json）由三层拼成 —— 通则正文引用 + 引用页现行执行标准
+#   + 限量标准的二级传递闭包。每一层都要人工维护，**必然漏**。
+#   实测漏掉的（实验室天天在用，却在范围外）：
+#     GB 5009.111 呕吐毒素 / GB 5009.118 T-2毒素 / GB 5009.209 玉米赤霉烯酮
+#     GB 5009.239 酸度 / GB 5009.208 生物胺 / GB 5009.228 挥发性盐基氮
+#     GB 5009.257 反式脂肪酸 / GB 5009.248 叶黄素 / GB 4789.28 培养基质量要求
+#   这些是**限量表指定的检测方法**，通则正文没引用 → 三层都覆盖不到。
+#
+#   但「检测方法类标准」这个号段本身就是实验室的工具箱：
+#     GB 5009 食品中检测方法 · GB 4789 食品微生物学检验 · GB 5413 婴配乳品检测
+#     GB 31604 / GB 4806 食品接触材料迁移量
+#   这些号段里的标准，婴配实验室都有可能执行 → 一律纳入。
+#
+# ★ 边界必须守住 ★
+#   明确**不收**：GB 1886 / GB 1903 / GB 306xx 食品添加剂与强化剂品种标准、
+#   GB 8538 矿泉水、GB 16740 保健食品 —— 婴配实验室不做这些。
+#   （实测：兜底后新增 61 条，全是检测方法类；添加剂类 100+ 条仍正确排除。）
+#
+_SEG_SCOPE = [
+    (r"^GB5009\.\d+",   "GB 5009 食品中检测方法"),
+    (r"^GB4789\.\d+",   "GB 4789 食品微生物学检验"),
+    (r"^GB5413\.\d+",   "GB 5413 婴幼儿食品和乳品检测"),
+    (r"^GB31604\.\d+",  "GB 31604 食品接触材料迁移量"),
+    (r"^GB4806\.\d+",   "GB 4806 食品接触材料"),
+    (r"^GBT22388$",       "GB/T 22388 三聚氰胺检测"),
+    (r"^GB276[12]$",      "GB 2761/2762 限量标准"),
+    (r"^GB29921$",        "GB 29921 致病菌限量"),
+    (r"^GB2760$",         "GB 2760 食品添加剂使用标准"),
+    (r"^GB14880$",        "GB 14880 营养强化剂使用标准"),
+    (r"^GB1490[23]$",     "GB 14902/14903 复配食品添加剂"),
+]
+_SEG_RE = [(re.compile(p), n) for p, n in _SEG_SCOPE]
+
+
+def seg_scope_of(no: str) -> str:
+    """该标准是否属于「检测方法类号段」。是则返回号段名，否则返回空串。"""
+    k = _refkey(no)
+    for r, n in _SEG_RE:
+        if r.match(k):
+            return n
+    return ""
+
+
 def _refkey(no: str) -> str:
     """归一：GB 5413.30-2016 → GB5413.30；GB/T 22388-2008 → GBT22388。
 
@@ -228,11 +389,21 @@ def bare_std_no(no: str) -> str:
 
 
 def in_ref_scope(no: str) -> bool:
-    """该标准是否在通则引用范围内。范围数据缺失时返回 True（不误杀）。"""
+    """该标准是否在通则引用范围内。
+
+    判定顺序：
+      1. 在 refscope.json 列出的范围里（通则引用 + 引用页现行标准 + 二级闭包）
+      2. 属于「检测方法类号段」（GB 5009 / 4789 / 5413 / 31604 / 4806 …）
+         → 实验室的工具箱，一律纳入（2026-11-05 补，见 _SEG_SCOPE 注释）
+      3. 都不满足 → 不在范围
+    范围数据缺失时返回 True（不误杀）。
+    """
     scope = _refscope()
     if not scope:
         return True
-    return _refkey(no) in scope
+    if _refkey(no) in scope:
+        return True
+    return bool(seg_scope_of(no))
 
 
 # ============================================================
@@ -408,11 +579,22 @@ def build_erata_alerts(erata_items: list[dict], include_low: bool = False) -> li
         lvl, why = grade_erata(it)
         if lvl == "low" and not include_low:
             continue      # 文字性修正不进提醒队列
-        no = it.get("std_no", "")
+        # ★ 标准号格式统一（2026-11-05）★
+        #   官方勘误记录里同一个标准有三种写法：
+        #     "GB 5009.235-2016" / "GB 5009.235" / "GB 5009.296 -2023"
+        #   页面上混着显示很难看，而且同标准的条目看起来像两个标准。
+        #   统一成「GB 5009.235-2016」这种带年份的标准写法。
+        no = _fmt_std_no(it.get("std_no", ""))
         name = it.get("std_name", "")
         sec = it.get("section") or "全文"
-        before = it.get("before") or ""
-        after = it.get("after") or ""
+        # ★ before/after 要剥掉 HTML 标签（2026-11-05）★
+        #   官方勘误原文里夹着编辑器富文本标签，实测见过
+        #   "<p style=\"text-align: center;\">同时取80 mL水</p>"、
+        #   "<p>显色剂：15mL37%甲醇…</p>"
+        #   → 直接显示在页面上就是一屏标签乱码。
+        #   _plain() 只做剥标签，不压空白；再压一次空白更好看。
+        before = _formula_text(it.get("before") or "")
+        after = _formula_text(it.get("after") or "")
 
         title = f"勘误：{no} {sec} 章节内容已更正"
         body = (f"《{name}》的 {sec} 章节有勘误。\n"
@@ -450,6 +632,13 @@ def build_erata_alerts(erata_items: list[dict], include_low: bool = False) -> li
             "relevance": "core",
             "erata": {"section": sec, "before": before, "after": after,
                       "reason": it.get("reason", ""),
+                      # ★ 标准名必须带上（2026-11-05）★
+                      #   官方勘误记录里 STANDARD_NAME 字段 187 条全都有值，
+                      #   但这里原来没往 erata 字典里放 → build_erata_js 取不到，
+                      #   页面显示「（标准名待补）」。
+                      #   （先用 STD 库兜底，再用这个原始字段 —— 顺序反了也没事，
+                      #     build_erata_js 里优先用 erata 里的 std_name。）
+                      "std_name": it.get("std_name", ""),
                       "date": it.get("erata_date", "")},
         })
     return out

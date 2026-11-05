@@ -138,8 +138,11 @@ def main() -> int:
             ck(False, "data.js 解析失败：" + ((r.stderr or "")[:200]))
         else:
             d = json.loads((r.stdout or "").strip())
+            # data.js 的 ERATA = 范围内勘误 + 修改单
             ck(d["n"] >= len(in_scope),
-               "data.js ERATA %d 条（官方范围内 %d 条）" % (d["n"], len(in_scope)))
+               "data.js ERATA %d 条（官方范围内勘误 %d 条 + 修改单）" % (d["n"], len(in_scope)))
+            ck(d["n"] == len(in_scope) + d["mods"],
+               "条数完全对齐：%d = 勘误 %d + 修改单 %d" % (d["n"], len(in_scope), d["mods"]))
             ck(d["nos"] >= 20, "涉及 %d 个标准（应 ≥20）" % d["nos"])
             ck(d["mods"] >= 5, "含 %d 条修改单（应 ≥5）" % d["mods"])
             ck(d["low"] > 0, "含 %d 条 low 级文字性修正（页面要能查全）" % d["low"])
@@ -148,6 +151,12 @@ def main() -> int:
             ck(d["jsa"] == 18, "JSA 18 区（未被破坏）")
             ck(d["qm"] == 16, "QM 工具 16 个（未被破坏）")
             ck(d["rd"] == 18, "RD 模块 18 个（未被破坏）")
+
+    print()
+    print("=== ⑥b 去重键必须带内容指纹（同一章节可能有多条不同勘误）===")
+    bej_src = read("scripts/build_erata_js.py")
+    ck('fp = str(e.get("before")' in bej_src,
+       "去重键含 before/after 指纹（否则同章节的多条勘误会被误丢）")
 
     print()
     print("=== ⑦ 修改单必须来自官方全库（勘误专库不收录）===")

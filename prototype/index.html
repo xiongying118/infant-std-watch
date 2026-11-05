@@ -2258,11 +2258,27 @@ function offLink(label, url, cls, style, stdNo){
 }
 /** 该URL 是否必须走 POST —— cfsa 的详情页与检索页都要 POST。 */
 function isCfsaPost(url){
-  return /sppt\.cfsa\.net\.cn/.test(url || "");
+  /* ★ 只有「详情页的 POST 形态」才需要走 postJump（2026-11-05）★
+     判据：URL 里带 type=2&guid= 参数。
+       · `?type=2&guid=<GUID>`  → GET 必然 404，要用表单 POST 打开
+       · `staticPages/<GUID>.html` → 静态页，GET 直接能开（实测 200）
+       · `?task=index&...`        → 检索页，GET 直接能开
+     原来对**所有** cfsa 链接都返回 true → staticPages 和检索页也被转成表单 POST，
+     白白多绕一层，还可能失败。 */
+  const u = String(url || "");
+  if(!/sppt\.cfsa\.net\.cn/.test(u)) return false;
+  return /[?&]type=2/.test(u) && /[?&]guid=/.test(u);
 }
 
 const CFSA_SEARCH = q => "https://sppt.cfsa.net.cn:8086/db?task=indexSearch"
   + "&isLength=9999&num_tn=99&standard_type=&keyword="
+  + encodeURIComponent(String(q||"").replace(/\s+/g,""));
+/* ★ 官方「标准勘误」检索页（2026-11-05）★
+   num_tn=4 就是平台上的「标准勘误」那个 tab。
+   用户截图确认过：搜 GB 5009.154-2023 时，「标准勘误」tab 里
+   列的是该标准的勘误记录（序号/标准号/标准名称/修改章节/修改前/修改后/勘误时间）。
+   → 页面上「官方勘误记录」按钮要指向这里，不是全库检索。 */
+const CFSA_ERATA = q => "https://sppt.cfsa.net.cn:8086/db?task=index&keyword="
   + encodeURIComponent(String(q||"").replace(/\s+/g,""));
 const _urlByNo = (()=>{
   const m = {};
@@ -3440,6 +3456,17 @@ function renderRefDigest(){
   $("#refDigest").innerHTML = html;
 }
 
+/* 勘误正文里的官方公式图链接 → 变成可点的 <a>
+   （官方把公式存成图片，剥标签后只剩 URL 文本，裸着显示不可点） */
+function _erataBody(txt){
+  if(!txt) return '<span class="muted">（官方未提供原文，见官方详情页）</span>';
+  const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return esc(txt).replace(
+    new RegExp("https://[^\\\\s（]+", "g"),
+    '<a href="$&" target="_blank" rel="noopener noreferrer" style="color:var(--brand);text-decoration:underline">$&</a>'
+  );
+}
+
 function renderErata(){
   const hi = ERATA.filter(e=>e.lvl==="high");
   /* ★ 2026-11-05：全部显示，不只显示 high ★
@@ -3450,11 +3477,35 @@ function renderErata(){
        high —— 实质性技术修订，会影响检测结果
        mid  —— 需要留意，一般不改变结果
        low  —— 文字性修正（编号/页码/错别字），留档即可 */
+  /* ★ 排序规则（用户 2026-11-05 要求）★
+     「按更新日期最新的排下去，同一标准的放一起排」
+     → 组之间：按该标准**最新一条**的日期倒序（最近动过的标准排最前）
+     → 组内部：同标准的条目按日期倒序（新的在上）
+     → 同日同标准：按章节号排，顺序稳定
+     等级不再参与排序，改由左边框颜色区分（high 红 / mid 橙 / low 绿）。 */
+  /* 分组键要归一：官方勘误记录里标准号格式不统一
+     （有的带年份 "GB 5009.235-2016"，有的不带 "GB 5009.235"，
+       还有的中间带空格 "GB 5009.296 -2023"）
+     → 不归一的话同一个标准会被拆成两组，排出来就是散的。 */
+  const _key = e => String(e.no||"")
+                      .replace(/\s+/g,"")
+                      .replace(/-\d{4}$/,"")
+                      .toUpperCase();
+  const _grp = {};                       // 标准 → 该组最新日期
+  ERATA.forEach(e=>{
+    const k = _key(e), d = String(e.erataDate||"");
+    if(!_grp[k] || d > _grp[k]) _grp[k] = d;
+  });
   const all = ERATA.slice().sort((a,b)=>{
-    const w = {high:0, mid:1, low:2};
-    const d = (w[a.lvl]||3) - (w[b.lvl]||3);
-    if(d) return d;
-    return String(b.erataDate||"").localeCompare(String(a.erataDate||""));
+    const ka = _key(a), kb = _key(b);
+    if(ka !== kb){
+      const da = _grp[ka]||"", db = _grp[kb]||"";
+      if(da !== db) return db.localeCompare(da);      // 组的最新日期倒序
+      return ka.localeCompare(kb);                     // 同日期按标准号
+    }
+    const dd = String(b.erataDate||"").localeCompare(String(a.erataDate||""));
+    if(dd) return dd;                                 // 组内日期倒序
+    return String(a.sec||"").localeCompare(String(b.sec||""));  // 同日按章节
   });
   // ★ 必须显示标准名和勘误时间 ★（用户要求）
   //   没有名称：只看到「GB 5009.7-2016 3.4.4」，不知道测的是什么，
@@ -3486,16 +3537,21 @@ function renderErata(){
          </div>`
       : `<div style="margin:9px 0;font-size:12.5px">
            <div style="background:#fdeceb;border:1px solid #f7cfcb;border-radius:5px;padding:7px 10px;margin-bottom:5px">
-             <span class="muted" style="display:block;margin-bottom:2px">改前（错误）</span>${e.before}
+             <span class="muted" style="display:block;margin-bottom:2px">改前（错误）</span>${_erataBody(e.before)}
            </div>
            <div style="background:#eaf4ee;border:1px solid #c9e0d4;border-radius:5px;padding:7px 10px">
-             <span class="muted" style="display:block;margin-bottom:2px">改后（正确）</span>${e.after}
+             <span class="muted" style="display:block;margin-bottom:2px">改后（正确）</span>${_erataBody(e.after)}
            </div>
          </div>`;
+    /* ★ 官方链接（2026-11-05）★
+       · 修改单 → staticPages/<GUID>.html  （静态页，GET 直接能开，实测 200）
+       · 勘误   → 官方「标准勘误」tab 的检索结果页
+                  （勘误记录没有可直开的静态页 —— 实测 122 条勘误的 staticPages 全 404；
+                    勘误是另一种文档类型。用户截图指的就是这个 tab。）
+       两个链接都带 rel="noopener noreferrer"（cfsa 防盗链，带 Referer 会 404/500）。 */
     const link = isMod
-      ? offLink("官方修改单详情页", e.url || CFSA_SEARCH(e.no), "btn sm", "", e.no)
-      /* 勘误：不是落到整个勘误专库首页，而是带标准号去检索该标准的勘误记录 */
-      : offLink("官方勘误记录", CFSA_SEARCH(e.no), "btn sm", "", e.no);
+      ? offLink("官方修改单正文", e.url || CFSA_SEARCH(e.no), "btn sm", "", e.no)
+      : offLink("官方勘误记录（标准勘误页）", e.url || CFSA_ERATA(e.no), "btn sm", "", e.no);
     return `
     <div class="alert a-${lv}">
       <div class="h"><span class="no">${e.no}</span><div class="t">${e.stdName || "（标准名待补）"}</div>
@@ -4420,7 +4476,7 @@ function renderAlerts(){
         </div>
         <div class="why"><span class="lb">为什么重要</span>${e.why}</div>
         <div class="act"><span class="lb">实验室要做什么</span><ul>${e.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
-        <div class="foot">${offLink("官方勘误记录", CFSA_SEARCH(e.no), "btn sm", "", e.no)}
+        <div class="foot">${offLink("官方勘误记录", CFSA_ERATA(e.no), "btn sm", "", e.no)}
           <div class="sp" style="flex:1"></div>
           ${done
             ? `<button class="btn sm" onclick="unmarkAlertDone('${e.no}','${e.sec}')">撤销处理</button>`
@@ -4452,7 +4508,7 @@ function renderAlerts(){
         <div class="kv">${isEr?("处理时间 "+m.at):src.body}</div>
         <div class="act"><span class="lb">实验室要做什么</span><ul>${(src.acts||[]).map(x=>`<li>${x}</li>`).join("")}</ul></div>
         <div class="foot">
-          ${isEr?offLink("官方勘误记录", CFSA_SEARCH(src.no))
+          ${isEr?offLink("官方勘误记录", CFSA_ERATA(src.no))
                  :offLink("官方详情页", stdUrl(k), "btn sm", "", k)}
           <div class="sp" style="flex:1"></div>
           <span class="muted">处理于 ${m.at}</span>

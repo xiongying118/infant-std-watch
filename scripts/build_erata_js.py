@@ -42,6 +42,7 @@ import json
 import os
 import re
 import sys
+import urllib.parse
 from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -62,6 +63,20 @@ def esc(s) -> str:
     s = s.replace("\\", "\\\\").replace('"', '\\"')
     s = s.replace("\r", " ").replace("\n", " ")
     return s
+
+
+def CFSA_ERATA_URL(no: str) -> str:
+    """官方「标准勘误」tab 所在的人可读检索页。
+
+    ★ 为什么不是 indexSearch 接口 ★
+      `?task=indexSearch&...` 返回的是 **JSON**（浏览器打开只有 41 字符纯文本，
+      什么都看不出来，实测过）；`?task=index` 才是那个平台页面
+      （26438 字符，顶部有「标准文本 / 标准勘误 / 标准解读 / 全部标准」几个 tab，
+      用户 2026-11-05 截图指的就是「标准勘误」那个 tab）。
+    → 链接指到检索页，用户点进去搜一下标准号就能看到官方那张勘误表。
+    """
+    return ("https://sppt.cfsa.net.cn:8086/db?task=index&keyword="
+            + urllib.parse.quote(str(no or "").replace(" ", "")))
 
 
 def _mod_name(mods: list[dict], no: str, mod_no) -> str:
@@ -150,6 +165,15 @@ def load_items() -> list[dict]:
             if key in seen:
                 continue
             seen.add(key)
+            # ★ 修改单官方页：staticPages/<GUID>.html（GET 可开，实测 200）★
+            #   勘误记录**不能**用它 —— 实测 122 条勘误的 staticPages 全 404
+            #   （勘误是另一种文档，staticPages 只对修改单有效）。
+            murl = a.get("official_url") or ""
+            if murl and "type=2&guid=" in murl:
+                murl = ""
+            if not murl:
+                murl = "https://sppt.cfsa.net.cn:8086/db?task=index&keyword=" \
+                       + urllib.parse.quote(str(a["std_no"]).replace(" ", ""))
             items.append({
                 "no": a["std_no"],
                 "stdName": _mod_name(mods, a["std_no"], e.get("modNo")),
@@ -164,7 +188,7 @@ def load_items() -> list[dict]:
                 "after": e.get("after") or "",
                 "why": a.get("why_matters") or "",
                 "acts": a.get("actions") or [],
-                "url": a.get("official_url") or "",
+                "url": murl,
             })
 
     # ---- 2) 勘误 ----
@@ -197,7 +221,13 @@ def load_items() -> list[dict]:
         no = x.get("std_no", "")
         if not no or not E.in_ref_scope(no):
             continue
-        key = f"{no}|ERATA|{e.get('date')}|{e.get('section')}"
+        # ★ 去重键要带内容指纹（2026-11-05）★
+        #   官方对**同一章节**可能有多条不同勘误（实测 GB 5009.257-2016 表A.1 有 3 条、
+        #   GB 5009.235-2016 第 12 章有 3 条），它们的 before/after 各不相同。
+        #   原来只用「标准号+日期+章节」去重 → **误当重复丢掉 2 条真实勘误**。
+        #   → 加上 before/after 的指纹，才是真正的去重。
+        fp = str(e.get("before") or "")[:60] + "|" + str(e.get("after") or "")[:60]
+        key = f"{no}|ERATA|{e.get('date')}|{e.get('section')}|{fp}"
         if key in seen:
             continue
         seen.add(key)
@@ -219,7 +249,10 @@ def load_items() -> list[dict]:
             "after": e.get("after") or "",
             "why": x.get("why_matters") or "",
             "acts": x.get("actions") or [],
-            "url": x.get("official_url") or "",
+            # ★ 勘误记录没有可直开的静态页（实测 staticPages 对勘误全 404）★
+            #   → 指向官方「标准勘误」tab 的检索结果页（GET 可开，
+            #     页面直接列出该标准的勘误记录表，正是用户截图指的那个位置）。
+            "url": CFSA_ERATA_URL(no),
         })
     return items
 
