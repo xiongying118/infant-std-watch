@@ -286,6 +286,43 @@ def is_relevant_erata(item: dict) -> bool:
 #   现行执行标准），本模块读它。范围数据缺失时回退到一级引用，且不误杀。
 _SCOPE_CANDIDATES = ("refscope.json", "general_refs.json")
 _refscope_cache: set[str] | None = None
+_refscope_cache_map: dict[str, list[str]] | None = None
+
+
+def _refscope_map() -> dict[str, list[str]]:
+    """范围表（归一标准号 → 来源说明列表）。
+
+    ★ 与 _refscope() 的区别 ★
+      _refscope() 只返回 set（归一后的标准号），没有来源信息；
+      页面要区分「官方通则引用的」和「实验室在检补充的」，
+      就需要来源 → 用这个。
+    """
+    global _refscope_cache, _refscope_cache_map
+    if _refscope_cache_map is not None:
+        return _refscope_cache_map
+    out: dict[str, list[str]] = {}
+    for fn in _SCOPE_CANDIDATES:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "..", "data", fn)
+        if not os.path.exists(path):
+            continue
+        try:
+            d = json.load(io.open(path, encoding="utf-8"))
+        except Exception:                              # noqa: BLE001
+            continue
+        if fn == "refscope.json":
+            for k, why in (d.get("scope") or {}).items():
+                rk = _refkey(k)
+                if rk:
+                    out[rk] = list(why) if isinstance(why, list) else [str(why)]
+        else:
+            for key in (d.get("linked") or {}):
+                out.setdefault(_refkey(key), []).append("通则直接引用")
+        if out:
+            break
+    _refscope_cache_map = out
+    _refscope_cache = set(out)
+    return out
 
 
 def _refscope() -> set[str]:
