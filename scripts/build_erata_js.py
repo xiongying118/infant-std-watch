@@ -417,7 +417,13 @@ def main() -> int:
             tail += 1
         if tail < len(new_s) and new_s[tail] == "\n":
             tail += 1
-        new_s = new_s[:ms.start()] + new_s[tail:]
+        # ★ 起点用 ms.start() + 1（保留段头前面那个换行符）★
+        #   ms.start() 指向的是 "\n  ERATASCOPE: [\n" 里**那个 \n**。
+        #   若从 ms.start() 开始删，会把「上一段结尾 ↔ ERATASCOPE 段头」之间的
+        #   换行也一起删掉 → 拼接后 "  ERATA: [" 不在行首
+        #   → 后面 index("\n  ERATA: [") 直接 ValueError。
+        #   （这个坑我踩了两次：插入点算错一次、删除起点算错一次。）
+        new_s = new_s[:ms.start() + 1] + new_s[tail:]
 
     # ② 在 ERATA 段头之前整段插入
     mi = new_s.index("\n  ERATA: [")
