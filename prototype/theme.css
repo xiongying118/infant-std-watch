@@ -360,13 +360,22 @@ a:hover{color:var(--brand);text-decoration:none}
 .grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .grid.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 /* ★ g5：KPI 区现在是 5 格（多了「20 天内勘误/修改单」）★
-   5 列在 1500px 宽下每格约 260px，数字和说明都放得下；
-   1200px 以下退成 2 列，860px 以下单列。 */
+   用户 2026-11-05：「这个排一行 不要每个一行」
+   → **始终 5 列横排**，任何宽度都不折行。
+   窄屏时每格会变窄，靠下面三条撑住可读性：
+     · 数字用 clamp() 随宽度缩放（不撑破格子）
+     · 说明文字允许换行（最多两行）
+     · 格子用 minmax(0,1fr) 防止内容把列撑开
+   之前按 1400/1200/860 逐级降列，在窄窗口下变成一列竖排，
+   5 张卡把首页顶掉一大屏 —— 用户明确要求改掉。 */
 .grid.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
-@media(max-width:1400px){.grid.g5{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:1200px){.grid.g4,.grid.g5{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.grid.g5 .kpi{padding:13px 14px}
+.grid.g5 .kpi .k{font-size:11px;letter-spacing:0}
+.grid.g5 .kpi .v{font-size:clamp(20px,2.1vw,30px);letter-spacing:-.6px}
+.grid.g5 .kpi .d{font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+@media(max-width:1200px){.grid.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:860px){
-  .grid.g2,.grid.g3,.grid.g4,.grid.g5{grid-template-columns:1fr}
+  .grid.g2,.grid.g3,.grid.g4{grid-template-columns:1fr}
 }
 
 /* ================================================================
