@@ -18,7 +18,7 @@
   再往下就是培养基、试剂、通用仪器规范，与婴配检测结果无关了。
 
 ★ 合规边界（与 general_refs.py 一致）★
-  标准正文只在内存里解析，不落盘；只提取标准号；落盘的只有标准号。
+  标准正文只在内存中解析，不落盘；只提取标准号；落盘的只有标准号。
 """
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ from sources import CfsaSpptAdapter                   # noqa: E402
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(BASE, "..", "data")
 
-# 只展开"限量类"标准 —— 它们是通则的同级引用，正文里引用的是检测方法。
+# 只展开"限量类标准" —— 它们是通则的同级引用，正文里引用的是检测方法。
 # 不展开 GB 2760（添加剂使用标准）/ GB 14880（营养强化剂）：
 # 那两个引用的是添加剂/强化剂品种标准（GB 1886/GB 1903 系列），
 # 实验室不测这些，且范围会无谓膨胀。
@@ -215,9 +215,9 @@ def main() -> int:
     #   现行执行的是 GB 5009.285）。这些是实验室真正在执行的标准，
     #   勘误/修改单盯着它们才有意义 —— 只按通则原文引用号会把替代后的漏掉。
     rj = os.path.join(DATA, "_refjs.txt")
+    extra = 0
     if os.path.exists(rj):
         txt = io.open(rj, encoding="utf-8").read()
-        extra = 0
         for m in re.finditer(r'no:"((?:GB|JJF|JB|QB)[^"]+)"', txt):
             k = _ref_key(m.group(1))
             if k and k not in scope:
@@ -282,7 +282,7 @@ def main() -> int:
            "level1": sorted(lvl1)}
     op = os.path.join(DATA, "refscope.json")
     json.dump(out, io.open(op, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print("\n范围合计 {} 个（一级 {} + 二级新增 {}）→ {}".format(
+    print("\n范围合计 {} 个（二级新增 {}）→ {}".format(
         len(scope), len(lvl1), len(scope) - len(lvl1), op))
     for k, v in sorted(scope.items()):
         if v[0] != "通则直接引用":
