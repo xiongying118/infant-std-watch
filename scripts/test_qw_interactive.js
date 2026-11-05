@@ -78,7 +78,20 @@ async function main() {
   p.on('pageerror', e => errs.push('pageerror: ' + e.message));
   p.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
 
-  await p.goto(URL + '#qmtools', { waitUntil: 'domcontentloaded', timeout: 60000 });
+      /* ★ 线上访问偶发 ERR_CONNECTION_RESET（本地网络抖动）→ 自动重试 ★
+       2026-11-04 加：之前网络一抖测试就整个崩掉，误判成功能有问题。 */
+    let navOK = false;
+    for (let i = 0; i < 6 && !navOK; i++) {
+      try {
+      await p.goto(URL + '#qmtools', { waitUntil: 'domcontentloaded', timeout: 60000 });
+        navOK = true;
+      } catch (e) {
+        console.log('  (网络重试 ' + (i + 1) + ')');
+        await p.waitForTimeout(4000);
+      }
+    }
+    if (!navOK) { console.log('网络不通，测试中止'); await b.close(); process.exit(2); }
+  
   await p.waitForTimeout(3500);
 
   console.log('\n=== ① 16 个质量管理工具：全部能打开并渲染 ===');
@@ -364,7 +377,11 @@ async function main() {
   await p.waitForTimeout(700);
   const pImp = await p.evaluate(() => {
     const host = document.querySelector('.view:not(.hide) [data-qw-host]');
-    const rows = host.querySelectorAll('tbody tr');
+    /* ★ 只数工具自己的表格（.qwt-tbl）★
+       引导面板里的「示例数据」现在也是 <table>，
+       用 host.querySelectorAll('tbody tr') 会把示例行一起算进来。 */
+    const tbl = host.querySelector('.qwt-tbl');
+    const rows = tbl ? tbl.querySelectorAll('tbody tr') : [];
     const first = rows[0] ? [...rows[0].querySelectorAll('input')].map(i => i.value) : [];
     return { n: rows.length, first: first.join('|') };
   });

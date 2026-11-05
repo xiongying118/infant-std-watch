@@ -13,7 +13,18 @@ function ck(ok,msg){ if(ok){pass++;console.log('  ✓ '+msg);} else {fail++;cons
   const ctx=await b.newContext({viewport:{width:1600,height:1100},permissions:['clipboard-read','clipboard-write']});
   const p=await ctx.newPage();
   const errs=[]; p.on('pageerror',e=>errs.push(e.message));
-  await p.goto(URL+'#qmtools',{waitUntil:'domcontentloaded',timeout:60000});
+  /* ★ 线上访问偶发 ERR_CONNECTION_RESET（本地网络抖动）→ 自动重试 ★ */
+  let navOK=false;
+  for(let i=0;i<6&&!navOK;i++){
+    try{
+      await p.goto(URL+'#qmtools',{waitUntil:'domcontentloaded',timeout:60000});
+      navOK=true;
+    }catch(e){
+      console.log('  (网络重试 '+(i+1)+')');
+      await p.waitForTimeout(4000);
+    }
+  }
+  if(!navOK){ console.log('网络不通，测试中止'); await b.close(); process.exit(2); }
   await p.waitForTimeout(4000);
 
   console.log('=== ① 所有示例数据块：表格列必须严格对齐 ===');

@@ -52,7 +52,18 @@ async function openTool(p, key) {
   p.on('pageerror', e => errs.push('pageerror: ' + e.message));
   p.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
 
-  await p.goto(URL + '#qmtools', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  /* ★ 线上访问偶发 ERR_CONNECTION_RESET → 自动重试 ★ */
+  let navOK = false;
+  for (let i = 0; i < 6 && !navOK; i++) {
+    try {
+      await p.goto(URL + '#qmtools', { waitUntil: 'domcontentloaded', timeout: 60000 });
+      navOK = true;
+    } catch (e) {
+      console.log('  (网络重试 ' + (i + 1) + ')');
+      await p.waitForTimeout(4000);
+    }
+  }
+  if (!navOK) { console.log('网络不通，测试中止'); await b.close(); process.exit(2); }
   await p.waitForTimeout(4000);
   /* ★ qwlink.json 是异步载入的 → 等它到位 ★ */
   await p.waitForFunction(() => window.QWLink && window.QWLink.LINK, null, { timeout: 15000 })
@@ -91,7 +102,11 @@ async function openTool(p, key) {
         open: g ? g.hasAttribute('open') : false,
         steps: g ? g.querySelectorAll('.qwg-step').length : 0,
         who: g ? ((g.querySelector('.qwg-who') || {}).textContent || '') : '',
-        hasData: g ? !!g.querySelector('.qwg-pre') : false,
+        /* ★ 示例数据现在有两种形态 ★
+           带制表符的 → 渲染成 .qwg-table（真表格，列严格对齐）
+           纯文本的   → 渲染成 .qwg-pre
+           两个都算「有行业示例数据」。 */
+        hasData: g ? !!(g.querySelector('.qwg-pre') || g.querySelector('.qwg-table')) : false,
         hasRead: g ? g.querySelectorAll('.qwg-read').length : 0,
         hasAction: g ? g.querySelectorAll('.qwg-act').length : 0
       };

@@ -123,25 +123,30 @@ def grade_erata(item: dict) -> tuple[str, str]:
 def is_relevant_erata(item: dict) -> bool:
     """这条勘误跟婴配实验室有没有关系。
 
-    实测 176 条里初版判了 105 条"相关"，明显偏宽 —— GB 1886（食品添加剂）
-    和 GB 1903（营养强化剂）系列大量混入，但实验室不测这些。
+    ★ 2026-11-05 判定逻辑大改（用户要求：「只要现行版本有效，全部都要」）★
+    原先靠一张关键词表判"相不相关"，实测误杀严重：
+      GB 5009.86-2016「食品中抗坏血酸的测定」—— 名称里没有"维生素"三字，
+      关键词表判 False → 实验室天天在测的抗坏血酸，勘误被丢掉。
+      GB 5009.3 / 5009.4 / 5009.90 等同理。
 
-    现在改成两条硬约束：
-      1. 名称里出现食品添加剂/营养强化剂等**明确的非检测对象** → 直接排除
-      2. 剩下再用关键词表判断
+    现在的判定（先范围、后关键词，顺序不能反）：
+      1. **在通则引用范围内 → 直接相关**（这是最硬的依据：
+         通则的规范性引用文件点了名，就是实验室必须执行的标准）
+      2. 范围外的 → 再用排除表 + 关键词表兜底（避免整个勘误库 187 条全进来）
     """
     name = item.get("std_name") or ""
+
+    # 1) ★ 范围优先 ★
+    #   范围内（现行有效的通则引用标准）→ 全部收录，一个不丢。
+    #   这是用户 2026-11-05 的明确要求：「只要现行版本有效，全部都要」。
+    if in_ref_scope(item.get("std_no", "")):
+        return True
+
+    # 2) 范围外的，用排除表 + 关键词表兜底
     blob = " ".join([item.get("std_no", ""), name,
                      _plain(item.get("before", "")), _plain(item.get("after", ""))])
-
-    # 1) 排除实验室不做的品类
     if _EXCLUDE_RE.search(name):
         return False
-
-    # 2) 营养强化剂/添加剂/食品用香精等，即使内容命中也不算
-    if re.search(r"^(GB\s*(1886|1903|14880|2760)\b)", item.get("std_no", "").strip().upper()):
-        return False
-
     return bool(_RELEVANT_RE.search(blob))
 
 
@@ -207,7 +212,11 @@ def _refkey(no: str) -> str:
     n = re.sub(r"\s+", "", (no or "").strip().rstrip(",，")).upper().replace("—", "-")
     n = re.sub(r"-\d{4}$", "", n)
     n = n.replace("GB/T", "GBT").replace("QB/T", "QBT")
-    if not n.startswith(("GB", "QB")):
+    # ★ JJF / JB 也要认（计量检定规程，婴配实验室在用）★
+    #   原来只要不是 GB/QB 开头就强加 "GB" 前缀 →
+    #   "JJF 1070-2023" 变成 "GBJJF1070"，跟官方库的 "JJF1070" 对不上，
+    #   这个标准的勘误/修改单永远匹配不上（2026-11-05 踩到）。
+    if not n.startswith(("GB", "QB", "JJF", "JB")):
         n = "GB" + n
     return n
 
@@ -373,13 +382,22 @@ _RELEVANT_RE = re.compile(
     r"食品生产通用卫生规范|良好生产规范|取样|留样")
 
 
-def build_erata_alerts(erata_items: list[dict]) -> list[dict]:
-    """把勘误转成提醒。文案格式固定，说人话。
+def build_erata_alerts(erata_items: list[dict], include_low: bool = False) -> list[dict]:
+    """把勘误转成结构化条目。文案格式固定，说人话。
 
     ★ 范围限定（用户要求 2026-10-03）★
     只保留通则引用标准里的勘误。产品标准（GB 10765/10766/10767 等）
     的「规范性引用文件」一章列出的那 60 来个标准才是实验室真正要执行的，
     其余标准的勘误与婴配检测无关，进提醒队列只会稀释重点。
+
+    ★ include_low 的用途区分（2026-11-05 加）★
+    这个函数原先同时干两件事，导致「页面勘误列表只有 15 条」：
+      · 推提醒（crawler.py）→ low 级该丢（文字性修正不必打扰人）
+      · 填页面数据（build_erata_js.py）→ **low 级也该收**
+    用户原话：「特别是通则引用标准里的更新、勘误修改每天一定要抓取」
+    —— 页面要能查全，查不到就等于没抓。
+    实测：官方范围内 53 条勘误，原先只进页面 15 条（丢 44 条）。
+    现在：推提醒仍只推 mid/high，页面数据全收（low 标出来即可）。
     """
     out = []
     for it in erata_items:
@@ -388,7 +406,7 @@ def build_erata_alerts(erata_items: list[dict]) -> list[dict]:
         if not is_relevant_erata(it):
             continue
         lvl, why = grade_erata(it)
-        if lvl == "low":
+        if lvl == "low" and not include_low:
             continue      # 文字性修正不进提醒队列
         no = it.get("std_no", "")
         name = it.get("std_name", "")
@@ -411,12 +429,16 @@ def build_erata_alerts(erata_items: list[dict]) -> list[dict]:
                 "检查近期检测数据是否受此勘误影响，必要时重新检测",
                 "检查已出具报告，涉及的批次需评估是否要补充说明",
             ]
-        else:
+        elif lvl == "mid":
             why_matters = "勘误内容属需要留意但通常不改变检测结果的修改。"
             acts = [
                 f"核对作业指导书 {sec} 章节",
                 "留意即可，一般不需重新检测",
             ]
+        else:
+            # low：文字性修正（编号/页码/错别字），页面留档用
+            why_matters = "文字性修正（编号、页码、错别字一类），不影响检测结果与判定。"
+            acts = ["留档即可，作业文件无需改"]
 
         out.append({
             "std_no": no, "level": lvl, "title": title,

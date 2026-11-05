@@ -188,6 +188,25 @@ def main() -> int:
             print("   注意：补抓未完成，缺失的标准这轮不会进清单。")
             print("   页面会如实显示各源条数与抓取时间，不会假装完整。")
 
+        # ★★ 2026-11-05 补上：通则引用标准的元数据与替代关系每日刷新 ★★
+        #
+        # 用户原话：「特别是通则引用标准里的更新、勘误修改每天一定要抓取」
+        #
+        # 这两个脚本原先**只在���机手动跑**，云端每日流程里没有：
+        #   · fetch_ref_details.py —— 补抓通则引用页新增标准的元数据
+        #     （GB 5009.12 铅 / GB 5009.16 锡 / GB 4789.40 克罗诺杆菌 等
+        #      通则正文没引用、但限量表指定的检测方法）
+        #     不跑 → build_refgroups 取不到名称与日期 → 缺项
+        #   · fill_replacements.py —— 按「检测对象」回官方源补全跨号替代者
+        #     （GB 5413.14 → GB 5009.285 维生素B12 这类）
+        #     不跑 → 库里有老号、没有新号 → 实验室真正该用的新方法不在监控范围
+        #
+        # 两个都要联网，给独立超时预算；失败不阻断后续（allow_fail）。
+        run("补抓引用标准元数据", ["scripts/fetch_ref_details.py"], allow_fail=True,
+            timeout=(240 if budget > 0 else None))
+        run("补全跨号替代关系", ["scripts/fill_replacements.py"], allow_fail=True,
+            timeout=(240 if budget > 0 else None))
+
         # ★ 重算分类（2026-10-07 补上，之前漏了）★
     #   category 是在**抓取当时**写进快照的。之后改了 guess_category
     #   的号段表（把GB 23790/29923 从 product 挪到 prod 等），
@@ -219,6 +238,35 @@ def main() -> int:
     #   data/general_refs.json 出 _refjs.txt，inject_refdata.py 把它灌进 data.js。
     run("重建通则引用组", ["scripts/build_refgroups.py"], allow_fail=True)
     run("注入通则引用数据", ["scripts/inject_refdata.py"], allow_fail=True)
+
+    # ★★ 2026-11-05 补上：通则引用标准的「更新 / 勘误 / 修改单」每日必须刷新 ★★
+    #
+    # 用户原话：「特别是通则引用标准里的更新、勘误修改每天一定要抓取啊」
+    #
+    # 实测查出来的四个断链（每一个都让「每日更新」名存实亡）：
+    #
+    #  ① expand_refscope.py —— **不在每日流程里**
+    #     它生成 data/refscope.json（通则引用的传递闭包 = 提醒的范围）。
+    #     文件停在 2026-10-21 那版 → 范围漏了 5 个**现行**标准：
+    #       GB 5009.229-2025 酸价 / GB 5009.227-2023 过氧化值
+    #       GB 5009.16-2023 锡 / GB 4789.14-2014 蜡样芽孢杆菌 / JJF 1070-2023
+    #     这 5 个标准的勘误**永远进不了提醒**（范围外直接丢弃）。
+    #
+    #  ② build_erata_js.py —— **不在每日流程里**
+    #     它把抓到的勘误/修改单写进 data.js 的 ERATA 段。
+    #     不跑它 → 每天抓到的新勘误**永远进不了页面**，
+    #     ERATA 一直是 2026-11-03 那 15 条。
+    #
+    #  ③ fetch_ref_details.py —— 不跑 → 引用标准的官方详情元数据不刷新
+    #
+    #  ④ fill_replacements.py —— 不跑 → 引用标准的替代关系不补
+    #
+    # 顺序很关键：expand_refscope 先跑（定范围），
+    # 再 build_erata_js（按新范围过滤勘误），最后注入 data.js。
+    # ★ 用 --daily 轻量模式（不联网、不解析 PDF）★
+    #   完整模式要下载 GB 2761/2762/29921 正文算二级传递闭包，本机手动跑。
+    run("展开引用范围", ["scripts/expand_refscope.py", "--daily"], allow_fail=True)
+    run("生成勘误数据", ["scripts/build_erata_js.py"], allow_fail=True)
 
     run("生成运行状态", ["scripts/build_runstate.py"])
     run("抽出 data.js", ["scripts/extract_data.py"])

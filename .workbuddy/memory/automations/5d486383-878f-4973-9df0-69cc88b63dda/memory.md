@@ -1273,3 +1273,107 @@
 8. `crawler.py:612-620` fetch 用裸 print 吞掉逐关键词异常
 9. **发布决策扩展**：本地 prototype 是新版应用（7 个 js/css 从未上线），发布前需确认是否整体上线
 10. `scripts/selfcheck_page.js` 陈旧（`GB` → `GBNUTRITION`），应修或标注为失效
+
+## 2026-11-05
+- 管线退出码 0，校验通过（还原后）：STD=348 LAWS=42 ERATA=15 REFGROUPS=13 ALERTS=2 SOONPOOL=4
+  CNASDOCS=18 CNASKINDS=6 METHODS=18
+- **判定情况 A → 已发布**（线上链接不变：https://infant-std-watch.app.workbuddy.host/）
+  理由：本地 data.js 与**线上副本**存在实质差异（线上缺已核实的 GB 19644 + JSA 模块严重残缺），
+  覆盖并非无意义覆盖 → 沿用 10-29 口径（线上副本陈旧且实质落后时归 A 发布，汇报中写明「今日无新标准，
+  发布只为纠正线上陈旧副本」）
+- 各源真实条数（还原后）：SRC-01=3 SRC-02=7 SRC-05=373 SRC-06=4 SRC-07=0 SRC-08=57 SRC-11=98
+  公告=56 勘误=187 法规 LAWS=42
+- **真实新增/换版/废止/勘误全 0**；change_events 今日 0 行（总计仍 27，max 停在 10-08 10:10:25）；
+  alerts 今日 0 行（总计 27）
+- **今日 crawl_logs 无任何 error**（error 计数 = 0）；SRC-07 是**冷却跳过**（连续失败 20 次，24h 窗口内未尝试）
+  → 按 10-14 口径不算情况 C；SRC-06 返回 0 条但**兜底生效**（沿用上次快照 4 条，未掉条）
+
+### ★ SRC-08 掉条第 13 次复现（与 10-21/23/26/28/29/30/11-02/11-03/11-04 同型）
+- 首跑抓取 55 条（基线 57），丢 `T/CDZX 003-2023`《乳粉中磷脂酰胆碱的测定 高效液相色谱法》
+  与 `T/HGMIF 001-2021`《绿色设计产品评价技术规范 婴幼儿配方乳粉》
+- **今日直连团标平台核验**（form 编码，正确姿势）：
+  `CDZX` total=0、`CDZX003` total=0、`CDZX 003` total=100（全是无关号段）、`乳粉中磷脂酰胆碱` total=0、
+  `磷脂酰胆碱` total=0、`磷脂酰胆碱的测定` total=0、`常德市质量协会`（CDZX 的发布方）total=0；
+  `HGMIF` total=26 **全 26 条列出仍不含 001**、`湖南省绿色制造产业联合会`（HGMIF 发布方）total=26 同上、
+  `绿色设计产品评价技术规范 婴幼儿配方乳粉` total=0
+  → **平台侧确实不可检索，不能判定废止**（对照 `HGMIF` 有 26 条正常返回，说明不是我方被墙）
+- 处置：`cp` 从 `.workbuddy/tmp/baseline_20261105/snapshots/` 还原 SRC-08(57)，再 `daily_check.py --skip-fetch` 重建 → **STD 恢复 348**
+- 还原后逐块比对（Node vm）：STD/ERATA/ALERTS/KWS/SUBS/HIST/LAWS/CATS/LAW_KINDS/SRCS/CNASKINDS/
+  METHODS/JSA/QMTOOLS/RDTOOLS/GBNUTRITION **全 IDENTICAL**；REFGROUPS 65 处 / SOONPOOL 4 处 /
+  RUNSTATE 16 处差异 → 全部是「N 天前」日计数与时间戳
+  → **唯一实质变化 = RUNSTATE.lastRun（11-04 18:27 → 11-05 18:17）+ nextRun**
+
+### ★ 官方源直连全库核验（结论：官方今天确实无新标准/新勘误/新公告）
+- **标准库 1808 行 / 剔除解读材料与修改单后 1753 条**，**PDATE 上限仍 2026-08-18**；
+  `PDATE>=2026-10-01` = **0** 条（与 11-02/11-03/11-04 完全一致 → 官方标准库自 8 月中旬起未再发新食品安全国标）
+- **勘误库 187 条**：与本地 erata 快照 **GUID 完全相同（官方有本地无 0 / 本地有官方无 0）**；KWSJ 上限 2026-10-28
+- **公告库 56 条**：与本地 notice 快照 **GUID 与标题双口径完全相同（双向 0 差异）**；PDATE 上限 2026-08-18
+- SRC-05 快照 373 vs 基线 373：标准号集合差异 **0/0**、7 个受监控字段差异 **0**
+  → 零新增、零换版、零废止
+- **GB 19644-2024《食品安全国家标准 乳粉和调制乳粉》在官方库确认存在**（PDATE 2024-02-08，另有 2010 旧版）
+  → 线上副本缺这条已核实条目，是本次发布的主要价值
+
+### 抓取日志「变更 16 条」的含义（与 11-02/11-03/11-04 完全相同，仍是倒计时事件不是换版）
+- SRC-05 写「抓取 355 条，变更 16 条」；实测快照里 `status=即将实施` 且 `0 <= days_to_implement <= 365`
+  的条数 **恰好 = 16** → 同一批 UPCOMING 提醒，30 天去重桶已推过 → 不新增 change_events/alerts
+- SRC-05 快照 status 分布：现行 353 / 即将实施 18 / 废止 2（GB 5749-1985、GB 5749-2006）
+
+### ★ 今日新增修复（已上线生效）
+- **CNAS 筛选项缺口（第 6 天）已修**：`build_refgroups.py` 的 `CNAS_DROP` 补 `珠宝玉石|贵金属|宝石|首饰`
+  → CNASDOCS 由 19 降为 **18**，与线上此前正确的 18 条一致（线上 18 条反而是对的，本地多一条
+  `CNAS-CL01-A015:2018`《检测和校准实验室能力认可准则在珠宝玉石、贵金属检测领域的应用说明》
+  —— 珠宝检测与乳品实验室无关）
+  预演实测：SRC-11 快照 98 条中**只命中这一条，误伤 0 条** → 修完与线上对齐，无副作用
+
+### ★ 发布方式变更（重要，本日首次用 WorkBuddy 站点发布能力）
+- **不再用 `scripts/deploy.py --fast`（GitHub Actions 通道）**，改用 WorkBuddy 站点发布能力
+  （目录 `prototype/`，domainPrefix=`infant-std-watch`，entryHtml=`index.html`）
+- **线上首次出现完整新版应用**：theme.css / jsa.js / labbench.js / qwform.js / qwguide.js 等
+  **7 个 js/css 从未上线 → 今日全部 200**（此前 theme.css/jsa.js/labbench.js 均 404）
+- 发布后回读校验：线上 data.js 与本地 **482941 字节逐块全 IDENTICAL**（含 STD/REFGROUPS/SOONPOOL/ERATA/
+  ALERTS/KWS/SUBS/HIST/LAWS/CATS/LAW_KINDS/SRCS/RUNSTATE/CNASDOCS/CNASKINDS/METHODS/JSA/QMTOOLS/RDTOOLS/GBNUTRITION）
+- **Playwright 端到端实测线上**：JS 错误 0、资源失败 0；13 个左侧视图**逐个点击全部渲染正常、无一报错**；
+  状态栏显示「上次检查：2026-11-05 18:17 / 下次：2026-11-06 09:07」
+- 注意：线上 index.html 引用 17 个 css/js，本地 prototype 目录 **17 个引用全部存在，缺失 0**（发布前已校验）
+- 首次发布前跑了两次冒烟：file:// 协议与 http:// 协议（python http.server 8731），均 JS 错误 0 / 资源失败 0；
+  测试后本地测试服务已终止（PID 6072）
+
+### 工具备忘（本日新增/修正）
+- **node 路径**：本机实际是 `C:\Users\13104\.workbuddy\binaries\node\versions\22.22.2-6\node.exe`（**不是** `-3`）；
+  `daily_check.py` 里 `find_node()` 的兜底 guess 写死 `-3`（已失效），但 `shutil.which("node")` 能命中，校验未静默跳过
+- **Playwright 可用**：`C:/Users/13104/.workbuddy/skills/dashi-ppt/project/node_modules/playwright-core` +
+  `C:/Users/13104/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe`
+  （require 路径**必须用 Windows 风格**，`/c/Users/...` 会 MODULE_NOT_FOUND）；
+  可用来做发布前冒烟 + 发布后端到端验证（比只看 Last-Modified 强得多）
+- **bash heredoc 会吃掉 JS 里的反斜杠**（`\\` 被吞成 `\`）→ 写 JS 脚本用 Write 工具，不用 heredoc
+- 本地起静态服务用 `python -m http.server <port> --bind 127.0.0.1`；停服务要用 PowerShell 工具
+  （bash 的 `pkill` 在 Git Bash 下杀不掉 Windows 进程）
+- 页面文本里搜到「错误」多为**勘误原文「编辑性错误」**的假阳性，不是页面故障；
+  判断页面异常应优先看 `pageerror` / `requestfailed` / HTTP>=400，而不是 innerText 关键词
+
+### 复核（旧问题）
+- healthy 假阳性**第 16 天复现**：RUNSTATE `healthy: true`，而今日 crawl_logs **无 error**（今日 SRC-07 冷却跳过）
+  → 今日无当日 error 可对照，但机制仍未修
+- SRC-06 日期兜底造号：本地与线上今日皆无（连续第 18 天）
+- 音译三条（GB 5009.276/292/303）为历史遗留，未扩散
+- 8 月批次三个婴配相关标准本地仍缺失（长期漏采，非今日新增）：`GB22570-2026`《辅食营养补充品和学龄前儿童营养补充品》、
+  `GB31688-2026`《牛乳蛋白》、`GB5413.36-2026`《特殊膳食用食品中脂肪酸和反式脂肪酸的测定》
+  （注：GB 5009.168-2026《食品中脂肪酸和反式脂肪酸的测定》已在库，别与 GB5413.36 混淆）
+
+### 待修（优先级排序）
+1. **★ SRC-07 判定逻辑**（连续 **21** fails，10-10 已诊断、11-05 再次确认根因）：
+   修 `crawler.py:859`，0 条记 ok 并正常写空快照 → 否则每 24h 冷却到期即触发误报，部委公告渠道持续假失明
+2. **★ 静默掉条闸门**（10-06 首次，10-19 事故，10-21/23/26/28/29/30/11-02/11-03/11-04/**11-05 复现**，**今日第 13 次**）：
+   `sanity_guard.py` 必须校验各源快照条数**环比跌幅**（>20% 判失败并阻断发布）；
+   建议同时**把 SRC-06 的「沿用上次快照」兜底推广到所有源**（SRC-06 今天靠这条保住 4 条，SRC-08 没有）
+3. **★ SRC-06 多栏目轮询**（连续 **11** 天造成实际掉条）：4 条公告分散在 `tssps/`/`spcjs/`/`zfjcs/`
+   三栏目 → 改多 pageId/多目录路径轮询 + 对快照内已有 `official_url` 做存活校验兜底
+4. **SRC-08 检索词选取**：`SOURCE_OWN_TERMS['SRC-08']` 需补 `HHPA` 等号段词；
+   `HGMIF 001-2021`、`CDZX 003-2023` 平台侧不可检索（今日再次证实），**不要因检索不到就判定废止**
+5. **检索词表缺口**（10-31 首次，至今未修）：需补「辅食营养补充品」「牛乳蛋白」等词
+6. **healthy 假阳性**（10-15 发现，已连续 16 天）：`build_runstate.py` 需读 `crawl_logs` 当日 error
+   与 `source_health.json` fails，反映到 healthy 与 logs
+7. `crawler.py:612-620` fetch 用裸 print 吞掉逐关键词异常
+8. `scripts/selfcheck_page.js` 陈旧（`GB` → `GBNUTRITION`），应修或标注为失效
+9. **发布通道已切换为 WorkBuddy 站点发布能力**（见上），`scripts/deploy.py --fast` 通道暂不再用；
+   待修 #9「本地 prototype 是新版应用发布前需确认」**今日已实际整体上线并端到端验证通过**，此项可关闭

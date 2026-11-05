@@ -328,6 +328,16 @@ def load_erata_snapshot() -> list[dict]:
         return []
 
 
+def _write_json(path: str, data) -> None:
+    """写 JSON（父目录不存在就建）。失败只记日志，不让整条流程挂掉。"""
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=1)
+    except Exception as e:                          # noqa: BLE001
+        log.warning("写 %s 失败：%s", path, e)
+
+
 def save_erata_snapshot(items: list[dict]) -> None:
     p = os.path.join(SNAP_DIR, "erata_latest.json")
     with open(p, "w", encoding="utf-8") as f:
@@ -491,6 +501,7 @@ def crawl_erata(force: bool = False) -> list[dict]:
     #   只跑勘误库 = 这一类变更 100% 漏抓，而且不报错（库是"成功"的）。
     #   修改单同样是"不改标准号、自批准之日起实施"，漏掉的代价一样大。
     mod_alerts: list[dict] = []
+    mods: list[dict] = []
     try:
         mods = ad.amendments_with_summary()
         # 去重交给 push_inapp（按 dedup_key 查 change_events），这里不重复造轮子
@@ -498,6 +509,15 @@ def crawl_erata(force: bool = False) -> list[dict]:
     except Exception as e:                          # noqa: BLE001
         log.error("[修改单] 抓取失败：%s", e)
     alerts.extend(mod_alerts)
+
+    # ★★ 落盘给页面用（2026-11-05）★★
+    #   build_erata_js.py 读 data/_erata_fresh.json + data/_mods.json
+    #   来填 data.js 的 ERATA 段 —— 但**这两个文件原先根本没人写**！
+    #   结果：每天抓到的新勘误/修改单只用来推了条提醒，
+    #   页面上的「标准勘误与修改单」列表永远是 2026-11-03 那 15 条。
+    #   用户原话：「特别是通则引用标准里的更新、勘误修改每天一定要抓取」
+    _write_json(os.path.join(SNAP_DIR, "..", "_erata_fresh.json"), items)
+    _write_json(os.path.join(SNAP_DIR, "..", "_mods.json"), mods)
 
     if first_run:
         log.info("[勘误] 首次建基线：收录 %d 条勘误（不推送）", len(items))

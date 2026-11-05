@@ -31,9 +31,11 @@ from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.stdout.reconfigure(encoding="utf-8")
-import pymupdf                                       # noqa: E402
+# ★ pymupdf 改成延迟导入（2026-11-05）★
+#   --daily 模式不需要解析 PDF，只做「一级引用 + 引用页现行执行标准」的合并。
+#   云端 CI 环境常常没装 pymupdf，模块顶层 import 会直接 ImportError 崩掉，
+#   导致整个范围刷新步骤挂掉 → 范围永远停在旧版。
 from sources import CfsaSpptAdapter                   # noqa: E402
-from general_refs import extract_refs_from_pdf, _clean_no   # noqa: E402
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(BASE, "..", "data")
@@ -62,12 +64,101 @@ def _ref_key(no: str) -> str:
     s = re.sub(r"-\d{4}$", "", s)
     # ★ "GB/T" 三字符整体替换，不能用 s[3:]（会剩个 T 变成 GBTTxxx）
     s = s.replace("GB/T", "GBT").replace("QB/T", "QBT")
-    if not s.startswith(("GB", "QB")):
+    # ★ JJF / JB 也要认（计量检定规程）★ 详见 erata.py 的同名函数
+    if not s.startswith(("GB", "QB", "JJF", "JB")):
         s = "GB" + s
     return s
 
 
+def _load_prev_scope() -> dict[str, list[str]]:
+    """读上次的 refscope.json，取其中的「二级引用」部分。"""
+    p = os.path.join(DATA, "refscope.json")
+    if not os.path.exists(p):
+        return {}
+    try:
+        d = json.load(io.open(p, encoding="utf-8"))
+    except Exception:                              # noqa: BLE001
+        return {}
+    out = {}
+    for k, v in (d.get("scope") or {}).items():
+        why = v if isinstance(v, list) else [str(v)]
+        # 二级来源是「经 XXX 引用」，一级是「通则直接引用」
+        if any(str(x).startswith("经") for x in why):
+            out[k] = list(why)
+    return out
+
+
+def daily_scope() -> int:
+    """★ 每日轻量刷新范围（不联网、不解析 PDF）★
+
+    为什么要有这个模式（2026-11-05）：
+      完整模式要下载 GB 2761/2762/29921 的正文 PDF 并解析二级引用，
+      云端 CI 跑不动（慢 + 还要 pymupdf）。
+      结果就是 **refscope.json 永远停在 2026-10-03 那版**，
+      范围漏了 5 个现行标准（GB 5009.229 酸价 / GB 5009.227 过氧化值 /
+      GB 5009.16 锡 / GB 4789.14 蜡样芽孢杆菌 / JJF 1070 净含量）。
+
+    每日真正会变的是：
+      · 一级引用（general_refs.json，本机跑 general_refs.py 时更新）
+      · **通则引用页的现行执行标准（data/_refjs.txt，每天由 build_refgroups.py 重建）**
+        —— 这里已经过了「现行有效性」核对，也含跨标准号替代后的新版
+
+    所以每日只需要：合并这两份 + **保留上次算好的二级引用**。
+    二级引用只在限量标准换版时才变，那是低频事件，本机跑 --full 即可。
+    """
+    p = os.path.join(DATA, "general_refs.json")
+    if not os.path.exists(p):
+        print("⚠ 没有 general_refs.json，跳过")
+        return 0
+    g = json.load(io.open(p, encoding="utf-8"))
+
+    scope: dict[str, list[str]] = {}
+    for key in (g.get("linked") or {}):
+        scope.setdefault(_ref_key(key), []).append("通则直接引用")
+    lvl1 = set(scope)
+    print("一级引用：{} 个".format(len(lvl1)))
+
+    # 并入「通则引用标准」页已核定的现行执行标准
+    rj = os.path.join(DATA, "_refjs.txt")
+    extra = 0
+    if os.path.exists(rj):
+        txt = io.open(rj, encoding="utf-8").read()
+        for m in re.finditer(r'no:"((?:GB|JJF|JB|QB)[^"]+)"', txt):
+            k = _ref_key(m.group(1))
+            if k and k not in scope:
+                scope[k] = ["通则引用页现行执行标准"]
+                extra += 1
+        print("并入通则引用页执行标准：{} 个".format(extra))
+    else:
+        print("⚠ 未找到 data/_refjs.txt，通则引用页执行标准未并入")
+
+    # 保留上次的二级引用（限量标准→检测方法）
+    prev = _load_prev_scope()
+    added2 = 0
+    for k, why in prev.items():
+        if k not in scope:
+            scope[k] = why
+            added2 += 1
+    print("保留二级引用：{} 个".format(added2))
+
+    out = {"scope": {k: v for k, v in sorted(scope.items())},
+           "level1": sorted(lvl1)}
+    op = os.path.join(DATA, "refscope.json")
+    json.dump(out, io.open(op, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print("\n范围合计 {} 个（一级 {} + 引用页 {} + 二级保留 {}）→ {}".format(
+        len(scope), len(lvl1), extra, added2, op))
+    return 0
+
+
 def main() -> int:
+    # ★ --daily：轻量刷新（每日跑，不联网、不解析 PDF）★
+    if "--daily" in sys.argv:
+        return daily_scope()
+
+    # ★ 完整模式：联网下载限量标准正文，算二级传递闭包（本机手动跑）★
+    import pymupdf                                       # noqa: E402
+    from general_refs import extract_refs_from_pdf, _clean_no   # noqa: E402
+
     ad = CfsaSpptAdapter()
     p = os.path.join(DATA, "general_refs.json")
     g = json.load(io.open(p, encoding="utf-8"))
@@ -88,7 +179,7 @@ def main() -> int:
     if os.path.exists(rj):
         txt = io.open(rj, encoding="utf-8").read()
         extra = 0
-        for m in re.finditer(r'no:"(GB[^"]+)"', txt):
+        for m in re.finditer(r'no:"((?:GB|JJF|JB|QB)[^"]+)"', txt):
             k = _ref_key(m.group(1))
             if k and k not in scope:
                 scope[k] = ["通则引用页现行执行标准"]

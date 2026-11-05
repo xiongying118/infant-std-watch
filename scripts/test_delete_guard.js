@@ -31,7 +31,20 @@ function ck(c,m){ if(c){pass++;console.log('  ✓ '+m);} else {fail++;console.lo
   p.on('pageerror',e=>errs.push(e.message));
   p.on('console',m=>{ if(m.type()==='error') errs.push('console: '+m.text()); });
 
-  await p.goto(URL+'#jsa',{waitUntil:'networkidle'});
+      /* ★ 线上访问偶发 ERR_CONNECTION_RESET（本地网络抖动）→ 自动重试 ★
+       2026-11-04 加：之前网络一抖测试就整个崩掉，误判成功能有问题。 */
+    let navOK = false;
+    for (let i = 0; i < 6 && !navOK; i++) {
+      try {
+      await p.goto(URL+'#jsa', { waitUntil: 'domcontentloaded', timeout: 60000 });
+        navOK = true;
+      } catch (e) {
+        console.log('  (网络重试 ' + (i + 1) + ')');
+        await p.waitForTimeout(4000);
+      }
+    }
+    if (!navOK) { console.log('网络不通，测试中止'); await b.close(); process.exit(2); }
+  
   await p.waitForTimeout(2500);
 
   console.log('\n=== ① Guard 已加载 ===');

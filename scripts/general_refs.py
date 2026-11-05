@@ -28,7 +28,11 @@ import io
 import re
 from collections import Counter, OrderedDict
 
-import pymupdf
+# ★ pymupdf 延迟导入（2026-11-05）★
+#   crawler.py 会 import 本模块来取 ref_keywords()，
+#   但那台机器/云端 CI 常常没装 pymupdf →
+#   顶层 import 直接 ModuleNotFoundError，**整个抓取流程起不来**。
+#   只有真的要解析 PDF 正文时才需要它。
 
 from sources import CfsaSpptAdapter, guess_category
 
@@ -101,6 +105,7 @@ def extract_refs_from_pdf(pdf_bytes: bytes) -> OrderedDict[str, int]:
 
     pdf_bytes 只在内存里，不落盘。
     """
+    import pymupdf                            # 延迟导入：只有解析 PDF 时才需要
     doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
     try:
         raw = "".join(doc[i].get_text() for i in range(doc.page_count))

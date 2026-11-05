@@ -3442,6 +3442,20 @@ function renderRefDigest(){
 
 function renderErata(){
   const hi = ERATA.filter(e=>e.lvl==="high");
+  /* ★ 2026-11-05：全部显示，不只显示 high ★
+     用户原话：「标准勘误与修改单里的 只要现行版本有效 全部都要」
+     原来只渲染 high → 页面只显示 11 条，mid/low 全看不见，
+     用户看到的就是「明明官方有 53 条，系统只给 15 条」。
+     现在按等级分色全部列出：
+       high —— 实质性技术修订，会影响检测结果
+       mid  —— 需要留意，一般不改变结果
+       low  —— 文字性修正（编号/页码/错别字），留档即可 */
+  const all = ERATA.slice().sort((a,b)=>{
+    const w = {high:0, mid:1, low:2};
+    const d = (w[a.lvl]||3) - (w[b.lvl]||3);
+    if(d) return d;
+    return String(b.erataDate||"").localeCompare(String(a.erataDate||""));
+  });
   // ★ 必须显示标准名和勘误时间 ★（用户要求）
   //   没有名称：只看到「GB 5009.7-2016 3.4.4」，不知道测的是什么，
   //            出报告时无法向委托方解释依据哪一版
@@ -3453,11 +3467,14 @@ function renderErata(){
   //                  官方"标准勘误"专库不收录这类文档，只查勘误库会 100% 漏抓
   //                  （实测：GB 5413.30-2016 杂质度第1号修改单 2026-08-18 发布）
   //   kind==="ERATA" 标准勘误   —— 更正表述错误，有改前/改后原文可对照
-  $("#erataBox").innerHTML = hi.map(e=>{
+  $("#erataBox").innerHTML = all.map(e=>{
     const isMod = e.kind==="MOD";
+    const lv = e.lvl || "mid";
     const tag = isMod
       ? `<span class="tag t-mod">第${e.modNo}号修改单</span>`
-      : `<span class="tag t-high">勘误</span>`;
+      : (lv==="high" ? `<span class="tag t-high">勘误</span>`
+         : lv==="mid"  ? `<span class="tag t-mid">勘误</span>`
+         : `<span class="tag t-low">勘误</span>`);
     const meta = isMod
       ? `发布 <b class="mono">${e.erataDate||"—"}</b> · <b>实施 ${e.impDate||e.erataDate||"—"}</b>
          <span class="tag t-mod" style="margin-left:4px">自批准之日起实施</span>`
@@ -3480,7 +3497,7 @@ function renderErata(){
       /* 勘误：不是落到整个勘误专库首页，而是带标准号去检索该标准的勘误记录 */
       : offLink("官方勘误记录", CFSA_SEARCH(e.no), "btn sm", "", e.no);
     return `
-    <div class="alert a-high">
+    <div class="alert a-${lv}">
       <div class="h"><span class="no">${e.no}</span><div class="t">${e.stdName || "（标准名待补）"}</div>
         ${tag}</div>
       <div class="muted" style="margin:5px 0 8px;font-size:12px">${meta}</div>
@@ -3492,8 +3509,13 @@ function renderErata(){
         <button class="btn sm" onclick="toast('已标记：' + e.no + '　' + e.sec + '　已核对')">已核对</button></div>
     </div>`;
   }).join("")
-    + `<div class="muted" style="padding-top:6px">仅收录<b>通则引用范围内</b>的标准（上面「通则引用标准」那块就是范围）。
-       共 ${ERATA.length} 条，其中高优 ${hi.length} 条${ERATA.length>hi.length?`，另有 ${ERATA.length-hi.length} 条中级勘误在提醒中心`:""}。</div>`;
+    + `<div class="muted" style="padding-top:6px">仅收录<b>通则引用范围内、且现行版本有效</b>的标准
+       （上面「通则引用标准」那块就是范围）。
+       共 <b>${ERATA.length}</b> 条 —— 高优 ${hi.length} 条
+       ${(()=>{const m=ERATA.filter(x=>x.lvl==="mid").length,l=ERATA.filter(x=>x.lvl==="low").length;
+               return (m?`，中优 ${m} 条`:'')+(l?`，低优（文字性修正）${l} 条`:'');})()}。
+       <br>高优＝会影响检测结果，必须核对作业文件并评估已出报告；
+       中优＝需要留意；低优＝编号页码错别字一类，留档即可。</div>`;
 }
 
 function renderHome(){
