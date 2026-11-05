@@ -1640,13 +1640,23 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
         <div><b>本页只做一件事：告诉你哪些标准变了、什么时候开始用。</b>所有"下载"按钮一律指向官方站点，本工具不存标准全文、不提供破解下载。</div>
       </div>
 
-      <div class="grid g5" style="margin-bottom:16px">
+      <!-- ★ KPI 分两行（用户 2026-11-05：「加多一行放在第一行」「就加两个」
+                        「第二行 一年内换版 不要删」「第一行的加备注」）★
+           第一行 = 新增的两张：一年内要换版、20 天内勘误/修改单
+                    —— 都只针对**通则引用标准**，卡片上带备注说明。
+           第二行 = 4 张：90 天内要动手、一年内要换版（标准清单全部）、
+                    现行有效标准、法规与体系。
+           ⚠ 两行都有「一年内要换版」是用户明确要的（第二行那张不删）。
+           ⚠ 第二行**不要**再加「20 天内勘误/修改单」（用户 2026-11-05 撤回）。
+           ⚠ 20 天内勘误/修改单：这类变更**不改标准号、不改实施日期**，
+              按标准号监控完全发现不了 → 必须单独占一格。 -->
+      <div class="grid g2" style="margin-bottom:10px">
+        <div class="kpi"><div class="k">一年内要换版</div><div class="v" id="kpiSoon365">—</div><div class="d" id="kpiSoon365d">仅通则引用标准</div></div>
+        <div class="kpi warn"><div class="k">20 天内勘误/修改单</div><div class="v" id="kpiErata20">—</div><div class="d" id="kpiErata20d">仅通则引用标准</div></div>
+      </div>
+      <div class="grid g4" style="margin-bottom:16px">
         <div class="kpi hi"><div class="k">90 天内要动手</div><div class="v" id="kpiSoon90">—</div><div class="d" id="kpiSoon90d">按实施日期实算</div></div>
-        <div class="kpi"><div class="k">一年内要换版</div><div class="v" id="kpiSoon365">—</div><div class="d" id="kpiSoon365d">含已发布未实施</div></div>
-        <!-- ★ 勘误/修改单提醒（用户 2026-11-05：「勘误与修改单这里也做一个提醒 日期是20天内的」）★
-             这类变更**不改标准号、不改实施日期**，按标准号监控完全发现不了 ——
-             所以必须单独占一格，否则用户根本不知道它发生过。 -->
-        <div class="kpi warn"><div class="k">20 天内勘误/修改单</div><div class="v" id="kpiErata20">—</div><div class="d" id="kpiErata20d">按发布日实算</div></div>
+        <div class="kpi"><div class="k">一年内要换版</div><div class="v" id="kpiSoon365b">—</div><div class="d" id="kpiSoon365bd">标准清单全部</div></div>
         <div class="kpi"><div class="k">现行有效标准</div><div class="v" id="kpiStd">—</div><div class="d" id="kpiSub">—</div></div>
         <div class="kpi"><div class="k">法规与体系</div><div class="v" id="kpiLaw">—</div><div class="d" id="kpiLawd">按效力与环节分层</div></div>
       </div>
@@ -1686,7 +1696,8 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
           <span>⚠️</span>
           <div><b>只盯通则范围内的标准</b>：通则正文「规范性引用文件」直接引用的，
             加上通则引用页现行执行标准，再加上限量标准（GB 2761/2762/29921）
-            指定检测方法后传递引用的那些 —— 共 <b id="erataScopeN">—</b> 个标准。
+            指定检测方法后传递引用的，以及实验室实际在检的那几项 ——
+            共 <b id="erataScopeN">—</b> 个标准。
             <b>范围之外的一律不进</b>（酒类、水产品、饮料、食用油等与婴配无关的标准不收）。
             <b>勘误</b>是更正表述错误；<b>修改单</b>是实质性技术修订，
             <b>自批准之日起实施、没有过渡期</b> —— 后者漏掉的代价更大：作业文件照旧版做，数据就是错的。
@@ -3219,6 +3230,10 @@ const ERATA = (window.STDWATCH_DATA && window.STDWATCH_DATA.ERATA) || [];
      （酒类/水产品/饮料咖啡因/食用油…）放了进来 —— 用户 2026-11-05 要求删掉。
      → 页面端再兜一层：不在范围里的直接不渲染（数据层已过滤，这里是双保险）。 */
 const ERATASCOPE = (window.STDWATCH_DATA && window.STDWATCH_DATA.ERATASCOPE) || [];
+/* ★ ERATASCOPE = 通则范围内的全部标准 ★
+   含三层官方来源（通则正文引用 / 引用页现行执行标准 / 限量标准二级闭包）
+   + 实验室实际在检、通则正文没直接引用的那几项（用户 2026-11-05 要求纳入）。
+   → 页面统一按"通则范围内"表述，不额外区分官方来源与实验室补充。 */
 const _erataScopeSet = new Set(ERATASCOPE);
 /* 标准号归一：去空格、去年份、GB/T→GBT（与 Python 侧 _refkey 一致） */
 function erataScopeKey(no){
@@ -3637,23 +3652,43 @@ function renderHome(){
   //   之前写死"3 项 / 2 项"，跟真实数据对不上（实际 0 项 ≤90 天、15 项 ≤365 天）。
   //   提醒类数字一旦不准，用户会按错的日期做准备 —— 比没有更糟。
   (function(){
+    /* ★★ 通则引用标准集合（2026-11-05 用户要求）★★
+       「一年内换版」「20 天内勘误/修改单」这两个 KPI **只针对通则里的标准**，
+       不统计全库（STD 有 348 条、通则引用只有 65 条，全库算出来的数字
+       对婴配实验室没有意义）。
+       → 集合 = REFGROUPS（通则引用标准页，按检测对象分类）里的标准号 */
+    const rg = (typeof REFGROUPS!=='undefined' && REFGROUPS) || [];
+    const refSet = new Set();
+    rg.forEach(g=>(g.items||[]).forEach(it=>refSet.add(erataScopeKey(it.no))));
+    const inRef = no => refSet.has(erataScopeKey(no));
+
     const pend = STD.filter(s=>s.impState==="即将实施" && daysTo(s.imp)!==null)
                      .map(s=>({d:daysTo(s.imp), no:s.no}));
     const s90  = pend.filter(x=>x.d<=90).sort((a,b)=>a.d-b.d);
-    const s365 = pend.filter(x=>x.d<=365).sort((a,b)=>a.d-b.d);
+    /* ★ 一年内要换版：只算通则引用标准里的 ★ */
+    /* 第一行的「一年内要换版」= 只算通则引用标准里的 */
+    const s365 = pend.filter(x=>x.d<=365 && inRef(x.no)).sort((a,b)=>a.d-b.d);
     $("#kpiSoon90").textContent = s90.length;
     $("#kpiSoon90d").textContent = s90.length
       ? "最早：" + s90[0].no + "（" + s90[0].d + " 天）" : "近期无强制换版";
     $("#kpiSoon365").textContent = s365.length;
     $("#kpiSoon365d").textContent = s365.length
       ? "最近：" + s365[0].no + "（" + s365[0].d + " 天）" : "一年内无换版";
+    /* 第二行 = **标准清单全部**口径（用户 2026-11-05：
+       「两行都要 第一行的只针对通则标准 第二行的针对标准清单全部」）*/
+    const s365All = pend.filter(x=>x.d<=365).sort((a,b)=>a.d-b.d);
+    const b365 = $("#kpiSoon365b");
+    if(b365) b365.textContent = s365All.length;
+    const b365d = $("#kpiSoon365bd");
+    if(b365d) b365d.textContent = s365All.length
+      ? "最近：" + s365All[0].no + "（" + s365All[0].d + " 天）" : "一年内无换版";
     /* ★ 20 天内勘误/修改单（2026-11-05 用户要求）★
-       只统计**范围内**的（通则引用范围），范围外的已经在 renderErata 里剔掉了。
+       只统计**通则引用标准里**的（不是全部范围表 103 个 —— 那些含限量标准本身）。
        「20 天内」= 以今天为界往前 20 天（含今天）——
        往前算而不是往后算：勘误是"已经发生"的变更，
        往后算的话永远是 0（发布日都是过去的），提醒就没意义了。 */
     (function(){
-      const all20 = ERATA.filter(e=>erataInScope(e.no) && e.erataDate);
+      const all20 = ERATA.filter(e=>inRef(e.no) && e.erataDate);
       const now = new Date();
       const dayMs = 86400000;
       const near = all20.filter(e=>{
