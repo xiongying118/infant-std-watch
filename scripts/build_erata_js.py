@@ -290,6 +290,25 @@ def render(items: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def render_scope() -> str:
+    """渲染 ERATASCOPE 段 —— 通则范围表里的标准号清单。
+
+    ★ 为什么要有这一段 ★
+      页面要显示「范围共 N 个标准」，还得能自己复核
+      「列表里的每一条都在范围内」（范围是硬边界，不能只靠生成时过滤）。
+      → 把范围表的原始标准号一并写进 data.js，页面端自查用。
+    """
+    scope = sorted(E._refscope())
+    lines = ["  ERATASCOPE: ["]
+    for k in scope:
+        lines.append('  "%s",' % esc(k))
+    # ★ 自带收尾 ★
+    #   这一段是**整段插入**（不是替换已有段），所以必须自己写 "],"。
+    #   之前漏了收尾 → data.js 数组没闭合 → 整个语法崩。
+    lines.append("  ],")
+    return "\n".join(lines)
+
+
 def main() -> int:
     items = load_items()
     if not items:
@@ -352,6 +371,58 @@ def main() -> int:
 
     new_s = s2[:start] + body + s2[end:]
 
+    # ---- 写 ERATASCOPE 段（范围表）----
+    #   ★ 整段插入到 "  ERATA: [" 之前 ★
+    #   上一版试过"定位已有段再替换"，两处坑：
+    #     ① 插入点算错（mi+1 落在空格上，把 ERATA 的 "[" 吞了）→ 语法崩
+    #     ② 段尾括号配平和 ERATA 段共用同一套逻辑，容易互相干扰
+    #   → 改成：先把已有的 ERATASCOPE 段**整段删掉**，再在 ERATA 前**整段插入**。
+    #     两步都不碰 ERATA 段的内容，只在它前面加东西。
+    scope_body = render_scope()
+
+    # ① 删掉可能存在的旧 ERATASCOPE 段（从段头到它自己的 "],"）
+    ms = re.search(r"\n  ERATASCOPE: \[\n", new_s)
+    if ms:
+        st = ms.start() + 1
+        depth = 0
+        in_str = False
+        escf = False
+        se = -1
+        for k in range(st, len(new_s)):
+            ch = new_s[k]
+            if in_str:
+                if escf:
+                    escf = False
+                elif ch == "\\":
+                    escf = True
+                elif ch == '"':
+                    in_str = False
+                continue
+            if ch == '"':
+                in_str = True
+                continue
+            if ch == "[":
+                depth += 1
+            elif ch == "]":
+                depth -= 1
+                if depth == 0:
+                    se = k
+                    break
+        if se < 0:
+            print("✗ 中止：ERATASCOPE 段括号不配平 —— 不写盘")
+            return 1
+        # 段尾 "]" 之后应有 ","，一并吃掉
+        tail = se + 1
+        if tail < len(new_s) and new_s[tail] == ",":
+            tail += 1
+        if tail < len(new_s) and new_s[tail] == "\n":
+            tail += 1
+        new_s = new_s[:ms.start()] + new_s[tail:]
+
+    # ② 在 ERATA 段头之前整段插入
+    mi = new_s.index("\n  ERATA: [")
+    new_s = new_s[:mi + 1] + scope_body + "\n" + new_s[mi + 1:]
+
     missing = [k for k in REQUIRED if k not in new_s]
     if missing:
         print("✗ 中止：缺少 {} —— 不写盘".format("、".join(missing)))
@@ -366,6 +437,7 @@ def main() -> int:
     mods = [x for x in items if x.get("kind") == "MOD"]
     nos = {E._refkey(x.get("no", "")) for x in items}
     print("已生成 {} 条（涉及 {} 个标准）".format(len(items), len(nos)))
+    print("  通则范围：{} 个标准（范围外的已剔除）".format(len(E._refscope())))
     print("  等级：高优 {} · 中优 {} · 低优 {}    其中修改单 {} 条".format(
         len(hi), len(mid), len(low), len(mods)))
     print("  今日 {}".format(date.today()))

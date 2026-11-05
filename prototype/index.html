@@ -164,6 +164,9 @@ a:hover{text-decoration:underline}
    但性质不同（勘误=更正表述；修改单=实质性技术修订，自批准之日起实施） */
 .t-mod{background:#f3e8f7;color:#7b2d8e;border-color:#e0c6ea}
 .tags{display:flex;gap:5px;flex-wrap:wrap}
+/* 勘误/修改单 总结计数（2026-11-05 用户要求：标题处加总结计数） */
+.erata-sum{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+.erata-sum .tag b{font-weight:700;font-size:12px}
 
 /* 提醒条目 */
 .alert{border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;background:var(--panel)}
@@ -1637,9 +1640,13 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
         <div><b>本页只做一件事：告诉你哪些标准变了、什么时候开始用。</b>所有"下载"按钮一律指向官方站点，本工具不存标准全文、不提供破解下载。</div>
       </div>
 
-      <div class="grid g4" style="margin-bottom:16px">
+      <div class="grid g5" style="margin-bottom:16px">
         <div class="kpi hi"><div class="k">90 天内要动手</div><div class="v" id="kpiSoon90">—</div><div class="d" id="kpiSoon90d">按实施日期实算</div></div>
         <div class="kpi"><div class="k">一年内要换版</div><div class="v" id="kpiSoon365">—</div><div class="d" id="kpiSoon365d">含已发布未实施</div></div>
+        <!-- ★ 勘误/修改单提醒（用户 2026-11-05：「勘误与修改单这里也做一个提醒 日期是20天内的」）★
+             这类变更**不改标准号、不改实施日期**，按标准号监控完全发现不了 ——
+             所以必须单独占一格，否则用户根本不知道它发生过。 -->
+        <div class="kpi warn"><div class="k">20 天内勘误/修改单</div><div class="v" id="kpiErata20">—</div><div class="d" id="kpiErata20d">按发布日实算</div></div>
         <div class="kpi"><div class="k">现行有效标准</div><div class="v" id="kpiStd">—</div><div class="d" id="kpiSub">—</div></div>
         <div class="kpi"><div class="k">法规与体系</div><div class="v" id="kpiLaw">—</div><div class="d" id="kpiLawd">按效力与环节分层</div></div>
       </div>
@@ -1660,22 +1667,27 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
           <div>这批标准不是搜出来的，是从 <b>GB 10765 / 10766 / 10767</b>（婴配三个通则）+
             <b>GB 19644</b>（乳粉和调制乳粉）等产品标准正文里"读"出来的。
             通则的「规范性引用文件」一章列了它们，<b>实验室天天在用，但关键词检索搜不到</b>。
-            每条都经过有效性与实施状态核对。<b>下面的"标准勘误与修改单"只盯这一范围内的标准。</b></div>
+            每条都经过有效性与实施状态核对。<b>下面的"标准勘误与修改单"只盯通则范围内的标准</b>
+            —— 范围比这块略大一点：还包含限量标准指定检测方法后传递引用的那些。</div>
         </div>
         <div id="refDigest"></div>
       </div>
 
       <!-- ===== 标准勘误与修改单 ===== -->
       <div class="card">
-        <div class="card-h">
+        <div class="card-h" style="flex-wrap:wrap;row-gap:8px">
           <h3>标准勘误与修改单</h3>
           <span class="muted">不改标准号、不改实施日期的变更 —— 按标准号监控发现不了</span>
+          <span class="erata-sum" id="erataSum"></span>
           <div class="sp"></div>
           <span class="tag t-high">最易漏</span>
         </div>
         <div class="notice warn" style="margin-bottom:12px">
           <span>⚠️</span>
-          <div><b>只盯通则引用范围内的标准</b>（上面那块就是范围）。
+          <div><b>只盯通则范围内的标准</b>：通则正文「规范性引用文件」直接引用的，
+            加上通则引用页现行执行标准，再加上限量标准（GB 2761/2762/29921）
+            指定检测方法后传递引用的那些 —— 共 <b id="erataScopeN">—</b> 个标准。
+            <b>范围之外的一律不进</b>（酒类、水产品、饮料、食用油等与婴配无关的标准不收）。
             <b>勘误</b>是更正表述错误；<b>修改单</b>是实质性技术修订，
             <b>自批准之日起实施、没有过渡期</b> —— 后者漏掉的代价更大：作业文件照旧版做，数据就是错的。
             注意：官方「标准勘误」专库<b>不收录修改单</b>，必须单独抓。</div>
@@ -3198,6 +3210,28 @@ function renderJsa(){
 const SOONPOOL = (window.STDWATCH_DATA && window.STDWATCH_DATA.SOONPOOL) || [];
 
 const ERATA = (window.STDWATCH_DATA && window.STDWATCH_DATA.ERATA) || [];
+/* ★ 通则范围表（2026-11-05）★
+   ERATASCOPE = 通则范围内的全部标准号（归一后）。
+   由 scripts/build_erata_js.py 从 data/refscope.json 写进 data.js。
+   三层来源：通则正文直接引用 + 通则引用页现行执行标准 + 限量标准二级传递闭包。
+   ★ 范围是硬边界：列表里的每一条都必须在这个集合里 ★
+     之前有过"检测方法类号段通配"的兜底，把 42 个与婴配无关的标准
+     （酒类/水产品/饮料咖啡因/食用油…）放了进来 —— 用户 2026-11-05 要求删掉。
+     → 页面端再兜一层：不在范围里的直接不渲染（数据层已过滤，这里是双保险）。 */
+const ERATASCOPE = (window.STDWATCH_DATA && window.STDWATCH_DATA.ERATASCOPE) || [];
+const _erataScopeSet = new Set(ERATASCOPE);
+/* 标准号归一：去空格、去年份、GB/T→GBT（与 Python 侧 _refkey 一致） */
+function erataScopeKey(no){
+  let n = String(no||"").replace(/\s+/g,"").toUpperCase().replace(/—/g,"-");
+  n = n.replace(/-\d{4}$/,"");
+  n = n.replace("GB/T","GBT").replace("QB/T","QBT");
+  if(!/^(GB|QB|JJF|JB)/.test(n)) n = "GB"+n;
+  return n;
+}
+function erataInScope(no){
+  if(!_erataScopeSet.size) return true;      /* 没有范围表就不拦（数据层已过滤） */
+  return _erataScopeSet.has(erataScopeKey(no));
+}
 
 /* ===== 标准换版提醒（真实数据，来源：CFSA + openstd + std.samr 实抓）===== */
 const ALERTS = (window.STDWATCH_DATA && window.STDWATCH_DATA.ALERTS) || [];
@@ -3467,8 +3501,32 @@ function _erataBody(txt){
   );
 }
 
+/* ★ 勘误/修改单排序（2026-11-05 用户定稿）★
+   用户原话：
+     ①「按最新日期排下去 不要给我分类再排」
+     ②「同一标准的放一起排」
+   两条同时满足的办法 = 日期当主轴，标准只当**同日内的次级键**：
+     · 日期严格倒序（第一关键字）→ 从上往下滑，日期一路递减，不会跳回去
+     · 同一天内按标准号排 → 同标准的条目天然连续，不会被别的标准插进中间隔开
+   ★ 为什么不能用"先按标准分组、组内再排"：
+     那样同标准的老勘误会被拉到同标准新勘误下面，
+     列表看起来就是 2026-10-28 → 2018-06-05 → 2026-10-28，日期在乱跳。
+     用户原话「不要给我分类再排」说的就是这个。 */
+function erataSorted(){
+  const _k = e => String(e.no||"")
+                  .replace(/\s+/g,"")
+                  .replace(/-\d{4}$/,"")
+                  .toUpperCase();
+  return ERATA.slice().sort((a,b)=>{
+    const da = String(a.erataDate||""), db = String(b.erataDate||"");
+    if(da !== db) return db.localeCompare(da);                    // ① 日期严格倒序
+    const ka = _k(a), kb = _k(b);
+    if(ka !== kb) return ka.localeCompare(kb);                    // ② 同日按标准号 → 同标准连续
+    return String(a.sec||"").localeCompare(String(b.sec||""));    // ③ 同标准同日内按章节
+  });
+}
+
 function renderErata(){
-  const hi = ERATA.filter(e=>e.lvl==="high");
   /* ★ 2026-11-05：全部显示，不只显示 high ★
      用户原话：「标准勘误与修改单里的 只要现行版本有效 全部都要」
      原来只渲染 high → 页面只显示 11 条，mid/low 全看不见，
@@ -3477,36 +3535,16 @@ function renderErata(){
        high —— 实质性技术修订，会影响检测结果
        mid  —— 需要留意，一般不改变结果
        low  —— 文字性修正（编号/页码/错别字），留档即可 */
-  /* ★ 排序规则（用户 2026-11-05 要求）★
-     「按更新日期最新的排下去，同一标准的放一起排」
-     → 组之间：按该标准**最新一条**的日期倒序（最近动过的标准排最前）
-     → 组内部：同标准的条目按日期倒序（新的在上）
-     → 同日同标准：按章节号排，顺序稳定
-     等级不再参与排序，改由左边框颜色区分（high 红 / mid 橙 / low 绿）。 */
-  /* 分组键要归一：官方勘误记录里标准号格式不统一
-     （有的带年份 "GB 5009.235-2016"，有的不带 "GB 5009.235"，
-       还有的中间带空格 "GB 5009.296 -2023"）
-     → 不归一的话同一个标准会被拆成两组，排出来就是散的。 */
-  const _key = e => String(e.no||"")
-                      .replace(/\s+/g,"")
-                      .replace(/-\d{4}$/,"")
-                      .toUpperCase();
-  const _grp = {};                       // 标准 → 该组最新日期
-  ERATA.forEach(e=>{
-    const k = _key(e), d = String(e.erataDate||"");
-    if(!_grp[k] || d > _grp[k]) _grp[k] = d;
-  });
-  const all = ERATA.slice().sort((a,b)=>{
-    const ka = _key(a), kb = _key(b);
-    if(ka !== kb){
-      const da = _grp[ka]||"", db = _grp[kb]||"";
-      if(da !== db) return db.localeCompare(da);      // 组的最新日期倒序
-      return ka.localeCompare(kb);                     // 同日期按标准号
-    }
-    const dd = String(b.erataDate||"").localeCompare(String(a.erataDate||""));
-    if(dd) return dd;                                 // 组内日期倒序
-    return String(a.sec||"").localeCompare(String(b.sec||""));  // 同日按章节
-  });
+  /* 等级不参与排序，改由左边框颜色区分（high 红 / mid 橙 / low 绿）。 */
+  /* ★ 范围过滤（双保险）★
+     数据层（build_erata_js.py）已经按范围表过滤过了，
+     这里再挡一次 —— 万一 data.js 是旧版或别处塞进来东西，页面不会显示。 */
+  const all = erataSorted().filter(e=>erataInScope(e.no));
+  /* 总结计数用：勘误 / 修改单 分开算（用户要「勘误 修改各有多少」） */
+  const nMod = all.filter(e=>e.kind==="MOD").length;
+  /* 高优条数也按过滤后的算（原来用的是全量 ERATA） */
+  const hi = all.filter(e=>e.lvl==="high");
+  const nEra = all.length - nMod;
   // ★ 必须显示标准名和勘误时间 ★（用户要求）
   //   没有名称：只看到「GB 5009.7-2016 3.4.4」，不知道测的是什么，
   //            出报告时无法向委托方解释依据哪一版
@@ -3565,13 +3603,31 @@ function renderErata(){
         <button class="btn sm" onclick="toast('已标记：' + e.no + '　' + e.sec + '　已核对')">已核对</button></div>
     </div>`;
   }).join("")
-    + `<div class="muted" style="padding-top:6px">仅收录<b>通则引用范围内、且现行版本有效</b>的标准
-       （上面「通则引用标准」那块就是范围）。
-       共 <b>${ERATA.length}</b> 条 —— 高优 ${hi.length} 条
-       ${(()=>{const m=ERATA.filter(x=>x.lvl==="mid").length,l=ERATA.filter(x=>x.lvl==="low").length;
+    + `<div class="muted" style="padding-top:6px">仅收录<b>通则范围内、且现行版本有效</b>的标准
+       （通则正文直接引用的 + 通则引用页现行执行标准 + 限量标准传递引用的检测方法）。
+       共 <b>${all.length}</b> 条 —— <b>勘误 ${nEra} 条</b>、<b>修改单 ${nMod} 条</b>；
+       高优 ${hi.length} 条
+       ${(()=>{const m=all.filter(x=>x.lvl==="mid").length,l=all.filter(x=>x.lvl==="low").length;
                return (m?`，中优 ${m} 条`:'')+(l?`，低优（文字性修正）${l} 条`:'');})()}。
        <br>高优＝会影响检测结果，必须核对作业文件并评估已出报告；
        中优＝需要留意；低优＝编号页码错别字一类，留档即可。</div>`;
+
+  /* ★ 标题处的总结计数（用户 2026-11-05：「在这里加一个总结计数」）★
+     一眼看清：勘误多少条、修改单多少条、合计多少条、涉及多少个标准。
+     数字全部实算（ERATA 是当天抓下来的），不写死。 */
+  const sumEl = $("#erataSum");
+  if(sumEl){
+    const stds = new Set(all.map(e=>erataScopeKey(e.no)));
+    sumEl.innerHTML =
+      `<span class="tag t-soon">勘误 <b>${nEra}</b> 条</span>` +
+      `<span class="tag t-mod">修改单 <b>${nMod}</b> 条</span>` +
+      `<span class="tag t-gray">合计 <b>${all.length}</b> 条</span>` +
+      `<span class="tag t-gray">涉及 <b>${stds.size}</b> 个标准</span>` +
+      `<span class="tag t-high">高优 <b>${hi.length}</b> 条</span>`;
+  }
+  /* 范围总数（通则范围内一共多少个标准）*/
+  const scopeEl = $("#erataScopeN");
+  if(scopeEl) scopeEl.textContent = ERATASCOPE.length || "—";
 }
 
 function renderHome(){
@@ -3591,6 +3647,33 @@ function renderHome(){
     $("#kpiSoon365").textContent = s365.length;
     $("#kpiSoon365d").textContent = s365.length
       ? "最近：" + s365[0].no + "（" + s365[0].d + " 天）" : "一年内无换版";
+    /* ★ 20 天内勘误/修改单（2026-11-05 用户要求）★
+       只统计**范围内**的（通则引用范围），范围外的已经在 renderErata 里剔掉了。
+       「20 天内」= 以今天为界往前 20 天（含今天）——
+       往前算而不是往后算：勘误是"已经发生"的变更，
+       往后算的话永远是 0（发布日都是过去的），提醒就没意义了。 */
+    (function(){
+      const all20 = ERATA.filter(e=>erataInScope(e.no) && e.erataDate);
+      const now = new Date();
+      const dayMs = 86400000;
+      const near = all20.filter(e=>{
+        const t = (now - new Date(e.erataDate)) / dayMs;
+        return t >= 0 && t <= 20;
+      }).sort((a,b)=>String(b.erataDate).localeCompare(String(a.erataDate)));
+      const nMod20 = near.filter(e=>e.kind==="MOD").length;
+      const el = $("#kpiErata20");
+      if(el){
+        el.textContent = near.length;
+        el.title = near.map(e=>e.erataDate+" "+e.no+" "+(e.kind==="MOD"?"修改单":"勘误")).join("\n");
+      }
+      const d = $("#kpiErata20d");
+      if(d){
+        d.textContent = near.length
+          ? "最近：" + near[0].erataDate + " " + near[0].no
+            + (nMod20?("（含修改单 "+nMod20+" 条）"):"")
+          : "近 20 天无变更";
+      }
+    })();
     const subs = new Set(STD.map(s=>s.sub));
     $("#kpiStd").textContent = STD.length;
     $("#kpiSub").textContent = subs.size + " 个细类 · 只列现行版";
@@ -4392,7 +4475,7 @@ function exportAlertCsv(){
     a.title, String(a.why||"").replace(/\*\*/g,""),
     (a.acts||[]).join(" / "), stdUrl(a.no)
   ]));
-  ERATA.forEach(e=>{
+  erataSorted().filter(e=>erataInScope(e.no)).forEach(e=>{
     if(Store.alerts.isDone(alertKey(e.no,e.sec))) return;
     rows.push([e.no, e.lvl==="high"?"高优":"中",
       "第 "+e.sec+" 章节勘误："+String(e.after).slice(0,120),
@@ -4428,7 +4511,7 @@ function renderAlertFilters(){
   const pend = Store.alerts.pending(ALERTS);
   const cnt = {
     all:    ALERTS.length,
-    erata:  ERATA.length,
+    erata:  ERATA.filter(e=>erataInScope(e.no)).length,
     high:   pend.filter(a=>a.lvl==="high").length,
     mid:    pend.filter(a=>a.lvl==="mid").length,
     low:    pend.filter(a=>a.lvl==="low").length,
@@ -4459,7 +4542,7 @@ function renderAlerts(){
 
   /* ---------- 勘误视图 ---------- */
   if(curAlertLvl==="erata"){
-    AL.innerHTML = ERATA.map(e=>{
+    AL.innerHTML = erataSorted().filter(e=>erataInScope(e.no)).map(e=>{
       const k = alertKey(e.no, e.sec);
       const done = !!doneMap[k];
       return `
@@ -4587,7 +4670,7 @@ function renderWeekly(){
         <td><span class="tag ${a.lvl==="high"?"t-high":a.lvl==="mid"?"t-mid":"t-low"}">${a.lvl==="high"?"高优":a.lvl==="mid"?"中":"低"}</span></td>
         <td><span class="tag ${done?"t-low":"t-soon"}">${done?"已处理":"待处理"}</span></td></tr>`;
       }).join("")}
-      ${ERATA.map(e=>{
+      ${erataSorted().filter(e=>erataInScope(e.no)).map(e=>{
         const k = alertKey(e.no, e.sec);
         const done = !!doneMap[k];
         return `<tr><td><span class="no">${e.no}</span></td>

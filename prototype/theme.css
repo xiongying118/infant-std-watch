@@ -342,6 +342,16 @@ a:hover{color:var(--brand);text-decoration:none}
 }
 .kpi.hi::after{background:radial-gradient(circle,rgba(200,51,42,.07),rgba(200,51,42,0) 68%)}
 
+/* ★ warn 档（勘误/修改单提醒）★
+   橙色 —— 介于 hi(红) 和普通(蓝) 之间：
+   勘误/修改单比"要动手"的紧急度低（改的是表述，不是限值），
+   但又比普通统计重要（按标准号监控发现不了）。
+   用 mid 橙，深橙字，浅橙底，四档配色里已有的第三档。 */
+.kpi.warn::before{background:linear-gradient(180deg,#D98A2B,var(--mid))}
+.kpi.warn::after{background:radial-gradient(circle,rgba(183,121,31,.07),rgba(183,121,31,0) 68%)}
+.kpi.warn .v{color:var(--mid-ink)}
+.kpi.warn .k{color:var(--mid-ink);opacity:.85}
+
 /* ================================================================
    ⑧ 网格
    ================================================================ */
@@ -349,9 +359,14 @@ a:hover{color:var(--brand);text-decoration:none}
 .grid.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .grid.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
-@media(max-width:1200px){.grid.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* ★ g5：KPI 区现在是 5 格（多了「20 天内勘误/修改单」）★
+   5 列在 1500px 宽下每格约 260px，数字和说明都放得下；
+   1200px 以下退成 2 列，860px 以下单列。 */
+.grid.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media(max-width:1400px){.grid.g5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1200px){.grid.g4,.grid.g5{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:860px){
-  .grid.g2,.grid.g3,.grid.g4{grid-template-columns:1fr}
+  .grid.g2,.grid.g3,.grid.g4,.grid.g5{grid-template-columns:1fr}
 }
 
 /* ================================================================
