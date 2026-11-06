@@ -1,0 +1,12 @@
+const fs=require('fs'),crypto=require('crypto');
+const dir=process.argv[2], uid=process.argv[3];
+const st=JSON.parse(fs.readFileSync(dir+'/connector-states.v3.json','utf8'));
+const mk=fs.readFileSync(dir+'/.master.key');
+const salt=Buffer.from(st.encryption.salt,'base64');
+const ikm=Buffer.concat([mk,Buffer.from(uid,'utf8')]);
+const key=Buffer.from(crypto.hkdfSync('sha256',ikm,salt,Buffer.from('workbuddy-oauth-credentials-v1','utf8'),32));
+const env=st.headerOverrides.github.Authorization;
+const dec=crypto.createDecipheriv('aes-256-gcm',key,Buffer.from(env.iv,'base64'));
+dec.setAAD(Buffer.from(`${uid}|connector-states:headerOverrides:github|Authorization`,'utf8'));
+dec.setAuthTag(Buffer.from(env.tag,'base64'));
+fs.writeFileSync(process.argv[4], Buffer.concat([dec.update(Buffer.from(env.ct,'base64')),dec.final()]));

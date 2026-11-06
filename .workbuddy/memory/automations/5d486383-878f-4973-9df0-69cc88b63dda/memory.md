@@ -1377,3 +1377,107 @@
 8. `scripts/selfcheck_page.js` 陈旧（`GB` → `GBNUTRITION`），应修或标注为失效
 9. **发布通道已切换为 WorkBuddy 站点发布能力**（见上），`scripts/deploy.py --fast` 通道暂不再用；
    待修 #9「本地 prototype 是新版应用发布前需确认」**今日已实际整体上线并端到端验证通过**，此项可关闭
+
+## 2026-11-06
+- 管线退出码 0，校验通过（还原后）：STD=348 LAWS=42 ERATA=61 REFGROUPS=14 ALERTS=2 SOONPOOL=4
+  CNASDOCS=18 CNASKINDS=6 METHODS=18
+- **判定情况 A → 已发布**（线上链接不变：https://infant-std-watch.app.workbuddy.host/）
+  发布后 curl 回读：线上 data.js **514618 字节，md5 18a35040e6ddd0b4db53a19c4622177a，与本地逐字节一致**
+  Playwright 端到端实测线上：JS 错误 0 / 资源失败 0；13 个导航视图**逐个点击全部渲染正常**
+- 各源真实条数（还原后）：SRC-01=3 SRC-02=7 SRC-05=373 SRC-06=4 SRC-07=0 SRC-08=57 SRC-11=98
+  公告=56 勘误=187
+- **真实新增/换版/废止/勘误全 0**；change_events 今日 0 行（总计仍 27，max 停在 10-08 10:10:25）；
+  alerts 今日 0 行（总计 27）；6 条 MOD 修改单为重复推送，去重后 0
+- **RUNSTATE.lastRun = 2026-11-06 19:27**（还原重建后）；nextRun = 2026-11-07 09:07
+
+### ★ SRC-08 掉条第 14 次复现（同型，与 10-21/23/26/28/29/30/11-02/03/04/05 一致）
+- 首跑 57 → 55，丢 `T/CDZX 003-2023`《乳粉中磷脂酰胆碱的测定 高效液相色谱法》
+  与 `T/HGMIF 001-2021`《绿色设计产品评价技术规范 婴幼儿配方乳粉》
+- **今日直连团标平台再次核验**（form 编码，正确姿势）：`CDZX` total=0、`乳粉中磷脂酰胆碱的测定` total=0、
+  `磷脂酰胆碱` total=0；`HGMIF` total=26（仍不含 001）、`绿色设计产品评价技术规范 婴幼儿配方乳粉` total=0；
+  **对照组 `HHPA` total=10、`婴幼儿肠造口` total=2 正常返回** → 平台检索正常，
+  这 2 条属**平台侧索引漏召回**，**不能判定废止**
+- 2 条官方详情页 GET 均 **200**（`/standardDetail/bmh8bvyilbowtow9tyc2f0e9amb2ry9`、
+  `/standardDetail/7tlqje0bti5dudsw5g96h5yrgwg8fhm`）→ 原文仍在
+- **处置（沿用既有口径，改进做法）**：不再整份覆盖快照，改为**合并还原**——
+  今日 55 条保持新鲜（days_to_implement 正确），只从基线补回缺的 2 条，
+  并**按当天重算这两条的 days_to_implement**（-1163→-1193、-1738→-1768）
+  脚本 `.workbuddy/tmp/restore_src08_20261106.py`；再 `daily_check.py --skip-fetch` 重建 → STD 恢复 348
+  （**注意**：整份 cp 覆盖会把 55 条的 days_to_implement 一起带旧 30 天，合并法可避免）
+
+### ★ 官方源直连全库核验（结论：官方今天确实无新标准/新勘误/新公告）
+- **标准库 1808 行 / 剔除解读材料后 1753 条**，**PDATE 上限仍 2026-08-18**；
+  `PDATE>=2026-09-01` = **0 条**（与 11-02/03/04/05 完全一致 → 标准库自 8 月中旬起未再发新食品安全国标）
+- **勘误库 187 条**：与本地 erata 快照 **GUID 完全相同（官方有本地无 0 / 本地有官方无 0）**；KWSJ 上限 2026-10-28
+- **公告库 56 条**：与本地 notice 快照 **GUID 完全相同（双向 0 差异）**；PDATE 上限 2026-08-18
+- **全库 num_tn=99（1975 GUID）**：本地修改单 55 条 → **官方全库命中 55 条，未命中 0**
+- SRC-05 快照 373 vs 基线 373：标准号集合差异 **0/0**、7 个受监控字段（status/pub/imp/dead/replaces/replaced_by/title）差异 **0**
+  → 零新增、零换版、零废止
+- SRC-06 4 条公告原文直连（带 UA+Referer）：全部 **200** 且 `<title>` 与标题完全一致 → 官方原文仍在
+  （**注意**：不带 UA/Referer 直连 samr.gov.cn 返回 403，是反爬不是下架 —— 核验必须带 UA+Referer）
+- 本地 ERATA 61 条逐条溯源：55 条非修改单按 (标准号,章节) **全部命中官方勘误快照（55/55，0 未命中）**，
+  6 条 MOD 按 guid **全部命中官方修改单**；无重复键；refscope 103 个标准，**超范围 0 条**
+
+### ★ 本次发布的实质内容（不是「无意义覆盖」）
+- 线上旧副本（11-05 18:29 发布）ERATA=15 / REFGROUPS=13，且 STD 的官方链接用的是**旧格式**
+  `db?type=2&guid=<GUID>` —— 直连实测该形态 GET 返回的是**自动提交表单的空壳页**（title 只是平台名，
+  无标准正文），`staticPages/<GUID>.html` 才是**真正静态详情页**（含「GB 10765-2021,食品安全国家标准 婴儿配方食品」等 meta）
+- 今日本地：**263 条 STD 的 url 已切到 staticPages 形态**（HEAD 对比：仅 url 字段差异 263 条，方向 100% 旧→新）
+- 另含 11-05 晚间用户点名的 4 个实验室在检标准分类 + **新增「食品添加剂」组（香兰素）**
+  → REFGROUPS 13 → 14
+- ERATA 15 → 61（46 条新增全部可溯源官方，含 2026-10-28 的 GB 5009.33-2025 亚硝酸盐测定勘误）
+- → **按 10-29 确立的「线上副本陈旧且实质落后时归 A 发布」口径处理**；汇报中写明「今日无新标准，
+  发布为纠正线上陈旧副本 + 修正官方链接形态」
+
+### 工具备忘（本日新增）
+- **src 官方库直连脚本的 loader bug 已修正**：快照是 dict（标准号→记录），不是 list；
+  旧脚本 `load_items()` 只认 items/records/rows/data/list → 本地标准号恒为 0，误报「官方有本地无 1753 条」。
+  新脚本 `.workbuddy/tmp/verify_std_20261106.py` 补 `return list(d.values())` 后本地标准号 533 个
+- **refscope.json 结构**：`scope` 是 **dict**（键=标准号去空格去年份，如 `GB10765`），
+  `level1` 是 55 条；比对 ERATA 是否超范围要用「标准号去空格后去掉 -年份」再比对，**别按完整标准号比**
+- **团标平台检索词**：号段词 `CDZX`/`HGMIF` total=0，但**完整中文标题词也 total=0**；
+  真正能命中的是**别的号段**（`HHPA` total=10、`婴幼儿肠造口` total=2）→ 说明是这 2 条自身没进检索索引
+- **CFSA 官方详情页两种 URL 形态实测**：
+  - `db?type=2&guid=<GUID>` → GET 200 但**返回自动提交 POST 的空壳表单**，用户点进去看不到标准正文
+  - `staticPages/<GUID>.html` → GET 200，**真正的静态详情页**，meta 含标准号与名称
+  → 页面「官方」链接一律用 staticPages（`sources.py:640` 的注释与实测一致）
+- **sppt.cfsa.net.cn 连续快速请求会被限流**（curl 连发返回 000/SSL 错误），逐条验证之间要 sleep 6 秒以上
+- **samr.gov.cn 直连必须带 UA + Referer**，否则 403（带 UA+Referer 后 200 且 title 正确）
+- Playwright 路径（本日复测可用）：
+  `C:/Users/13104/.workbuddy/skills/dashi-ppt/project/node_modules/playwright-core` +
+  `C:/Users/13104/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe`
+  （require 路径必须 Windows 风格）；脚本 `.workbuddy/tmp/smoke_20261106.js`（数据+错误）
+  与 `.workbuddy/tmp/views_20261106.js`（逐个点击导航视图）
+- **bash heredoc 会被安全策略拦截** → 写文件用 Write 工具；本地静态服务用
+  `python -m http.server 8732 --bind 127.0.0.1`，停服务用 PowerShell（bash 的 pkill 杀不掉 Windows 进程）
+- **还原快照不要用 git checkout**（HEAD 基线陈旧）→ 用运行前基线备份
+  `.workbuddy/tmp/baseline_20261106/`（今日已建，含 data.js + 各源 _latest.json）
+- 今日 baseline 已存 `.workbuddy/tmp/baseline_20261106/`：SRC-05=373 SRC-08=57（还原后）
+
+### 复核（旧问题）
+- healthy 假阳性**第 17 天复现**：RUNSTATE `healthy: true`，而今日 crawl_logs 明确有 `error / SRC-07`，fails=21
+- SRC-07 直连复核（第 22 次确证）：三栏目 pageId 正常（cd969bf2/03b4fad2/3e3ad1a3）、
+  接口载荷 8~12KB、**原始条目 72 条**，但 `_relevant()` 主体词∩动作词交集 = **0**
+  （命中 FOOD_TERMS 1 条 =《轻工纺织产业发展"十五五"规划》、ACTION_TERMS 4 条、EXCLUDE 40 条）
+  → **站点完全正常，是 crawler 把「0 条属正常业务结果」误报为 error**，根因仍在 `crawler.py:859`
+- SRC-06 日期兜底造号连续第 19 天：本地 4 条均为**真文号**（总局公告2026年第34号、市监稽发〔2026〕117号）
+  或标题型（「婴幼儿配方食品标签标识问答」），**不再是日期伪造文号**，此项已实质改善
+- 音译三条（GB 5009.276/292/303）仍为历史遗留，未扩散
+- 8 月批次三个婴配相关标准本地仍缺失（长期漏采，非今日新增）：`GB22570-2026`《辅食营养补充品和学龄前儿童营养补充品》、
+  `GB31688-2026`《牛乳蛋白》、`GB5413.36-2026`《特殊膳食用食品中脂肪酸和反式脂肪酸的测定》
+
+### 待修（优先级排序）
+1. **★ SRC-07 判定逻辑**（连续 **21** fails，10-10 已诊断、11-04/11-05/11-06 三次直连再确认）：
+   修 `crawler.py:859`，0 条记 ok 并正常写空快照 → 否则每 24h 冷却到期即触发误报，部委公告渠道持续假失明
+2. **★ 静默掉条闸门**（10-06 首次，10-19 事故，10-21/23/26/28/29/30/11-02/03/04/05/**11-06 复现**，**今日第 14 次**）：
+   `sanity_guard.py` 必须校验各源快照条数**环比跌幅**（>20% 判失败并阻断发布）；
+   建议把 SRC-06/SRC-08 的「沿用上次快照」兜底**推广到所有源**
+3. **★ SRC-06 多栏目轮询**（连续 **12** 天造成实际掉条）：4 条公告分散在 `tssps/`/`spcjs/`/`zfjcs/`
+   三栏目 → 改多 pageId/多目录路径轮询 + 对快照内已有 `official_url` 做存活校验兜底
+4. **SRC-08 检索词选取**：`SOURCE_OWN_TERMS['SRC-08']` 需补 `HHPA` 等号段词；
+   `HGMIF 001-2021`、`CDZX 003-2023` 平台侧不可检索（今日再证实），**不要因检索不到就判定废止**
+5. **检索词表缺口**（10-31 首次，至今未修）：需补「辅食营养补充品」「牛乳蛋白」等词
+6. **healthy 假阳性**（10-15 发现，已连续 17 天）：`build_runstate.py` 需读 `crawl_logs` 当日 error
+   与 `source_health.json` fails，反映到 healthy 与 logs
+7. `crawler.py:612-620` fetch 用裸 print 吞掉逐关键词异常
+8. `scripts/selfcheck_page.js` 陈旧（`GB` → `GBNUTRITION`），应修或标注为失效
