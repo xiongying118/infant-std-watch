@@ -518,13 +518,9 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
    做法：flex-wrap:wrap（默认折行）+ 字号/内边距压紧，
         尽量在常见宽度下折得少一点。 */
 .ref-tabs{
-  flex-wrap:wrap;row-gap:4px;column-gap:3px;
+  flex-wrap:wrap;row-gap:4px;column-gap:4px;
 }
-.ref-tabs .tab{
-  flex:0 0 auto;
-  font-size:12.5px;padding:5.5px 11px;line-height:1.55;
-}
-.ref-tabs .tab .cnt{font-size:10px;margin-left:3px;padding:0 5px}
+.ref-tabs .tab{flex:0 0 auto}
 
 .tabs .cnt,.tab .cnt{
   font-size:10.5px;background:rgba(0,0,0,.06);padding:0 6px;border-radius:10px;
