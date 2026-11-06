@@ -3366,6 +3366,12 @@ function legalNote(s){
   return "标准文本版权归发布机构所有，本站仅提供官方入口，不提供全文下载。";
 }
 
+/* ★ 通则引用标准的分组页签（2026-11-05 用户指定排列方式）★
+   用户截图给的是 JSA 页那种样式：一行横向页签，选中的深蓝底白字。
+   这里复用同一套 .tabs / .tab / .tab.on 样式（theme.css 已有，不用新写）。
+   原来 14 个分组各占一张长卡片，页面要滚很久才能看完 → 改成页签切换。 */
+let _refTab = 0;
+
 function renderRefs(){
   const all=[];
   REFGROUPS.forEach(g=>g.items.forEach(x=>all.push(Object.assign({g:g.g},x))));
@@ -3375,7 +3381,34 @@ function renderRefs(){
                     : v==="已被替代" ? "var(--ink3)"
                     : "var(--low)";
 
-  $("#refBox").innerHTML = REFGROUPS.map(g=>`
+  /* ---- 页签条 ----
+     ★ 一行排开，不折行 ★（用户 2026-11-05 截图指定）
+       14 个分组名有长有短（如"脂肪酸与反式脂肪酸"9字），
+       全称塞一行必然折成两行 → 给每个分组配一个**短名**用于页签，
+       全称保留在下面的卡片标题里（信息不丢）。
+       容器用 flex + nowrap + overflow-x:auto → 放不下就横向滚，不折行。 */
+  const SHORT = {
+    "脂肪酸与反式脂肪酸":"脂肪酸/反式",
+    "污染物元素检测":"污染物元素",
+    "致病菌限量检测":"致病菌限量",
+    "蛋白质与基础成分":"蛋白/基础",
+    "婴配特殊成分":"婴配特殊",
+    "油脂氧化指标":"油脂氧化",
+    "食品添加剂":"食品添加剂",
+    "计量与包装":"计量包装",
+    "限量与强化":"限量强化",
+    "污染物检测":"污染物",
+    "矿物质":"矿物质",
+    "维生素":"维生素",
+    "糖类":"糖类",
+    "微生物":"微生物"
+  };
+  const tabHtml = REFGROUPS.map((g,i)=>
+    `<button class="tab ${i===_refTab?"on":""}" data-ref-tab="${i}" title="${g.g}">${SHORT[g.g]||g.g}<span class="cnt">${g.items.length}</span></button>`
+  ).join("");
+  /* ---- 当前组的内容 ---- */
+  const g = REFGROUPS[_refTab];
+  const bodyHtml = g ? `
     <div class="card">
       <div class="card-h"><h3>${g.g}</h3><span class="pill">${g.items.length} 项</span>
         <div class="sp"></div>
@@ -3398,7 +3431,17 @@ function renderRefs(){
           ${offLink("官方", officialUrl(x.no), "btn sm", "", x.no)}
         </div>`).join("")}
       </div>
-    </div>`).join("");
+    </div>` : `<div class="muted">没有可显示的分组</div>`;
+
+  $("#refBox").innerHTML =
+    `<div class="tabs ref-tabs" id="refTabs" style="margin-bottom:var(--gap)">${tabHtml}</div>` + bodyHtml;
+  /* 绑定页签点击 */
+  [].forEach.call(document.querySelectorAll("#refTabs button"), function(b){
+    b.onclick = function(){
+      _refTab = parseInt(b.dataset.refTab, 10) || 0;
+      renderRefs();
+    };
+  });
 
   // 换版清单：只列"即将实施"的，以及近期换过的
   const pending = all.filter(x=>x.impState==="即将实施")

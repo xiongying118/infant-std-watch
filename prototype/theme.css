@@ -512,6 +512,20 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
   background:linear-gradient(140deg,var(--brand-2),var(--brand));color:#fff;font-weight:600;
   box-shadow:0 3px 10px rgba(27,58,107,.22);
 }
+/* ★ 通则引用标准的分组页签：一眼看全所有分组 ★
+   用户 2026-11-05：「一行不行就两行 两行不行就三行 我要一眼就看到」
+   → **绝不横向滚动**（滚动的确一眼看不全），宁可折成两行三行。
+   做法：flex-wrap:wrap（默认折行）+ 字号/内边距压紧，
+        尽量在常见宽度下折得少一点。 */
+.ref-tabs{
+  flex-wrap:wrap;row-gap:4px;column-gap:3px;
+}
+.ref-tabs .tab{
+  flex:0 0 auto;
+  font-size:12.5px;padding:5.5px 11px;line-height:1.55;
+}
+.ref-tabs .tab .cnt{font-size:10px;margin-left:3px;padding:0 5px}
+
 .tabs .cnt,.tab .cnt{
   font-size:10.5px;background:rgba(0,0,0,.06);padding:0 6px;border-radius:10px;
   margin-left:4px;font-variant-numeric:tabular-nums;font-weight:600;
