@@ -1647,16 +1647,18 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
            第二行 = 4 张：90 天内要动手、一年内要换版（标准清单全部）、
                     现行有效标准、法规与体系。
            ⚠ 两行都有「一年内要换版」是用户明确要的（第二行那张不删）。
+           ⚠ 2026-11-07 用户「加备注区分」→ 标题里用 .knote 标口径：
+             第一行两张 = （通则引用标准）；第二行同名卡 = （标准清单全部）。
            ⚠ 第二行**不要**再加「20 天内勘误/修改单」（用户 2026-11-05 撤回）。
            ⚠ 20 天内勘误/修改单：这类变更**不改标准号、不改实施日期**，
               按标准号监控完全发现不了 → 必须单独占一格。 -->
       <div class="grid g2" style="margin-bottom:10px">
-        <div class="kpi jump" data-kpi="soon365" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">一年内要换版</div><div class="v" id="kpiSoon365">—</div><div class="d" id="kpiSoon365d">仅通则引用标准</div></div>
-        <div class="kpi warn jump" data-kpi="erata20" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">20 天内勘误/修改单</div><div class="v" id="kpiErata20">—</div><div class="d" id="kpiErata20d">仅通则引用标准</div></div>
+        <div class="kpi jump" data-kpi="soon365" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">一年内要换版<span class="knote">（通则引用标准）</span></div><div class="v" id="kpiSoon365">—</div><div class="d" id="kpiSoon365d">仅通则引用标准</div></div>
+        <div class="kpi warn jump" data-kpi="erata20" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">20 天内勘误/修改单<span class="knote">（通则引用标准）</span></div><div class="v" id="kpiErata20">—</div><div class="d" id="kpiErata20d">仅通则引用标准</div></div>
       </div>
       <div class="grid g4" style="margin-bottom:16px">
         <div class="kpi hi jump" data-kpi="soon90" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">90 天内要动手</div><div class="v" id="kpiSoon90">—</div><div class="d" id="kpiSoon90d">按实施日期实算</div></div>
-        <div class="kpi jump" data-kpi="soon365b" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">一年内要换版</div><div class="v" id="kpiSoon365b">—</div><div class="d" id="kpiSoon365bd">标准清单全部</div></div>
+        <div class="kpi jump" data-kpi="soon365b" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">一年内要换版<span class="knote">（标准清单全部）</span></div><div class="v" id="kpiSoon365b">—</div><div class="d" id="kpiSoon365bd">标准清单全部</div></div>
         <div class="kpi jump" data-kpi="std" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">现行有效标准</div><div class="v" id="kpiStd">—</div><div class="d" id="kpiSub">—</div></div>
         <div class="kpi jump" data-kpi="law" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">法规与体系</div><div class="v" id="kpiLaw">—</div><div class="d" id="kpiLawd">按效力与环节分层</div></div>
       </div>
@@ -1668,10 +1670,8 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
         <span>⚠️</span><div id="erataRemindBody"></div>
       </div>
 
-      <div class="card">
-        <div class="card-h"><h3>高优提醒（置顶）</h3><span class="muted">产品标准 / 安全限量 / 强制检测方法</span><div class="sp"></div><a href="#alerts">全部提醒 →</a></div>
-        <div id="highAlerts"></div>
-      </div>
+      <!-- ★ 2026-11-07 用户「这个不要」：首页「高优提醒（置顶）」卡片已删除。
+           高优提醒本身没删：仍完整保留在「提醒中心」，并由「今日待办」自动汇总。 -->
 
       <!-- ===== 通则引用标准（第二位置：今日待办之后） ===== -->
       <div class="card" style="margin-bottom:16px">
@@ -3744,8 +3744,13 @@ function renderErataRemind(){
     const e=x.e, isMod=e.kind==="MOD";
     const kind=isMod?("第"+e.modNo+"号修改单"):"勘误";
     const sec=e.sec?(" · 第 "+e.sec+" 章"):"";
-    const nm=e.stdName?(" · "+(e.stdName.length>20?e.stdName.slice(0,20)+"…":e.stdName)):"";
+    /* ★ 2026-11-07 用户：「不要只有标准号，还要标准的具体名称」★
+       原来全称只塞在 title 属性里（要鼠标悬停才看得到），手机上根本没法悬停，
+       而且截成 20 字。现在完整显示在行内、允许自然折行。 */
+    const nm = e.stdName ? String(e.stdName).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : "";
+    const nameHtml = nm ? ' · <span class="erata-name">'+nm+'</span>' : '';
     return '<div class="erata-line"><a class="mono" href="#alerts" onclick="curAlertLvl=\'erata\'" title="'+nm.replace(/"/g,"")+'">'+e.no+'</a>'
+      + nameHtml
       + ' · <span class="muted">'+kind+sec+'</span>'
       + ' · <b>'+e.erataDate+' 发布</b>（'+x.days+' 天前）</div>';
   }).join("");
@@ -3823,27 +3828,10 @@ function renderHome(){
     $("#kpiLawd").textContent = "法律/法规/规章/体系 " +
       new Set((LAWS||[]).map(x=>x.sub.split(" · ")[0])).size + " 类";
   })();
-  const doneMap = Store.alerts.doneMap();
-  const hiPend = ALERTS.filter(a=>a.lvl==="high");
-  $("#highAlerts").innerHTML = hiPend.map(a=>{
-    const done = !!doneMap[a.no];
-    return `
-    <div class="alert a-high ${done?"is-done":""}">
-      <div class="h"><span class="no">${a.no}</span><div class="t">${a.title}</div>
-        <span class="tag t-high">高优</span>
-        ${done?`<span class="tag t-low">已处理</span>`:""}</div>
-      <div class="kv">${a.body}</div>
-      <div class="why"><span class="lb">为什么重要</span>${a.why}</div>
-      <div class="act"><span class="lb">实验室要做什么</span><ul>${a.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
-      <div class="foot">${offLink("官方详情页", stdUrl(a.no), "btn sm", "", a.no)}
-        <a class="btn sm" href="#detail" onclick="openDetail('${a.no}')">查看变更摘要</a>
-        <div class="sp" style="flex:1"></div><span class="muted">${a.time}</span>
-        ${done
-          ? `<button class="btn sm" onclick="unmarkAlertDone('${a.no}')">撤销处理</button>`
-          : `<button class="btn sm" onclick="markAlertDone('${a.no}')">标记已处理</button>`}
-      </div>
-    </div>`;
-  }).join("") || `<div class="empty">当前没有高优提醒</div>`;
+  /* ★ 2026-11-07：首页高优提醒卡片已删（用户「这个不要」）。
+     原来这里直接 $("#highAlerts").innerHTML=... ，容器删了会抛 TypeError
+     把 renderHome 后半段整段带崩 —— 必须一起拿掉。
+     ALERTS 高优数据仍由「提醒中心」渲染 + collectTodos() 汇总到今日待办。 */
 
   const soon = STD.filter(s=>s.imp && daysTo(s.imp)>=0 && daysTo(s.imp)<=240).sort((a,b)=>daysTo(a.imp)-daysTo(b.imp)).slice(0,5);
   $("#countdown").innerHTML = soon.map(s=>{

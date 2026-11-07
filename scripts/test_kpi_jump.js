@@ -3,7 +3,10 @@
 const {chromium}=require('playwright-core');
 const path=require('path');
 const PROT=path.resolve(__dirname,'..','prototype');
-const URL='file:///'+PROT.replace(/\\/g,'/')+'/index.html';
+const LOCAL='file:///'+PROT.replace(/\\/g,'/')+'/index.html';
+/* 默认线上（改完就是验线上），STD_TARGET=local 才验本地 file:// */
+const URL = process.env.STD_TARGET === 'local' ? LOCAL
+  : 'https://xiongying118.github.io/infant-std-watch/';
 let pass=0,fail=0;
 function ck(ok,msg){ if(ok){pass++;console.log('  ✓ '+msg);} else {fail++;console.log('  ✗ '+msg);} }
 (async()=>{

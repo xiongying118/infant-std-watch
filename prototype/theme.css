@@ -365,8 +365,13 @@ a:hover{color:var(--brand);text-decoration:none}
 .kpi.warn.jump .go{color:var(--mid-ink)}
 .kpi.hi.jump .go{color:var(--high)}
 /* 近 20 天勘误/修改单提醒：每条一行，跟换版黄框同一套紧凑排版 */
-.erata-line{margin:3px 0;font-size:12.5px;line-height:1.7}
+.erata-line{margin:3px 0;font-size:12.5px;line-height:1.7;overflow-wrap:anywhere}
 .erata-line a{color:var(--brand);text-decoration:none}
+/* 2026-11-07：勘误提醒里的标准全称（完整显示，不截断） */
+.erata-name{color:var(--ink2);font-weight:600;overflow-wrap:anywhere}
+/* 2026-11-07：KPI 标题里的口径备注，跟主标题同色、弱一档 */
+.kpi .k .knote{font-size:10.5px;font-weight:600;letter-spacing:0;color:currentColor;
+  opacity:.72;white-space:normal;overflow-wrap:anywhere}
 .erata-line a:hover{text-decoration:underline}
 
 /* ================================================================
@@ -694,4 +699,113 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
   body{background:#fff}
   body::before{display:none}
   .card{box-shadow:none;border-color:#ccc;break-inside:avoid}
+}
+
+/* ================================================================
+   ★★ 手机版适配 · 最终覆盖（2026-11-07）★★
+   ----------------------------------------------------------------
+   为什么必须写在 theme.css 末尾，而不是 head 里的 <style>：
+     index.html 的 <style> 在 <head>（20~1516 行），theme.css 却是在
+     <body> 末尾（2127 行）才 <link> 进来的 —— theme.css 里
+     .side{position:sticky} 会**覆盖** head 中 @media(max-width:900px)
+     里的 .side{position:fixed}。
+     实测后果（390px 视口）：侧栏虽被 transform 移出屏幕，却仍以 sticky
+     身份占着 258px 布局宽度 → .main 只剩 132px → 卡片全压成竖条、
+     KPI 列宽 72px、首页高度 23 万像素、整页横向溢出到 928px。
+   → 移动端规则统一收在这份"最后加载"的样式表里，确保真的生效。
+   ================================================================ */
+@media(max-width:900px){
+  .app{display:block}
+  .side{
+    position:fixed;left:0;top:0;bottom:0;width:250px;max-width:82vw;height:100vh;
+    z-index:70;transform:translateX(-102%);transition:transform .24s ease;
+    overflow-y:auto;box-shadow:0 0 40px rgba(0,0,0,.16);
+  }
+  body.nav-open .side{transform:translateX(0)}
+  .side .nav a{min-height:44px}
+  .main{width:100%;max-width:100%;min-width:0;display:flex;flex-direction:column}
+  .top{flex-wrap:wrap;gap:9px;padding:9px 12px;position:sticky;top:0;z-index:20;
+    padding-left:12px;padding-right:12px}
+  .top h2{font-size:15px;order:1}
+  .top .sp{display:none}
+  .top .search{order:2;flex:1 1 100%;width:auto;min-width:0;max-width:100%}
+  .top .search input{width:100%;min-width:0}
+  .top .btn{order:3}
+  .topbrand{padding-left:12px;padding-right:12px}
+  .view{padding:14px 12px 48px;max-width:100%;padding-left:12px;padding-right:12px}
+  .burger{display:flex}
+  .side-mask.on{display:block}
+}
+@media(max-width:640px){
+  /* 手机上统一 2 列：6 张 KPI 共 3 行，既不挤成 72px 竖条，也不竖排占满一屏 */
+  .grid.g2,.grid.g3,.grid.g4,.grid.g5{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .card{padding:13px 12px;margin-bottom:12px}
+  .card-h{flex-wrap:wrap;gap:7px}
+  .card-h h3{font-size:14px}
+  .kpi{padding:11px 12px;margin-bottom:0}
+  /* 右上角「直达 →」是 absolute，标题长会压上去 → 右侧留白，备注另起一行 */
+  .kpi .k{font-size:10.5px;line-height:1.45;letter-spacing:0;white-space:normal;
+    overflow-wrap:anywhere;padding-right:34px}
+  .kpi .k .knote{display:block;font-size:10px;line-height:1.35;margin-top:1px}
+  .kpi.jump .go{opacity:.75}
+  .kpi .v{font-size:clamp(20px,6vw,26px)}
+  .kpi .d{font-size:10.5px;line-height:1.5;overflow-wrap:anywhere}
+  .kpi.jump .go{font-size:9.5px;right:8px;top:8px}
+  .notice{padding:10px 12px;font-size:12px;line-height:1.7}
+  .erata-line{font-size:12px;line-height:1.75}
+  .btn{min-height:38px;padding:8px 11px}
+  .btn.sm{min-height:34px}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;gap:2px}
+  .tabs button{white-space:nowrap;padding:9px 11px;min-height:40px}
+  .dl{grid-template-columns:1fr;gap:2px 0}
+  .dl dt{margin-top:8px;font-size:11.5px}
+  .dl dd{margin-bottom:2px}
+  .alert{padding:12px}
+  .disclaimer{padding:12px}
+  .rem-item{gap:9px;padding:11px 0}
+  /* 勘误/修改单条目：「改前/改后」原文里常有超长官方图片 URL，
+     _erataBody() 会把它转成 <a>，不折行就把整页撑宽
+     （修复前实测 390px 视口 document.scrollWidth = 638px）。 */
+  #erataBox .alert,#erataBox .alert *{min-width:0;overflow-wrap:anywhere;word-break:break-word}
+  #erataBox .alert .h{flex-wrap:wrap;gap:5px}
+  #erataBox .alert .h .t{flex:1 1 100%;font-size:13px}
+  #erataBox .alert .foot{gap:6px}
+  #erataBox .alert .foot .btn{white-space:normal;text-align:left}
+  .view .card,.view .notice,.view .kv,.view .why,.view .act{overflow-wrap:anywhere}
+  /* JSA「基础信息」：标签 96px + input flex:1，input 默认 min-width:auto
+     （表单控件固有宽度 ~170px）会顶破 2 列网格 → 改单列 + 允许收缩 */
+  #jsaBody .grid.g2{grid-template-columns:1fr}
+  #jsaBody .grid.g2 > div{min-width:0}
+  #jsaBody input,#jsaBody select,#jsaBody textarea{min-width:0;max-width:100%;box-sizing:border-box}
+  .view input,.view select,.view textarea{min-width:0;max-width:100%}
+  /* 动态生成、没被 .twrap 包住的表格：直接父级变横向滚动，别把整页撑宽。
+     :has() 在 Edge/Chrome 105+、Safari 15.4+ 都支持；老浏览器退回原样。 */
+  .view div:has(> table):not(.twrap):not(.card){overflow-x:auto;max-width:100%;
+    -webkit-overflow-scrolling:touch}
+  .view table{min-width:520px}
+  /* 自绘弹窗 → 底部抽屉（theme.css 的 .dlg/.mask 在前面，这里重新压一遍） */
+  .mask{align-items:flex-end;padding:0}
+  .dlg{width:100%!important;max-width:none;max-height:88vh;overflow-y:auto;
+    border-radius:14px 14px 0 0}
+  .dlg-h{padding:14px 15px 11px}
+  .dlg-b{padding:0 15px 13px}
+  .dlg-f{flex-direction:column-reverse;gap:8px;padding:11px 15px 15px}
+  .dlg-f .btn{width:100%;min-height:44px;justify-content:center}
+}
+@media(max-width:430px){
+  .view{padding:12px 10px 44px;padding-left:10px;padding-right:10px}
+  .top{padding:8px 10px;padding-left:10px;padding-right:10px}
+  .card{padding:12px 10px}
+  .kpi{padding:10px}
+  .kpi .v{font-size:20px}
+  .btn{font-size:12px}
+  .top .btn.pri{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(max-width:900px) and (max-height:480px){
+  .side{width:200px;max-width:70vw}
+  .side .nav a{min-height:38px;padding-top:6px;padding-bottom:6px}
+}
+@media(min-width:901px){
+  .side-mask{display:none!important}
+  .burger{display:none!important}
 }
