@@ -18,7 +18,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "2dbad1c46af4b761",
-  "days_to_implement": -250
+  "days_to_implement": -251
  },
  "T/SRX002-2024": {
   "std_no": "T/SRX 002-2024",
@@ -39,7 +39,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "18ed1c1df7a8e875",
-  "days_to_implement": -706
+  "days_to_implement": -707
  },
  "T/HJX020-2025": {
   "std_no": "T/HJX 020-2025",
@@ -60,7 +60,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "7b3e029bc4a17cf1",
-  "days_to_implement": -578
+  "days_to_implement": -579
  },
  "T/HLBENX0009-2024": {
   "std_no": "T/HLBENX 0009-2024",
@@ -81,7 +81,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "4a4449f2592a6a33",
-  "days_to_implement": -738
+  "days_to_implement": -739
  },
  "T/IMAS073-2024": {
   "std_no": "T/IMAS 073-2024",
@@ -102,7 +102,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "b6f48f7c1d3de6d5",
-  "days_to_implement": -924
+  "days_to_implement": -925
  },
  "T/SSX011-2024": {
   "std_no": "T/SSX 011-2024",
@@ -123,7 +123,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "8fa53b862f382469",
-  "days_to_implement": -484
+  "days_to_implement": -485
  },
  "T/JXSYYXH0007-2025": {
   "std_no": "T/JXSYYXH 0007-2025",
@@ -144,7 +144,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "02ccfba7b82a5edc",
-  "days_to_implement": -651
+  "days_to_implement": -652
  },
  "T/SSX010-2024": {
   "std_no": "T/SSX 010-2024",
@@ -165,7 +165,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "a35a6942cc8c786f",
-  "days_to_implement": -484
+  "days_to_implement": -485
  },
  "T/CAGR021-2024": {
   "std_no": "T/CAGR 021-2024",
@@ -186,7 +186,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "4135e122a53a31e7",
-  "days_to_implement": -736
+  "days_to_implement": -737
  },
  "T/SCDC001-2024": {
   "std_no": "T/SCDC 001-2024",
@@ -207,7 +207,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "f9e3db71f0df0140",
-  "days_to_implement": -888
+  "days_to_implement": -889
  },
  "T/SSX009-2024": {
   "std_no": "T/SSX 009-2024",
@@ -228,7 +228,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "21b545111ec751a5",
-  "days_to_implement": -484
+  "days_to_implement": -485
  },
  "T/CAB0258-2023": {
   "std_no": "T/CAB 0258-2023",
@@ -249,7 +249,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "d3d4f36a36bafd9b",
-  "days_to_implement": -1240
+  "days_to_implement": -1241
  },
  "T/SRX004-2022": {
   "std_no": "T/SRX 004-2022",
@@ -270,7 +270,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "ea8709d556aa2096",
-  "days_to_implement": -1497
+  "days_to_implement": -1498
  },
  "T/SRX002-2022": {
   "std_no": "T/SRX 002-2022",
@@ -291,7 +291,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "3311044a128f3d49",
-  "days_to_implement": -1513
+  "days_to_implement": -1514
  },
  "T/CITS0012-2023": {
   "std_no": "T/CITS 0012-2023",
@@ -312,7 +312,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "be2e7663f2901d07",
-  "days_to_implement": -1193
+  "days_to_implement": -1194
  },
  "T/CFCA0063-2026": {
   "std_no": "T/CFCA 0063-2026",
@@ -333,7 +333,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "9c6ceb4490ebe745",
-  "days_to_implement": -151
+  "days_to_implement": -152
  },
  "T/CITSRM014-2026": {
   "std_no": "T/CITS RM014-2026",
@@ -354,7 +354,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "1ed23950a8307a9f",
-  "days_to_implement": -234
+  "days_to_implement": -235
  },
  "T/JAASS70-2022": {
   "std_no": "T/JAASS 70-2022",
@@ -375,7 +375,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "3bc03d57c54f6a64",
-  "days_to_implement": -1477
+  "days_to_implement": -1478
  },
  "T/SATA053-2023": {
   "std_no": "T/SATA 053-2023",
@@ -396,7 +396,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "20d13ac1ba9194fa",
-  "days_to_implement": -1268
+  "days_to_implement": -1269
  },
  "T/HBFPIA002-2026": {
   "std_no": "T/HBFPIA 002-2026",
@@ -417,7 +417,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "b8947ab0dd5b8d77",
-  "days_to_implement": -270
+  "days_to_implement": -271
  },
  "T/TDSTIA027-2026": {
   "std_no": "T/TDSTIA 027-2026",
@@ -438,7 +438,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "a05f460653dc0a1e",
-  "days_to_implement": -239
+  "days_to_implement": -240
  },
  "T/CITS504-2025": {
   "std_no": "T/CITS 504-2025",
@@ -459,7 +459,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "4d9eabf6fe95355d",
-  "days_to_implement": -497
+  "days_to_implement": -498
  },
  "T/SAFC002-2024": {
   "std_no": "T/SAFC 002-2024",
@@ -480,7 +480,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "882c19d0ad2b1b75",
-  "days_to_implement": -977
+  "days_to_implement": -978
  },
  "T/TDSTIA032-2023": {
   "std_no": "T/TDSTIA 032-2023",
@@ -501,7 +501,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "5cdfc1ec3292449a",
-  "days_to_implement": -1274
+  "days_to_implement": -1275
  },
  "T/HLJZX004-2022": {
   "std_no": "T/HLJZX 004-2022",
@@ -522,7 +522,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "e2cbbfbf71a436b3",
-  "days_to_implement": -1420
+  "days_to_implement": -1421
  },
  "T/TDSTIA026-2022": {
   "std_no": "T/TDSTIA 026-2022",
@@ -543,7 +543,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "279e20b1a53ce993",
-  "days_to_implement": -1417
+  "days_to_implement": -1418
  },
  "T/CFCRA007-2025": {
   "std_no": "T/CFCRA 007-2025",
@@ -564,7 +564,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "a7ae5abbd3f32879",
-  "days_to_implement": -382
+  "days_to_implement": -383
  },
  "T/DAIM003-2025": {
   "std_no": "T/DAIM 003-2025",
@@ -585,7 +585,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "c3a2609c2cc82deb",
-  "days_to_implement": -310
+  "days_to_implement": -311
  },
  "T/CIQA174-2026": {
   "std_no": "T/CIQA 174-2026",
@@ -606,7 +606,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "11ff019c1a83153a",
-  "days_to_implement": -85
+  "days_to_implement": -86
  },
  "T/SHNX003-2025": {
   "std_no": "T/SHNX 003-2025",
@@ -627,7 +627,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "5e93b0824edb5c3c",
-  "days_to_implement": -402
+  "days_to_implement": -403
  },
  "T/HJX022-2025": {
   "std_no": "T/HJX 022-2025",
@@ -648,7 +648,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "8f17729a3700fe9e",
-  "days_to_implement": -462
+  "days_to_implement": -463
  },
  "T/CIQA107-2025": {
   "std_no": "T/CIQA 107-2025",
@@ -669,7 +669,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "ab8b3a17b30d7141",
-  "days_to_implement": -616
+  "days_to_implement": -617
  },
  "T/SFLA012-2024": {
   "std_no": "T/SFLA 012-2024",
@@ -690,7 +690,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "1e85d254955d8e7a",
-  "days_to_implement": -735
+  "days_to_implement": -736
  },
  "T/SHNX001-2024": {
   "std_no": "T/SHNX 001-2024",
@@ -711,7 +711,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "82e132b7832a9b43",
-  "days_to_implement": -792
+  "days_to_implement": -793
  },
  "T/CAGR023-2025": {
   "std_no": "T/CAGR 023-2025",
@@ -732,7 +732,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "579b06d923cf76bf",
-  "days_to_implement": -318
+  "days_to_implement": -319
  },
  "T/SATA094-2026": {
   "std_no": "T/SATA 094-2026",
@@ -753,7 +753,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "04a4180a9bc33832",
-  "days_to_implement": -267
+  "days_to_implement": -268
  },
  "T/HGMIF024-2023": {
   "std_no": "T/HGMIF 024-2023",
@@ -774,7 +774,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "d5723c39c695e1f6",
-  "days_to_implement": -1107
+  "days_to_implement": -1108
  },
  "T/IMAS041-2022": {
   "std_no": "T/IMAS 041-2022",
@@ -795,7 +795,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "6c45df900e264ae7",
-  "days_to_implement": -1605
+  "days_to_implement": -1606
  },
  "T/GBC161-2026": {
   "std_no": "T/GBC 161-2026",
@@ -816,7 +816,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "9db094e1629c08ac",
-  "days_to_implement": -64
+  "days_to_implement": -65
  },
  "T/CPCPA0017-2026": {
   "std_no": "T/CPCPA 0017-2026",
@@ -837,7 +837,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "9e9a08492cdbf769",
-  "days_to_implement": -205
+  "days_to_implement": -206
  },
  "T/ACEF281-2026": {
   "std_no": "T/ACEF 281-2026",
@@ -858,7 +858,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "7bfc2a2049ce93db",
-  "days_to_implement": -183
+  "days_to_implement": -184
  },
  "T/BPDAC004-2025": {
   "std_no": "T/BPDAC 004-2025",
@@ -879,7 +879,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "01449e80a0022b01",
-  "days_to_implement": -584
+  "days_to_implement": -585
  },
  "T/T2020JT003-2025": {
   "std_no": "T/T2020JT 003-2025",
@@ -900,7 +900,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "c4754341aab754c9",
-  "days_to_implement": -316
+  "days_to_implement": -317
  },
  "T/CI1092-2025": {
   "std_no": "T/CI 1092-2025",
@@ -921,7 +921,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "9bb47205cc2d21f9",
-  "days_to_implement": -483
+  "days_to_implement": -484
  },
  "T/JTAIT21-2024": {
   "std_no": "T/JTAIT 21-2024",
@@ -942,7 +942,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "5848f31a5cbc4613",
-  "days_to_implement": -813
+  "days_to_implement": -814
  },
  "T/GBMA008-2024": {
   "std_no": "T/GBMA 008-2024",
@@ -963,7 +963,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "2ff663b75f785caf",
-  "days_to_implement": -705
+  "days_to_implement": -706
  },
  "T/WHHLW143-2024": {
   "std_no": "T/WHHLW 143-2024",
@@ -984,7 +984,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "8f73f38c788de0cd",
-  "days_to_implement": -839
+  "days_to_implement": -840
  },
  "T/WSJD005-2024": {
   "std_no": "T/WSJD 005-2024",
@@ -1005,7 +1005,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "88a3781d518fe551",
-  "days_to_implement": -955
+  "days_to_implement": -956
  },
  "T/BPDAC002-2023": {
   "std_no": "T/BPDAC 002-2023",
@@ -1026,7 +1026,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "42ee502d4a8434cf",
-  "days_to_implement": -1040
+  "days_to_implement": -1041
  },
  "T/JSCC030-2023": {
   "std_no": "T/JSCC 030-2023",
@@ -1047,7 +1047,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "4af78d528c33932b",
-  "days_to_implement": -1071
+  "days_to_implement": -1072
  },
  "T/ZZB3129-2023": {
   "std_no": "T/ZZB 3129-2023",
@@ -1068,7 +1068,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "68715b26f0e8273e",
-  "days_to_implement": -1153
+  "days_to_implement": -1154
  },
  "T/DGCX002-2023": {
   "std_no": "T/DGCX 002-2023",
@@ -1089,7 +1089,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "e10df50bc6c7577c",
-  "days_to_implement": -1101
+  "days_to_implement": -1102
  },
  "T/ZZB3145-2023": {
   "std_no": "T/ZZB 3145-2023",
@@ -1110,7 +1110,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "5807bb724e004c81",
-  "days_to_implement": -1153
+  "days_to_implement": -1154
  },
  "T/CNTAC1-2023": {
   "std_no": "T/CNTAC 1-2023",
@@ -1131,7 +1131,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "e02f75b64f746b72",
-  "days_to_implement": -1123
+  "days_to_implement": -1124
  },
  "T/HHPA005-2022": {
   "std_no": "T/HHPA 005-2022",
@@ -1152,7 +1152,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "d04f08670fef0422",
-  "days_to_implement": -1406
+  "days_to_implement": -1407
  },
  "T/CDZX003-2023": {
   "std_no": "T/CDZX 003-2023",
@@ -1173,7 +1173,7 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "5d05f413fa3e7ccd",
-  "days_to_implement": -1193
+  "days_to_implement": -1194
  },
  "T/HGMIF001-2021": {
   "std_no": "T/HGMIF 001-2021",
@@ -1194,6 +1194,6 @@
   "is_mandatory": false,
   "source_code": "SRC-08",
   "row_hash": "c4114d8ef17ac4c6",
-  "days_to_implement": -1768
+  "days_to_implement": -1769
  }
 }

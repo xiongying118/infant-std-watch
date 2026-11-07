@@ -1481,3 +1481,57 @@
    与 `source_health.json` fails，反映到 healthy 与 logs
 7. `crawler.py:612-620` fetch 用裸 print 吞掉逐关键词异常
 8. `scripts/selfcheck_page.js` 陈旧（`GB` → `GBNUTRITION`），应修或标注为失效
+
+## 2026-11-07
+- 管线退出码 0，校验通过（还原后）：STD=348 LAWS=42 ERATA=61 REFGROUPS=14 ALERTS=2
+- 各源真实条数：SRC-01=3 SRC-02=7 SRC-05=373 SRC-06=4 SRC-07=0 SRC-08=57 SRC-11=98 公告=56 勘误=187
+- **真实新增/换版/废止/勘误全 0**；change_events 27 行 / alerts 27 行，max 均停在 2026-10-08 10:10:25；
+  今日 crawl_logs 无 error 行
+- **RUNSTATE.lastRun = 2026-11-07 14:39**；nextRun = 2026-11-08 09:07
+- **判定情况 A → 已发布**（线上链接不变：https://infant-std-watch.app.workbuddy.host/）
+  发布后 curl 回读：线上 data.js **514618 字节，md5 30031c947da98c4df9c68af509d36520，与本地逐字节一致**
+  Playwright 端到端：JS 错误 0 / 资源失败 0；13 个导航视图**逐个点击全部渲染正常**
+
+### ★ SRC-08 掉条第 15 次复现（同型）
+- 首跑 57 → 55，丢 `T/CDZX 003-2023`《乳粉中磷脂酰胆碱的测定 高效液相色谱法》
+  与 `T/HGMIF 001-2021`《绿色设计产品评价技术规范 婴幼儿配方乳粉》
+- 今日直连团标平台再核验：`CDZX`/`磷脂酰胆碱`/`乳粉中磷脂酰胆碱` total 均 0；
+  `HGMIF` total=26（**不含 001**）、`婴幼儿配方乳粉` total=13（**不含 HGMIF001**）、
+  `绿色设计产品评价技术规范 婴幼儿` total=0；**对照组 `HHPA` total=10、`婴幼儿肠造口` total=2 正常**
+  → 平台检索正常，属**索引漏召回**，**不能判定废止**；2 条详情页 GET 均 200（235334 字节）
+- **处置**：合并还原（今日 55 条保持新鲜，只补回 2 条并按当天重算 days_to_implement
+  -1193→-1194、-1768→-1769），脚本 `.workbuddy/tmp/restore_src08_20261107.py`
+  → `daily_check.py --skip-fetch` 重建 → STD 恢复 348；node diff 复核 STD/ERATA/ALERTS/SRCS 全部 0 差异
+
+### ★ 官方源直连全库核验（结论：官方今天确实无新标准/新勘误/新公告）
+- 标准库 num_tn=2：1808 行 → 有效 1753 条，**PDATE 上限仍 2026-08-18**，`PDATE>=2026-09-01` = **0 条**
+- 公告库 num_tn=1：56 条，与本地 **GUID 双向 0 差异**
+- 勘误库 num_tn=4：187 条，与本地 **GUID 双向 0 差异**，KWSJ 上限 2026-10-28
+- 全库 num_tn=99：1975 GUID；本地修改单 55 条 → **全部命中，未命中 0**
+- 脚本 `.workbuddy/tmp/verify_official_20261107.py`（四库+TTBZ 一次跑完）
+
+### 工具备忘（本日新增）
+- **data.js 不是纯 JSON**（`window.STDWATCH_DATA = { STD:[{no:".."}] }`，键无引号、值单引号）
+  → Python json 必失败，**必须 node + vm 载入**；已写 `.workbuddy/tmp/diff_20261107.js`
+- **bash 管道接 head 会 SIGPIPE 杀掉长跑脚本**（今天 verify 第一次跑就是这样死的、JSON 没落盘）
+  → 长脚本一律 `> log 2>&1` 重定向后再 grep/awk
+- 还原快照不用 git checkout，用基线备份 `.workbuddy/tmp/baseline_20261107/`（data.js + data/snapshots 全量）
+- Playwright 路径复测可用，脚本 `.workbuddy/tmp/smoke_20261107.js` / `views_20261107.js`（接受 URL 参数）
+
+### 复核
+- **SRC-07 今天根本没运行**（24h 冷却，crawl_logs 无 SRC-07 行）；`source_health.json` 里
+  `SRC-07 fails=21 / last_fail=2026-11-06T18:46:58` 是**历史累计**，不是今天的错误
+  → 今日 `healthy: true` 不算假阳性（但 build_runstate 不读 source_health 的根因仍未修）
+- SRC-06 连续第 20 天靠「沿用上次快照 4 条」兜底保住（mtime 仍停 2026-11-02 18:15）
+- 8 月批次三个婴配标准本地仍缺失（长期漏采，非今日新增）
+
+### 待修（优先级排序）
+1. **★ SRC-07 判定逻辑**（累计 21 fails）：修 `crawler.py:859`，0 条记 ok 并正常写空快照
+2. **★ 静默掉条闸门**（10-06 首次，**今日第 15 次**）：`sanity_guard.py` 校验环比跌幅（>20% 阻断发布），
+   并把「沿用上次快照」兜底推广到所有源
+3. **★ SRC-06 多栏目轮询**（连续 **13** 天造成实际掉条）：改多 pageId/多目录轮询 + official_url 存活兜底
+4. **SRC-08 检索词选取**：补 `HHPA` 等号段词；两条平台侧不可检索，**不要因检索不到就判定废止**
+5. **检索词表缺口**（10-31 首次）：补「辅食营养补充品」「牛乳蛋白」等词
+6. **healthy 假阳性**（10-15 发现）：`build_runstate.py` 读 crawl_logs 当日 error 与 source_health fails
+7. `crawler.py:612-620` fetch 用裸 print 吞掉逐关键词异常
+8. `scripts/selfcheck_page.js` 陈旧（`GB` → `GBNUTRITION`），应修或标注为失效

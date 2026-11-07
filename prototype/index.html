@@ -1651,14 +1651,21 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
            ⚠ 20 天内勘误/修改单：这类变更**不改标准号、不改实施日期**，
               按标准号监控完全发现不了 → 必须单独占一格。 -->
       <div class="grid g2" style="margin-bottom:10px">
-        <div class="kpi"><div class="k">一年内要换版</div><div class="v" id="kpiSoon365">—</div><div class="d" id="kpiSoon365d">仅通则引用标准</div></div>
-        <div class="kpi warn"><div class="k">20 天内勘误/修改单</div><div class="v" id="kpiErata20">—</div><div class="d" id="kpiErata20d">仅通则引用标准</div></div>
+        <div class="kpi jump" data-kpi="soon365" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">一年内要换版</div><div class="v" id="kpiSoon365">—</div><div class="d" id="kpiSoon365d">仅通则引用标准</div></div>
+        <div class="kpi warn jump" data-kpi="erata20" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">20 天内勘误/修改单</div><div class="v" id="kpiErata20">—</div><div class="d" id="kpiErata20d">仅通则引用标准</div></div>
       </div>
       <div class="grid g4" style="margin-bottom:16px">
-        <div class="kpi hi"><div class="k">90 天内要动手</div><div class="v" id="kpiSoon90">—</div><div class="d" id="kpiSoon90d">按实施日期实算</div></div>
-        <div class="kpi"><div class="k">一年内要换版</div><div class="v" id="kpiSoon365b">—</div><div class="d" id="kpiSoon365bd">标准清单全部</div></div>
-        <div class="kpi"><div class="k">现行有效标准</div><div class="v" id="kpiStd">—</div><div class="d" id="kpiSub">—</div></div>
-        <div class="kpi"><div class="k">法规与体系</div><div class="v" id="kpiLaw">—</div><div class="d" id="kpiLawd">按效力与环节分层</div></div>
+        <div class="kpi hi jump" data-kpi="soon90" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">90 天内要动手</div><div class="v" id="kpiSoon90">—</div><div class="d" id="kpiSoon90d">按实施日期实算</div></div>
+        <div class="kpi jump" data-kpi="soon365b" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">一年内要换版</div><div class="v" id="kpiSoon365b">—</div><div class="d" id="kpiSoon365bd">标准清单全部</div></div>
+        <div class="kpi jump" data-kpi="std" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">现行有效标准</div><div class="v" id="kpiStd">—</div><div class="d" id="kpiSub">—</div></div>
+        <div class="kpi jump" data-kpi="law" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">法规与体系</div><div class="v" id="kpiLaw">—</div><div class="d" id="kpiLawd">按效力与环节分层</div></div>
+      </div>
+
+      <!-- ★ 近 20 天勘误/修改单：独立简洁提醒（2026-11-07 用户要求）★
+           样式照「一年内换版」那条黄框，但**单独一条、不和换版放一起**，
+           位置紧跟 KPI（换版倒计时在下面的「通则引用标准」卡片里）。 -->
+      <div class="notice warn" id="erataRemind" style="display:none;margin-bottom:14px">
+        <span>⚠️</span><div id="erataRemindBody"></div>
       </div>
 
       <div class="card">
@@ -3508,30 +3515,8 @@ function renderRefDigest(){
       ${soon.length>6?`<div class="muted" style="margin-top:4px">另有 ${soon.length-6} 项，<a href="#refs">查看全部</a></div>`:""}
     </div></div>`;
   }
-  html += REFGROUPS.map(g=>{
-    const n = g.items.length;
-    // ★ 这一组涉及几个"即将换版的标准号"（去重），不是几个检测对象 ★
-    //   原写法 `g.items.filter(x=>x.altsSoon).length` 数的是条目数，
-    //   同一标准被两个检测对象引用时会数成 2，与上面"4 项"对不上。
-    const soonSet = new Set();
-    g.items.forEach(x=>(x.altsSoon||"").split("；").filter(Boolean).forEach(t=>{
-      const m = t.match(/(GB[/T]?\s*[\d.]+-\d{4})/);
-      if (m) soonSet.add(m[1]);
-    }));
-    const soonN = soonSet.size;
-    return `<div class="rem-item" style="padding:8px 0;border-bottom:1px solid var(--line)">
-      <div class="tx">
-        <b style="font-size:13px">${g.g}</b>
-        <span class="muted"> · ${n} 项</span>
-        ${soonN?`<span class="tag t-soon" style="margin-left:6px">${soonN} 项待换版</span>`:""}
-        <div class="muted" style="margin-top:3px;font-size:11.5px">
-          ${g.items.slice(0,4).map(x=>`<span class="mono">${x.no.replace(/-\d{4}$/,"")}</span>`).join("、")}
-          ${n>4?` 等 ${n} 项`:""}
-        </div>
-      </div>
-      <a class="btn sm" href="#refs">详情</a>
-    </div>`;
-  }).join("");
+  /* ★ 2026-11-07 用户要求：首页不再铺这 14 行分组概览（"这个不要"）。
+     分组明细改由上方 KPI 卡片点击直达 / 卡片头「查看全部 →」进 #refs。 */
   $("#refDigest").innerHTML = html;
 }
 
@@ -3675,9 +3660,109 @@ function renderErata(){
   if(scopeEl) scopeEl.textContent = ERATASCOPE.length || "—";
 }
 
+/* ================================================================
+   ★ KPI 卡片点击直达（2026-11-07 用户要求）★
+   有更新数字的卡片点一下直接到对应清单，不用再翻首页的分组列表。
+   ★ 20 天勘误/修改单提醒：单独渲染，绝不与「一年内换版」倒计时合并。
+   ================================================================ */
+let kpiFocus = null, kpiFocusPending = false;
+
+/* 通则引用标准号集合（「一年内要换版」第一行的口径）*/
+function kpiRefNos(){
+  const rg = (typeof REFGROUPS!=="undefined" && REFGROUPS) || [];
+  const set = new Set();
+  rg.forEach(g=>(g.items||[]).forEach(it=>set.add(erataScopeKey(it.no))));
+  return set;
+}
+/* 近 20 天（含今天）发布、且属于通则引用标准的勘误/修改单 */
+function erataNear20(){
+  const refSet = kpiRefNos();
+  const now = Date.now(), dayMs = 86400000;
+  return ERATA.filter(e=>e.erataDate && refSet.has(erataScopeKey(e.no)))
+    .map(e=>({e:e, days:Math.floor((now - new Date(e.erataDate+"T00:00:00"))/dayMs)}))
+    .filter(x=>x.days>=0 && x.days<=20)
+    .sort((a,b)=>String(b.e.erataDate).localeCompare(String(a.e.erataDate)));
+}
+/* 标准清单的 KPI 聚焦筛选（只在点卡片那一次生效）*/
+const KPI_FOCUS = {
+  soon90:   {label:"90 天内要动手", test:s=>{
+    const d=daysTo(s.imp); return s.impState==="即将实施" && d!==null && d<=90; }},
+  soon365:  {label:"一年内要换版 · 仅通则引用标准", test:s=>{
+    const d=daysTo(s.imp), ref=kpiRefNos();
+    return s.impState==="即将实施" && d!==null && d<=365 && ref.has(erataScopeKey(s.no)); }},
+  soon365b: {label:"一年内要换版 · 标准清单全部", test:s=>{
+    const d=daysTo(s.imp); return s.impState==="即将实施" && d!==null && d<=365; }}
+};
+function clearKpiFocus(){
+  kpiFocus=null;
+  if((location.hash||"#home")==="#list") renderList();
+}
+function kpiJump(kind){
+  /* 勘误/修改单 → 提醒中心的「勘误」视图 */
+  if(kind==="erata20"){
+    const was=location.hash; curAlertLvl="erata"; location.hash="#alerts";
+    if(was==="#alerts") renderAlerts();
+    return;
+  }
+  if(kind==="law"){ kpiFocus=null; location.hash="#law"; return; }
+  if(kind==="std"){
+    kpiFocus=null; curCat="all"; curSub="all"; curStdSort="";
+    const was=location.hash; location.hash="#list";
+    if(was==="#list") renderList();
+    return;
+  }
+  if(!KPI_FOCUS[kind]) return;
+  kpiFocus=kind; kpiFocusPending=true;
+  curCat="all"; curSub="all"; curStdSort="imp";
+  const was=location.hash; location.hash="#list";
+  if(was==="#list"){ kpiFocusPending=false; renderList(); }
+}
+/* 事件委托：鼠标 + 键盘（div 不是原生按钮，得自己接 Enter/Space）
+   ★ 加 typeof 判断：离线渲染自检里 document 是精简桩，没有 addEventListener，
+     顶层直接调会把整段脚本炸掉（连带 renderMethod 等一堆断言全挂）。 */
+if(typeof document.addEventListener === "function"){
+  document.addEventListener("click", e=>{
+    const c=e.target.closest && e.target.closest(".kpi[data-kpi]");
+    if(c) kpiJump(c.dataset.kpi);
+  });
+  document.addEventListener("keydown", e=>{
+    if(e.key!=="Enter" && e.key!==" ") return;
+    const c=e.target.closest && e.target.closest(".kpi[data-kpi]");
+    if(c){ e.preventDefault(); kpiJump(c.dataset.kpi); }
+  });
+}
+
+/* ★ 近 20 天勘误/修改单 —— 独立简洁提醒（样式照换版黄框）★ */
+function renderErataRemind(){
+  const box=$("#erataRemind"), body=$("#erataRemindBody");
+  if(!box || !body) return;
+  const near=erataNear20();
+  if(!near.length){ box.style.display="none"; body.innerHTML=""; return; }
+  box.style.display="";
+  const nMod=near.filter(x=>x.e.kind==="MOD").length;
+  const lines=near.slice(0,6).map(x=>{
+    const e=x.e, isMod=e.kind==="MOD";
+    const kind=isMod?("第"+e.modNo+"号修改单"):"勘误";
+    const sec=e.sec?(" · 第 "+e.sec+" 章"):"";
+    const nm=e.stdName?(" · "+(e.stdName.length>20?e.stdName.slice(0,20)+"…":e.stdName)):"";
+    return '<div class="erata-line"><a class="mono" href="#alerts" onclick="curAlertLvl=\'erata\'" title="'+nm.replace(/"/g,"")+'">'+e.no+'</a>'
+      + ' · <span class="muted">'+kind+sec+'</span>'
+      + ' · <b>'+e.erataDate+' 发布</b>（'+x.days+' 天前）</div>';
+  }).join("");
+  const tail=near.length>6
+    ? '另有 '+(near.length-6)+' 条，'
+    : '';
+  body.innerHTML='<b>近 20 天有 '+near.length+' 条勘误/修改单</b>'
+    + (nMod?('（含修改单 '+nMod+' 条）'):'')
+    + '，请核对作业文件：<div style="margin-top:6px">'+lines+'</div>'
+    + '<div class="muted" style="margin-top:4px">'+tail
+    + '<a href="#alerts" onclick="curAlertLvl=\'erata\'">查看全部勘误/修改单 →</a></div>';
+}
+
 function renderHome(){
   renderErata();
   renderRefDigest();
+  renderErataRemind();
   // ★ KPI 全部实算，不写死数字 ★
   //   之前写死"3 项 / 2 项"，跟真实数据对不上（实际 0 项 ≤90 天、15 项 ≤365 天）。
   //   提醒类数字一旦不准，用户会按错的日期做准备 —— 比没有更糟。
@@ -3687,9 +3772,7 @@ function renderHome(){
        不统计全库（STD 有 348 条、通则引用只有 65 条，全库算出来的数字
        对婴配实验室没有意义）。
        → 集合 = REFGROUPS（通则引用标准页，按检测对象分类）里的标准号 */
-    const rg = (typeof REFGROUPS!=='undefined' && REFGROUPS) || [];
-    const refSet = new Set();
-    rg.forEach(g=>(g.items||[]).forEach(it=>refSet.add(erataScopeKey(it.no))));
+    const refSet = kpiRefNos();
     const inRef = no => refSet.has(erataScopeKey(no));
 
     const pend = STD.filter(s=>s.impState==="即将实施" && daysTo(s.imp)!==null)
@@ -3718,13 +3801,7 @@ function renderHome(){
        往前算而不是往后算：勘误是"已经发生"的变更，
        往后算的话永远是 0（发布日都是过去的），提醒就没意义了。 */
     (function(){
-      const all20 = ERATA.filter(e=>inRef(e.no) && e.erataDate);
-      const now = new Date();
-      const dayMs = 86400000;
-      const near = all20.filter(e=>{
-        const t = (now - new Date(e.erataDate)) / dayMs;
-        return t >= 0 && t <= 20;
-      }).sort((a,b)=>String(b.erataDate).localeCompare(String(a.erataDate)));
+      const near = erataNear20().map(x=>x.e);
       const nMod20 = near.filter(e=>e.kind==="MOD").length;
       const el = $("#kpiErata20");
       if(el){
@@ -3975,7 +4052,7 @@ function renderList(kw){
     const n = c.k==="all" ? STD.length : STD.filter(s=>s.cat===c.k).length;
     return `<button class="${curCat===c.k?"on":""}" data-cat="${c.k}">${c.name}<span class="cnt">${n}</span></button>`;
   }).join("");
-  $$("#listTabs button").forEach(b=>b.onclick=()=>{curCat=b.dataset.cat;curSub="all";renderList();});
+  $$("#listTabs button").forEach(b=>b.onclick=()=>{curCat=b.dataset.cat;curSub="all";kpiFocus=null;renderList();});
 
   // ---- 二级细分：按检测对象/项目分组（用户要求"再按种类细分"） ----
   const base = STD.filter(s=>curCat==="all"||s.cat===curCat);
@@ -3988,9 +4065,10 @@ function renderList(kw){
     const on = curSub===k;
     return `<button class="chip ${on?"on":""}" data-sub="${k}">${k}<span class="cnt">${subs[k].length}</span></button>`;
   }).join("");
-  $$("#subTabs button").forEach(b=>b.onclick=()=>{curSub=b.dataset.sub;renderList();});
+  $$("#subTabs button").forEach(b=>b.onclick=()=>{curSub=b.dataset.sub;kpiFocus=null;renderList();});
 
   let rows = curSub==="all" ? base : (subs[curSub]||[]);
+  if(kpiFocus && KPI_FOCUS[kpiFocus]) rows = rows.filter(KPI_FOCUS[kpiFocus].test);
   if(kw) rows = rows.filter(s=>(s.no+s.title).toUpperCase().includes(kw.toUpperCase()));
   if(curStdSort==="imp") rows = rows.slice().sort((a,b)=>{
     const av=a.imp||"9999", bv=b.imp||"9999"; return av<bv?-1:av>bv?1:0;
@@ -3999,9 +4077,14 @@ function renderList(kw){
     const av=a.pub||"9999", bv=b.pub||"9999"; return av<bv?-1:av>bv?1:0;
   });
   const groupBy = curCat==="all" && curSub==="all" && curStdSort!=="imp" && curStdSort!=="pub";
-  $("#listCnt").innerHTML = `共 <b class="mono">${rows.length}</b> 条` +
+  let cntHtml = `共 <b class="mono">${rows.length}</b> 条` +
     (curStdSort?`　<span class="muted">按${curStdSort==="imp"?"实施日期":"发布日期"}排序</span>`:"") +
     (groupBy?"　<span class=\"muted\">按细类分组显示</span>":"");
+  if(kpiFocus && KPI_FOCUS[kpiFocus]){
+    cntHtml += `　<span class="tag t-soon">${KPI_FOCUS[kpiFocus].label}</span> `
+             + `<button class="btn sm" onclick="clearKpiFocus()">清除筛选</button>`;
+  }
+  $("#listCnt").innerHTML = cntHtml;
   const cell = s => `<tr class="rowlink" onclick="openDetail('${s.no}')">
       <td><span class="no">${s.no}</span></td>
       <td>${s.title}<div style="margin-top:3px"><span class="tag ${s.cat==="product"?"t-high":s.cat==="test"?"t-mid":"t-gray"}">${s.sub||catName(s.cat)}</span></div></td>
@@ -4034,6 +4117,7 @@ function currentStdRows(){
   const subs = {};
   base.forEach(s=>{ const k=s.sub||"未分类"; (subs[k]=subs[k]||[]).push(s); });
   let rows = curSub==="all" ? base : (subs[curSub]||[]);
+  if(kpiFocus && KPI_FOCUS[kpiFocus]) rows = rows.filter(KPI_FOCUS[kpiFocus].test);
   if(curStdSort==="imp") rows = rows.slice().sort((a,b)=>(a.imp||"9999")<(b.imp||"9999")?-1:1);
   else if(curStdSort==="pub") rows = rows.slice().sort((a,b)=>(a.pub||"9999")<(b.pub||"9999")?-1:1);
   return rows;
@@ -5363,6 +5447,9 @@ function route(){
   const h=(location.hash||"#home").slice(1);
   const OK=["home","list","law","cnas","refs","detail","method","mdetail","lab","jsa","qmtools","rdtools","subs","alerts","admin"];
   const v = OK.includes(h) ? h : "home";
+  /* ★ KPI 直达筛选只在「点卡片那一次」生效，正常导航自动清除 ★ */
+  if(!kpiFocusPending) kpiFocus=null;
+  kpiFocusPending=false;
   $$(".nav a").forEach(a=>a.classList.toggle("on",a.dataset.v===v
       || (v==="mdetail"&&a.dataset.v==="method")));
   $$(".view").forEach(s=>s.classList.add("hide"));

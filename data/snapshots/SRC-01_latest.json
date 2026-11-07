@@ -18,7 +18,7 @@
   "is_mandatory": true,
   "source_code": "SRC-01",
   "row_hash": "7eb320468765f050",
-  "days_to_implement": -10293
+  "days_to_implement": -10294
  },
  "GB10766-1997": {
   "std_no": "GB 10766-1997",
@@ -39,7 +39,7 @@
   "is_mandatory": true,
   "source_code": "SRC-01",
   "row_hash": "445fc9731f4e0bd1",
-  "days_to_implement": -10293
+  "days_to_implement": -10294
  },
  "GB10767-1997": {
   "std_no": "GB 10767-1997",
@@ -60,6 +60,6 @@
   "is_mandatory": true,
   "source_code": "SRC-01",
   "row_hash": "6ca7a85e1ed75464",
-  "days_to_implement": -10293
+  "days_to_implement": -10294
  }
 }
