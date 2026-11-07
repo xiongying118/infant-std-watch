@@ -1663,12 +1663,9 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
         <div class="kpi jump" data-kpi="law" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">法规与体系</div><div class="v" id="kpiLaw">—</div><div class="d" id="kpiLawd">按效力与环节分层</div></div>
       </div>
 
-      <!-- ★ 近 20 天勘误/修改单：独立简洁提醒（2026-11-07 用户要求）★
-           样式照「一年内换版」那条黄框，但**单独一条、不和换版放一起**，
-           位置紧跟 KPI（换版倒计时在下面的「通则引用标准」卡片里）。 -->
-      <div class="notice warn" id="erataRemind" style="display:none;margin-bottom:14px">
-        <span>⚠️</span><div id="erataRemindBody"></div>
-      </div>
+      <!-- ★ 2026-11-07 22:37 用户改口：「近 20 天勘误」黄框移到
+           「4 项标准在一年内换版」黄框**后面**（见下面 #refDigest 之后）。
+           两条仍是各自独立的 .notice.warn，不合并成一条。 -->
 
       <!-- ★ 2026-11-07 用户「这个不要」：首页「高优提醒（置顶）」卡片已删除。
            高优提醒本身没删：仍完整保留在「提醒中心」，并由「今日待办」自动汇总。 -->
@@ -1688,6 +1685,11 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
             —— 范围比这块略大一点：还包含限量标准指定检测方法后传递引用的那些。</div>
         </div>
         <div id="refDigest"></div>
+        <!-- ★ 近 20 天勘误/修改单：紧跟换版黄框之后（2026-11-07 用户要求）★
+             独立一条、不与换版黄框合并；数据与 KPI 同一口径 erataNear20()。 -->
+        <div class="notice warn" id="erataRemind" style="display:none;margin-bottom:0">
+          <span>⚠️</span><div id="erataRemindBody"></div>
+        </div>
       </div>
 
       <!-- ===== 标准勘误与修改单 ===== -->
@@ -4678,25 +4680,52 @@ function renderAlerts(){
   if(!AL) return;
 
   /* ---------- 勘误视图 ---------- */
+  /* ---------- 勘误视图（2026-11-07：补齐成首页「今日待办」同款完整信息）---------- */
   if(curAlertLvl==="erata"){
     AL.innerHTML = erataSorted().filter(e=>erataInScope(e.no)).map(e=>{
       const k = alertKey(e.no, e.sec);
       const done = !!doneMap[k];
+      const isMod = e.kind==="MOD";
+      const lv = e.lvl || "mid";
+      /* ★ 用户「提醒中心里的这些信息没有今日待办里的完整，按今日待办里的复制过去弄完整」
+         → 与首页 renderErata() 用同一套字段：标准全称、三档徽标、
+           勘误章节/官方原因/发布日期、改前(错误)/改后(正确) 对照（公式图链接可点）、
+           为什么重要、实验室要做什么、官方原始链接。
+           底部操作仍是提醒中心自己的「标记已处理 / 忽略 30 天」，功能不丢。 */
+      const tag = isMod
+        ? `<span class="tag t-mod">第${e.modNo}号修改单</span>`
+        : (lv==="high" ? `<span class="tag t-high">勘误</span>`
+           : lv==="mid"  ? `<span class="tag t-mid">勘误</span>`
+           : `<span class="tag t-low">勘误</span>`);
+      const meta = isMod
+        ? `发布 <b class="mono">${e.erataDate||"—"}</b> · <b>实施 ${e.impDate||e.erataDate||"—"}</b>
+           <span class="tag t-mod" style="margin-left:4px">自批准之日起实施</span>`
+        : `勘误章节 <b class="mono">${e.sec || "—"}</b>${e.reason?` · 官方原因「${e.reason}」`:""} · 勘误发布 <b class="mono">${e.erataDate || "—"}</b>`;
+      const body = isMod
+        ? `<div style="background:#faf6fc;border:1px solid #e0c6ea;border-radius:5px;padding:8px 10px;font-size:12.5px">
+             <span class="muted" style="display:block;margin-bottom:3px">官方变更说明（摘自官方解读材料）</span>
+             ${e.after || "官方未提供解读材料，请点击下方官方链接查看修改单正文"}
+           </div>`
+        : `<div style="margin:9px 0;font-size:12.5px">
+             <div style="background:#fdeceb;border:1px solid #f7cfcb;border-radius:5px;padding:7px 10px;margin-bottom:5px">
+               <span class="muted" style="display:block;margin-bottom:2px">改前（错误）</span>${_erataBody(e.before)}
+             </div>
+             <div style="background:#eaf4ee;border:1px solid #c9e0d4;border-radius:5px;padding:7px 10px">
+               <span class="muted" style="display:block;margin-bottom:2px">改后（正确）</span>${_erataBody(e.after)}
+             </div>
+           </div>`;
+      const link = isMod
+        ? offLink("官方修改单正文", e.url || CFSA_SEARCH(e.no), "btn sm", "", e.no)
+        : offLink("官方勘误记录（标准勘误页）", e.url || CFSA_ERATA(e.no), "btn sm", "", e.no);
       return `
-      <div class="alert a-${e.lvl} ${done?"is-done":""}">
-        <div class="h"><span class="no">${e.no}</span><div class="t">第 ${e.sec} 章节勘误</div>
-          <span class="tag ${e.lvl==="high"?"t-high":"t-mid"}">${e.lvl==="high"?"高优":"中"}</span>
-          <span class="tag t-gray">勘误</span>
-          ${done?`<span class="tag t-low">已处理</span>`:""}</div>
-        <div style="margin:9px 0;font-size:12.5px">
-          <div style="background:#fdeceb;border:1px solid #f7cfcb;border-radius:5px;padding:7px 10px;margin-bottom:5px">
-            <span class="muted" style="display:block;margin-bottom:2px">改前</span>${e.before}</div>
-          <div style="background:#eaf4ee;border:1px solid #c9e0d4;border-radius:5px;padding:7px 10px">
-            <span class="muted" style="display:block;margin-bottom:2px">改后</span>${e.after}</div>
-        </div>
-        <div class="why"><span class="lb">为什么重要</span>${e.why}</div>
-        <div class="act"><span class="lb">实验室要做什么</span><ul>${e.acts.map(x=>`<li>${x}</li>`).join("")}</ul></div>
-        <div class="foot">${offLink("官方勘误记录", CFSA_ERATA(e.no), "btn sm", "", e.no)}
+      <div class="alert a-${lv} ${done?"is-done":""}">
+        <div class="h"><span class="no">${e.no}</span><div class="t">${e.stdName || "（标准名待补）"}</div>
+          ${tag}${done?`<span class="tag t-low">已处理</span>`:""}</div>
+        <div class="muted" style="margin:5px 0 8px;font-size:12px">${meta}</div>
+        ${body}
+        <div class="why"><span class="lb">为什么重要</span>${e.why||"—"}</div>
+        <div class="act"><span class="lb">实验室要做什么</span><ul>${(e.acts||[]).map(x=>`<li>${x}</li>`).join("")}</ul></div>
+        <div class="foot">${link}
           <div class="sp" style="flex:1"></div>
           ${done
             ? `<button class="btn sm" onclick="unmarkAlertDone('${e.no}','${e.sec}')">撤销处理</button>`
@@ -5371,10 +5400,43 @@ function toggleNav(force){
     document.removeEventListener("keydown", _navEsc);
     _navEsc = null;
   }
-  // 抽屉打开时锁住背景滚动，否则在 iOS 上滑遮罩会带着页面一起动
-  document.body.style.overflow = open ? "hidden" : "";
+  /* ★ 2026-11-07 用户「手机版左边没法下滑」★
+     原先用 body{overflow:hidden} 锁背景，在部分手机 WebView / 微信内置浏览器里
+     会把 fixed 抽屉内部的滚动一起锁死 —— 侧栏下方「研发管理 / 提醒 / 管理后台」
+     既看不到也滑不下去。
+     → 不再锁 body：抽屉自己用 overscroll-behavior:contain 截断滚动链，
+       遮罩用 touch-action:none 禁止在遮罩上滑动，背景一样不会跟着动。 */
+  document.body.style.overflow = "";
   return open;
 }
+/* ★ 抽屉里滑动别误触导航链接（2026-11-07「手机版左边没法下滑」配套）★
+   部分手机 WebView 在滚动手势结束时仍会给 <a> 合成一次 click，
+   "往下滑"就变成"点了某个菜单"→ 路由切走 + 抽屉关闭，看起来像滑不动。
+   手指移动 >8px 时，短暂禁用导航链接的点击（350ms 后自动恢复）。 */
+(function(){
+  if(typeof document === "undefined" || typeof document.getElementById !== "function") return;
+  const side = document.getElementById("side");
+  if(!side || typeof side.addEventListener !== "function") return;
+  let y0=null, moved=false, timer=null;
+  side.addEventListener("touchstart", e=>{
+    y0=(e.touches && e.touches[0]) ? e.touches[0].clientY : null; moved=false;
+  }, {passive:true});
+  side.addEventListener("touchmove", e=>{
+    if(y0!==null && e.touches && e.touches[0] &&
+       Math.abs(e.touches[0].clientY-y0)>8) moved=true;
+  }, {passive:true});
+  side.addEventListener("touchend", ()=>{
+    if(moved){
+      side.classList.add("no-tap");
+      if(typeof clearTimeout === "function") clearTimeout(timer);
+      if(typeof setTimeout === "function")
+        timer=setTimeout(()=>side.classList.remove("no-tap"), 350);
+      else side.classList.remove("no-tap");
+    }
+    y0=null;
+  }, {passive:true});
+})();
+
 function closeNavOnMobile(){
   // 只有在抽屉模式下才需要自动收起。判断依据用 matchMedia 而不是
   // 屏幕宽度数值 —— 与 CSS 断点保持一致，不会出现"CSS 藏了但 JS 没收"。

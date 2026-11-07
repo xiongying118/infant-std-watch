@@ -20,6 +20,15 @@ const EXE='C://Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const HASHES=['#home','#refs','#list','#law','#cnas','#subs','#jsa','#lab','#method','#qmtools','#rdtools','#alerts','#admin'];
 let pass=0,fail=0;
 function ck(ok,msg){ if(ok){pass++;console.log('  ✓ '+msg);} else {fail++;console.log('  ✗ '+msg);} }
+/* ★ 线上偶发 ERR_CONNECTION_RESET（本地网络抖动）→ 6 次 / 4 秒重试。
+   项目里其它测试脚本都是这套处理，不加会中途整轮挂掉。 */
+async function gotoRetry(p,url){
+  for(let i=0;i<6;i++){
+    try{ await p.goto(url,{waitUntil:'domcontentloaded',timeout:60000}); return true; }
+    catch(e){ console.log('  (网络重试 '+(i+1)+')'); await p.waitForTimeout(4000); }
+  }
+  return false;
+}
 
 (async()=>{
   const b=await chromium.launch({executablePath:EXE,headless:true});
@@ -29,7 +38,7 @@ function ck(ok,msg){ if(ok){pass++;console.log('  ✓ '+msg);} else {fail++;cons
   {
     const p=await b.newPage({viewport:{width:1600,height:1000}});
     p.on('pageerror',e=>errs.push('desktop: '+e.message));
-    await p.goto(URL+'#home',{waitUntil:'domcontentloaded',timeout:60000});
+    if(!(await gotoRetry(p,URL+'#home'))){ console.log('网络不通，测试中止'); await b.close(); process.exit(2); }
     await p.waitForTimeout(2200);
     console.log('=== ① 桌面 · 四点改动 ===');
     ck(errs.length===0,'无 JS 报错'+(errs.length?': '+errs.join(' | '):''));
@@ -54,6 +63,44 @@ function ck(ok,msg){ if(ok){pass++;console.log('  ✓ '+msg);} else {fail++;cons
     ck(/GB 5009\.33-2025/.test(r.remind),'勘误提醒仍含标准号');
     ck(r.lines>0,'提醒框有条目（'+r.lines+'）');
     console.log('    提醒框：'+r.remind.replace(/\n/g,' / ').slice(0,190));
+
+    /* 2026-11-07 第三轮 ②：勘误黄框必须在换版黄框后面 */
+    const ord=await p.evaluate(()=>{
+      const rem=document.getElementById('erataRemind'), dig=document.getElementById('refDigest');
+      const card=rem.closest('.card');
+      return {after:!!(dig.compareDocumentPosition(rem)&Node.DOCUMENT_POSITION_FOLLOWING),
+        sameCard:!!card&&card.contains(dig),
+        independent:rem.classList.contains('notice')&&rem.classList.contains('warn'),
+        prevIsSoon:/一年内换版/.test(dig.innerText||'')};
+    });
+    ck(ord.after&&ord.sameCard,'勘误黄框紧跟换版黄框之后（同一张「通则引用标准」卡片内）');
+    ck(ord.prevIsSoon,'前面的黄框确实是「一年内换版」');
+    ck(ord.independent,'两条黄框各自独立，未合并');
+
+    /* 2026-11-07 第三轮 ③：提醒中心「勘误」视图字段要跟首页一样完整 */
+    await p.evaluate(()=>{location.hash='#alerts';});
+    await p.waitForTimeout(700);
+    await p.click('#alertFilters .chip[data-lvl="erata"]');
+    await p.waitForTimeout(500);
+    const er=await p.evaluate(()=>{
+      const el=document.getElementById('alertList'), t=el.innerText||'';
+      return {n:el.querySelectorAll('.alert').length,
+        name:/食品安全国家标准/.test(t),
+        before:t.includes('改前（错误）'), after:t.includes('改后（正确）'),
+        meta:/勘误章节/.test(t)&&/勘误发布/.test(t),
+        why:t.includes('为什么重要'), act:t.includes('实验室要做什么'),
+        link:!!el.querySelector('a[href*="cfsa"]'),
+        btn:t.includes('标记已处理'),
+        sample:t.slice(0,180).replace(/\n/g,' / ')};
+    });
+    ck(er.n>0,'提醒中心勘误视图有条目（'+er.n+'）');
+    ck(er.name,'含标准全称');
+    ck(er.before&&er.after,'含「改前（错误）/ 改后（正确）」对照');
+    ck(er.meta,'含勘误章节 / 官方原因 / 发布日期');
+    ck(er.why&&er.act,'含「为什么重要 / 实验室要做什么」');
+    ck(er.link,'含官方勘误链接');
+    ck(er.btn,'保留「标记已处理」操作');
+    console.log('    提醒中心首条：'+er.sample);
     await p.close();
   }
 
@@ -61,7 +108,7 @@ function ck(ok,msg){ if(ok){pass++;console.log('  ✓ '+msg);} else {fail++;cons
   for(const W of [390,430,768]){
     const p=await b.newPage({viewport:{width:W,height:844}});
     p.on('pageerror',e=>errs.push('W'+W+': '+e.message));
-    await p.goto(URL+'#home',{waitUntil:'domcontentloaded',timeout:60000});
+    if(!(await gotoRetry(p,URL+'#home'))){ console.log('网络不通，测试中止'); await b.close(); process.exit(2); }
     await p.waitForTimeout(1800);
     console.log('=== ② 手机视口 '+W+'px ===');
     const r=await p.evaluate(()=>{
@@ -92,6 +139,23 @@ function ck(ok,msg){ if(ok){pass++;console.log('  ✓ '+msg);} else {fail++;cons
         mask:getComputedStyle(document.getElementById('sideMask')).display}));
       ck(opened.cls&&opened.x>=-2,'抽屉能打开（x='+opened.x+'）');
       ck(opened.mask!=='none','遮罩生效');
+      /* 2026-11-07 第三轮 ①：侧栏整体可下滑，能看到最下面的菜单 */
+      const sc=await p.evaluate(()=>{
+        const s=document.getElementById('side');
+        s.scrollTop=0;
+        const can=s.scrollHeight>s.clientHeight+10;
+        s.scrollTop=400;
+        const last=s.querySelector('.nav').lastElementChild.textContent.trim();
+        return {can,top:s.scrollTop,ch:s.clientHeight,sh:s.scrollHeight,
+          navOv:getComputedStyle(s.querySelector('.nav')).overflowY,
+          maskTouch:getComputedStyle(document.getElementById('sideMask')).touchAction,
+          last:last};
+      });
+      ck(sc.can,'侧栏内容超出可视高度、可滚动（'+sc.sh+'/'+sc.ch+'）');
+      ck(sc.top>0,'侧栏 scrollTop 能改变（'+sc.top+'）');
+      ck(sc.navOv==='visible','导航区不再被单独裁切');
+      ck(sc.maskTouch==='none','遮罩禁止滑动、背景不跟着动');
+      ck(/管理后台/.test(sc.last),'最底部「管理后台」在滚动区域内');
       await p.click('#sideMask'); await p.waitForTimeout(350);
       const closed=await p.evaluate(()=>document.body.classList.contains('nav-open'));
       ck(!closed,'点遮罩能关闭抽屉');
@@ -103,7 +167,7 @@ function ck(ok,msg){ if(ok){pass++;console.log('  ✓ '+msg);} else {fail++;cons
   {
     const p=await b.newPage({viewport:{width:390,height:844}});
     p.on('pageerror',e=>errs.push('views: '+e.message));
-    await p.goto(URL+'#home',{waitUntil:'domcontentloaded',timeout:60000});
+    if(!(await gotoRetry(p,URL+'#home'))){ console.log('网络不通，测试中止'); await b.close(); process.exit(2); }
     await p.waitForTimeout(1600);
     console.log('=== ③ 390px · 13 个视图横向溢出巡检 ===');
     for(const h of HASHES){
@@ -113,6 +177,15 @@ function ck(ok,msg){ if(ok){pass++;console.log('  ✓ '+msg);} else {fail++;cons
         view:(document.querySelector('.view:not(.hide)')||{}).id||'-'}));
       ck(r.sw<=r.iw+1,h+' → '+r.view+' 不溢出（'+r.sw+'/'+r.iw+'）');
     }
+    /* 第三轮 ③：提醒中心「勘误」视图现在有 61 条完整卡片，
+       里面有超长官方图片 URL，最容易把手机页面撑宽 —— 单独再验一次。 */
+    await p.evaluate(()=>{location.hash='#alerts';});
+    await p.waitForTimeout(600);
+    await p.evaluate(()=>{const x=document.querySelector('#alertFilters .chip[data-lvl="erata"]');if(x)x.click();});
+    await p.waitForTimeout(900);
+    const erSw=await p.evaluate(()=>({sw:document.documentElement.scrollWidth,iw:innerWidth,
+      n:document.querySelectorAll('#alertList .alert').length}));
+    ck(erSw.sw<=erSw.iw+1,'提醒中心勘误视图（'+erSw.n+' 条完整卡片）不横向溢出（'+erSw.sw+'/'+erSw.iw+'）');
     await p.close();
   }
 

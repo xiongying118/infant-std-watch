@@ -717,10 +717,21 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
 @media(max-width:900px){
   .app{display:block}
   .side{
-    position:fixed;left:0;top:0;bottom:0;width:250px;max-width:82vw;height:100vh;
+    position:fixed;left:0;top:0;bottom:0;width:250px;max-width:82vw;
+    height:100vh;height:100dvh;
     z-index:70;transform:translateX(-102%);transition:transform .24s ease;
-    overflow-y:auto;box-shadow:0 0 40px rgba(0,0,0,.16);
+    box-shadow:0 0 40px rgba(0,0,0,.16);
+    /* ★ 2026-11-07「手机版左边没法下滑」★
+       原来只有 .nav 自己 overflow-y:auto，且被 flex 压到 703px / 内容 870px，
+       手指落在品牌区或底部状态区就完全滑不动；body 又被 overflow:hidden 锁住。
+       → display:block 让 brand + nav + side-foot 自然堆叠，整块侧栏一起滚。 */
+    display:block;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;touch-action:pan-y;
   }
+  .side .nav{flex:none;overflow:visible;height:auto}
+  .side .brand,.side .side-foot{flex:none}
+  .side-mask{touch-action:none}
+  .side.no-tap .nav a{pointer-events:none}
   body.nav-open .side{transform:translateX(0)}
   .side .nav a{min-height:44px}
   .main{width:100%;max-width:100%;min-width:0;display:flex;flex-direction:column}
@@ -766,11 +777,12 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
   /* 勘误/修改单条目：「改前/改后」原文里常有超长官方图片 URL，
      _erataBody() 会把它转成 <a>，不折行就把整页撑宽
      （修复前实测 390px 视口 document.scrollWidth = 638px）。 */
-  #erataBox .alert,#erataBox .alert *{min-width:0;overflow-wrap:anywhere;word-break:break-word}
-  #erataBox .alert .h{flex-wrap:wrap;gap:5px}
-  #erataBox .alert .h .t{flex:1 1 100%;font-size:13px}
-  #erataBox .alert .foot{gap:6px}
-  #erataBox .alert .foot .btn{white-space:normal;text-align:left}
+  #erataBox .alert,#erataBox .alert *,#alertList .alert,#alertList .alert *{
+    min-width:0;overflow-wrap:anywhere;word-break:break-word}
+  #erataBox .alert .h,#alertList .alert .h{flex-wrap:wrap;gap:5px}
+  #erataBox .alert .h .t,#alertList .alert .h .t{flex:1 1 100%;font-size:13px}
+  #erataBox .alert .foot,#alertList .alert .foot{gap:6px}
+  #erataBox .alert .foot .btn,#alertList .alert .foot .btn{white-space:normal;text-align:left}
   .view .card,.view .notice,.view .kv,.view .why,.view .act{overflow-wrap:anywhere}
   /* JSA「基础信息」：标签 96px + input flex:1，input 默认 min-width:auto
      （表单控件固有宽度 ~170px）会顶破 2 列网格 → 改单列 + 允许收缩 */
