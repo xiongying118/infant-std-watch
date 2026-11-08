@@ -7,23 +7,23 @@
    不是页面上写死的字符串。跑没跑、跑了多少条，页面上看得见。 */
 const RUNSTATE = {
   schedule:"每日 09:07",
-  lastRun:"2026-11-07 14:39",
-  lastRunDetail:"0.0 小时前",
-  nextRun:"2026-11-08 09:07",
+  lastRun:"2026-11-08 19:15",
+  lastRunDetail:"0.1 小时前",
+  nextRun:"2026-11-09 09:07",
   everRan:true,
   healthy:true,
   sources:[
-  {code:"SRC-01", file:"SRC-01_latest.json", count:3, mtime:"2026-11-07 14:29"},
-  {code:"SRC-02", file:"SRC-02_latest.json", count:7, mtime:"2026-11-07 14:31"},
-  {code:"SRC-05", file:"SRC-05_latest.json", count:373, mtime:"2026-11-07 14:31"},
-  {code:"SRC-06", file:"SRC-06_latest.json", count:4, mtime:"2026-11-02 18:15"},
+  {code:"SRC-01", file:"SRC-01_latest.json", count:3, mtime:"2026-11-08 19:13"},
+  {code:"SRC-02", file:"SRC-02_latest.json", count:7, mtime:"2026-11-08 19:15"},
+  {code:"SRC-05", file:"SRC-05_latest.json", count:373, mtime:"2026-11-08 19:15"},
+  {code:"SRC-06", file:"SRC-06_latest.json", count:1, mtime:"2026-11-08 19:13"},
   {code:"SRC-07", file:"SRC-07_latest.json", count:0, mtime:"2026-10-07 11:46"},
-  {code:"SRC-08", file:"SRC-08_latest.json", count:57, mtime:"2026-11-07 14:39"},
-  {code:"SRC-11", file:"SRC-11_latest.json", count:98, mtime:"2026-11-07 14:30"}
+  {code:"SRC-08", file:"SRC-08_latest.json", count:55, mtime:"2026-11-08 19:13"},
+  {code:"SRC-11", file:"SRC-11_latest.json", count:98, mtime:"2026-11-08 19:14"}
   ],
   extras:[
-  {label:"公告", file:"notice_latest.json", count:56, mtime:"2026-11-07 14:30"},
-  {label:"勘误与修改单", file:"erata_latest.json", count:187, mtime:"2026-11-07 14:31"}
+  {label:"公告", file:"notice_latest.json", count:56, mtime:"2026-11-08 19:14"},
+  {label:"勘误与修改单", file:"erata_latest.json", count:187, mtime:"2026-11-08 19:14"}
   ],
-  logs:[["2026-11-07 14:39:00","ok","[SRC-08] 全国团体标准 抓取 57 条（仅作参考）"],["2026-11-07 14:31:43","ok","[SRC-05] 食品安全国家标准数据检索平台 抓取 373 条"],["2026-11-07 14:31:43","ok","[SRC-02] 国家标准全文公开系统 openstd 抓取 7 条"],["2026-11-07 14:31:08","ok","[勘误] 收录 187 条标准勘误 / 修改单"],["2026-11-07 14:30:40","ok","[公告] 收录 56 条发布公告"],["2026-11-07 14:30:38","ok","[SRC-11] CNAS 实验室认可规范 抓取 98 条（非国标，标准委不收录）"],["2026-11-07 14:29:41","ok","[SRC-01] 全国标准信息公共服务平台 gbQueryPage 抓取 3 条"],["2026-11-02 18:15:46","ok","[SRC-06] 市场监管总局公告 抓取 4 条（BJS 补充检验方法等）"],["2026-10-07 11:46:15","ok","[SRC-07] 工信部行业公告 抓取 0 条（该源常为 0，属正常）"]]
+  logs:[["2026-11-08 19:15:26","ok","[SRC-05] 食品安全国家标准数据检索平台 抓取 373 条"],["2026-11-08 19:15:26","ok","[SRC-02] 国家标准全文公开系统 openstd 抓取 7 条"],["2026-11-08 19:14:52","ok","[勘误] 收录 187 条标准勘误 / 修改单"],["2026-11-08 19:14:24","ok","[公告] 收录 56 条发布公告"],["2026-11-08 19:14:22","ok","[SRC-11] CNAS 实验室认可规范 抓取 98 条（非国标，标准委不收录）"],["2026-11-08 19:13:46","ok","[SRC-08] 全国团体标准 抓取 55 条（仅作参考）"],["2026-11-08 19:13:20","ok","[SRC-06] 市场监管总局公告 抓取 1 条（BJS 补充检验方法等）"],["2026-11-08 19:13:16","ok","[SRC-01] 全国标准信息公共服务平台 gbQueryPage 抓取 3 条"],["2026-10-07 11:46:15","ok","[SRC-07] 工信部行业公告 抓取 0 条（该源常为 0，属正常）"]]
 };

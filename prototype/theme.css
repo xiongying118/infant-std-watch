@@ -731,7 +731,8 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
   .side .nav{flex:none;overflow:visible;height:auto}
   .side .brand,.side .side-foot{flex:none}
   .side-mask{touch-action:none}
-  .side.no-tap .nav a{pointer-events:none}
+  /* 2026-11-08：不再用 pointer-events:none 全局锁导航（会把抽屉锁死），
+     改为只拦滑动后紧跟的那一次合成 click，见 index.html 抽屉防误触 IIFE。 */
   body.nav-open .side{transform:translateX(0)}
   .side .nav a{min-height:44px}
   .main{width:100%;max-width:100%;min-width:0;display:flex;flex-direction:column}
@@ -820,4 +821,26 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
 @media(min-width:901px){
   .side-mask{display:none!important}
   .burger{display:none!important}
+}
+
+/* ================================================================
+   ★ 2026-11-08 首页 4 张 KPI 同一行 ★
+   前面有 @media(max-width:1200px){.grid.g4→2列}、
+   @media(max-width:860px){.grid.g4→1fr} 等历史断点，
+   这里用 #v-home + .kpi4 的更高特异性、并放在最后一份样式表末尾压过它们。
+   手机 ≤900px 仍走 2 列 2 行，避免 390px 下每张只有 85px 不可读。
+   ================================================================ */
+#v-home .grid.kpi4{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+/* 右上角「直达 →」是 absolute，标题必须让出位置，否则 1024px 这类
+   中宽屏下每张只有 166px，标题会直接压到角标上（2026-11-08 实测）。 */
+#v-home .grid.kpi4 .kpi .k{padding-right:38px;overflow-wrap:anywhere}
+#v-home .grid.kpi4 .kpi .d{overflow-wrap:anywhere}
+@media(min-width:901px) and (max-width:1200px){
+  #v-home .grid.kpi4 .kpi .k{font-size:10.5px;line-height:1.4;letter-spacing:0}
+  #v-home .grid.kpi4 .kpi .k .knote{display:block;font-size:10px;line-height:1.3;margin-top:1px}
+  #v-home .grid.kpi4 .kpi .v{font-size:26px}
+  #v-home .grid.kpi4 .kpi .d{font-size:10.5px;line-height:1.45}
+}
+@media(max-width:900px){
+  #v-home .grid.kpi4{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 }

@@ -58,7 +58,7 @@ async function gotoRetry(p,url){
     ck(r.notes[0]==='（通则引用标准）','换版 KPI 备注 = （通则引用标准）');
     ck(r.notes[1]==='（通则引用标准）','勘误 KPI 备注 = （通则引用标准）');
     ck(r.notes[2]==='（标准清单全部）','第二行同名卡备注 = （标准清单全部）');
-    ck(r.kpiN===6,'6 张 KPI 仍全部可点击');
+    ck(r.kpiN===4,'4 张 KPI 仍全部可点击（删掉后两张）');
     ck(/食品安全国家标准/.test(r.name)&&!/…/.test(r.name),'勘误提醒含完整标准全称（未截断）');
     ck(/GB 5009\.33-2025/.test(r.remind),'勘误提醒仍含标准号');
     ck(r.lines>0,'提醒框有条目（'+r.lines+'）');
@@ -106,7 +106,7 @@ async function gotoRetry(p,url){
 
   /* ── 手机：三种视口 + 抽屉 ─────────────────────────────── */
   for(const W of [390,430,768]){
-    const p=await b.newPage({viewport:{width:W,height:844}});
+    const p=await b.newPage({viewport:{width:W,height:844},hasTouch:true});
     p.on('pageerror',e=>errs.push('W'+W+': '+e.message));
     if(!(await gotoRetry(p,URL+'#home'))){ console.log('网络不通，测试中止'); await b.close(); process.exit(2); }
     await p.waitForTimeout(1800);
@@ -139,6 +139,19 @@ async function gotoRetry(p,url){
         mask:getComputedStyle(document.getElementById('sideMask')).display}));
       ck(opened.cls&&opened.x>=-2,'抽屉能打开（x='+opened.x+'）');
       ck(opened.mask!=='none','遮罩生效');
+      /* ★★ 2026-11-08「手机版左边还是无法滑动 / 点不开功能区」回归 ★★
+         旧测试只用 JS 直接赋值 scrollTop，遮罩盖住侧栏照样全绿 —— 必须验
+         「手指真正碰到的是谁」+ 真实触摸手势。 */
+      const hit=await p.evaluate(()=>{
+        const el=document.elementFromPoint(100,300);
+        return {cls:el?(el.className||'').toString():'',
+          inSide:!!(el&&el.closest&&el.closest('#side')),
+          maskZ:getComputedStyle(document.getElementById('sideMask')).zIndex,
+          sideZ:getComputedStyle(document.getElementById('side')).zIndex};
+      });
+      ck(!/side-mask/.test(hit.cls)&&hit.inSide,
+         '侧栏区域命中的是侧栏本身，不是遮罩（'+hit.cls.slice(0,30)+'）');
+      ck(Number(hit.sideZ)>Number(hit.maskZ),'侧栏层级高于遮罩（'+hit.sideZ+'>'+hit.maskZ+'）');
       /* 2026-11-07 第三轮 ①：侧栏整体可下滑，能看到最下面的菜单 */
       const sc=await p.evaluate(()=>{
         const s=document.getElementById('side');
@@ -156,9 +169,40 @@ async function gotoRetry(p,url){
       ck(sc.navOv==='visible','导航区不再被单独裁切');
       ck(sc.maskTouch==='none','遮罩禁止滑动、背景不跟着动');
       ck(/管理后台/.test(sc.last),'最底部「管理后台」在滚动区域内');
-      await p.click('#sideMask'); await p.waitForTimeout(350);
+      /* 遮罩不再盖住侧栏（2026-11-08 修复），点它的中心会被侧栏拦到 →
+         点侧栏右侧的空白区（视口 x=330）才是真实的「点外面关抽屉」。 */
+      await p.click('#sideMask',{position:{x:330,y:400}}); await p.waitForTimeout(350);
       const closed=await p.evaluate(()=>document.body.classList.contains('nav-open'));
       ck(!closed,'点遮罩能关闭抽屉');
+
+      /* 重新打开，用 CDP 真实触摸：上滑 + 点导航链接 */
+      await p.click('#burger'); await p.waitForTimeout(350);
+      const cdp=await p.context().newCDPSession(p);
+      const send=(type,y,id)=>cdp.send('Input.dispatchTouchEvent',{type,
+        touchPoints:type==='touchEnd'?[]:[{x:100,y,radiusX:8,radiusY:8,force:1,id:id}]});
+      await p.evaluate(()=>{document.getElementById('side').scrollTop=0;});
+      await send('touchStart',600,1);
+      for(let y=590;y>=220;y-=30){ await send('touchMove',y,1); await p.waitForTimeout(16); }
+      await send('touchEnd',220,1);
+      await p.waitForTimeout(300);
+      const swipe=await p.evaluate(()=>document.getElementById('side').scrollTop);
+      ck(swipe>20,'真实手指上滑能滚动侧栏（scrollTop='+swipe+'）');
+
+      await p.evaluate(()=>{document.getElementById('side').scrollTop=0;});
+      await p.waitForTimeout(200);
+      const lk=await p.evaluate(()=>{
+        const a=document.querySelector('#side .nav a[href="#list"]')||document.querySelector('#side .nav a');
+        const r=a.getBoundingClientRect();
+        return {x:Math.round(r.x+r.width/2),y:Math.round(r.y+r.height/2)};
+      });
+      const tap=(type,y,x)=>cdp.send('Input.dispatchTouchEvent',{type,
+        touchPoints:type==='touchEnd'?[]:[{x,y,radiusX:6,radiusY:6,force:1,id:2}]});
+      await tap('touchStart',lk.y,lk.x); await p.waitForTimeout(40);
+      await tap('touchEnd',lk.y,lk.x); await p.waitForTimeout(500);
+      const nav=await p.evaluate(()=>({hash:location.hash,
+        open:document.body.classList.contains('nav-open')}));
+      ck(nav.hash==='#list','真实手指点导航能打开功能区（hash='+nav.hash+'）');
+      ck(!nav.open,'点完导航抽屉自动收起');
     }
     await p.close();
   }

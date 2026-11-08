@@ -49,7 +49,17 @@ async function gotoRetry(p,url){
     v20:document.getElementById('kpiErata20').textContent,
     v365:document.getElementById('kpiSoon365').textContent
   }));
-  ck(kpi.n===6,'6 张 KPI 全部可点击');
+  ck(kpi.n===4,'4 张 KPI（已删「现行有效标准 / 法规与体系」）');
+  const row=await p.evaluate(()=>{
+    const ks=[...document.querySelectorAll('.kpi[data-kpi]')];
+    const cols=getComputedStyle(ks[0].parentElement).gridTemplateColumns.split(' ').length;
+    const ys=ks.map(x=>Math.round(x.getBoundingClientRect().top));
+    return {cols,same:ys.every(y=>Math.abs(y-ys[0])<=2),
+      gone:!document.querySelector('.kpi[data-kpi="std"]')&&!document.querySelector('.kpi[data-kpi="law"]'),
+      sameBox:ks.every(x=>x.parentElement===ks[0].parentElement)};
+  });
+  ck(row.cols===4&&row.same&&row.sameBox,'桌面端 4 张 KPI 同一行 4 列（cols='+row.cols+'）');
+  ck(row.gone,'「现行有效标准 / 法规与体系」两张已删除');
   ck(kpi.v20===String(rem.lines),'KPI 数字与提醒框条目数一致（'+kpi.v20+' vs '+rem.lines+'）');
 
   console.log('=== ② 点击直达 ===');
@@ -77,17 +87,6 @@ async function gotoRetry(p,url){
   r=await p.evaluate(()=>({focus:typeof kpiFocus!=='undefined'?kpiFocus:'?',
     rows:document.querySelectorAll('#listBody tr.rowlink').length}));
   ck(r.focus===null,'清除筛选按钮生效');
-
-  if(!(await gotoRetry(p,URL+'#home'))){console.log('网络不通，测试中止'); await b.close(); process.exit(2);} await p.waitForTimeout(1500);
-  await p.click('.kpi[data-kpi="std"]');
-  await p.waitForTimeout(600);
-  r=await p.evaluate(()=>({hash:location.hash,focus:typeof kpiFocus!=='undefined'?kpiFocus:'?'}));
-  ck(r.hash==='#list'&&r.focus===null,'现行有效标准 KPI → 全量清单（无聚焦）');
-
-  if(!(await gotoRetry(p,URL+'#home'))){console.log('网络不通，测试中止'); await b.close(); process.exit(2);} await p.waitForTimeout(1500);
-  await p.click('.kpi[data-kpi="law"]');
-  await p.waitForTimeout(600);
-  ck((await p.evaluate(()=>location.hash))==='#law','法规与体系 KPI → 法规页');
 
   if(!(await gotoRetry(p,URL+'#home'))){console.log('网络不通，测试中止'); await b.close(); process.exit(2);} await p.waitForTimeout(1800);
   console.log('\n通过 '+pass+' / 失败 '+fail);

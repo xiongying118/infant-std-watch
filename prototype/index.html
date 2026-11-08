@@ -1531,10 +1531,16 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
   </div>
 </div>
 
-<!-- 抽屉遮罩（≤900px 出现，点它关闭菜单） -->
-<div class="side-mask" id="sideMask" onclick="toggleNav(false)"></div>
-
 <div class="app">
+  <!-- 抽屉遮罩（≤900px 出现，点它关闭菜单）
+       ★★ 2026-11-08「手机版左边还是无法滑动，点不开功能区，像全部锁定」根因 ★★
+       .app 有 position:relative;z-index:1 → 它是独立层叠上下文。
+       遮罩原先放在 .app **外面**（body 直属，z-index:60），会把整个 .app 盖住；
+       侧栏自己的 z-index:70 只在 .app 内部有效，再高也压不过遮罩。
+       实测 elementFromPoint(100,300) 返回 .side-mask：手指落在侧栏上其实点/滑的都是遮罩，
+       touch-action:none 让滚动彻底失效，onclick 又把抽屉关掉 → 看起来「全锁死」。
+       → 遮罩必须和 .side 同属 .app，70 > 60 才会真正生效。 -->
+  <div class="side-mask" id="sideMask" onclick="toggleNav(false)"></div>
   <!-- ============ 侧边栏 ============ -->
   <aside class="side" id="side">
     <div class="brand">
@@ -1652,15 +1658,14 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
            ⚠ 第二行**不要**再加「20 天内勘误/修改单」（用户 2026-11-05 撤回）。
            ⚠ 20 天内勘误/修改单：这类变更**不改标准号、不改实施日期**，
               按标准号监控完全发现不了 → 必须单独占一格。 -->
-      <div class="grid g2" style="margin-bottom:10px">
+      <!-- ★ 2026-11-08 用户「后面这两个卡片删了，前面四个卡片放在同一行」：
+           删掉「现行有效标准 348」「法规与体系 42」，余下 4 张合并成一行 4 列。
+           手机 ≤900px 仍为 2 列 2 行（见 theme.css 末尾 #v-home .grid.kpi4）。 -->
+      <div class="grid g4 kpi4" style="margin-bottom:16px">
         <div class="kpi jump" data-kpi="soon365" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">一年内要换版<span class="knote">（通则引用标准）</span></div><div class="v" id="kpiSoon365">—</div><div class="d" id="kpiSoon365d">仅通则引用标准</div></div>
         <div class="kpi warn jump" data-kpi="erata20" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">20 天内勘误/修改单<span class="knote">（通则引用标准）</span></div><div class="v" id="kpiErata20">—</div><div class="d" id="kpiErata20d">仅通则引用标准</div></div>
-      </div>
-      <div class="grid g4" style="margin-bottom:16px">
         <div class="kpi hi jump" data-kpi="soon90" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">90 天内要动手</div><div class="v" id="kpiSoon90">—</div><div class="d" id="kpiSoon90d">按实施日期实算</div></div>
         <div class="kpi jump" data-kpi="soon365b" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">一年内要换版<span class="knote">（标准清单全部）</span></div><div class="v" id="kpiSoon365b">—</div><div class="d" id="kpiSoon365bd">标准清单全部</div></div>
-        <div class="kpi jump" data-kpi="std" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">现行有效标准</div><div class="v" id="kpiStd">—</div><div class="d" id="kpiSub">—</div></div>
-        <div class="kpi jump" data-kpi="law" role="button" tabindex="0"><span class="go">直达 →</span><div class="k">法规与体系</div><div class="v" id="kpiLaw">—</div><div class="d" id="kpiLawd">按效力与环节分层</div></div>
       </div>
 
       <!-- ★ 2026-11-07 22:37 用户改口：「近 20 天勘误」黄框移到
@@ -3823,12 +3828,10 @@ function renderHome(){
           : "近 20 天无变更";
       }
     })();
-    const subs = new Set(STD.map(s=>s.sub));
-    $("#kpiStd").textContent = STD.length;
-    $("#kpiSub").textContent = subs.size + " 个细类 · 只列现行版";
-    $("#kpiLaw").textContent = (LAWS||[]).length;
-    $("#kpiLawd").textContent = "法律/法规/规章/体系 " +
-      new Set((LAWS||[]).map(x=>x.sub.split(" · ")[0])).size + " 类";
+    /* ★ 2026-11-08 首页删掉「现行有效标准 / 法规与体系」两张 KPI。
+       原来这里直接给 #kpiStd / #kpiSub / #kpiLaw / #kpiLawd 赋值，
+       容器删了会抛 TypeError 把 renderHome 后半段整段带崩 —— 一起拿掉。
+       kpiJump("std"/"law") 两个分支保留（已无入口，无害）。 */
   })();
   /* ★ 2026-11-07：首页高优提醒卡片已删（用户「这个不要」）。
      原来这里直接 $("#highAlerts").innerHTML=... ，容器删了会抛 TypeError
@@ -5409,32 +5412,28 @@ function toggleNav(force){
   document.body.style.overflow = "";
   return open;
 }
-/* ★ 抽屉里滑动别误触导航链接（2026-11-07「手机版左边没法下滑」配套）★
-   部分手机 WebView 在滚动手势结束时仍会给 <a> 合成一次 click，
-   "往下滑"就变成"点了某个菜单"→ 路由切走 + 抽屉关闭，看起来像滑不动。
-   手指移动 >8px 时，短暂禁用导航链接的点击（350ms 后自动恢复）。 */
+/* ★ 抽屉里滑动别误触导航链接（2026-11-08 重写）★
+   上一版用 .side.no-tap .nav a{pointer-events:none} 全局禁用 350ms，
+   手指稍有抖动（>8px）就判成「在滑动」，连着点菜单时链接会一直不可点
+   —— 用户反馈「点不开功能区，左边像全部锁定」。
+   → 只拦「滑动手势之后紧跟的那一次合成 click」，
+     完全不碰 pointer-events，绝不长期锁死导航。 */
 (function(){
   if(typeof document === "undefined" || typeof document.getElementById !== "function") return;
   const side = document.getElementById("side");
   if(!side || typeof side.addEventListener !== "function") return;
-  let y0=null, moved=false, timer=null;
+  let y0=null, moved=false;
   side.addEventListener("touchstart", e=>{
     y0=(e.touches && e.touches[0]) ? e.touches[0].clientY : null; moved=false;
   }, {passive:true});
   side.addEventListener("touchmove", e=>{
     if(y0!==null && e.touches && e.touches[0] &&
-       Math.abs(e.touches[0].clientY-y0)>8) moved=true;
+       Math.abs(e.touches[0].clientY-y0)>10) moved=true;
   }, {passive:true});
-  side.addEventListener("touchend", ()=>{
-    if(moved){
-      side.classList.add("no-tap");
-      if(typeof clearTimeout === "function") clearTimeout(timer);
-      if(typeof setTimeout === "function")
-        timer=setTimeout(()=>side.classList.remove("no-tap"), 350);
-      else side.classList.remove("no-tap");
-    }
-    y0=null;
-  }, {passive:true});
+  side.addEventListener("touchend", ()=>{ y0=null; }, {passive:true});
+  side.addEventListener("click", e=>{
+    if(moved){ e.preventDefault(); e.stopPropagation(); moved=false; }
+  }, true);
 })();
 
 function closeNavOnMobile(){

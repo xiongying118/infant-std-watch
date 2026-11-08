@@ -1,0 +1,23 @@
+{
+ "总局公告2026-11-07": {
+  "std_no": "总局公告 2026-11-07",
+  "title": "市场监管总局关于发布《食品中双己酚丁等5种化合物的测定》等2项食品补充检验方法的公告",
+  "category": "assoc",
+  "status": "现行",
+  "publish_date": "2026-11-07",
+  "implement_date": "2026-11-07",
+  "abolish_date": "",
+  "replaces": [],
+  "replaced_by": "",
+  "jurisdiction_org": "市场监管总局",
+  "issuer_org": "国家市场监督管理总局",
+  "official_url": "https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/spcjs/art/2026/art_35f170019c184b60a8c8cad152f08a20.html",
+  "hcno": "",
+  "download_allowed": false,
+  "is_iso": false,
+  "is_mandatory": false,
+  "source_code": "SRC-06",
+  "row_hash": "d6558e413766a934",
+  "days_to_implement": -1
+ }
+}
