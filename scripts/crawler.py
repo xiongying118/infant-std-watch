@@ -675,11 +675,38 @@ def build_alerts(events: list[dict], kws: list[dict]) -> list[dict]:
         dk = dedup_key(std.std_no, etype, e.get("stage", ""))
 
         if etype == "NEW":
-            title = f"新标准发布：{std.std_no} {std.title}"
-            body = (f"发布日期 {std.publish_date or '—'}，实施日期 "
-                    f"{std.implement_date or '—'}。命中关键词："
-                    + "、".join(h["term"] for h in hits[:3]))
-            acts = ["确认是否属于在检产品适用标准", "判断是否需要纳入检验计划"]
+            # ★ 别把「补录历史」说成「新发布」 ★
+            # 实测 2026-11-08：SRC-06 修好多栏目后，一次性补回 16 条
+            # 2025-02 ~ 2026-11 的总局公告。若一律写「新标准发布」，
+            # 用户会以为 2025-12 那份《婴幼儿配方液态乳产品配方注册
+            # 申请材料与要求》是今天新发的 —— 实际是补录历史条目。
+            # 判据：**发布日距今超过 30 天** → 措辞改为「补录」。
+            # （发布日期是官方给的，不是我们推断的。）
+            pub = std.publish_date or ""
+            old_enough = False
+            if pub:
+                try:
+                    age = (date.today()
+                           - datetime.strptime(pub, "%Y-%m-%d").date()).days
+                    old_enough = age > 30
+                except (ValueError, TypeError):
+                    old_enough = False
+            if old_enough:
+                title = f"补录历史标准：{std.std_no} {std.title}"
+                body = (f"官方发布日期 {pub}，实施日期 "
+                        f"{std.implement_date or '—'}。这条是本次**补录**"
+                        "进监控库的（此前因抓取窗口有限未纳入），"
+                        "并非近日新发布。命中关键词："
+                        + "、".join(h["term"] for h in hits[:3]))
+                acts = ["确认是否属于在检产品适用标准",
+                        "判断是否需要纳入检验计划",
+                        "核对发布日期，确认不是近期变更"]
+            else:
+                title = f"新标准发布：{std.std_no} {std.title}"
+                body = (f"发布日期 {pub or '—'}，实施日期 "
+                        f"{std.implement_date or '—'}。命中关键词："
+                        + "、".join(h["term"] for h in hits[:3]))
+                acts = ["确认是否属于在检产品适用标准", "判断是否需要纳入检验计划"]
         elif etype == "ABOLISH":
             title = f"《{std.title}》（{std.std_no}）已废止，请勿再作为判定依据"
             bits = "；".join(_fmt_change(c) for c in e.get("changed", []))
@@ -929,6 +956,32 @@ def run_once(source_codes: list[str] | None = None, run_extras: bool = True) -> 
                 con.close()
                 time.sleep(2)                      # 源之间 2 秒礼貌间隔
                 continue
+            # ★★ 稳定主键：同一份公告，跨栏目要能对上 ★★
+            #
+            # 根因：总局公告的**文号只有主栏目有**（子栏目的 HTML 没有文号单元格），
+            # 所以同一条公告：
+            #   主栏目抓到 → std_no = "总局公告 2026年第34号"
+            #   子栏目抓到 → std_no = "总局公告 2026-09-30"
+            # 同一个官方 URL（art_xxx.html），两个不同的标准号。
+            # 后果：diff 看成「删一条 + 加一条」→ 每次都产生假的新增/删除事件，
+            # 且旧号在清单里留下、新号又进来，页面出现重复条目。
+            #
+            # 修法：**以 official_url（art_id）为主键做身份对齐**，
+            # 同一个 URL 沿用上次的标准号。这样公告在窗口内滚动也不改身份。
+            if old:
+                by_url = {}
+                for rec in old.values():
+                    u = rec.get("official_url") or ""
+                    if u:
+                        by_url.setdefault(u, rec.get("std_no") or "")
+                for s in stds:
+                    u = s.official_url or ""
+                    prev_no = by_url.get(u)
+                    if prev_no and prev_no != s.std_no:
+                        log.info("[%s] 标准号沿用历史值：%s -> %s（同一官方 URL）",
+                                 code, s.std_no, prev_no)
+                        s.std_no = prev_no
+
             new = {s.norm(): {**asdict(s), "row_hash": s.row_hash(),
                               "days_to_implement": s.days_to_implement()} for s in stds}
 

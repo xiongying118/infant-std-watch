@@ -299,7 +299,7 @@ a:hover{color:var(--brand);text-decoration:none}
 }
 .card-h h3{
   margin:0;font-size:15px;font-weight:700;color:var(--brand-ink);letter-spacing:.2px;
-  position:relative;padding-left:11px;
+  position:relative;padding-left:15px;
 }
 .card-h h3::before{
   content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);
@@ -866,4 +866,48 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
   .view table.rt th{white-space:normal}
   .view table.rt th:first-child,.view table.rt td:first-child{width:34%}
   .view table.rt th,.view table.rt td{padding-left:8px;padding-right:8px}
+}
+
+
+/* ================================================================
+   ★★ 2026-11-08 第六轮：「字和框边线粘在一起」全站留白统一 ★★
+   实测根因：
+   ① .mcard 展开区 .dt 没有 padding，检测方法原理 / 试剂与作用 /
+      要点与操作提示 全部压在 .mcard::before 的 3px 蓝色竖条上，
+      桌面与手机实测间距都是 0px（用户截图红框处）。
+   ② 手机端 .card / .kpi 只剩 10~12px 内边距，左侧 3.5px 色条
+      再吃掉一半 → 文字离色条仅 6.5px，视觉上就是"粘住"。
+   口径：卡片内行首文字到左侧框线至少 12px；带色条的按
+         「框线 + 色条」之后再留 12px。三种视口统一巡检。
+   ================================================================ */
+/* 桌面：带左侧色条的卡片统一 18px（色条 3.5px + 14.5px 留白） */
+.view .kpi{padding-left:18px}
+.view .notice{padding-left:18px}
+.view .alert.a-high,.view .alert.a-mid,.view .alert.a-low{padding-left:18px}
+/* 标准清单等可横滚表格：表头/单元格左侧 11px → 13px */
+.view .twrap th,.view .twrap td{padding-left:13px}
+/* 方法卡展开区：与 .hd 的 17px 对齐 */
+.mcard .dt{padding:2px 17px 16px}
+@media(max-width:900px){
+  .view .card{padding-left:15px;padding-right:14px}
+  .view .kpi{padding-left:17px;padding-right:14px}
+  .view .notice{padding-left:17px;padding-right:14px}
+  .view .alert.a-high,.view .alert.a-mid,.view .alert.a-low{padding-left:17px}
+  .mcard .dt{padding:2px 15px 14px}
+}
+@media(max-width:430px){
+  .view .card{padding-left:14px;padding-right:13px}
+  .view .kpi{padding-left:16px;padding-right:12px}
+  .view .notice{padding-left:16px;padding-right:12px}
+  .view .alert.a-high,.view .alert.a-mid,.view .alert.a-low{padding-left:16px}
+  .mcard .dt{padding:2px 14px 13px}
+}
+/* 方法页搜索框：原来 input 和占位 .sp 各 flex:1 平分，390 视口只有 ~170px，
+   提示文字被截成「如 G」。手机端让输入框占满、计数固定不换行。
+   ★ max-width 必须写在 CSS 里（inline style 优先级更高，压不过） */
+#methodSearch{max-width:320px}
+@media(max-width:640px){
+  #methodFilter>.sp{display:none}
+  #methodSearch{max-width:none}
+  #methodFilter .muted{white-space:nowrap;flex:0 0 auto}
 }

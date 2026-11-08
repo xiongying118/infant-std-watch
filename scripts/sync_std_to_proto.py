@@ -407,6 +407,24 @@ def main():
     for no, v in std.items():
         a = audit.get(no, {})
         validity = a.get("validity") or (v.get("status") or "现行")
+        # ★ 源站明确写「废止」的，直接出局 ★
+        #
+        # audit_validity 只判**替代关系**（谁取代了谁），
+        # 它不看源站的 status 字段 —— 因为 sppt 对已被替代的历史版本
+        # 也标「现行」（见 audit_validity 的注释），不能盲信。
+        #
+        # 但**平台自己标废止**是另一回事：那不是推断，是源站的事实陈述。
+        # 实测 2026-11-08：SRC-08 团标平台详情接口返回 standardStatusName=废止
+        # （statusName=已废止 / 注销废止），而 audit 判它「现行有效」——
+        # 因为没有新版取代它，替代关系判不出来。
+        # 结果：一条官方已废止的团标仍留在「现行有效」清单里，
+        # 检测员可能照着它做检测。**这比漏报更危险**。
+        #
+        # 安全边界：只在源站 status 明确为「废止」时出局，
+        # 不动「现行/即将实施」的判断（那两种仍走原有替代逻辑）。
+        src_status = (v.get("status") or "").strip()
+        if src_status == "废止":
+            validity = "已废止"
         if validity in ("已被替代", "已废止"):
             dead.append((no, a.get("newer") or "", v.get("title") or ""))
             continue

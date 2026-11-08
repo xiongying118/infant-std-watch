@@ -1241,6 +1241,10 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .msec .sh::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--brand)}
 .msec .it{padding:6px 0 6px 13px;font-size:12.5px;line-height:1.8;color:var(--ink2);border-left:2px solid var(--line2);margin-bottom:5px}
 .mcard .tip{margin-top:13px;padding:8px 11px;font-size:11.5px;line-height:1.7;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;color:#92400e}
+/* 2026-11-08：展开区原来没有内边距，原理正文/章节标题/试剂表全部压在
+   .mcard::before 的 3px 蓝色竖条上（桌面/手机实测 0px）。与 .hd 的 17px 对齐。
+   手机端在 theme.css 末尾另有更紧凑的覆盖。 */
+.mcard .dt{padding:2px 17px 16px}
 
 /* 日志 */
 .log{font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.9;color:var(--ink2);background:#fafbfc;border:1px solid var(--line2);border-radius:6px;padding:12px 14px;overflow-x:auto}
@@ -1794,7 +1798,8 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
           <b>不存条文全文</b>——只列名称、文号、施行日期与说明。
         </div>
       </div>
-      <div class="tabs" id="lawTabs"></div>
+      <!-- 2026-11-08：原第一层「分类」页签只剩一个孤零零的「全部 42」，
+           与下面场景 chips 的「全部」重复（用户「把这个多余的『全部』删了」）→ 整层移除 -->
       <div class="chips" id="lawSceneTabs" style="margin-bottom:12px"></div>
       <div id="lawList"></div>
     </div>
@@ -1994,8 +1999,8 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
           <b>换版提醒请看「标准清单」</b>。
         </div>
       </div>
-      <div class="flex" style="margin-bottom:12px">
-        <input id="methodSearch" placeholder="搜标准号或方法名，如 GB 5009.5 / 凯氏定氮" style="flex:1;max-width:320px"
+      <div class="flex" id="methodFilter" style="margin-bottom:12px">
+        <input id="methodSearch" placeholder="搜标准号或方法名，如 GB 5009.5 / 凯氏定氮" style="flex:1;min-width:0"
                oninput="renderMethod()">
         <div class="sp" style="flex:1"></div>
         <span class="muted" id="methodCount"></span>
@@ -3422,7 +3427,7 @@ function renderRefs(){
       <div class="card-h"><h3>${g.g}</h3><span class="pill">${g.items.length} 项</span>
         <div class="sp"></div>
         <span class="muted">实验室当前应执行的版本</span></div>
-      <div style="margin:0 -4px">
+      <div style="margin:0">
       ${g.items.map(x=>`
         <div class="rem-item">
           <div class="dot" style="background:${dotCol(x.impState)}"></div>
@@ -4271,12 +4276,11 @@ function renderLaw(){
   const all = (LAWS||[]);
   const byK = {};
   all.forEach(x=>{ const k = (x.sub||"").split(" · ")[0]; (byK[k]=byK[k]||[]).push(x); });
-  const kindKeys = LAW_KINDS.map(x=>x.k).filter(k=>k==="all"||byK[k]);
-  $("#lawTabs").innerHTML = LAW_KINDS.filter(c=>c.k==="all"||byK[c.k]).map(c=>{
-    const n = c.k==="all" ? all.length : (byK[c.k]||[]).length;
-    return `<button class="${curLawKind===c.k?"on":""}" data-kind="${c.k}">${c.name}<span class="cnt">${n}</span></button>`;
-  }).join("");
-  $$("#lawTabs button").forEach(b=>b.onclick=()=>{curLawKind=b.dataset.kind;renderLaw();});
+  /* 2026-11-08 用户「把这个多余的『全部』删了」：
+     第一层分类页签 lawTabs 实际只渲染出一个「全部」（LAW_KINDS 的
+     law/admin/rule/system 与 x.sub 前缀对不上被全部过滤），
+     且与下面场景 chips 的「全部」重复。整层移除，只保留场景筛选；
+     curLawKind 固定 all，pool 仍取全量，列表字段一条不少。 */
 
   const pool = curLawKind==="all" ? all : (byK[curLawKind]||[]);
   const scenes = ["全部", ...Array.from(new Set(pool.map(x=>x.scene))).filter(s=>s!=="全部")];
