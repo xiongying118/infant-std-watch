@@ -113,6 +113,29 @@ GROUPS = [
 
 
 # ==============================================================
+# ★ 用户点名追加的固定条目（2026-11-08）★
+# ==============================================================
+# 这两个是「酵母β-葡聚糖」配套标准，用户明确要求归入「婴配特殊成分」：
+#   GB 5009.303-2025  食品中酵母β-葡聚糖的测定       （检测方法，已在库里）
+#   GB 1903.80-2025   食品营养强化剂 酵母β-葡聚糖   （原料规格，本次补录）
+#
+# ★ 为什么不塞进 GROUPS 的检测对象列表 ★
+#   GROUPS 的语义是「检测对象 → 取当前该执行的那一版方法」，
+#   靠 verify_validity2.subject_of(标题) 归类，且只认标题里带「测定/检验」
+#   等方法提示词的标准。GB 1903.80 是**产品规格**不是方法，
+#   塞进去要么匹配不上（空池），要么跟 GB 5009.303 抢同一对象只留一条。
+#   → 用独立的「点名附加表」，不参与自动取条竞争，两条都稳定出现。
+#   元数据仍从 general_refs.json 的 details 取，日期/有效性每天自动刷新。
+EXTRA_ITEMS = [
+    ("婴配特殊成分", "GB 5009.303-2025", "酵母β-葡聚糖"),
+    ("婴配特殊成分", "GB 1903.80-2025",  "酵母β-葡聚糖"),
+]
+EXTRA_BY_GROUP = {}
+for _g, _no, _subj in EXTRA_ITEMS:
+    EXTRA_BY_GROUP.setdefault(_g, []).append((_no, _subj))
+
+
+# ==============================================================
 # CNAS 认可规范：独立产物，不混进通则引用
 # ==============================================================
 # ★ 用户 2026-10-07 明确要求：「CNAS不要放在通则里，
@@ -472,6 +495,21 @@ def main():
                 "impDesc": r["implement_desc"], "reason": r["reason"],
                 "subject": subj,
                 "alts": alts, "altsSoon": alts_soon_s, "olds": "、".join(sorted(set(olds))[:3]),
+            })
+        # ★ 追加用户点名的固定条目（不参与检测对象自动取条）★
+        for _no, _subj in (EXTRA_BY_GROUP.get(gname) or []):
+            if any(x["no"] == _no for x in items):
+                continue                       # 自动取条已经收到，别重复
+            r = byno.get(_no)
+            if not r:
+                missing.append(_no + "（点名条目缺 general_refs.json 元数据）")
+                continue
+            items.append({
+                "no": r["std_no"], "title": r["title"],
+                "imp": r["implement_date"] or "", "pub": r["publish_date"] or "",
+                "validity": r["validity"], "impState": r["implement_state"],
+                "impDesc": r["implement_desc"], "reason": r["reason"],
+                "subject": _subj, "alts": [], "altsSoon": "", "olds": "",
             })
         if not items:
             continue

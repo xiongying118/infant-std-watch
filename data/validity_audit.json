@@ -5570,5 +5570,19 @@
   "cross_no": false,
   "implement_state": "已实施",
   "implement_desc": "已于 2000-09-01 实施（9564 天前）"
+ },
+ {
+  "std_no": "GB 1903.80-2025",
+  "title": "食品安全国家标准 食品营养强化剂 酵母β-葡聚糖",
+  "publish_date": "2025-09-02",
+  "implement_date": "2026-03-02",
+  "subject": null,
+  "validity": "现行有效",
+  "reason": "同号与同检测对象下均无更新的已实施版本",
+  "newer": null,
+  "newer_title": "",
+  "cross_no": false,
+  "implement_state": "已实施",
+  "implement_desc": "已于 2026-03-02 实施（251 天前）"
  }
 ]

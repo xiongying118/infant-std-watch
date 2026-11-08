@@ -3991,6 +3991,16 @@
    "download_allowed": false,
    "note": "早已作废，被 JJF 1070-2005 代替。",
    "source": "人工核实（JJF 不在标准委检索库）"
+  },
+  "GB 1903.80-2025": {
+   "std_no": "GB 1903.80-2025",
+   "title": "食品安全国家标准 食品营养强化剂 酵母β-葡聚糖",
+   "status": "现行",
+   "category": "assoc",
+   "publish_date": "2025-09-02",
+   "implement_date": "2026-03-02",
+   "official_url": "https://sppt.cfsa.net.cn:8086/db?task=indexSearch&isLength=9999&num_tn=99&standard_type=&keyword=GB1903.80-2025",
+   "download_allowed": false
   }
  },
  "by_general": {

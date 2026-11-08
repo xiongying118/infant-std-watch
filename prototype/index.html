@@ -1844,10 +1844,11 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
         <span>⚗</span>
         <div>
           <b>这一页的标准，不是搜出来的，是从产品标准正文里"读"出来的。</b>
+          <b>本页是「标准清单」的一部分</b>：标准清单收录全部现行标准，这里只取通则正文引用、实验室当前应执行的版本（按检测对象分组）。
           已通读 <b>GB 10765 / 10766 / 10767</b>（婴配三个通则）+
           <b>GB 19644</b>（乳粉和调制乳粉）+
           <b>GB 19302 / 19646 / 5420 / 25192 / 25190 / 19645 / 13102</b>（发酵乳、奶油、干酪、灭菌乳、巴氏杀菌乳、炼乳）
-          的「规范性引用文件」一章，共引用 62 个标准 ——
+          的「规范性引用文件」一章，下面按检测对象分组列出 ——
           蛋白、脂肪、钙铁锌硒碘、12 种维生素、乳铁蛋白、牛磺酸、肌醇、
           菌落总数、乳与乳制品检验、污染物限量、乳糖、低聚半乳糖、亚硝酸盐、黄曲霉毒素……
           <b>这些不会主动出现在关键词检索里，但实验室天天在用。</b>
@@ -3307,7 +3308,12 @@ const HIST = (window.STDWATCH_DATA && window.STDWATCH_DATA.HIST) || [];
 /* ================= 渲染 ================= */
 const $ = s=>document.querySelector(s);
 const $$ = s=>[...document.querySelectorAll(s)];
-let curSub, curLawKind, curLawScene;
+/* ★ curSub 必须初始化为 "all" ★
+   2026-11-08 踩到：原来是 `let curSub` （undefined），renderList 里
+   `if(curSub && ...)` 不会兜底，`rows = subs[curSub] || []` 直接取到空数组
+   → 从左侧导航直接点「标准清单」显示「共 0 条」。
+   之前没暴露，是因为 KPI 跳转会顺手把 curSub 设成 "all"。 */
+let curSub = "all", curLawKind, curLawScene;
 let curCat="all", curAlertLvl="all", curDetail=null;
 
 // 状态标签。数据来自核对结果（verify_validity.py），不是源站原样搬过来 ——
@@ -3798,7 +3804,7 @@ function renderHome(){
   (function(){
     /* ★★ 通则引用标准集合（2026-11-05 用户要求）★★
        「一年内换版」「20 天内勘误/修改单」这两个 KPI **只针对通则里的标准**，
-       不统计全库（STD 有 348 条、通则引用只有 65 条，全库算出来的数字
+       不统计全库（标准清单是全集、通则引用只是其中一个子集，全库算出来的数字
        对婴配实验室没有意义）。
        → 集合 = REFGROUPS（通则引用标准页，按检测对象分类）里的标准号 */
     const refSet = kpiRefNos();
@@ -4105,9 +4111,17 @@ function renderList(kw){
       <td>${offLink("官方页", s.url || "https://openstd.samr.gov.cn/bzgk/gb/", "btn sm", "", s.no)}
           <span onclick="event.stopPropagation()"></span>
         ${dlBtn(s)}</td></tr>`;
+  /* ★ 分组视图必须按「过滤后的 rows」重新分组，不能用未过滤的 subs ★
+     2026-11-08 踩到：搜 GB 1903.80-2025 时计数写「共 1 条」，
+     表格却仍按 subs 铺出全部团标 —— 搜索与 KPI 筛选在分组模式下失效。
+     #subTabs 仍用 subs 显示全集细类，那是筛选器，不受影响。 */
+  const grouped = {};
+  rows.forEach(s=>{ const k=s.sub||"未分类"; (grouped[k]=grouped[k]||[]).push(s); });
+  const groupKeys = Object.keys(grouped).sort((a,b)=>grouped[b].length-grouped[a].length);
   $("#listBody").innerHTML = groupBy
-    ? subKeys.map(k=>`<tr class="grouprow"><td colspan="7">${k}<span class="muted">　${subs[k].length} 条</span></td></tr>`
-        + subs[k].map(cell).join("")).join("")
+    ? (groupKeys.map(k=>`<tr class="grouprow"><td colspan="7">${k}<span class="muted">　${grouped[k].length} 条</span></td></tr>`
+        + grouped[k].map(cell).join("")).join("")
+       || `<tr><td colspan="7" class="empty">没有匹配的标准</td></tr>`)
     : (rows.map(cell).join("") || `<tr><td colspan="7" class="empty">没有匹配的标准</td></tr>`);
 }
 

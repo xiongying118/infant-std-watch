@@ -75,7 +75,11 @@ function sliceAtLastFunction(src) {
 }
 body = sliceAtLastFunction(body);
 
-console.log('=== offLink 渲染行为（真实执行）===');
+console.log('=== offLink 渲染行为（当前设计：普通 <a> + rel="noopener noreferrer"）===');
+/* ★ 2026-11-08 更新 ★
+   页面 11-05 已删掉 postJump（POST 表单被浏览器拦成 404），改成普通 GET <a>。
+   防盗链靠 rel="noopener noreferrer" 清掉 Referer —— 这才是现在要守的铁律。
+   旧断言「必须走 postJump」「不能有 cfsa 裸 href」与现状相反，已废弃。 */
 try {
   const fn = new Function('window', 'document', body + `
     return [
@@ -83,49 +87,40 @@ try {
       offLink("官方", "https://www.ttbz.org.cn/#/standardDetail/xyz"),
       offLink("官方", CFSA_SEARCH("GB 5413.20-2022")),
       offLink("官方", ""),
-      CFSA_SEARCH("GB 4789.10-2016"),
+      offLink("官方", "https://sppt.cfsa.net.cn:8086/db?type=2&guid=ABC-123"),
     ].join("\\u0001");
   `);
-  // postJump 要在同一段代码里调，才能观察到表单提交
-  new Function('window', 'document',
-    body + '\npostJump(officialUrl("GB 5009.5-2025"));')
-    (global.window, global.document);
-
   const parts = fn(global.window, global.document).split('\u0001');
   const a = parts[0] || '', b = parts[1] || '', c = parts[2] || '',
-        d = parts[3] || '';
-  console.log('  cfsa 详情: ' + a.slice(0, 88));
-  console.log('  ttbz     : ' + b.slice(0, 88));
-  console.log('  cfsa 检索: ' + c.slice(0, 88));
+        d = parts[3] || '', e = parts[4] || '';
+  const links = [a, b, c, e].filter(Boolean);
+  console.log('  cfsa 详情: ' + a.slice(0, 100));
+  console.log('  ttbz     : ' + b.slice(0, 100));
+  console.log('  cfsa 检索: ' + c.slice(0, 100));
   console.log('  空 url   : "' + d + '"');
-
-  ck(a.indexOf('postJump') >= 0, 'cfsa 详情 → 走 postJump()');
-  ck(a.indexOf('guid=') >= 0, 'postJump 的 url 带 guid');
-  ck(b.indexOf('href="https://www.ttbz.org.cn') >= 0,
-     '非 cfsa 站点 → 保持普通 href（GET 正常）');
-  ck(b.indexOf('postJump') < 0, '非 cfsa 不用 POST');
-  ck(c.indexOf('postJump') >= 0, 'cfsa 检索 → 也走 POST');
-  ck(c.indexOf('keyword=') >= 0, 'cfsa 检索带 keyword');
+  ck(links.length === 4, '四种 URL 都渲染出链接');
+  ck(links.every(x => /rel="noopener noreferrer"/.test(x)),
+     '★ 所有外链都带 rel="noopener noreferrer"（cfsa 防盗链）');
+  ck(links.every(x => /target="_blank"/.test(x)), '所有外链在新标签打开');
+  ck(a.indexOf('href="https://') >= 0, 'cfsa 详情 → 普通 href，不再走 postJump 表单');
+  ck(b.indexOf('href="https://www.ttbz.org.cn') >= 0, '非 cfsa 站点 → 保持原 href');
+  ck(c.indexOf('keyword=') >= 0, 'cfsa 检索链接带 keyword');
   ck(d === '', '空 url → 返回空串（不渲染坏按钮）');
-
-  ck(submitted.length === 1, 'postJump 真的提交了表单（' + submitted.length + '）');
-  if (submitted.length) {
-    const s = submitted[0];
-    console.log('\n  实际提交: ' + s.action.slice(0, 76));
-    console.log('  task=' + s.task + '  target=' + s.target);
-    ck(s.action.indexOf('type=2&guid=') >= 0, 'action 含 type=2&guid=');
-    ck(s.task === 'goto', 'task=goto（官方要求，缺了会被丢回首页）');
-    ck(s.target === '_blank', 'target=_blank（新标签打开）');
-  }
-  console.log('\n  兜底示例: ' + (parts[4] || '').slice(0, 82));
+  ck(e.indexOf('type=2&guid=') < 0 && e.indexOf('href="https://') >= 0,
+     'GET 必 404 的 POST 形态详情链接 → 换成能打开的官方检索页');
+  ck(body.indexOf('function postJump') < 0,
+     '页面已不再定义 postJump（别把旧行为写回来）');
 } catch (err) {
   ck(false, '执行抛错: ' + err.message);
 }
 
-console.log('\n=== 各视图真实渲染（抓 href 检查）===');
+console.log('\n=== 各视图真实渲染（抓 href + rel 检查）===');
+/* ★ 2026-11-08：标准清单页 curSub 初始化修好后才真正渲染出外链，
+   之前「无 cfsa 裸 href」是空白页带来的假绿。现在按当前设计检查：
+   cfsa 链接必须带 noreferrer，且不能出现 GET 必 404 的 type=2&guid= 裸链。 */
 const views = [
   ['通则引用', '\nrenderRefs();', 'refBox'],
-  ['标准清单', '\ncurCat="all";renderList();', 'listBody'],
+  ['标准清单', '\ncurCat="all";curSub="all";renderList();', 'listBody'],
   ['方法原理', '\nrenderMethod();', 'methodList'],
   ['CNAS', '\nrenderCnas();', 'cnasList'],
 ];
@@ -134,13 +129,16 @@ for (const [label, code, box] of views) {
     new Function('window', 'document', body + code)(global.window, global.document);
     const s = grabbed[box] || '';
     if (!s) { console.log('  (' + label + ') 未抓到内容，跳过'); continue; }
-    const hrefs = [...s.matchAll(/href="(https?:\/\/[^"]+)"/g)].map(m => m[1]);
-    const cfsaHref = hrefs.filter(h => /sppt\.cfsa\.net\.cn/.test(h));
-    const postJump = (s.match(/postJump\(/g) || []).length;
-    ck(cfsaHref.length === 0,
-       label + '：无 cfsa 裸 href（外链 ' + hrefs.length + ' · postJump ' + postJump + '）');
+    const tags = [...s.matchAll(/<a\b[^>]*href="(https?:\/\/[^"]+)"[^>]*>/g)].map(m => m[0]);
+    const cfsa = tags.filter(t => /sppt\.cfsa\.net\.cn/.test(t));
+    const badRel = cfsa.filter(t => !/rel="[^"]*noreferrer/.test(t));
+    const badGet = cfsa.filter(t => /[?&]type=2&/.test(t) && /[?&]guid=/.test(t));
+    ck(badRel.length === 0,
+       label + '：cfsa 外链 ' + cfsa.length + ' 个全部带 noreferrer（缺 ' + badRel.length + '）');
+    ck(badGet.length === 0,
+       label + '：无 GET 必 404 的裸详情链接（' + badGet.length + '）');
   } catch (err) {
-    console.log('  (' + label + ') 渲染抛错: ' + err.message);
+    ck(false, '(' + label + ') 渲染抛错: ' + err.message);
   }
 }
 
