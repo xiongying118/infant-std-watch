@@ -2422,7 +2422,10 @@ function methodDetailHtml(m){
   const reagents = (m.reagents||[]).length ? `
     <div class="msec">
       <div class="sh">试剂与作用（${m.reagents.length}）</div>
-      <div style="border:1px solid var(--line);border-radius:7px;overflow:hidden">
+      <!-- 2026-11-08：原来 overflow:hidden + 手机表格被强制 520px，
+           366px 容器里右边 154px 的文字完全看不到（截图实测）。
+           改 overflow-x:auto 兜底；正常情况表格自适应折行、不出现滚动条。 -->
+      <div style="border:1px solid var(--line);border-radius:7px;overflow-x:auto;overflow-y:hidden">
         <table class="rt">
           <thead><tr><th>试剂</th><th>在方法中的主要作用</th></tr></thead>
           <tbody>
@@ -3384,7 +3387,7 @@ function legalNote(s){
    用户截图给的是 JSA 页那种样式：一行横向页签，选中的深蓝底白字。
    这里复用同一套 .tabs / .tab / .tab.on 样式（theme.css 已有，不用新写）。
    原来 14 个分组各占一张长卡片，页面要滚很久才能看完 → 改成页签切换。 */
-let _refTab = 0;
+let _refTab = 0;   // 数字 = 分组序号；"all" = 全部（2026-11-08 新增）
 
 function renderRefs(){
   const all=[];
@@ -3404,12 +3407,17 @@ function renderRefs(){
          白底圆角框 + 标签间距 4px + padding 6.5/14 + 13px 字号
        → 剩下的交给 flex-wrap:wrap 自然折行
          （JSA 那组 14 个就是 10 + 4 两行，视觉上很齐整） */
-  const tabHtml = REFGROUPS.map((g,i)=>
-    `<button class="tab ${i===_refTab?"on":""}" data-ref-tab="${i}">${g.g}<span class="cnt">${g.items.length}</span></button>`
-  ).join("");
-  /* ---- 当前组的内容 ---- */
-  const g = REFGROUPS[_refTab];
-  const bodyHtml = g ? `
+  /* ★ 2026-11-08 用户「通则引用标准这里加个全部，放在第一位置」：
+     第一项是「全部」（数字 = 14 组总和），点它把全部分组一次铺开；
+     默认仍选中第一组（照用户截图，不改现有选中态）。 */
+  const totalN = REFGROUPS.reduce((a,g)=>a+g.items.length, 0);
+  const tabHtml =
+    `<button class="tab ${_refTab==="all"?"on":""}" data-ref-tab="all">全部<span class="cnt">${totalN}</span></button>` +
+    REFGROUPS.map((g,i)=>
+      `<button class="tab ${i===_refTab?"on":""}" data-ref-tab="${i}">${g.g}<span class="cnt">${g.items.length}</span></button>`
+    ).join("");
+  /* ---- 分组卡片（单组 / 全部共用同一套模板，字段不缩水）---- */
+  const groupCard = g => g ? `
     <div class="card">
       <div class="card-h"><h3>${g.g}</h3><span class="pill">${g.items.length} 项</span>
         <div class="sp"></div>
@@ -3433,13 +3441,17 @@ function renderRefs(){
         </div>`).join("")}
       </div>
     </div>` : `<div class="muted">没有可显示的分组</div>`;
+  const bodyHtml = _refTab === "all"
+    ? REFGROUPS.map(groupCard).join("")
+    : groupCard(REFGROUPS[_refTab]);
 
   $("#refBox").innerHTML =
     `<div class="tabs ref-tabs" id="refTabs" style="margin-bottom:var(--gap)">${tabHtml}</div>` + bodyHtml;
   /* 绑定页签点击 */
   [].forEach.call(document.querySelectorAll("#refTabs button"), function(b){
     b.onclick = function(){
-      _refTab = parseInt(b.dataset.refTab, 10) || 0;
+      const v = b.dataset.refTab;
+      _refTab = v === "all" ? "all" : (parseInt(v, 10) || 0);
       renderRefs();
     };
   });

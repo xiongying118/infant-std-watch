@@ -876,6 +876,33 @@ def run_once(source_codes: list[str] | None = None, run_extras: bool = True) -> 
             stds = fetch_source(code, query_terms)
             old = load_snapshot(code)
             if not stds:
+                # ★★ 区分两种「0 条」★★
+                #   ① 列表接口挂了 / 被风控 → 源真的没接通 → 报错
+                #   ② 列表拿到了，只是没有一条与本项目相关 → **正常**，记成功
+                #
+                # 实测 2026-11-08：SRC-07（工信部）三个栏目各返回 24 条
+                # （27/27/40 个 art 链接），相关性过滤后 0 条 —— 接口完全正常。
+                # 但旧逻辑只看「有没有历史快照」：SRC-07 的快照一直是空的 {},
+                # 于是被判成「未接通」并报错，连续误报 22 天（10-04 起）。
+                # 适配器现在会回报 last_listing_ok，据此正确判定。
+                listing_ok = bool(getattr(ad, "last_listing_ok", False))
+                if listing_ok:
+                    log.info("[%s] 列表正常但无相关条目，记为成功（该源本就低频零误报）",
+                             code)
+                    new = {}
+                    counts[code] = 0
+                    save_snapshot(code, new)
+                    _mark_source_ok(code)
+                    con = _con()
+                    con.execute(
+                        "INSERT INTO crawl_logs(level,source_code,message,cost_ms)"
+                        " VALUES('ok',?,?,?)",
+                        (code, "列表正常，无相关条目（该源常为 0，属正常）",
+                         int((time.time() - t0) * 1000)))
+                    con.commit()
+                    con.close()
+                    time.sleep(2)
+                    continue
                 if not old:
                     # 空结果 + 无历史快照 = 这个源我们没真正接通，别假装成功
                     raise RuntimeError("返回 0 条且无历史快照，视为未接通（可能接口变更或被风控）")
@@ -904,6 +931,52 @@ def run_once(source_codes: list[str] | None = None, run_extras: bool = True) -> 
                 continue
             new = {s.norm(): {**asdict(s), "row_hash": s.row_hash(),
                               "days_to_implement": s.days_to_implement()} for s in stds}
+
+            # ★★ 掉条核实：这次没抓到、但上次有的条目，去官方问清楚 ★★
+            #
+            # 为什么要问：
+            #   「少了一条」有两种完全不同的原因 ——
+            #     ① 官方把它废止了 → 这是**变更**，该生成废止提醒
+            #     ② 它只是这次没被搜到（索引/窗口问题）→ 这是**漏采**，该补回
+            #   不问就默认"少=废止"会误报废止；不问就默认"少=漏采"会漏报废止。
+            #   实测 2026-11-08：SRC-08 少了 2 条，详情接口说两条**都是废止**
+            #   （T/CDZX 003-2023 注销废止、T/HGMIF 001-2021 已废止），
+            #   而列表检索只返回现行标准，所以废止后它就直接从搜索结果里消失。
+            #
+            # 做法：适配器提供 verify_vanished() 时逐条问官方。
+            #   abolished → 保留条目并标记废止 → diff 会生成 ABOLISH 事件
+            #   current   → 补回快照（这次只是没搜到）
+            #   unknown   → 不下结论，保留旧条目（宁可不判，也不误判）
+            if old and hasattr(ad, "verify_vanished"):
+                vanished = [k for k in old if k not in new]
+                if vanished:
+                    keep, abolished = [], []
+                    for k in vanished:
+                        verdict = ad.verify_vanished(old[k])
+                        if verdict == "abolished":
+                            rec = dict(old[k])
+                            rec["status"] = "废止"
+                            rec["abolish_date"] = rec.get("abolish_date") or ""
+                            abolished.append(rec)
+                            new[k] = rec
+                        elif verdict == "current":
+                            keep.append(old[k])
+                            new[k] = old[k]
+                        else:
+                            # 查不到就不下结论 —— 保留旧条目，不产生废止事件
+                            new[k] = old[k]
+                    if abolished:
+                        log.info("[%s] %d 条本次缺失，官方详情接口确认已废止：%s",
+                                 code, len(abolished),
+                                 "、".join(r.get("std_no") or "" for r in abolished))
+                    if keep:
+                        log.info("[%s] %d 条本次未搜到，官方详情接口确认仍现行，已保留",
+                                 code, len(keep))
+                    unknown = len(vanished) - len(abolished) - len(keep)
+                    if unknown:
+                        log.info("[%s] %d 条本次缺失但官方状态未明，保留旧条目不下结论",
+                                 code, unknown)
+
             first_run = len(old) == 0
             events = diff_snapshots(old, new, first_run) + countdown_events(old, new)
             log.info("[%s] 抓取 %d 条，%s变更事件 %d 条",

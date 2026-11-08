@@ -1025,6 +1025,29 @@ class SamrNoticeAdapter:
     PAGE_ID = "20178939d3ff4e2cb6a2301da388b6c9"
     LIST_TAG = "当前内容"
 
+    # ★★ 主栏目的坑：只有 26 行滚动窗口 ★★
+    #
+    # 实测 2026-11-08：主栏目（当前内容）只返回**最近 26 条**，
+    # 范围 2026-10-19 ~ 2026-11-07。9 月的公告一旦被顶出这个窗口
+    # 就**彻底消失** —— 实测 SRC-06 从 4 条掉到 1 条，丢的 4 条
+    # 官方页面全是 HTTP 200（标题逐字吻合），证明不是废止而是漏采。
+    #
+    # ★ 修法：加抓三个子栏目 ★
+    #   spcjs（食品生产安全监督管理司）/ tssps（特殊食品安全监督管理司）
+    #   / zfjcs（执法稽查司）
+    # 子栏目的 tagId 是 **内容区域**（主栏目是「当前内容」），
+    # HTML 结构也不同：主栏目是 `<tr>` 表格，子栏目是 `<ul><li>` 列表。
+    #
+    # 实测三栏目合计 **60 条**唯一 art_id，日期范围 2025-02-19 ~ 2026-11-07，
+    # 把丢掉的 4 条（2026-09-20 / 09-28 / 09-30 / 09-29）和新公告全部捞回来了。
+    # 代价：多 3 次 HTTP，可接受。
+    SUB_COLUMNS = [
+        ("spcjs", "/zw/zfxxgk/fdzdgknr/spcjs/index.html"),
+        ("tssps", "/zw/zfxxgk/fdzdgknr/tssps/index.html"),
+        ("zfjcs", "/zw/zfxxgk/fdzdgknr/zfjcs/index.html"),
+    ]
+    SUB_LIST_TAG = "内容区域"
+
     # 与婴配实验室相关的公告关键词（用于过滤，抽检通报/招聘/公示不要）
     #
     # ★ 口径教训：第一版只用"标题含关键词"过滤，16 条里混进
@@ -1078,15 +1101,56 @@ class SamrNoticeAdapter:
         except Exception:                              # noqa: BLE001
             return ""
 
+    def _sub_column_html(self, list_path: str) -> str:
+        """抓一个子栏目（spcjs / tssps / zfjcs）。
+
+        与主栏目不同：pageId 要从**子栏目自己的页面**抠，
+        tagId 是「内容区域」而不是「当前内容」。
+        """
+        self._ensure_session()
+        try:
+            page_html = self.f.session.get(self.base + list_path, timeout=30).text
+        except Exception:                              # noqa: BLE001
+            return ""
+        m = re.search(r"'pageId':'([0-9a-f]{32})'", page_html)
+        if not m:
+            return ""
+        return self._unit_html(m.group(1), self.SUB_LIST_TAG)
+
     def fetch(self, keywords: list[str] | None = None) -> list[Standard]:
         """返回与食品/检测相关的总局公告。
 
         公告不是"标准"，但对实验室同样是变更信号：
         「发布《婴幼儿配方液态乳生产许可审查细则》的公告」这类，
         直接影响体系文件。所以作为 assoc 类条目进清单。
+
+        ★ 主栏目 + 三个子栏目一起抓 ★
+        主栏目只有 26 行滚动窗口（2026-10-19 起），9 月的公告会被顶掉；
+        子栏目各有 20 条历史条目，合计覆盖到 2025-02-19。
+        按 art_id 去重，重复的以先解析到��为准。
         """
-        html = self._unit_html(self.PAGE_ID, self.LIST_TAG)
-        return self.parse_notices(html)
+        out: dict[str, Standard] = {}
+        seen: set[str] = set()
+
+        def add(stds: list[Standard]) -> None:
+            for s in stds:
+                key = s.official_url or s.std_no
+                if key in seen:
+                    continue
+                seen.add(key)
+                out.setdefault(s.norm(), s)
+
+        # 主栏目（最近 26 条，新公告在这里最先出现）
+        add(self.parse_notices(self._unit_html(self.PAGE_ID, self.LIST_TAG)))
+
+        # 三个子栏目（历史归档）
+        for _, path in self.SUB_COLUMNS:
+            try:
+                add(self.parse_sub_notices(self._sub_column_html(path)))
+            except Exception as e:                       # noqa: BLE001
+                print(f"    [{self.code}] 子栏目 {path} 失败：{e}")
+
+        return list(out.values())
 
     @classmethod
     def _relevant(cls, title: str) -> bool:
@@ -1154,6 +1218,71 @@ class SamrNoticeAdapter:
                               else "https://www.samr.gov.cn" + href),
                 is_mandatory=False,
                 download_allowed=False,     # 只给官方阅读入口
+                issuer_org="国家市场监督管理总局",
+                jurisdiction_org="市场监管总局",
+                source_code="SRC-06",
+            ))
+        return out
+
+    @staticmethod
+    def parse_sub_notices(html: str) -> list[Standard]:
+        """解析**子栏目**返回的 html 片段。
+
+        子栏目结构跟主栏目不一样（实测 2026-11-08）：
+            <ul>
+              <li class="nav04Left02_content">
+                <a href="/.../art_xxx.html" title="标题" target="_blank">标题</a></li>
+              <li class="nav04Left02_contenttime">2026-09-20</li>
+            </ul>
+
+        差异有三点，都必须处理：
+        ① 用 `<ul>` 切块，不是 `<tr>`；
+        ② 日期是 `2026-09-20` 这种短横线格式，不是 `2026年09月30日`；
+        ③ **没有文号单元格** —— 子栏目只有标题和日期。
+           所以 std_no 只能用日期兜底（`总局公告 2026-09-20`）。
+
+        ★ 文号兜底的隐患 ★
+        同一天总局可能发多条公告，日期兜底会让它们的 std_no 撞车。
+        但 std_no 只作去重键，主键是 official_url（art_id），
+        实测三个子栏目 + 主栏目合计 60 条 art_id 唯一，没有同 URL 冲突。
+        """
+        if not html:
+            return []
+        out: list[Standard] = []
+        for blk in re.split(r"<ul[^>]*>", html)[1:]:
+            block = blk.split("</ul>")[0]
+            links = re.findall(r'href="([^"]*art_[0-9a-f]{32}\.html)"[^>]*'
+                               r'title="([^"]+)"', block)
+            if links:
+                href, title = links[0]
+            else:
+                links2 = re.findall(r'title="([^"]+)"[^>]*'
+                                    r'href="([^"]*art_[0-9a-f]{32}\.html)"', block)
+                if not links2:
+                    continue
+                title, href = links2[0]
+            date = ""
+            m = re.search(r"nav04Left02_contenttime\">\s*(\d{4})-(\d{2})-(\d{2})\s*<", block)
+            if m:
+                date = "%s-%s-%s" % (m.group(1), m.group(2), m.group(3))
+            else:
+                m2 = re.search(r"(20\d\d)\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日", block)
+                if m2:
+                    date = "{}-{}-{}".format(m2.group(1), m2.group(2).zfill(2),
+                                             m2.group(3).zfill(2))
+            if not SamrNoticeAdapter._relevant(title):
+                continue
+            out.append(Standard(
+                std_no="总局公告 " + (date or "—"),
+                title=title,
+                status="现行",
+                category="assoc",
+                publish_date=date,
+                implement_date=date,
+                official_url=(href if href.startswith("http")
+                              else "https://www.samr.gov.cn" + href),
+                is_mandatory=False,
+                download_allowed=False,
                 issuer_org="国家市场监督管理总局",
                 jurisdiction_org="市场监管总局",
                 source_code="SRC-06",
@@ -1229,6 +1358,14 @@ class MiitStdAdapter:
     def __init__(self, fetcher: Fetcher | None = None):
         self.f = fetcher or Fetcher(self.name)
         self._primed: set[str] = set()
+        # ★ 本次抓取是否真的拿到了栏目列表（而不是压根没连上） ★
+        # 用来区分两种「0 条」：
+        #   ① 接口挂了 / 被风控 → 列表拿不到 → 应当报错
+        #   ② 接口正常、列表拿到了，只是没有一条与乳制品相关 → 这是**正常**状态
+        # 实测 2026-11-08：三个栏目各返回 24 条（27/27/40 个 art 链接），
+        # 相关性过滤后 0 条 —— 但接口完全正常。以前把这种情况当成
+        # 「未接通」报错，连续误报 22 天（见 crawler 的 fails 计数）。
+        self.last_listing_ok = False
 
     def _ensure_session(self, list_path: str) -> None:
         if list_path not in self._primed:
@@ -1257,6 +1394,9 @@ class MiitStdAdapter:
             html = (_json_loads(txt).get("data") or {}).get("html") or ""
         except Exception:                              # noqa: BLE001
             return []
+        # ★ 列表拿到了（哪怕里面一条相关的都没有）→ 源是通的 ★
+        if html:
+            self.last_listing_ok = True
         return self.parse_items(html)
 
     @classmethod
@@ -1313,8 +1453,12 @@ class MiitStdAdapter:
 
         实测当前常返回 0 条（该站这三个栏目以电信/汽车/集成电路为主）。
         这是**正常的**，不是抓取失败 —— 页面上会写明覆盖边界。
+
+        ★ last_listing_ok 告诉调用方「列表拿到了，只是没有相关内容」 ★
+        调用方据此把它记成成功而不是失败（见 crawler 的空结果分支）。
         """
         out: dict[str, Standard] = {}
+        self.last_listing_ok = False
         for _, path in self.COLUMNS:
             try:
                 for s in self._fetch_column(path):
@@ -1443,6 +1587,74 @@ class TtbzStdAdapter:
             except Exception as e:                       # noqa: BLE001
                 print(f"    [{self.code}] 检索「{kw}」失败：{e}")
         return list(out.values())
+
+    # ============================================================
+    # 掉条核实：官方详情接口
+    # ============================================================
+    #
+    # ★ 为什么需要它 ★
+    # 平台的**检索接口只返回「现行」的标准** —— 实测搜「乳粉」45 条，
+    # status 分布是 {'现行': 45}，一条废止的都没有。
+    # 所以标准一旦废止，它就从检索结果里**直接消失**，
+    # 而列表接口不告诉你它去哪了 —— 只留下一个"少了一条"的沉默。
+    #
+    # ★ 详情接口才是权威 ★
+    # getPortalStandardById 返回完整记录，含 standardStatusName / status：
+    #   status=1 已公布   standardStatus=1 现行
+    #   status=8 已废止   standardStatus=2 废止
+    #   status=9 注销废止 standardStatus=2 废止
+    # 用它就能分辨「这条被官方废止了」和「这条只是没搜到」。
+    #
+    # ★ 一个坑：详情页是 SPA 壳，对**乱写的 ID 也返回 HTTP 200** ★
+    # 所以「详情页 200」不能证明标准还在 —— 实测伪造 ID 同样 200、
+    # 同样 241471 字节。必须用这个 JSON 接口，
+    # 它对不存在的 ID 正确返回「未找到对应的标准信息」。
+    #
+    # ★ 会话要求 ★
+    # 详情接口必须先 POST 一次列表接口建会话，否则返回「访问受限」页面。
+    detail_api = base + "/cms-proxy/ms/portal/standardInfo/getPortalStandardById"
+
+    def detail_status(self, unique_id: str) -> dict | None:
+        """查一条团标的官方详情。返回 None = 查不到。"""
+        if not unique_id:
+            return None
+        try:
+            # 先用列表接口建会话（否则详情接口回「访问受限」）
+            self.search("乳粉", 1, 1)
+            self.f._throttle()
+            r = self.f.session.post(
+                self.detail_api,
+                data={"standardUniqueId": unique_id},
+                headers={"Referer": self.referer,
+                         "X-Requested-With": "XMLHttpRequest",
+                         "Accept": "application/json, text/plain, */*"},
+                timeout=40)
+            r.encoding = r.apparent_encoding or "utf-8"
+            j = _json_loads(r.text)
+            if not j.get("result"):
+                return None
+            return j.get("data") or {}
+        except Exception:                              # noqa: BLE001
+            return None
+
+    def verify_vanished(self, rec: dict) -> str:
+        """核实一条**本次没抓到**的旧条目到底怎么了。
+
+        返回 "abolished" / "current" / "unknown"：
+          abolished —— 官方详情接口说它已废止（真的下架了）
+          current   —— 官方说它还在现行（这次只是没搜到）
+          unknown   —— 查不到（接口异常或记录不存在），**不下结论**
+        """
+        uid = (rec.get("official_url") or "").rsplit("/", 1)[-1]
+        d = self.detail_status(uid)
+        if not d:
+            return "unknown"
+        name = (d.get("standardStatusName") or "").strip()
+        if name == "废止":
+            return "abolished"
+        if name == "现行":
+            return "current"
+        return "unknown"
 
 
 # ============================================================

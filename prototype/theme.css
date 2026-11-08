@@ -188,8 +188,9 @@ a:hover{color:var(--brand);text-decoration:none}
 
 /* 二级标题行：吸顶 */
 .top{
-  background:rgba(255,255,255,.94);backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
+  /* ★ 2026-11-08「电脑网页版有些字看不全」：
+     半透明 + 毛玻璃会让滚到顶栏下方的内容透出半行模糊字。改纯色不透明。 */
+  background:var(--panel);
   border-bottom:1px solid var(--line);
   padding:9px 30px;display:flex;align-items:center;gap:18px;
   position:sticky;top:0;z-index:20;box-shadow:0 1px 3px rgba(16,24,40,.03);
@@ -795,7 +796,9 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
      :has() 在 Edge/Chrome 105+、Safari 15.4+ 都支持；老浏览器退回原样。 */
   .view div:has(> table):not(.twrap):not(.card){overflow-x:auto;max-width:100%;
     -webkit-overflow-scrolling:touch}
-  .view table{min-width:520px}
+  /* 2026-11-08：方法详情试剂表 .rt 要在手机自适应折行，不能强制 520px，
+     否则 366px 容器里右半截文字被裁掉（用户截图实测）。其余表格保持横滚。 */
+  .view table:not(.rt){min-width:520px}
   /* 自绘弹窗 → 底部抽屉（theme.css 的 .dlg/.mask 在前面，这里重新压一遍） */
   .mask{align-items:flex-end;padding:0}
   .dlg{width:100%!important;max-width:none;max-height:88vh;overflow-y:auto;
@@ -843,4 +846,24 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
 }
 @media(max-width:900px){
   #v-home .grid.kpi4{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+}
+
+/* ================================================================
+   ★★ 2026-11-08「手机版 / 电脑版有些字都看不到」全站防裁切 ★★
+   根因一：移动端 .view table{min-width:520px} 把试剂表撑到 520px，
+           外层 div 又是 overflow:hidden → 390 视口右半截 154px 全没了。
+   根因二：.top 半透明 + backdrop-filter，滚动时内容透出半行模糊字。
+   这里补的是通用兜底：长文本一律允许折行、表格按列宽自适应。
+   ================================================================ */
+.view .card,.view .notice,.view .mcard,.view .msec,.view .mcard .pv,
+.view .msec .it,.view .rem-item .tx,#alertList .alert,#erataBox .alert{
+  min-width:0;overflow-wrap:anywhere;word-break:break-word}
+/* 试剂表：两列固定比例、表头也允许折行，中文长句自然换行不需要横滚 */
+.view table.rt{min-width:0}
+.view table.rt th,.view table.rt td{overflow-wrap:anywhere;word-break:break-word}
+@media(max-width:640px){
+  .view table.rt{table-layout:fixed}
+  .view table.rt th{white-space:normal}
+  .view table.rt th:first-child,.view table.rt td:first-child{width:34%}
+  .view table.rt th,.view table.rt td{padding-left:8px;padding-right:8px}
 }
