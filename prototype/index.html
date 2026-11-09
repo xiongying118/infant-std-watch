@@ -760,6 +760,12 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .gbc-tbl tr.risk td.v{color:#b45309}
 .gbc-tbl tr.ok td.v{color:#15803d}
 .gbc-tbl td.v{font-size:11.8px}
+/* ★ 计算值恒为两个数：低 ~ 高。两端相等也照样写两个数，别再吞成一个。 */
+.gbc-tbl td.v .lo,.gbc-tbl td.v .hi{font-weight:700}
+.gbc-tbl td.v .sep{color:var(--ink3);font-weight:400;padding:0 2px}
+.gbc-tbl tr.changed td.v{animation:gbcFlash 1.6s ease-out}
+@keyframes gbcFlash{0%{background:#fef08a;box-shadow:inset 0 0 0 1px #facc15}
+  100%{background:transparent;box-shadow:none}}
 .gbc-tbl .vns{font-size:9.5px;color:var(--ink3);margin-left:3px}
 .gbc-unit{padding:7px 14px;font-size:11px;color:var(--ink3);border-top:1px solid var(--line2)}
 
@@ -840,6 +846,11 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .gbc-fld input:focus{outline:2px solid #bfdbfe;outline-offset:0}
 .gbc-fld .dash{color:var(--ink3);font-size:11px;flex:0 0 auto}
 .gbc-rng{padding:0 14px 9px;font-size:11px;color:var(--ink3);line-height:1.6}
+.gbc-warn{margin:0 14px 9px;padding:7px 10px;border:1px solid #fcd34d;
+  background:#fffbeb;border-radius:6px;font-size:11.5px;color:#92400e;line-height:1.6}
+.gbc-warn .btn{padding:2px 8px;font-size:11px;margin-left:6px}
+.gbc-saved{padding:0 14px 9px;font-size:11.5px;font-weight:700;color:#15803d}
+.gbc-dirty{padding:0 14px 9px;font-size:11.5px;font-weight:700;color:#b45309}
 .gbc-comp-f{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
   padding:9px 14px;border-top:1px solid var(--line2);background:#fafbfc;font-size:11.5px}
 .gbc-comp-f .sp{flex:1}
@@ -2593,6 +2604,8 @@ let gbImportOpen = false;     // CSV 导入面板
 let gbAddingCustom = false;   // 新增自定义原料表单
 let gbCompDraft = {};         // 面板里尚未保存的输入 {mkey: {min:string,max:string}}
 let gbCompMsg = "";           // 导入结果提示
+let gbSavedMsg = "";          // ★ 保存后的明确反馈（用户曾反馈「保存没反应」）
+let gbSavedTs = 0;
 
 /* ★ 2026-11-09 追加：每个成分是两个数（下限 / 上限区间）。
    供应商 CoA 给的本来就是规格范围，单值只是 min=max 的特例。
@@ -2664,51 +2677,184 @@ function gbMatCountMine(){
   return Object.keys(gbOverrides).filter(k=>Object.keys(gbOverrides[k]||{}).length).length
        + gbCustomMats.length;
 }
-/* 面板输入只写草稿，不重绘（保住输入焦点）；点「保存并重新计算」才落地。
-   每个成分两个框：下限 / 上限。只填一个 → 两边取同一个数；
-   两个都留空 → 用回内置参考值；下限填得比上限大 → 自动交换。 */
+/* ★★ 面板输入 = 实时预览 + 显式保存 ★★
+   2026-11-09 用户反馈「保存没反应，计算值都只有一个，且不变」，三个根因：
+     ① 只改其中一个框时，另一个框的显示值根本没进草稿 → 区间被压成单值；
+     ② 保存后没有任何反馈，右侧也不动 → 看着像没点；
+     ③ 存盘失败会挡住重绘（gbSaveMats 抛异常 → gbRender 不执行）。
+   现在的做法：改任一框 → 把两框当前值一起记进草稿 → 立刻重算右侧（不重绘、保住焦点）；
+   点保存 → 落盘 → 明确显示「已保存 N 项 / 影响 M 项指标」→ 变化的单元格闪一下。 */
+function gbCurComp(mk){
+  const all = gbAllMaterials();
+  const m = all.find(x=>x.key===gbCompKey) || all[0];
+  return (m && m.comp && m.comp[mk]) || {min:0, max:0};
+}
+/* 把某一项的草稿 + 面板上另一框的当前值，合成 {min,max}；两框都空 = 用回内置 */
+function gbPairFromDraft(mk, d, cur){
+  const lo = String(d.min==null?cur.min:d.min).trim();
+  const hi = String(d.max==null?cur.max:d.max).trim();
+  if(lo === "" && hi === "") return null;
+  let a = parseFloat(lo===""?hi:lo), b = parseFloat(hi===""?lo:hi);
+  if(isNaN(a) && isNaN(b)) return null;
+  if(isNaN(a)) a = b;
+  if(isNaN(b)) b = a;
+  if(a < 0) a = 0;
+  if(b < 0) b = 0;
+  return b < a ? {min:b, max:a} : {min:a, max:b};
+}
+/* 草稿合并出一份「临时覆盖表」，只用于预览，不落盘 */
+function gbDraftOverrides(){
+  const out = {};
+  Object.keys(gbOverrides).forEach(k=>{ out[k] = Object.assign({}, gbOverrides[k]); });
+  if(!gbCompKey || !Object.keys(gbCompDraft).length) return out;
+  const cur = Object.assign({}, out[gbCompKey] || {});
+  Object.keys(gbCompDraft).forEach(mk=>{
+    const pair = gbPairFromDraft(mk, gbCompDraft[mk] || {}, gbCurComp(mk));
+    if(pair) cur[mk] = pair; else delete cur[mk];
+  });
+  if(Object.keys(cur).length) out[gbCompKey] = cur;
+  else delete out[gbCompKey];
+  return out;
+}
 function gbSetCompDraft(mk, side, v){
   const d = gbCompDraft[mk] || (gbCompDraft[mk] = {});
+  if(!Object.prototype.hasOwnProperty.call(d, "min")
+     || !Object.prototype.hasOwnProperty.call(d, "max")){
+    const c = gbCurComp(mk);          // ★ 另一框的值必须先补进草稿
+    d.min = String(c.min); d.max = String(c.max);
+  }
   d[side] = v;
+  gbSavedMsg = "";
+  gbLivePreview();
 }
 function gbApplyCompDraft(){
   if(!gbCompKey || !Object.keys(gbCompDraft).length) return false;
   const ov = gbOverrides[gbCompKey] || (gbOverrides[gbCompKey] = {});
   Object.keys(gbCompDraft).forEach(mk=>{
-    const d = gbCompDraft[mk] || {};
-    const lo = String(d.min==null?"":d.min).trim();
-    const hi = String(d.max==null?"":d.max).trim();
-    if(lo === "" && hi === ""){ delete ov[mk]; return; }
-    let a = parseFloat(lo===""?hi:lo), b = parseFloat(hi===""?lo:hi);
-    if(isNaN(a) && isNaN(b)){ delete ov[mk]; return; }
-    if(isNaN(a)) a = b;
-    if(isNaN(b)) b = a;
-    if(a < 0) a = 0;
-    if(b < 0) b = 0;
-    ov[mk] = b < a ? {min:b, max:a} : {min:a, max:b};
+    const pair = gbPairFromDraft(mk, gbCompDraft[mk] || {}, gbCurComp(mk));
+    if(pair) ov[mk] = pair; else delete ov[mk];
   });
   if(!Object.keys(ov).length) delete gbOverrides[gbCompKey];
   gbCompDraft = {};
   return true;
 }
 function gbSaveComp(){
-  gbApplyCompDraft(); gbSaveMats(); gbRender();
+  const before = gbResultSnapshot();
+  gbCollectInputs();                 // ★ 先兜底读 DOM，再落到草稿
+  const n = Object.keys(gbCompDraft).length;
+  gbApplyCompDraft();
+  try { gbSaveMats(); } catch(e) { /* 存盘失败也照样重绘，不能让按钮看起来没反应 */ }
+  gbSavedMsg = n ? `✓ 已保存 ${n} 项成分，计算值已重新核算` : "✓ 已保存（本次没有改动）";
+  gbSavedTs = Date.now();
+  gbRender();
+  gbFlashChanged(before);
+  /* ★ 不能用 toast()：本项目的 toast 是带 #dlgMask 的模态框，会把页面挡死 */
 }
 function gbResetComp(){
   if(!gbCompKey) return;
+  const before = gbResultSnapshot();
   delete gbOverrides[gbCompKey];
-  gbCompDraft = {}; gbSaveMats(); gbRender();
+  gbCompDraft = {}; gbSavedMsg = "✓ 已恢复该原料的内置参考值并重新计算"; gbSavedTs = Date.now();
+  try { gbSaveMats(); } catch(e) {}
+  gbRender();
+  gbFlashChanged(before);
+}
+function gbAddToRecipe(key){
+  if(!gbState || !key) return;
+  gbApplyCompDraft();
+  try { gbSaveMats(); } catch(e) {}
+  const row = gbState.recipe.find(r=>r.key===key);
+  if(row) row.amount = Number(row.amount) || 1;
+  else gbState.recipe.push({key:key, amount:1});
+  gbSave();
+  gbCompKey = key; gbCompOpen = true;
+  gbSavedMsg = "✓ 已把该原料加入配方（1 kg/1000kg），计算值已重新核算";
+  gbSavedTs = Date.now();
+  gbRender();
+}
+/* ★ 保存兜底：直接读输入框现值。
+   浏览器自动填充 / 右键粘贴 / 脚本改值等场景下 oninput 可能没触发，
+   只靠草稿就会「点了保存什么都没发生」。data-base 存的是渲染时的基准值。 */
+function gbCollectInputs(){
+  if(!gbCompKey) return;
+  Array.prototype.forEach.call(
+    document.querySelectorAll("#gbCalc .gbc-grid .gbc-fld"), f=>{
+      const ins = f.querySelectorAll("input");
+      if(ins.length < 2) return;
+      const mk = ins[0].getAttribute("data-mk");
+      if(!mk) return;
+      const lo = ins[0].value, hi = ins[1].value;
+      if(lo === ins[0].getAttribute("data-base") && hi === ins[1].getAttribute("data-base")) return;
+      gbCompDraft[mk] = {min:lo, max:hi};
+    });
+}
+/* 当前右侧表格里所有计算值文本，用于保存后比对「哪些变了」 */
+function gbResultSnapshot(){
+  return Array.prototype.map.call(
+    document.querySelectorAll("#gbCalc .gbc-tbl tbody td.v"),
+    td => td.textContent.trim());
+}
+function gbFlashChanged(before){
+  const tds = document.querySelectorAll("#gbCalc .gbc-tbl tbody td.v");
+  let n = 0;
+  Array.prototype.forEach.call(tds, (td,i)=>{
+    // 边填边算已经把新值显示在右侧了，保存前后可能一样；
+    // 所以「有真实区间」也算本次生效的改动，一并高亮，给用户明确反馈。
+    const a = td.querySelector(".lo"), b = td.querySelector(".hi");
+    const ranged = !!(a && b && a.textContent !== b.textContent);
+    const diff = before[i] != null && before[i] !== td.textContent.trim();
+    if(ranged || diff){
+      const tr = td.parentNode;
+      tr.classList.remove("changed");
+      void tr.offsetWidth;              // 重启动画
+      tr.classList.add("changed");
+      n++;
+    }
+  });
+  if(before.length && gbSavedTs){
+    const el = document.getElementById("gbSavedLine");
+    if(el) el.textContent = gbSavedMsg + (n ? ` · 本次 ${n} 项计算值按区间重算` :
+      " · 计算值未变（该原料可能未投料，或成分与内置值相同）");
+  }
+}
+/* 只改右侧结果，不重绘整个工具（保住输入框焦点），实现「边填边算」 */
+function gbLivePreview(){
+  if(!GB || !gbState || !document.querySelector("#gbCalc .gbc-tbl tbody td.v")) return;
+  const saved = gbOverrides;
+  let r = null;
+  try { gbOverrides = gbDraftOverrides(); r = gbCompute(); }
+  catch(e) { r = null; }
+  finally { gbOverrides = saved; }
+  if(!r) return;
+  const trs = document.querySelectorAll("#gbCalc .gbc-tbl tbody tr");
+  r.rows.forEach((row,i)=>{
+    const tr = trs[i]; if(!tr) return;
+    const td = tr.querySelector("td.v");
+    if(td) td.innerHTML = gbRangeHtml(row.valMin, row.valMax, row.dec);
+    const bad = row.verdict==="超限", low = row.verdict==="不足";
+    const risk = row.verdict==="波动越界";
+    const vc = bad?"bad":(low||risk?"low":"ok");
+    tr.className = vc;
+    const vd = tr.querySelector(".vd");
+    if(vd){ vd.className = "vd " + vc; vd.textContent = row.verdict; }
+  });
+  const tag = document.getElementById("gbVerdictTag");
+  if(tag) tag.innerHTML = gbVerdictHtml(r);
+  const sum = document.getElementById("gbEnergyLine");
+  if(sum) sum.innerHTML = `已投 ${r.sumAmount.toFixed(2)} kg　能量 ${gbRangeText(r.energyLo,r.energyHi,0)} kJ/100g`;
+  const st = document.getElementById("gbCompStatus");
+  if(st){ st.className = "gbc-dirty"; st.textContent = "● 有未保存改动 —— 右侧已按当前输入实时预览，点「保存并重新计算」落盘"; }
 }
 function gbPickComp(key){
-  gbApplyCompDraft(); gbSaveMats();
-  gbCompKey = key; gbRender();
+  gbCollectInputs(); gbApplyCompDraft(); gbSaveMats();
+  gbSavedMsg = ""; gbCompKey = key; gbRender();
 }
 function gbToggleComp(key){
   if(gbCompOpen && (!key || key === gbCompKey)){
-    gbApplyCompDraft(); gbSaveMats();
+    gbCollectInputs(); gbApplyCompDraft(); gbSaveMats();
     gbCompOpen = false; gbRender(); return;
   }
-  gbApplyCompDraft(); gbSaveMats();
+  gbCollectInputs(); gbApplyCompDraft(); gbSaveMats();
   gbCompOpen = true;
   gbCompKey = key || gbCompKey
     || (gbState && gbState.recipe.length ? gbState.recipe[0].key : null)
@@ -3017,14 +3163,34 @@ function gbCompute(){
    ★ force = 该指标确实受「区间成分」影响时，即使差值小于默认小数位，
      也要多加几位把两个数都显示出来 —— 用户录了区间就必须看到两个数，
      不能因为四舍五入成同一个数就被吞掉。 */
-function gbRangeText(lo, hi, dec, force){
+function gbRangeParts(lo, hi, dec){
   const d = dec==null ? 3 : dec;
   const a = Number(lo||0), b = Number(hi||0);
-  if(!force && Math.abs(a-b) < Math.pow(10, -d)) return a.toFixed(d);
   let dd = d;
-  while(dd < 6 && a.toFixed(dd) === b.toFixed(dd)) dd++;
-  if(a.toFixed(dd) === b.toFixed(dd)) return a.toFixed(dd);
-  return a.toFixed(dd) + "~" + b.toFixed(dd);
+  // 真实区间但小数位不够、四舍五入成同一个数时，多给几位把两个数显出来
+  if(Math.abs(a-b) > 1e-12){
+    while(dd < 6 && a.toFixed(dd) === b.toFixed(dd)) dd++;
+  }
+  return [a.toFixed(dd), b.toFixed(dd)];
+}
+/* ★ 用户要求：计算值这里也要有两个数。两端相等就写 x~x，不再吞成一个。 */
+function gbRangeText(lo, hi, dec, force){
+  const p = gbRangeParts(lo, hi, dec);
+  return p[0] + "~" + p[1];
+}
+function gbRangeHtml(lo, hi, dec){
+  const p = gbRangeParts(lo, hi, dec);
+  return `<b class="lo">${p[0]}</b><span class="sep">~</span><b class="hi">${p[1]}</b>`;
+}
+/* 顶部总判定单独成函数，实时预览时也能改 */
+function gbVerdictHtml(r){
+  const nOver = r.rows.filter(x=>x.verdict==="超限").length;
+  const nLow  = r.rows.filter(x=>x.verdict==="不足").length;
+  const nRisk = r.rows.filter(x=>x.verdict==="波动越界").length;
+  if(nOver) return `<span class="gbc-tag bad">${nOver} 项超限</span>`;
+  if(nLow)  return `<span class="gbc-tag warn">${nLow} 项不足</span>`;
+  if(nRisk) return `<span class="gbc-tag warn">${nRisk} 项波动越界</span>`;
+  return `<span class="gbc-tag ok">全部达标</span>`;
 }
 
 /* 数据来源说明条：讲清「计算值 = 原料成分 × 用量」，并标出录了几味实测值 */
@@ -3035,6 +3201,7 @@ function gbSrcBarHtml(){
       内置成分表是<b>行业典型参考值（演示用）</b>，不是实测值；点每行的「成分」把供应商 CoA / 实测值录进来，计算值立刻按你的数据重算。</span>
     <span class="sp"></span>
     <span class="cnt">已录入实测 <b>${gbMatCountMine()}</b> 味原料</span>
+    ${gbSavedMsg?`<span class="cnt" style="color:#15803d;font-weight:700">${escHtml(gbSavedMsg)}</span>`:""}
     ${gbCompMsg?`<span class="cnt">${escHtml(gbCompMsg)}</span>`:""}
   </div>`;
 }
@@ -3058,22 +3225,29 @@ function gbCompHtml(){
     return `<div class="gbc-fld">
       <label title="${escHtml((nt.name||nkey)+" · 每 100g 原料 · 下限~上限")}">${escHtml(nt.name||nkey)} <i>${escHtml(nt.srcUnit||"")}/100g</i></label>
       <input type="number" step="any" min="0" placeholder="下限" value="${escHtml(String(lo))}"
-             oninput="gbSetCompDraft('${mk}','min',this.value)">
+             data-mk="${mk}" data-base="${escHtml(String(lo))}"
+             oninput="gbSetCompDraft('${mk}','min',this.value)" onchange="gbSetCompDraft('${mk}','min',this.value)">
       <span class="dash">~</span>
       <input type="number" step="any" min="0" placeholder="上限" value="${escHtml(String(hi))}"
-             oninput="gbSetCompDraft('${mk}','max',this.value)">
+             data-mk="${mk}" data-base="${escHtml(String(hi))}"
+             oninput="gbSetCompDraft('${mk}','max',this.value)" onchange="gbSetCompDraft('${mk}','max',this.value)">
     </div>`;
   }).join("");
   const tabs = all.map(x=>`<button class="gbc-mtab ${x.key===m.key?"on":""}"
       onclick="gbPickComp('${x.key}')">${escHtml(x.name)}${gbIsMine(x.key)?'<span class="mine"> ·实测</span>':""}</button>`).join("");
+  const kg = ((gbState && gbState.recipe) || [])
+    .filter(r=>r.key===m.key).reduce((s,r)=>s+(Number(r.amount)||0), 0);
   return `<div class="gbc-comp">
     <div class="gbc-comp-h">
       <b>原料成分录入（每 100g 原料 · 下限 ~ 上限）</b>
       <span class="muted">当前：<b>${escHtml(m.name)}</b>
-        ${gbIsMine(m.key)?'<span class="gbc-flag mine">实测录入</span>':'<span class="gbc-flag">内置参考值</span>'}</span>
+        ${gbIsMine(m.key)?'<span class="gbc-flag mine">实测录入</span>':'<span class="gbc-flag">内置参考值</span>'}
+        <span class="muted">投料 ${kg.toFixed(2)} kg/1000kg</span></span>
       <span class="sp"></span>
       <button class="btn sm" onclick="gbToggleComp()">收起 ✕</button>
     </div>
+    ${kg <= 0 ? `<div class="gbc-warn">⚠ 该原料当前不在配方里（投料 0 kg），改成分不会影响右侧计算值。
+      <button class="btn sm pri" onclick="gbAddToRecipe('${m.key}')">加入配方 1 kg</button></div>` : ""}
     <div class="gbc-mtabs">${tabs}</div>
     ${gbAddingCustom ? `<div class="gbc-new">
         <b>新增自定义原料</b>
@@ -3082,11 +3256,15 @@ function gbCompHtml(){
         <button class="btn sm pri" onclick="gbCreateCustom()">创建并录入成分</button>
         <button class="btn sm" onclick="gbCancelCustom()">取消</button>
       </div>` : ""}
-    <div class="gbc-rng">每项填 <b>下限 ~ 上限</b> 两个数（供应商规格范围）；只填一个则两边相同。
-      右侧计算值会按所有原料的下限、上限各算一遍，显示成同一个区间。</div>
+    <div class="gbc-rng">每项填 <b>下限 ~ 上限</b> 两个数（供应商规格范围）；只改一个框，另一个框保持原值。
+      右侧计算值按所有原料的下限、上限各算一遍，<b>永远显示两个数</b>（两端相同就写成 x~x）。</div>
     <div class="gbc-grid">${fields}</div>
+    <div id="gbCompStatus" class="${Object.keys(gbCompDraft).length?"gbc-dirty":"gbc-saved"}">
+      ${Object.keys(gbCompDraft).length ? "● 有未保存改动 —— 右侧已按当前输入实时预览，点「保存并重新计算」落盘"
+        : (gbSavedMsg ? `<span id="gbSavedLine">${escHtml(gbSavedMsg)}</span>` : "")}
+    </div>
     <div class="gbc-comp-f">
-      <span class="hint">${isCustom?"自定义原料：两框都留空按 0 计。":(base?"两框都留空 = 用回内置参考值；填 0 = 明确该成分为 0。":"")} 改完点「保存并重新计算」。</span>
+      <span class="hint">${isCustom?"自定义原料：两框都留空按 0 计。":(base?"两框都留空 = 用回内置参考值；填 0 = 明确该成分为 0。":"")} 边填边算，点保存落盘。</span>
       <span class="sp"></span>
       ${isCustom?`<button class="btn sm" onclick="gbDelCustom('${m.key}')">删除该原料</button>`:""}
       <button class="btn sm" onclick="gbResetComp()">恢复内置参考值</button>
@@ -3134,17 +3312,7 @@ function gbRender(){
     <div class="gbc-meta">
       <span class="gbc-tag">${escHtml(gbState.basis)}</span>
       <span class="gbc-tag">${gbState.seg}段</span>
-      <span class="gbc-tag ${r.rows.some(x=>x.verdict==="超限")?"bad":(r.rows.some(x=>x.verdict==="不足"||x.verdict==="波动越界")?"warn":"ok")}">
-        ${(()=>{
-        /* 顶部判定要覆盖「不足」和「波动越界」，否则表里一堆黄、顶部却写全部达标 */
-        const nOver = r.rows.filter(x=>x.verdict==="超限").length;
-        const nLow  = r.rows.filter(x=>x.verdict==="不足").length;
-        const nRisk = r.rows.filter(x=>x.verdict==="波动越界").length;
-        if(nOver) return `<span class="gbc-tag bad">${nOver} 项超限</span>`;
-        if(nLow)  return `<span class="gbc-tag warn">${nLow} 项不足</span>`;
-        if(nRisk) return `<span class="gbc-tag warn">${nRisk} 项波动越界</span>`;
-        return `<span class="gbc-tag ok">全部达标</span>`;
-      })()}
+      <span id="gbVerdictTag">${gbVerdictHtml(r)}</span>
     </div>
     <div class="gbc-sub">
       目标 ${escHtml(L.std||"")}-${escHtml(L.stdVersion||"")}　|
@@ -3210,7 +3378,7 @@ function gbRender(){
       </div>
       <div class="gbc-sum">
         <div>设计余量 <b>${r.remain.toFixed(2)}</b> kg/1000kg</div>
-        <div class="muted">已投 ${r.sumAmount.toFixed(2)} kg　能量 ${gbRangeText(r.energyLo, r.energyHi, 0, r.hasEnergyRange)} kJ/100g</div>
+        <div class="muted" id="gbEnergyLine">已投 ${r.sumAmount.toFixed(2)} kg　能量 ${gbRangeText(r.energyLo, r.energyHi, 0)} kJ/100g</div>
       </div>
     </div>
 
@@ -3233,7 +3401,7 @@ function gbRender(){
             <td>${escHtml(row.name)}
               ${row.note==="待核对"?'<span class="vf" title="内置参考值，请与标准正文核对">待核对</span>':""}
               ${row.note==="国标未设限"?'<span class="vf gray">未设限</span>':""}</td>
-            <td class="v">${gbRangeText(row.valMin, row.valMax, row.dec, row.hasRange)}</td>
+            <td class="v">${gbRangeHtml(row.valMin, row.valMax, row.dec)}</td>
             <td>${row.min==null?(row.max==null?"—":"—"):row.min.toFixed(row.dec)}${row.min==null&&row.max!=null?'<span class="vns">起</span>':""}</td>
             <td>${row.max==null?"—":row.max.toFixed(row.dec)}</td>
             <td><span class="vd ${vc}">${row.verdict}</span></td>

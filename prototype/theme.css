@@ -934,3 +934,15 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
   .gbc-imp{margin:0 11px 11px}
   .gbc-comp-f .hint{flex:1 1 100%}
 }
+
+/* ★ 2026-11-09 手机端真 bug：.qmk 在 ≤720px 设了 flex:0 0 100%，
+   但 .qmrow 没有 flex-wrap，值列 .qmv 被挤成 0 宽 —— 工具内容整块看不见。
+   让标签独占一行、值列换行铺满；同时约束工具内表格可横滚。 */
+@media(max-width:720px){
+  .qmrow{flex-wrap:wrap}
+  .qmv{flex:1 1 100%;min-width:0}
+  .qwb-toolbar{flex-wrap:wrap;gap:6px}
+  .gbc-tblwrap{overflow-x:auto}
+  .gbc-tbl{min-width:430px}
+  .gbc-saved,.gbc-dirty,.gbc-warn{padding-left:11px;padding-right:11px}
+}

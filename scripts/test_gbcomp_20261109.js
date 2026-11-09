@@ -34,20 +34,13 @@ async function gotoRetry(p, url) {
   return false;
 }
 async function openTool(p) {
+  // ★ 必须走真实 UI 路径：先展开研发工具卡片（生成 [data-qw-host]），再打开工具。
+  //   以前直接 RD_open 找不到宿主，测试自己造了个 #gbCalc，结果测的不是用户看到的那个。
   await p.evaluate(() => {
+    if (typeof toggleRd === 'function') toggleRd('nutrient_calc');
     if (typeof RD_open === 'function') RD_open('nutrient_calc');
   });
-  await p.waitForTimeout(350);
-  // 视图没切过去时 QW_render 找不到宿主 → 兜底手动挂一个，保证能测交互
-  await p.evaluate(() => {
-    const host = document.getElementById('gbCalc');
-    if (!host || !host.querySelector('.gbc-head')) {
-      let d = document.getElementById('gbCalc');
-      if (!d) { d = document.createElement('div'); d.id = 'gbCalc'; document.body.appendChild(d); }
-      if (typeof gbRender === 'function') gbRender();
-    }
-  });
-  await p.waitForTimeout(250);
+  await p.waitForTimeout(500);
 }
 const val = async (p, n) => (await p.textContent(
   '#gbCalc .gbc-tbl tbody tr:nth-child(' + n + ') td.v') || '').trim();
@@ -73,7 +66,10 @@ const val = async (p, n) => (await p.textContent(
   const protein0 = await val(p, 2);
   const energy0 = await val(p, 1);
   ck(!!protein0 && !!energy0, '右侧初始有计算值（蛋白 ' + protein0 + ' / 能量 ' + energy0 + '）');
-  ck(!protein0.includes('~'), '内置参考值 min=max 时计算值只显示一个数');
+  ck((protein0.match(/~/g) || []).length === 1,
+     '★ 计算值恒显示低~高两个数（内置值两端相等时写 x~x）');
+  ck((energy0.match(/~/g) || []).length === 1, '能量同样是两个数');
+  ck(await p.locator('#gbVerdictTag').count() === 1, '顶部总判定有独立容器可实时更新');
 
   console.log('=== 逐项录入成分并实时重算 ===');
   await p.click('#gbCalc .gbc-ctl .btn:has-text("原料成分录入")');
@@ -86,10 +82,20 @@ const val = async (p, n) => (await p.textContent(
   ck(await p.locator('#gbCalc .gbc-mtab').count() >= 20, '原料切换页签含全部内置原料');
   // 第一味原料的 p 填 20~30 → 计算值必须是两个值
   const ins = p.locator('#gbCalc .gbc-grid .gbc-fld input');
+  const baseHi = await ins.nth(1).inputValue();
   await ins.nth(0).fill('20');
+  const livePreview = await val(p, 2);
+  ck(livePreview !== protein0, '★ 没点保存，右侧已实时重算（' + protein0 + ' → ' + livePreview + '）');
+  ck((await p.locator('#gbCompStatus').innerText()).includes('未保存'), '标注「有未保存改动」');
+  ck((await p.evaluate(() => JSON.stringify(gbCompDraft))).includes('"max":"' + baseHi + '"'),
+     '★ 只改下限框时，上限框原值 ' + baseHi + ' 一并进草稿（不再被压成单值）');
   await ins.nth(1).fill('30');
   await p.click('#gbCalc .gbc-comp-f .btn.pri');
-  const protein1 = await val(p, 2);
+  let protein1 = await val(p, 2);
+  ck((await p.locator('#gbCompStatus').innerText()).includes('已保存'), '★ 保存后给出明确反馈');
+  ck(await p.locator('#gbCalc .gbc-tbl tr.changed').count() > 0, '★ 变化的计算值单元格高亮闪烁');
+  ck(!(await p.locator('#dlgMask').isVisible().catch(() => false)),
+     '★ 保存不会弹模态遮罩把页面挡死');
   ck(protein1.includes('~'), '★ 计算值出现两个数（区间 ' + protein1 + '）');
   ck(protein1 !== protein0, '录入区间后蛋白质计算值变了（' + protein0 + ' → ' + protein1 + '）');
   const rng1 = protein1.split('~').map(Number);
@@ -98,6 +104,17 @@ const val = async (p, n) => (await p.textContent(
      '该原料行徽标变成「实测」');
   ck((await p.locator('#gbCalc .gbc-tbl thead').innerText()).includes('低~高'),
      '表头写明「计算值（低~高）」');
+
+  console.log('=== 兜底：oninput 没触发也能保存 ===');
+  await p.evaluate(() => {
+    const i = document.querySelector('#gbCalc .gbc-grid .gbc-fld input');
+    i.value = '18';                 // 故意不派发任何事件
+  });
+  await p.click('#gbCalc .gbc-comp-f .btn.pri');
+  const fallbackVal = await val(p, 2);
+  ck(fallbackVal !== protein1, '★ 直接改 DOM 值不触发 oninput，保存仍生效（' +
+     protein1 + ' → ' + fallbackVal + '）');
+  protein1 = fallbackVal;
 
   console.log('=== 刷新后录入值还在 ===');
   await p.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
