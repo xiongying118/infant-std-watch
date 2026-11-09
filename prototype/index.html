@@ -756,7 +756,10 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .gbc-tbl tr.bad td.v{color:#b91c1c}
 .gbc-tbl tr.low{background:#fffbeb}
 .gbc-tbl tr.low td.v{color:#b45309}
+.gbc-tbl tr.risk{background:#fffbeb}
+.gbc-tbl tr.risk td.v{color:#b45309}
 .gbc-tbl tr.ok td.v{color:#15803d}
+.gbc-tbl td.v{font-size:11.8px}
 .gbc-tbl .vns{font-size:9.5px;color:var(--ink3);margin-left:3px}
 .gbc-unit{padding:7px 14px;font-size:11px;color:var(--ink3);border-top:1px solid var(--line2)}
 
@@ -793,6 +796,66 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .gbc-fbar{display:flex;align-items:center;gap:8px;padding:9px 14px;
   border-top:1px solid var(--line2);background:#fafbfc;flex-wrap:wrap}
 .gbc-fbar .sp{flex:1}
+
+/* ============ 原料营养成分录入（2026-11-09）=================
+   用户质疑「没地方录原料成分，右侧计算值哪来的」——原来每 100g 原料的
+   成分值全写死在 data.js，页面只让录用量，那些是行业典型参考值（演示用）。
+   这里把成分表开放出来：逐项可改 / 自定义原料 / CSV 批量导入导出，
+   并在界面标清「内置参考值」与「实测录入」两种来源。 */
+.gbc-srcbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:8px 14px;border:1px solid #fde68a;border-top:none;
+  background:#fffbeb;color:#92400e;font-size:11.8px;line-height:1.65}
+.gbc-srcbar b{color:#b45309}
+.gbc-srcbar .sp{flex:1}
+.gbc-srcbar .cnt{white-space:nowrap;font-size:11.5px}
+.gbc-flag{font-size:10px;padding:1px 6px;border-radius:8px;white-space:nowrap;
+  background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;flex:0 0 auto}
+.gbc-flag.mine{background:#dcfce7;color:#15803d;border-color:#bbf7d0}
+.gbc-row .cmp{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:5px;
+  font:inherit;font-size:11px;color:var(--brand);cursor:pointer;padding:3px 6px;white-space:nowrap}
+.gbc-row .cmp:hover{background:#eff6ff;border-color:#93c5fd}
+.gbc-row .cmp.on{background:#dbeafe;border-color:#93c5fd}
+.gbc-comp{border:1px solid var(--line);border-top:none;background:#fff}
+.gbc-comp-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  padding:9px 14px;background:#f8fafc;border-bottom:1px solid var(--line)}
+.gbc-comp-h b{font-size:13px}
+.gbc-comp-h .sp{flex:1}
+.gbc-comp-h .muted{font-size:11.5px}
+.gbc-mtabs{display:flex;gap:5px;flex-wrap:wrap;padding:10px 14px 0;
+  max-height:104px;overflow-y:auto}
+.gbc-mtab{font-size:11.5px;padding:3px 9px;border-radius:14px;cursor:pointer;
+  border:1px solid var(--line);background:#fff;color:var(--ink2)}
+.gbc-mtab:hover{border-color:#93c5fd;color:var(--brand)}
+.gbc-mtab.on{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8;font-weight:600}
+.gbc-mtab .mine{color:#15803d;font-weight:700}
+.gbc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));
+  gap:8px 12px;padding:11px 14px;max-height:288px;overflow-y:auto}
+.gbc-fld{display:flex;align-items:center;gap:5px;min-width:0}
+.gbc-fld label{flex:1;min-width:0;font-size:11.5px;color:var(--ink2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gbc-fld label i{font-style:normal;color:var(--ink3);font-size:10px}
+.gbc-fld input{width:66px;flex:0 0 66px;border:1px solid var(--line);
+  border-radius:5px;padding:4px 5px;font:inherit;font-size:12px;
+  text-align:right;background:#fff;min-width:0}
+.gbc-fld input:focus{outline:2px solid #bfdbfe;outline-offset:0}
+.gbc-fld .dash{color:var(--ink3);font-size:11px;flex:0 0 auto}
+.gbc-rng{padding:0 14px 9px;font-size:11px;color:var(--ink3);line-height:1.6}
+.gbc-comp-f{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:9px 14px;border-top:1px solid var(--line2);background:#fafbfc;font-size:11.5px}
+.gbc-comp-f .sp{flex:1}
+.gbc-comp-f .hint{color:var(--ink3);line-height:1.6}
+.gbc-new{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:9px 14px;
+  border-top:1px solid var(--line2);background:#fff;font-size:11.5px}
+.gbc-new input,.gbc-new select{border:1px solid var(--line);border-radius:5px;
+  padding:4px 7px;font:inherit;font-size:12px;background:#fff;min-width:0}
+.gbc-new input{flex:1 1 210px}
+.gbc-imp{margin:0 14px 12px;border:1px dashed #cbd5e1;border-radius:7px;
+  padding:10px;background:#f8fafc;font-size:11.8px;line-height:1.7}
+.gbc-imp textarea{width:100%;min-height:92px;box-sizing:border-box;
+  border:1px solid var(--line);border-radius:5px;padding:7px 9px;
+  font:12px/1.6 ui-monospace,Menlo,Consolas,monospace;background:#fff;resize:vertical}
+.gbc-imp .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:7px}
+.gbc-imp .hint{color:var(--ink3);font-size:11px}
 
 /* ================= 质量管理工具（2026-10-22）=================
    设计取向：工具卡片要能「一眼扫过去找到自己要用的那个」，
@@ -2504,6 +2567,257 @@ const GB_KEYMAP = {
 /* 钙磷比这类「比值型」指标不能简单相加，要单独算 */
 const GB_RATIO_KEYS = { ca_ratio: ["ca", "phos"] };
 
+/* ================================================================
+   原料营养成分：内置参考值 ＋ 用户实测值（2026-11-09）
+   ----------------------------------------------------------------
+   ★ 用户质疑：页面上没有地方录原料的营养成分，右侧「计算值」怎么来的？
+     原来每 100g 原料的成分值全部写死在 data.js 的
+     GBNUTRITION[0].materials（源头 scripts/build_gbnutrition.py 的 MATERIALS），
+     页面只录「选哪味原料 + 加多少 kg」。那些是行业典型参考值，
+     不是供应商 CoA / 实测值，拿它出配方结论不可信。
+   → 把成分表开放出来：逐项可录、可加自定义原料、可 CSV 批量导入导出；
+     用户录入的值覆盖内置值参与 gbCompute()，落盘（刷新不丢），
+     界面标清「内置参考值 / 实测录入」两种来源。
+   ================================================================ */
+const GB_COMP_KEYS = Object.keys(GB_KEYMAP);     // 营养素 key → 原料表 mkey
+function gbDraftGet(k){
+  return (typeof Store !== "undefined" && Store.draft) ? Store.draft.get(k) : null;
+}
+const _ov = gbDraftGet("gbMatOverrides");
+let gbOverrides = (_ov && typeof _ov === "object" && !Array.isArray(_ov)) ? _ov : {};
+const _cm = gbDraftGet("gbCustomMats");
+let gbCustomMats = Array.isArray(_cm) ? _cm : [];
+let gbCompOpen  = false;      // 成分面板展开
+let gbCompKey   = null;       // 正在编辑的原料 key
+let gbImportOpen = false;     // CSV 导入面板
+let gbAddingCustom = false;   // 新增自定义原料表单
+let gbCompDraft = {};         // 面板里尚未保存的输入 {mkey: {min:string,max:string}}
+let gbCompMsg = "";           // 导入结果提示
+
+/* ★ 2026-11-09 追加：每个成分是两个数（下限 / 上限区间）。
+   供应商 CoA 给的本来就是规格范围，单值只是 min=max 的特例。
+   旧存盘里的裸数字、CSV 里的 "24~26" 都在这里归一。 */
+function gbNormComp(v){
+  if(v == null) return null;
+  if(typeof v === "number") return isNaN(v) ? null : {min:v, max:v};
+  if(typeof v === "object"){
+    let a = parseFloat(v.min), b = parseFloat(v.max);
+    if(isNaN(a) && isNaN(b)) return null;
+    if(isNaN(a)) a = b;
+    if(isNaN(b)) b = a;
+    return {min:a, max:b};
+  }
+  return gbParseRange(String(v));
+}
+function gbParseRange(s){
+  s = String(s == null ? "" : s).trim();
+  if(!s) return null;
+  const parts = s.split(/\s*[~～\-—]\s*/).filter(x=>x!=="");
+  let a = parseFloat(parts[0]), b = parts.length>1 ? parseFloat(parts[1]) : a;
+  if(isNaN(a) && isNaN(b)) return null;
+  if(isNaN(a)) a = b;
+  if(isNaN(b)) b = a;
+  if(a < 0) a = 0;
+  if(b < 0) b = 0;
+  return b < a ? {min:b, max:a} : {min:a, max:b};
+}
+function gbCompText(c){
+  if(!c) return "";
+  const a = Number(c.min), b = Number(c.max);
+  if(Math.abs(a-b) < 1e-9) return String(a);
+  return a + "~" + b;
+}
+
+function gbSaveMats(){
+  if(typeof Store === "undefined" || !Store.draft) return;
+  Store.draft.set("gbMatOverrides", gbOverrides);
+  Store.draft.set("gbCustomMats", gbCustomMats);
+}
+/* 参与计算的原料表 = 内置库 + 自定义原料，再叠加用户录入的区间值。
+   ★ 每味原料统一带 comp：{mkey: {min, max}}，gbCompute 按两侧各算一遍。
+     内置参考值是单值 → 归一成 min=max，因此不录入时计算区间宽度为 0。 */
+function gbAllMaterials(){
+  const base = (GB && Array.isArray(GB.materials) ? GB.materials : []).concat(gbCustomMats);
+  return base.map(m=>{
+    const o = Object.assign({}, m);
+    const comp = {};
+    GB_COMP_KEYS.forEach(nk=>{
+      const mk = GB_KEYMAP[nk];
+      comp[mk] = {min:0, max:0};
+      const built = gbNormComp(m[mk]);
+      if(built) comp[mk] = {min:built.min, max:built.max};
+    });
+    const ov = gbOverrides[m.key];
+    if(ov) Object.keys(ov).forEach(mk=>{
+      const v = gbNormComp(ov[mk]);
+      if(v) comp[mk] = {min:v.min, max:v.max};
+    });
+    o.comp = comp;
+    return o;
+  });
+}
+function gbIsMine(key){
+  return gbCustomMats.some(m=>m.key===key)
+      || !!(gbOverrides[key] && Object.keys(gbOverrides[key]).length);
+}
+function gbMatCountMine(){
+  return Object.keys(gbOverrides).filter(k=>Object.keys(gbOverrides[k]||{}).length).length
+       + gbCustomMats.length;
+}
+/* 面板输入只写草稿，不重绘（保住输入焦点）；点「保存并重新计算」才落地。
+   每个成分两个框：下限 / 上限。只填一个 → 两边取同一个数；
+   两个都留空 → 用回内置参考值；下限填得比上限大 → 自动交换。 */
+function gbSetCompDraft(mk, side, v){
+  const d = gbCompDraft[mk] || (gbCompDraft[mk] = {});
+  d[side] = v;
+}
+function gbApplyCompDraft(){
+  if(!gbCompKey || !Object.keys(gbCompDraft).length) return false;
+  const ov = gbOverrides[gbCompKey] || (gbOverrides[gbCompKey] = {});
+  Object.keys(gbCompDraft).forEach(mk=>{
+    const d = gbCompDraft[mk] || {};
+    const lo = String(d.min==null?"":d.min).trim();
+    const hi = String(d.max==null?"":d.max).trim();
+    if(lo === "" && hi === ""){ delete ov[mk]; return; }
+    let a = parseFloat(lo===""?hi:lo), b = parseFloat(hi===""?lo:hi);
+    if(isNaN(a) && isNaN(b)){ delete ov[mk]; return; }
+    if(isNaN(a)) a = b;
+    if(isNaN(b)) b = a;
+    if(a < 0) a = 0;
+    if(b < 0) b = 0;
+    ov[mk] = b < a ? {min:b, max:a} : {min:a, max:b};
+  });
+  if(!Object.keys(ov).length) delete gbOverrides[gbCompKey];
+  gbCompDraft = {};
+  return true;
+}
+function gbSaveComp(){
+  gbApplyCompDraft(); gbSaveMats(); gbRender();
+}
+function gbResetComp(){
+  if(!gbCompKey) return;
+  delete gbOverrides[gbCompKey];
+  gbCompDraft = {}; gbSaveMats(); gbRender();
+}
+function gbPickComp(key){
+  gbApplyCompDraft(); gbSaveMats();
+  gbCompKey = key; gbRender();
+}
+function gbToggleComp(key){
+  if(gbCompOpen && (!key || key === gbCompKey)){
+    gbApplyCompDraft(); gbSaveMats();
+    gbCompOpen = false; gbRender(); return;
+  }
+  gbApplyCompDraft(); gbSaveMats();
+  gbCompOpen = true;
+  gbCompKey = key || gbCompKey
+    || (gbState && gbState.recipe.length ? gbState.recipe[0].key : null)
+    || (gbAllMaterials()[0] || {}).key || null;
+  gbRender();
+}
+function gbToggleImport(){
+  gbImportOpen = !gbImportOpen;
+  if(gbImportOpen) gbCompMsg = "";
+  gbRender();
+}
+function gbStartCustom(){ gbAddingCustom = true; gbCompOpen = true; gbRender(); }
+function gbCancelCustom(){ gbAddingCustom = false; gbRender(); }
+function gbCreateCustom(){
+  const el = document.getElementById("gbNewName");
+  const name = el ? String(el.value).trim() : "";
+  if(!name){ if(el) el.focus(); return; }
+  const kd = document.getElementById("gbNewKind");
+  const key = "custom_" + Date.now();
+  gbCustomMats.push({key:key, name:name, kind:(kd?kd.value:"粉")});
+  if(gbState){
+    gbState.recipe.push({key:key, amount:1});
+    gbSave();
+  }
+  gbCompKey = key; gbAddingCustom = false; gbCompOpen = true;
+  gbSaveMats(); gbRender();
+}
+function gbDelCustom(key){
+  gbCustomMats = gbCustomMats.filter(m=>m.key!==key);
+  delete gbOverrides[key];
+  if(gbState){
+    gbState.recipe = gbState.recipe.filter(r=>r.key!==key);
+    gbSave();
+  }
+  if(gbCompKey===key) gbCompKey = (gbState && gbState.recipe.length)
+    ? gbState.recipe[0].key : (gbAllMaterials()[0]||{}).key || null;
+  gbSaveMats(); gbRender();
+}
+/* ---- CSV：导出当前成分表当模板，导入覆盖 ---- */
+function gbCsvLine(s){
+  const out = []; let cur = "", q = false;
+  for(let i=0;i<s.length;i++){
+    const c = s[i];
+    if(q){
+      if(c === '"' && s[i+1] === '"'){ cur += '"'; i++; }
+      else if(c === '"') q = false;
+      else cur += c;
+    } else if(c === '"') q = true;
+    else if(c === ","){ out.push(cur); cur = ""; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out.map(x=>x.trim());
+}
+function gbCsvCols(){ return GB_COMP_KEYS.map(k=>GB_KEYMAP[k]); }
+function gbExportCsv(){
+  if(!GB) return;
+  const cols = gbCsvCols();
+  const q = v => '"' + String(v==null?"":v).replace(/"/g,'""') + '"';
+  const lines = [["key","name","kind"].concat(cols).join(",")];
+  gbAllMaterials().forEach(m=>{
+    lines.push([q(m.key), q(m.name), q(m.kind||"")]
+      .concat(cols.map(c=>q(gbCompText(m.comp[c])))).join(","));
+  });
+  const blob = new Blob(["\ufeff"+lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "原料营养成分.csv";
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1200);
+}
+function gbImportCsv(){
+  const el = document.getElementById("gbCsvText");
+  const txt = el ? String(el.value) : "";
+  const lines = txt.split(/\r?\n/).filter(x=>x.trim());
+  if(lines.length < 2){ gbCompMsg = "至少要表头 + 一行数据"; gbRender(); return; }
+  const head = gbCsvLine(lines[0]).map(x=>x.replace(/^\ufeff/,"").toLowerCase());
+  const cols = gbCsvCols();
+  const ki = head.indexOf("key"), ni = head.indexOf("name"), di = head.indexOf("kind");
+  const idx = {};
+  cols.forEach(c=>{ const j = head.indexOf(c.toLowerCase()); if(j>=0) idx[c]=j; });
+  if(!Object.keys(idx).length){ gbCompMsg = "表头里没有可识别的成分列（p/f/c/ca…）"; gbRender(); return; }
+  let nMat = 0, nVal = 0;
+  const all = gbAllMaterials();
+  for(let li=1; li<lines.length; li++){
+    const f = gbCsvLine(lines[li]);
+    const key = ki>=0 ? f[ki] : "";
+    const name = ni>=0 ? f[ni] : "";
+    if(!key && !name) continue;
+    let m = all.find(x=>x.key===key) || (name ? all.find(x=>x.name===name) : null);
+    if(!m){
+      const nk = key || ("custom_" + Date.now() + "_" + li);
+      m = {key:nk, name:name||nk, kind:(di>=0?f[di]:"粉")};
+      gbCustomMats.push(m); all.push(m);
+    }
+    const ov = gbOverrides[m.key] || (gbOverrides[m.key] = {});
+    Object.keys(idx).forEach(c=>{
+      const s = (f[idx[c]]||"").trim();
+      if(s === "") return;
+      const v = gbParseRange(s);
+      if(v){ ov[c] = v; nVal++; }
+    });
+    nMat++;
+  }
+  if(!Object.keys(gbOverrides).length) gbCompMsg = "没有读到有效数值";
+  else gbCompMsg = "已导入 " + nMat + " 味原料 / " + nVal + " 个成分值，右侧已按新数据重算";
+  gbSaveMats(); gbImportOpen = false; gbRender();
+}
+
 /* 计算状态 */
 let gbState = null;
 
@@ -2581,111 +2895,222 @@ function pickAdvice(key, verdict){
 function gbCompute(){
   if(!GB || !gbState) return null;
   const mats = {};
-  GB.materials.forEach(m=>{ mats[m.key] = m; });
+  gbAllMaterials().forEach(m=>{ mats[m.key] = m; });
 
-  // ① 累计每 1000kg 配方中的营养素总量
-  const total = {};        // 营养素 key → 每 1000kg 的量
+  // ① 每味原料的成分都是 [下限, 上限] → 两侧各累加一遍
+  //    换算系数 amt/1000：原料表是「每 100g 该原料」的值，
+  //    乘添加量(kg/1000kg)/1000 得「每 100g 成品」该原料的贡献。
+  //    （推导与量级验算见 git 历史；写成 ×amt×10 会大 100 倍）
+  const totalLo = {}, totalHi = {};
   let sumAmount = 0;
   gbState.recipe.forEach(r=>{
     const m = mats[r.key];
     if(!m || !r.amount) return;
     sumAmount += r.amount;
-    /* ★★ 换算系数：每 100g 成品中该原料贡献多少 ★★
-       原料表的值是「每 100g 该原料」的量。
-
-       朴素推导（不化简，最不容易错）：
-         原料质量 = amt(kg) × 1000 (g/kg)
-         其中该营养素 = 原料质量 / 100 × 每100g值
-         成品总质量 = 1000(kg) × 1000 (g/kg)
-         每 100g 成品含该营养素 = 上式 / 成品总质量 × 100
-                              = 每100g值 × amt / 1000
-
-       验算：全脂乳粉 420kg/1000kg，蛋白 24g/100g
-             → 24 × 420 / 1000 = 10.08 g/100g 成品
-             → 3段国标限 10.5~13.5，量级对得上 ✓
-       ★ 踩过的坑 ★
-         写成 × amt×10 → 大 100 倍（能量 180 万 kJ/100g）
-         写成 × amt/100 → 大 10 倍（蛋白 100.8g/100g） */
     const k = r.amount / 1000;
-    Object.keys(GB_KEYMAP).forEach(nkey=>{
-      const mkey = GB_KEYMAP[nkey];
-      const v = m[mkey];
-      if(v == null) return;
-      total[nkey] = (total[nkey] || 0) + v * k;
+    GB_COMP_KEYS.forEach(nkey=>{
+      const c = m.comp[GB_KEYMAP[nkey]];
+      if(!c) return;
+      totalLo[nkey] = (totalLo[nkey] || 0) + c.min * k;
+      totalHi[nkey] = (totalHi[nkey] || 0) + c.max * k;
     });
   });
 
-  // ② 能量（每 100g 成品，kJ）
-  //   蛋白 17 kJ/g、脂肪 37 kJ/g、碳水 17 kJ/g
-  //   total 已经是「每 100g 成品」了，直接用
-  const e100g = (total.protein||0) * 17 + (total.carb||0) * 17
-              + (total.fat||0) * 37;
-  const energyPer100kJ = e100g / 100;   // 每 100kJ 相当于多少 100g
+  // ② 能量也按两侧算（蛋白 17 / 碳水 17 / 脂肪 37 kJ/g）
+  const energyOf = t => (t.protein||0)*17 + (t.carb||0)*17 + (t.fat||0)*37;
+  const eLo = energyOf(totalLo), eHi = energyOf(totalHi);
+  const eMin = Math.min(eLo, eHi), eMax = Math.max(eLo, eHi);
 
-  // ③ 按每个指标自己的基准换算
-  //   ★★ 基准不统一是最大的坑 ★★
-  //   GB 10765/10766/10767 里：
-  //     能量 / 蛋白质 / 脂肪 / 碳水化合物 → 每 100g 粉剂
-  //     钙 / 磷 / 钠 / 维生素 / 亚油酸 / DHA…      → 每 100kJ
-  //   一律按「每 100kJ」算 → 蛋白 12.5g/100g 被算成 1.07g/100kJ，
-  //   比限值低一个数量级，整张表全显示「不足」，工具直接废掉。
-  //   → 每个营养素按 nt.basis 分别处理。
+  // ③ 按每个指标自己的基准换算，得到 [min, max]
+  //   ★ 基准不统一是最大的坑：能量/蛋白/脂肪/碳水按每 100g，
+  //     钙磷钠/维生素/脂肪酸按每 100kJ；一律 100kJ 会让整表显示「不足」。
+  //   ★ 分母也是变量（能量随成分变），所以低侧/高侧要用各自的能量换算，
+  //     最后再取 min/max，不能假定哪一侧一定更大。
   const res = {};
   GB.nutrients.forEach(nt=>{
-    if(nt.key === "energy"){ res[nt.key] = e100g; return; }
+    if(nt.key === "energy"){ res[nt.key] = {min:eMin, max:eMax}; return; }
     if(nt.basis === "ratio"){
-      // 比值型：亚油酸:α-亚麻酸、钙磷比
-      //   → 用「同一基准」下的两个值相除，不能拿不同基准的原始量相除。
+      // 比值型（亚油酸:α-亚麻酸、钙磷比）：
+      //   分子取下限、分母取上限 → 最小；分子上限、分母下限 → 最大。
       const [a, b] = nt.ratio;
-      const av = convTo100kJ(total[a]||0, nt.srcUnit, nt, e100g);
-      const bv = convTo100kJ(total[b]||0, NT_SRC[a]||"mg", nt, e100g);
-      res[nt.key] = bv ? (av/bv) : 0;
+      const conv = (t, e, key, unit) =>
+        convTo100kJ(t[key]||0, unit, nt, e);
+      const aLo = conv(totalLo, eLo, a, nt.srcUnit);
+      const aHi = conv(totalHi, eHi, a, nt.srcUnit);
+      const bLo = conv(totalLo, eLo, b, NT_SRC[a]||"mg");
+      const bHi = conv(totalHi, eHi, b, NT_SRC[a]||"mg");
+      const v1 = bHi ? aLo/bHi : 0, v2 = bLo ? aHi/bLo : 0;
+      res[nt.key] = {min:Math.min(v1,v2), max:Math.max(v1,v2)};
       return;
     }
-    const raw = total[nt.key] || 0;
-    if(!raw) { res[nt.key] = 0; return; }
-
-    // raw 是「每 100g 成品」的量，单位 = nt.srcUnit
-    let v = raw;
-    if(nt.basis === "per100kJ"){
-      v = convTo100kJ(raw, nt.srcUnit, nt, e100g);
-    }
-    res[nt.key] = v;
+    const cv = (t, e) => {
+      const raw = t[nt.key] || 0;
+      if(!raw) return 0;
+      return nt.basis === "per100kJ"
+        ? convTo100kJ(raw, nt.srcUnit, nt, e) : raw;
+    };
+    const lo = cv(totalLo, eLo), hi = cv(totalHi, eHi);
+    res[nt.key] = {min:Math.min(lo,hi), max:Math.max(lo,hi)};
   });
 
-  // ④ 判定
-  //   ★ 限值分「乳基 / 豆基」两套 ★
-  //   GB 10765-2021：豆基婴儿配方食品蛋白质 0.53~0.72 g/100kJ（乳基 0.72~1.80），
-  //   磷下限也不同 —— 类别选错，整张表判定都错。
+  // ③' 逐项标记「这个指标是否受区间成分影响」→ 决定是否强制显示两个数。
+  //     能量受蛋白/脂肪/碳水三者影响；比值型受分子分母两者影响。
+  const rangeFlags = {};
+  GB.nutrients.forEach(nt=>{
+    let keys;
+    if(nt.key === "energy") keys = ["protein","fat","carb"];
+    else if(nt.basis === "ratio") keys = nt.ratio || [];
+    else keys = [nt.key];
+    rangeFlags[nt.key] = keys.some(k=>{
+      const mk = GB_KEYMAP[k];
+      if(!mk) return false;
+      return gbState.recipe.some(r=>{
+        const mm = mats[r.key];
+        const c = mm && mm.comp && mm.comp[mk];
+        return c && Math.abs(c.max - c.min) > 1e-12;
+      });
+    });
+  });
+
+  // ④ 判定（区间口径）
+  //   ★ 限值分「乳基 / 豆基」两套（豆基蛋白下限、磷下限都不同），选错整表都错。
+  //   区间整体低于下限 → 不足；整体高于上限 → 超限；
+  //   只有一侧踩线 → 「波动越界」：原料规格波动就可能不合格，必须单独提醒；
+  //   两侧都在范围内 → 达标。
   const segL = GB.limits[gbState.seg] || {};
   const lim = (gbState.basis === "豆基" ? segL.soy : segL.milk) || {};
   const rows = GB.nutrients.map(nt=>{
     const L = lim[nt.key];
-    const val = res[nt.key] || 0;
-    let verdict = "—", note = "";
+    const R = res[nt.key] || {min:0, max:0};
+    const valMin = R.min, valMax = R.max;
+    let verdict = "—", note = "", advKey = "";
     if(L){
       const tol = 1e-9;
-      // 下限为 null = 标准写 N.S.（没有特别说明）→ 只有上限
-      if(L.min!=null && val < L.min - tol){ verdict = "不足"; }
-      else if(L.max!=null && val > L.max + tol){ verdict = "超限"; }
-      else { verdict = "达标"; }
+      const partLow  = L.min!=null && valMin < L.min - tol;
+      const partHigh = L.max!=null && valMax > L.max + tol;
+      if(L.min!=null && valMax < L.min - tol){ verdict="不足"; advKey="不足"; }
+      else if(L.max!=null && valMin > L.max + tol){ verdict="超限"; advKey="超限"; }
+      else if(partLow || partHigh){ verdict="波动越界"; advKey=partLow?"不足":"超限"; }
+      else { verdict="达标"; }
       if(!L.verified) note = "待核对";
     } else {
       note = "国标未设限";
     }
     return {key:nt.key, name:nt.name, unit:nt.unit, dec:nt.dec,
-            val:val, min:L?L.min:null, max:L?L.max:null,
+            valMin:valMin, valMax:valMax, hasRange:!!rangeFlags[nt.key],
+            min:L?L.min:null, max:L?L.max:null,
             verified:L?L.verified:true, verdict:verdict, note:note,
-            advice: pickAdvice(nt.key, verdict)};
+            advice: pickAdvice(nt.key, advKey||verdict)};
   });
 
   return {
     rows: rows,
     sumAmount: sumAmount,
     remain: 1000 - sumAmount,
-    energy100g: e100g,
+    energy100g: eMax,
+    energyLo: eMin, energyHi: eMax, hasEnergyRange: !!rangeFlags.energy,
     limitInfo: GB.limits[gbState.seg] || {},
   };
+}
+
+/* 区间文本：两端相等只显示一个数；否则显示 下限~上限。
+   ★ force = 该指标确实受「区间成分」影响时，即使差值小于默认小数位，
+     也要多加几位把两个数都显示出来 —— 用户录了区间就必须看到两个数，
+     不能因为四舍五入成同一个数就被吞掉。 */
+function gbRangeText(lo, hi, dec, force){
+  const d = dec==null ? 3 : dec;
+  const a = Number(lo||0), b = Number(hi||0);
+  if(!force && Math.abs(a-b) < Math.pow(10, -d)) return a.toFixed(d);
+  let dd = d;
+  while(dd < 6 && a.toFixed(dd) === b.toFixed(dd)) dd++;
+  if(a.toFixed(dd) === b.toFixed(dd)) return a.toFixed(dd);
+  return a.toFixed(dd) + "~" + b.toFixed(dd);
+}
+
+/* 数据来源说明条：讲清「计算值 = 原料成分 × 用量」，并标出录了几味实测值 */
+function gbSrcBarHtml(){
+  return `<div class="gbc-srcbar">
+    <span>ⓘ 右侧计算值 = 各原料 <b>每 100g 营养成分</b> × 添加量累加，再换算到国标口径。
+      每个成分按 <b>下限 ~ 上限</b> 录两值，计算值也是同口径区间。
+      内置成分表是<b>行业典型参考值（演示用）</b>，不是实测值；点每行的「成分」把供应商 CoA / 实测值录进来，计算值立刻按你的数据重算。</span>
+    <span class="sp"></span>
+    <span class="cnt">已录入实测 <b>${gbMatCountMine()}</b> 味原料</span>
+    ${gbCompMsg?`<span class="cnt">${escHtml(gbCompMsg)}</span>`:""}
+  </div>`;
+}
+
+/* 单味原料的成分录入面板（每 100g 原料） */
+function gbCompHtml(){
+  if(!gbCompOpen || !GB) return "";
+  const all = gbAllMaterials();
+  const m = all.find(x=>x.key===gbCompKey) || all[0];
+  if(!m) return "";
+  const isCustom = gbCustomMats.some(x=>x.key===m.key);
+  const base = (GB.materials||[]).find(x=>x.key===m.key) || null;
+  const fields = GB_COMP_KEYS.map(nkey=>{
+    const mk = GB_KEYMAP[nkey];
+    const nt = (GB.nutrients||[]).find(x=>x.key===nkey) || {};
+    const cur = m.comp[mk] || {min:0, max:0};
+    const d = gbCompDraft[mk] || {};
+    const has = k => Object.prototype.hasOwnProperty.call(d, k);
+    const lo = has("min") ? d.min : cur.min;
+    const hi = has("max") ? d.max : cur.max;
+    return `<div class="gbc-fld">
+      <label title="${escHtml((nt.name||nkey)+" · 每 100g 原料 · 下限~上限")}">${escHtml(nt.name||nkey)} <i>${escHtml(nt.srcUnit||"")}/100g</i></label>
+      <input type="number" step="any" min="0" placeholder="下限" value="${escHtml(String(lo))}"
+             oninput="gbSetCompDraft('${mk}','min',this.value)">
+      <span class="dash">~</span>
+      <input type="number" step="any" min="0" placeholder="上限" value="${escHtml(String(hi))}"
+             oninput="gbSetCompDraft('${mk}','max',this.value)">
+    </div>`;
+  }).join("");
+  const tabs = all.map(x=>`<button class="gbc-mtab ${x.key===m.key?"on":""}"
+      onclick="gbPickComp('${x.key}')">${escHtml(x.name)}${gbIsMine(x.key)?'<span class="mine"> ·实测</span>':""}</button>`).join("");
+  return `<div class="gbc-comp">
+    <div class="gbc-comp-h">
+      <b>原料成分录入（每 100g 原料 · 下限 ~ 上限）</b>
+      <span class="muted">当前：<b>${escHtml(m.name)}</b>
+        ${gbIsMine(m.key)?'<span class="gbc-flag mine">实测录入</span>':'<span class="gbc-flag">内置参考值</span>'}</span>
+      <span class="sp"></span>
+      <button class="btn sm" onclick="gbToggleComp()">收起 ✕</button>
+    </div>
+    <div class="gbc-mtabs">${tabs}</div>
+    ${gbAddingCustom ? `<div class="gbc-new">
+        <b>新增自定义原料</b>
+        <input id="gbNewName" placeholder="原料名称，如：供应商A 脱盐乳清粉">
+        <select id="gbNewKind"><option>粉</option><option>油</option><option>糖</option><option>预混</option><option>其他</option></select>
+        <button class="btn sm pri" onclick="gbCreateCustom()">创建并录入成分</button>
+        <button class="btn sm" onclick="gbCancelCustom()">取消</button>
+      </div>` : ""}
+    <div class="gbc-rng">每项填 <b>下限 ~ 上限</b> 两个数（供应商规格范围）；只填一个则两边相同。
+      右侧计算值会按所有原料的下限、上限各算一遍，显示成同一个区间。</div>
+    <div class="gbc-grid">${fields}</div>
+    <div class="gbc-comp-f">
+      <span class="hint">${isCustom?"自定义原料：两框都留空按 0 计。":(base?"两框都留空 = 用回内置参考值；填 0 = 明确该成分为 0。":"")} 改完点「保存并重新计算」。</span>
+      <span class="sp"></span>
+      ${isCustom?`<button class="btn sm" onclick="gbDelCustom('${m.key}')">删除该原料</button>`:""}
+      <button class="btn sm" onclick="gbResetComp()">恢复内置参考值</button>
+      <button class="btn sm pri" onclick="gbSaveComp()">保存并重新计算</button>
+    </div>
+  </div>`;
+}
+
+/* CSV 批量导入 / 导出面板 */
+function gbImportHtml(){
+  if(!gbImportOpen) return "";
+  return `<div class="gbc-imp">
+    <div><b>批量导入原料成分</b>　先「导出当前成分表」拿模板（首行表头
+      <code>key,name,kind,p,f,c,la,ala,ca,phos,na,va,…</code>），把供应商规格范围填好，
+      整段粘贴到下面点「导入并覆盖」。单格写 <code>24~26</code> 表示下限 24、上限 26；
+      只写一个数字则上下限相同。单位与内置表一致：p/f/c 为 g/100g，其余为 mg 或 μg/100g。</div>
+    <textarea id="gbCsvText" placeholder="key,name,kind,p,f,c,ca,phos,na&#10;whole_milk,全脂乳粉,粉,24.5,26.1,37.2,912,705,376"></textarea>
+    <div class="row">
+      <button class="btn sm pri" onclick="gbImportCsv()">导入并覆盖</button>
+      <button class="btn sm" onclick="gbExportCsv()">导出当前成分表 CSV</button>
+      <button class="btn sm" onclick="gbToggleImport()">关闭</button>
+      <span class="hint">表头里写到的成分列才会覆盖；新原料名会自动建成自定义原料。</span>
+    </div>
+  </div>`;
 }
 
 function gbRender(){
@@ -2696,7 +3121,7 @@ function gbRender(){
 
   const r = gbCompute();
   const mats = {};
-  GB.materials.forEach(m=>{ mats[m.key] = m; });
+  gbAllMaterials().forEach(m=>{ mats[m.key] = m; });
   const L = r.limitInfo;
 
   // ---- 顶部：版本与段位 ----
@@ -2709,15 +3134,15 @@ function gbRender(){
     <div class="gbc-meta">
       <span class="gbc-tag">${escHtml(gbState.basis)}</span>
       <span class="gbc-tag">${gbState.seg}段</span>
-      <span class="gbc-tag ${r.rows.some(x=>x.verdict==="超限")?"bad":"ok"}">
+      <span class="gbc-tag ${r.rows.some(x=>x.verdict==="超限")?"bad":(r.rows.some(x=>x.verdict==="不足"||x.verdict==="波动越界")?"warn":"ok")}">
         ${(()=>{
-        /* ★ 顶部判定要把「不足」也算上 ★
-           原来只查 verdict==="超限"，结果表里 8 项显示「不足」，
-           顶部却写「全部达标」—— 自相矛盾，用户一看就知道不可信。 */
+        /* 顶部判定要覆盖「不足」和「波动越界」，否则表里一堆黄、顶部却写全部达标 */
         const nOver = r.rows.filter(x=>x.verdict==="超限").length;
         const nLow  = r.rows.filter(x=>x.verdict==="不足").length;
+        const nRisk = r.rows.filter(x=>x.verdict==="波动越界").length;
         if(nOver) return `<span class="gbc-tag bad">${nOver} 项超限</span>`;
         if(nLow)  return `<span class="gbc-tag warn">${nLow} 项不足</span>`;
+        if(nRisk) return `<span class="gbc-tag warn">${nRisk} 项波动越界</span>`;
         return `<span class="gbc-tag ok">全部达标</span>`;
       })()}
     </div>
@@ -2744,9 +3169,16 @@ function gbRender(){
              oninput="gbState.version=this.value">
     </label>
     <div class="sp"></div>
+    <button class="btn sm ${gbCompOpen?"pri":""}" onclick="gbToggleComp()">🧪 原料成分录入</button>
+    <button class="btn sm" onclick="gbStartCustom()">+ 自定义原料</button>
+    <button class="btn sm" onclick="gbToggleImport()">⇅ 批量导入 / 导出</button>
     <button class="btn sm" onclick="gbAddRow()">+ 加一味原料</button>
     <button class="btn sm" onclick="gbResetRecipe()">恢复默认配方</button>
   </div>
+
+  ${gbSrcBarHtml()}
+  ${gbCompHtml()}
+  ${gbImportHtml()}
 
   <div class="gbc-cols">
     <!-- 左：原料数据录入 -->
@@ -2761,19 +3193,24 @@ function gbRender(){
           if(!m) return "";
           return `<div class="gbc-row">
             <select onchange="gbSetMat(${i},this.value)">
-              ${GB.materials.map(x=>`<option value="${x.key}" ${x.key===row.key?"selected":""}>${escHtml(x.name)}</option>`).join("")}
+              ${gbAllMaterials().map(x=>`<option value="${x.key}" ${x.key===row.key?"selected":""}>${escHtml(x.name)}</option>`).join("")}
             </select>
             <input type="number" step="0.01" value="${row.amount}"
                    oninput="gbSetAmt(${i},this.value)">
             <span class="u">kg</span>
             <span class="kd">${escHtml(m.kind)}</span>
+            <span class="gbc-flag ${gbIsMine(row.key)?"mine":""}"
+                  title="${gbIsMine(row.key)?"已录入实测/CoA 成分，计算值按录入值算":"内置行业典型参考值，点「成分」可改成实测值"}">${gbIsMine(row.key)?"实测":"内置"}</span>
+            <button class="cmp ${gbCompOpen&&gbCompKey===row.key?"on":""}"
+                    onclick="gbToggleComp('${row.key}')"
+                    title="录入 / 修改该原料每 100g 的营养成分">成分</button>
             <button class="x" onclick="gbDelRow(${i})" title="移除">×</button>
           </div>`;
         }).join("")}
       </div>
       <div class="gbc-sum">
         <div>设计余量 <b>${r.remain.toFixed(2)}</b> kg/1000kg</div>
-        <div class="muted">已投 ${r.sumAmount.toFixed(2)} kg　能量 ${r.energy100g.toFixed(0)} kJ/100g</div>
+        <div class="muted">已投 ${r.sumAmount.toFixed(2)} kg　能量 ${gbRangeText(r.energyLo, r.energyHi, 0, r.hasEnergyRange)} kJ/100g</div>
       </div>
     </div>
 
@@ -2785,17 +3222,18 @@ function gbRender(){
       <div class="gbc-tblwrap">
       <table class="gbc-tbl">
         <thead><tr>
-          <th>营养素</th><th>计算值</th><th>下限</th><th>上限</th><th>判定</th>
+          <th>营养素</th><th>计算值（低~高）</th><th>下限</th><th>上限</th><th>判定</th>
         </tr></thead>
         <tbody>
         ${r.rows.map(row=>{
           const bad = row.verdict==="超限", low = row.verdict==="不足";
-          const vc = bad?"bad":(low?"low":"ok");
+          const risk = row.verdict==="波动越界";
+          const vc = bad?"bad":(low||risk?"low":"ok");
           return `<tr class="${vc}">
             <td>${escHtml(row.name)}
               ${row.note==="待核对"?'<span class="vf" title="内置参考值，请与标准正文核对">待核对</span>':""}
               ${row.note==="国标未设限"?'<span class="vf gray">未设限</span>':""}</td>
-            <td class="v">${row.val.toFixed(row.dec)}</td>
+            <td class="v">${gbRangeText(row.valMin, row.valMax, row.dec, row.hasRange)}</td>
             <td>${row.min==null?(row.max==null?"—":"—"):row.min.toFixed(row.dec)}${row.min==null&&row.max!=null?'<span class="vns">起</span>':""}</td>
             <td>${row.max==null?"—":row.max.toFixed(row.dec)}</td>
             <td><span class="vd ${vc}">${row.verdict}</span></td>
@@ -2804,13 +3242,14 @@ function gbRender(){
         </tbody>
       </table>
       </div>
-      <div class="gbc-unit">单位：${escHtml((GB.nutrients[1]||{}).unit||"")} 等，按国标口径换算</div>
+      <div class="gbc-unit">单位：${escHtml((GB.nutrients[1]||{}).unit||"")} 等，按国标口径换算。
+        计算值按各原料成分的下限、上限各算一遍，显示「下限~上限」；两端相同则只显示一个值。</div>
     </div>
   </div>
 
   <!-- 超限项的调整建议 -->
   ${(()=>{
-    const bads = r.rows.filter(x=>x.verdict==="超限"||x.verdict==="不足");
+    const bads = r.rows.filter(x=>["超限","不足","波动越界"].indexOf(x.verdict)>=0);
     if(!bads.length) return `
       <div class="gbc-tip ok">✓ 全部指标在国标范围内，可以进入配方评审。</div>`;
     return `<div class="gbc-bads">
@@ -2818,7 +3257,7 @@ function gbRender(){
       ${bads.map(x=>`<div class="gbc-bad">
         <span class="vd ${x.verdict==="超限"?"bad":"low"}">${x.verdict}</span>
         <b>${escHtml(x.name)}</b>
-        <span class="num">${x.val.toFixed(x.dec)} ${escHtml(x.unit)}
+        <span class="num">${gbRangeText(x.valMin, x.valMax, x.dec, x.hasRange)} ${escHtml(x.unit)}
           ${x.min!=null?`（限 ${x.min}~${x.max}）`:""}</span>
         <div class="adv">${escHtml(x.advice || "调整对应原料添加量后重算。")}</div>
       </div>`).join("")}
@@ -2859,7 +3298,9 @@ function gbSetMat(i,k){ gbState.recipe[i].key = k; gbSave(); gbRender(); }
 function gbDelRow(i){ gbState.recipe.splice(i,1); gbSave(); gbRender(); }
 function gbAddRow(){
   const used = gbState.recipe.map(r=>r.key);
-  const next = GB.materials.find(m=>!used.includes(m.key)) || GB.materials[0];
+  const pool = gbAllMaterials();
+  const next = pool.find(m=>!used.includes(m.key)) || pool[0];
+  if(!next) return;
   gbState.recipe.push({key:next.key, amount:1});
   gbSave(); gbRender();
 }

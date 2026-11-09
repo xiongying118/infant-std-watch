@@ -143,6 +143,17 @@ def main():
 
     files = collect()
     files = [(r, f) for r, f in files if r not in KEEP_REMOTE]
+    # ★ PUSH_ONLY：只推指定文件（逗号分隔的仓库相对路径）。
+    #   本机 data/ 下常有本地跑出来的快照 / 状态文件，它们不该覆盖云端
+    #   Actions 每天 09:07 刚抓的新数据。纯前端改动时用这个白名单发布。
+    only = set(x.strip().replace("\\", "/")
+               for x in os.environ.get("PUSH_ONLY", "").split(",") if x.strip())
+    if only:
+        files = [(r, f) for r, f in files if r in only]
+        print("-- PUSH_ONLY 白名单：只比对 %d 个指定文件" % len(files))
+        missing = only - set(r for r, _ in files)
+        if missing:
+            print("   [!] 白名单里没找到：" + ", ".join(sorted(missing)))
     print("-- 本地待比对 %d 个（data.js 与工作流沿用远端）" % len(files))
 
     changed = []

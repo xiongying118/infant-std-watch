@@ -911,3 +911,26 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
   #methodSearch{max-width:none}
   #methodFilter .muted{white-space:nowrap;flex:0 0 auto}
 }
+
+/* ===== 营养素配比计算 · 原料成分录入（2026-11-09）=====
+   每行多了「实测/内置」徽标和「成分」按钮，窄屏必须换行，
+   否则 select 被压到只剩几十像素，原料名整条看不见。
+   ★ 移动端规则一律写在样式表最末尾（会覆盖 head 里的 @media） */
+@media(max-width:900px){
+  .gbc-row{flex-wrap:wrap;gap:6px}
+  .gbc-row select{flex:1 1 100%}
+  .gbc-grid{grid-template-columns:repeat(auto-fill,minmax(212px,1fr));
+    gap:7px 9px;padding:10px}
+  .gbc-fld{flex-wrap:wrap}
+  .gbc-fld label{flex:1 1 100%}
+  .gbc-rng{padding:0 11px 9px}
+}
+@media(max-width:430px){
+  .gbc-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+  .gbc-fld input{flex:0 0 62px;width:62px}
+  .gbc-srcbar{font-size:11px;padding:8px 11px}
+  .gbc-comp-h,.gbc-comp-f,.gbc-mtabs,.gbc-new{padding-left:11px;padding-right:11px}
+  .gbc-mtabs{padding-right:11px}
+  .gbc-imp{margin:0 11px 11px}
+  .gbc-comp-f .hint{flex:1 1 100%}
+}
