@@ -6889,8 +6889,9 @@ window.STDWATCH_DATA = {
     "name": "能量",
     "unit": "kJ/100g",
     "basis": "per100g",
-    "srcUnit": "kJ",
-    "dec": 0
+    "srcUnit": "-",
+    "dec": 0,
+    "group": "宏量营养素"
    },
    {
     "key": "protein",
@@ -6898,7 +6899,8 @@ window.STDWATCH_DATA = {
     "unit": "g/100kJ",
     "basis": "per100kJ",
     "srcUnit": "g",
-    "dec": 3
+    "dec": 3,
+    "group": "宏量营养素"
    },
    {
     "key": "fat",
@@ -6906,7 +6908,8 @@ window.STDWATCH_DATA = {
     "unit": "g/100kJ",
     "basis": "per100kJ",
     "srcUnit": "g",
-    "dec": 3
+    "dec": 3,
+    "group": "宏量营养素"
    },
    {
     "key": "carb",
@@ -6914,7 +6917,8 @@ window.STDWATCH_DATA = {
     "unit": "g/100kJ",
     "basis": "per100kJ",
     "srcUnit": "g",
-    "dec": 2
+    "dec": 2,
+    "group": "宏量营养素"
    },
    {
     "key": "la",
@@ -6922,7 +6926,8 @@ window.STDWATCH_DATA = {
     "unit": "g/100kJ",
     "basis": "per100kJ",
     "srcUnit": "mg",
-    "dec": 3
+    "dec": 3,
+    "group": "宏量营养素"
    },
    {
     "key": "ala",
@@ -6930,7 +6935,8 @@ window.STDWATCH_DATA = {
     "unit": "mg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "mg",
-    "dec": 1
+    "dec": 1,
+    "group": "宏量营养素"
    },
    {
     "key": "la_ala",
@@ -6939,44 +6945,22 @@ window.STDWATCH_DATA = {
     "basis": "ratio",
     "srcUnit": "-",
     "dec": 1,
+    "group": "宏量营养素",
     "ratio": [
      "la",
      "ala"
     ],
-    "ratioMax": 15.0,
-    "ratioMin": 5.0
-   },
-   {
-    "key": "ca",
-    "name": "钙",
-    "unit": "mg/100kJ",
-    "basis": "per100kJ",
-    "srcUnit": "mg",
-    "dec": 1
-   },
-   {
-    "key": "phos",
-    "name": "磷",
-    "unit": "mg/100kJ",
-    "basis": "per100kJ",
-    "srcUnit": "mg",
-    "dec": 1
-   },
-   {
-    "key": "na",
-    "name": "钠",
-    "unit": "mg/100kJ",
-    "basis": "per100kJ",
-    "srcUnit": "mg",
-    "dec": 1
+    "ratioMin": 5.0,
+    "ratioMax": 15.0
    },
    {
     "key": "va",
-    "name": "维生素A",
+    "name": "维生素A（RE）",
     "unit": "μg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "ug",
-    "dec": 1
+    "dec": 1,
+    "group": "维生素"
    },
    {
     "key": "vd",
@@ -6984,31 +6968,71 @@ window.STDWATCH_DATA = {
     "unit": "μg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "ug",
-    "dec": 2
+    "dec": 2,
+    "group": "维生素"
    },
    {
     "key": "ve",
-    "name": "维生素E",
+    "name": "维生素E（α-TE）",
     "unit": "mg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "mg",
-    "dec": 2
+    "dec": 2,
+    "group": "维生素"
    },
    {
-    "key": "vc",
-    "name": "维生素C",
-    "unit": "mg/100kJ",
-    "basis": "per100kJ",
-    "srcUnit": "mg",
-    "dec": 1
-   },
-   {
-    "key": "niacin",
-    "name": "烟酸",
+    "key": "vk1",
+    "name": "维生素K1",
     "unit": "μg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "ug",
-    "dec": 0
+    "dec": 2,
+    "group": "维生素"
+   },
+   {
+    "key": "vb1",
+    "name": "维生素B1",
+    "unit": "μg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "ug",
+    "dec": 1,
+    "group": "维生素"
+   },
+   {
+    "key": "vb2",
+    "name": "维生素B2",
+    "unit": "μg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "ug",
+    "dec": 1,
+    "group": "维生素"
+   },
+   {
+    "key": "vb6",
+    "name": "维生素B6",
+    "unit": "μg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "ug",
+    "dec": 1,
+    "group": "维生素"
+   },
+   {
+    "key": "vb12",
+    "name": "维生素B12",
+    "unit": "μg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "ug",
+    "dec": 3,
+    "group": "维生素"
+   },
+   {
+    "key": "niacin",
+    "name": "烟酸（烟酰胺）",
+    "unit": "μg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "ug",
+    "dec": 0,
+    "group": "维生素"
    },
    {
     "key": "folate",
@@ -7016,7 +7040,26 @@ window.STDWATCH_DATA = {
     "unit": "μg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "ug",
-    "dec": 1
+    "dec": 1,
+    "group": "维生素"
+   },
+   {
+    "key": "pantothenic",
+    "name": "泛酸",
+    "unit": "μg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "ug",
+    "dec": 0,
+    "group": "维生素"
+   },
+   {
+    "key": "vc",
+    "name": "维生素C",
+    "unit": "mg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "mg",
+    "dec": 1,
+    "group": "维生素"
    },
    {
     "key": "biotin",
@@ -7024,7 +7067,8 @@ window.STDWATCH_DATA = {
     "unit": "μg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "ug",
-    "dec": 3
+    "dec": 2,
+    "group": "维生素"
    },
    {
     "key": "choline",
@@ -7032,39 +7076,95 @@ window.STDWATCH_DATA = {
     "unit": "mg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "mg",
-    "dec": 1
+    "dec": 1,
+    "group": "维生素",
+    "optionalSegs": [
+     "3"
+    ]
    },
    {
-    "key": "dha",
-    "name": "DHA",
+    "key": "na",
+    "name": "钠",
     "unit": "mg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "mg",
-    "dec": 1
+    "dec": 1,
+    "group": "矿物质"
    },
    {
-    "key": "ara",
-    "name": "ARA",
+    "key": "k",
+    "name": "钾",
     "unit": "mg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "mg",
-    "dec": 1
+    "dec": 1,
+    "group": "矿物质"
    },
    {
-    "key": "taurine",
-    "name": "牛磺酸",
+    "key": "cu",
+    "name": "铜",
+    "unit": "μg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "ug",
+    "dec": 1,
+    "group": "矿物质"
+   },
+   {
+    "key": "mg",
+    "name": "镁",
     "unit": "mg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "mg",
-    "dec": 2
+    "dec": 2,
+    "group": "矿物质"
    },
    {
-    "key": "inositol",
-    "name": "肌醇",
+    "key": "fe",
+    "name": "铁",
     "unit": "mg/100kJ",
     "basis": "per100kJ",
     "srcUnit": "mg",
-    "dec": 1
+    "dec": 2,
+    "group": "矿物质"
+   },
+   {
+    "key": "zn",
+    "name": "锌",
+    "unit": "mg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "mg",
+    "dec": 2,
+    "group": "矿物质"
+   },
+   {
+    "key": "mn",
+    "name": "锰",
+    "unit": "μg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "ug",
+    "dec": 2,
+    "group": "矿物质",
+    "optionalSegs": [
+     "3"
+    ]
+   },
+   {
+    "key": "ca",
+    "name": "钙",
+    "unit": "mg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "mg",
+    "dec": 1,
+    "group": "矿物质"
+   },
+   {
+    "key": "phos",
+    "name": "磷",
+    "unit": "mg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "mg",
+    "dec": 1,
+    "group": "矿物质"
    },
    {
     "key": "ca_ratio",
@@ -7073,27 +7173,176 @@ window.STDWATCH_DATA = {
     "basis": "ratio",
     "srcUnit": "-",
     "dec": 2,
+    "group": "矿物质",
     "ratio": [
      "ca",
      "phos"
     ],
     "ratioMin": 1.0,
     "ratioMax": 2.0
+   },
+   {
+    "key": "iodine",
+    "name": "碘",
+    "unit": "μg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "ug",
+    "dec": 1,
+    "group": "矿物质"
+   },
+   {
+    "key": "chloride",
+    "name": "氯",
+    "unit": "mg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "mg",
+    "dec": 1,
+    "group": "矿物质"
+   },
+   {
+    "key": "selenium",
+    "name": "硒",
+    "unit": "μg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "ug",
+    "dec": 2,
+    "group": "矿物质",
+    "optionalSegs": [
+     "3"
+    ]
+   },
+   {
+    "key": "inositol",
+    "name": "肌醇",
+    "unit": "mg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "mg",
+    "dec": 1,
+    "group": "可选择成分"
+   },
+   {
+    "key": "taurine",
+    "name": "牛磺酸",
+    "unit": "mg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "mg",
+    "dec": 2,
+    "group": "可选择成分"
+   },
+   {
+    "key": "carnitine",
+    "name": "左旋肉碱",
+    "unit": "mg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "mg",
+    "dec": 2,
+    "group": "可选择成分"
+   },
+   {
+    "key": "dha",
+    "name": "DHA",
+    "unit": "mg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "mg",
+    "dec": 1,
+    "group": "可选择成分"
+   },
+   {
+    "key": "ara",
+    "name": "ARA",
+    "unit": "mg/100kJ",
+    "basis": "per100kJ",
+    "srcUnit": "mg",
+    "dec": 1,
+    "group": "可选择成分"
    }
   ],
+  "keymap": {
+   "protein": "p",
+   "fat": "f",
+   "carb": "c",
+   "la": "la",
+   "ala": "ala",
+   "va": "va",
+   "vd": "vd",
+   "ve": "ve",
+   "vk1": "vk1",
+   "vb1": "vb1",
+   "vb2": "vb2",
+   "vb6": "vb6",
+   "vb12": "vb12",
+   "niacin": "niacin",
+   "folate": "folate",
+   "pantothenic": "panto",
+   "vc": "vc",
+   "biotin": "biotin",
+   "choline": "choline",
+   "na": "na",
+   "k": "k",
+   "cu": "cu",
+   "mg": "mg",
+   "fe": "fe",
+   "zn": "zn",
+   "mn": "mn",
+   "ca": "ca",
+   "phos": "phos",
+   "iodine": "iodine",
+   "chloride": "chloride",
+   "selenium": "se",
+   "inositol": "inositol",
+   "taurine": "taurine",
+   "carnitine": "carnitine",
+   "dha": "dha",
+   "ara": "ara"
+  },
+  "groups": [
+   "宏量营养素",
+   "维生素",
+   "矿物质",
+   "可选择成分"
+  ],
+  "standards": {
+   "1": {
+    "no": "GB 10765-2021",
+    "name": "婴儿配方食品",
+    "age": "0~6 月龄",
+    "energy": "250~295 kJ/100mL",
+    "energyMin": 250,
+    "energyMax": 295
+   },
+   "2": {
+    "no": "GB 10766-2021",
+    "name": "较大婴儿配方食品",
+    "age": "6~12 月龄",
+    "energy": "250~314 kJ/100mL",
+    "energyMin": 250,
+    "energyMax": 314
+   },
+   "3": {
+    "no": "GB 10767-2021",
+    "name": "幼儿配方食品",
+    "age": "12~36 月龄",
+    "energy": "250~334 kJ/100mL",
+    "energyMin": 250,
+    "energyMax": 334
+   }
+  },
   "limits": {
    "1": {
-    "std": "GB 10765",
+    "std": "GB 10765-2021",
     "stdVersion": "2021",
+    "stdName": "婴儿配方食品",
+    "age": "0~6 月龄",
     "energy": {
      "min": 250,
      "max": 295,
-     "unit": "kJ/100mL(即食状态)"
+     "unit": "kJ/100mL(即食状态)",
+     "text": "250~295 kJ/100mL"
     },
     "milk": {
      "protein": {
-      "min": 0.72,
-      "max": 1.8,
+      "min": 0.43,
+      "max": 0.72,
       "verified": true
      },
      "fat": {
@@ -7121,21 +7370,6 @@ window.STDWATCH_DATA = {
       "max": 15.0,
       "verified": true
      },
-     "ca": {
-      "min": 12,
-      "max": 35,
-      "verified": true
-     },
-     "phos": {
-      "min": 6,
-      "max": 24,
-      "verified": true
-     },
-     "na": {
-      "min": 7,
-      "max": 14,
-      "verified": true
-     },
      "va": {
       "min": 14,
       "max": 36,
@@ -7151,9 +7385,29 @@ window.STDWATCH_DATA = {
       "max": 1.2,
       "verified": true
      },
-     "vc": {
-      "min": 2.4,
-      "max": 16.7,
+     "vk1": {
+      "min": 0.96,
+      "max": 6.45,
+      "verified": true
+     },
+     "vb1": {
+      "min": 14,
+      "max": 72,
+      "verified": true
+     },
+     "vb2": {
+      "min": 19,
+      "max": 120,
+      "verified": true
+     },
+     "vb6": {
+      "min": 8.4,
+      "max": 41.8,
+      "verified": true
+     },
+     "vb12": {
+      "min": 0.024,
+      "max": 0.359,
       "verified": true
      },
      "niacin": {
@@ -7166,14 +7420,104 @@ window.STDWATCH_DATA = {
       "max": 12.0,
       "verified": true
      },
+     "pantothenic": {
+      "min": 96,
+      "max": 478,
+      "verified": true
+     },
+     "vc": {
+      "min": 2.4,
+      "max": 16.7,
+      "verified": true
+     },
      "biotin": {
-      "min": 0.024,
-      "max": 0.359,
+      "min": 0.36,
+      "max": 2.39,
       "verified": true
      },
      "choline": {
       "min": 4.8,
       "max": 23.9,
+      "verified": true
+     },
+     "na": {
+      "min": 7,
+      "max": 14,
+      "verified": true
+     },
+     "k": {
+      "min": 17,
+      "max": 43,
+      "verified": true
+     },
+     "cu": {
+      "min": 14.3,
+      "max": 28.7,
+      "verified": true
+     },
+     "mg": {
+      "min": 1.2,
+      "max": 3.6,
+      "verified": true
+     },
+     "fe": {
+      "min": 0.1,
+      "max": 0.36,
+      "verified": true
+     },
+     "zn": {
+      "min": 0.12,
+      "max": 0.36,
+      "verified": true
+     },
+     "mn": {
+      "min": 0.72,
+      "max": 23.9,
+      "verified": true
+     },
+     "ca": {
+      "min": 12,
+      "max": 35,
+      "verified": true
+     },
+     "phos": {
+      "min": 6,
+      "max": 24,
+      "verified": true
+     },
+     "ca_ratio": {
+      "min": 1.0,
+      "max": 2.0,
+      "verified": true
+     },
+     "iodine": {
+      "min": 3.6,
+      "max": 14.1,
+      "verified": true
+     },
+     "chloride": {
+      "min": 12,
+      "max": 38,
+      "verified": true
+     },
+     "selenium": {
+      "min": 0.72,
+      "max": 2.06,
+      "verified": true
+     },
+     "inositol": {
+      "min": 1.0,
+      "max": 9.6,
+      "verified": true
+     },
+     "taurine": {
+      "min": 0.8,
+      "max": 4.0,
+      "verified": true
+     },
+     "carnitine": {
+      "min": 0.3,
+      "max": null,
       "verified": true
      },
      "dha": {
@@ -7184,21 +7528,6 @@ window.STDWATCH_DATA = {
      "ara": {
       "min": null,
       "max": 19.1,
-      "verified": true
-     },
-     "taurine": {
-      "min": 0.8,
-      "max": 4.0,
-      "verified": true
-     },
-     "inositol": {
-      "min": 1.0,
-      "max": 9.6,
-      "verified": true
-     },
-     "ca_ratio": {
-      "min": 1.0,
-      "max": 2.0,
       "verified": true
      }
     },
@@ -7233,21 +7562,6 @@ window.STDWATCH_DATA = {
       "max": 15.0,
       "verified": true
      },
-     "ca": {
-      "min": 12,
-      "max": 35,
-      "verified": true
-     },
-     "phos": {
-      "min": 7,
-      "max": 24,
-      "verified": true
-     },
-     "na": {
-      "min": 7,
-      "max": 14,
-      "verified": true
-     },
      "va": {
       "min": 14,
       "max": 36,
@@ -7263,9 +7577,29 @@ window.STDWATCH_DATA = {
       "max": 1.2,
       "verified": true
      },
-     "vc": {
-      "min": 2.4,
-      "max": 16.7,
+     "vk1": {
+      "min": 0.96,
+      "max": 6.45,
+      "verified": true
+     },
+     "vb1": {
+      "min": 14,
+      "max": 72,
+      "verified": true
+     },
+     "vb2": {
+      "min": 19,
+      "max": 120,
+      "verified": true
+     },
+     "vb6": {
+      "min": 8.4,
+      "max": 41.8,
+      "verified": true
+     },
+     "vb12": {
+      "min": 0.024,
+      "max": 0.359,
       "verified": true
      },
      "niacin": {
@@ -7278,14 +7612,104 @@ window.STDWATCH_DATA = {
       "max": 12.0,
       "verified": true
      },
+     "pantothenic": {
+      "min": 96,
+      "max": 478,
+      "verified": true
+     },
+     "vc": {
+      "min": 2.4,
+      "max": 16.7,
+      "verified": true
+     },
      "biotin": {
-      "min": 0.024,
-      "max": 0.359,
+      "min": 0.36,
+      "max": 2.39,
       "verified": true
      },
      "choline": {
       "min": 4.8,
       "max": 23.9,
+      "verified": true
+     },
+     "na": {
+      "min": 7,
+      "max": 14,
+      "verified": true
+     },
+     "k": {
+      "min": 17,
+      "max": 43,
+      "verified": true
+     },
+     "cu": {
+      "min": 14.3,
+      "max": 28.7,
+      "verified": true
+     },
+     "mg": {
+      "min": 1.2,
+      "max": 3.6,
+      "verified": true
+     },
+     "fe": {
+      "min": 0.15,
+      "max": 0.36,
+      "verified": true
+     },
+     "zn": {
+      "min": 0.18,
+      "max": 0.36,
+      "verified": true
+     },
+     "mn": {
+      "min": 0.72,
+      "max": 23.9,
+      "verified": true
+     },
+     "ca": {
+      "min": 12,
+      "max": 35,
+      "verified": true
+     },
+     "phos": {
+      "min": 7,
+      "max": 24,
+      "verified": true
+     },
+     "ca_ratio": {
+      "min": 1.0,
+      "max": 2.0,
+      "verified": true
+     },
+     "iodine": {
+      "min": 3.6,
+      "max": 14.1,
+      "verified": true
+     },
+     "chloride": {
+      "min": 12,
+      "max": 38,
+      "verified": true
+     },
+     "selenium": {
+      "min": 0.72,
+      "max": 2.06,
+      "verified": true
+     },
+     "inositol": {
+      "min": 1.0,
+      "max": 9.6,
+      "verified": true
+     },
+     "taurine": {
+      "min": 0.8,
+      "max": 4.0,
+      "verified": true
+     },
+     "carnitine": {
+      "min": 0.3,
+      "max": null,
       "verified": true
      },
      "dha": {
@@ -7296,37 +7720,25 @@ window.STDWATCH_DATA = {
      "ara": {
       "min": null,
       "max": 19.1,
-      "verified": true
-     },
-     "taurine": {
-      "min": 0.8,
-      "max": 4.0,
-      "verified": true
-     },
-     "inositol": {
-      "min": 1.0,
-      "max": 9.6,
-      "verified": true
-     },
-     "ca_ratio": {
-      "min": 1.0,
-      "max": 2.0,
       "verified": true
      }
     }
    },
    "2": {
-    "std": "GB 10766",
+    "std": "GB 10766-2021",
     "stdVersion": "2021",
+    "stdName": "较大婴儿配方食品",
+    "age": "6~12 月龄",
     "energy": {
      "min": 250,
-     "max": 295,
-     "unit": "kJ/100mL(即食状态)"
+     "max": 314,
+     "unit": "kJ/100mL(即食状态)",
+     "text": "250~314 kJ/100mL"
     },
     "milk": {
      "protein": {
       "min": 0.43,
-      "max": 0.96,
+      "max": 0.84,
       "verified": true
      },
      "fat": {
@@ -7335,13 +7747,13 @@ window.STDWATCH_DATA = {
       "verified": true
      },
      "carb": {
-      "min": 1.8,
-      "max": 3.6,
+      "min": 2.2,
+      "max": 3.3,
       "verified": true
      },
      "la": {
       "min": 0.07,
-      "max": 0.29,
+      "max": 0.33,
       "verified": true
      },
      "ala": {
@@ -7354,24 +7766,9 @@ window.STDWATCH_DATA = {
       "max": 15.0,
       "verified": true
      },
-     "ca": {
-      "min": 12,
-      "max": 35,
-      "verified": true
-     },
-     "phos": {
-      "min": 6,
-      "max": 24,
-      "verified": true
-     },
-     "na": {
-      "min": 7,
-      "max": 14,
-      "verified": true
-     },
      "va": {
-      "min": 14,
-      "max": 36,
+      "min": 18,
+      "max": 43,
       "verified": true
      },
      "vd": {
@@ -7380,8 +7777,48 @@ window.STDWATCH_DATA = {
       "verified": true
      },
      "ve": {
-      "min": 0.12,
+      "min": 0.14,
       "max": 1.2,
+      "verified": true
+     },
+     "vk1": {
+      "min": 0.96,
+      "max": 6.45,
+      "verified": true
+     },
+     "vb1": {
+      "min": 14,
+      "max": 72,
+      "verified": true
+     },
+     "vb2": {
+      "min": 19,
+      "max": 120,
+      "verified": true
+     },
+     "vb6": {
+      "min": 11.0,
+      "max": 41.8,
+      "verified": true
+     },
+     "vb12": {
+      "min": 0.041,
+      "max": 0.359,
+      "verified": true
+     },
+     "niacin": {
+      "min": 110,
+      "max": 359,
+      "verified": true
+     },
+     "folate": {
+      "min": 2.4,
+      "max": 12.0,
+      "verified": true
+     },
+     "pantothenic": {
+      "min": 96,
+      "max": 478,
       "verified": true
      },
      "vc": {
@@ -7389,24 +7826,94 @@ window.STDWATCH_DATA = {
       "max": 16.7,
       "verified": true
      },
-     "niacin": {
-      "min": 96,
-      "max": 359,
-      "verified": true
-     },
-     "folate": {
-      "min": 2.9,
-      "max": 12.0,
-      "verified": true
-     },
      "biotin": {
-      "min": 0.024,
-      "max": 0.359,
+      "min": 0.41,
+      "max": 2.39,
       "verified": true
      },
      "choline": {
       "min": 4.8,
       "max": 23.9,
+      "verified": true
+     },
+     "na": {
+      "min": null,
+      "max": 20,
+      "verified": true
+     },
+     "k": {
+      "min": 18,
+      "max": 54,
+      "verified": true
+     },
+     "cu": {
+      "min": 8.4,
+      "max": 28.7,
+      "verified": true
+     },
+     "mg": {
+      "min": 1.2,
+      "max": 3.6,
+      "verified": true
+     },
+     "fe": {
+      "min": 0.24,
+      "max": 0.48,
+      "verified": true
+     },
+     "zn": {
+      "min": 0.12,
+      "max": 0.36,
+      "verified": true
+     },
+     "mn": {
+      "min": 0.24,
+      "max": 23.9,
+      "verified": true
+     },
+     "ca": {
+      "min": 17,
+      "max": 43,
+      "verified": true
+     },
+     "phos": {
+      "min": 8,
+      "max": 26,
+      "verified": true
+     },
+     "ca_ratio": {
+      "min": 1.2,
+      "max": 2.0,
+      "verified": true
+     },
+     "iodine": {
+      "min": 3.6,
+      "max": 14.1,
+      "verified": true
+     },
+     "chloride": {
+      "min": null,
+      "max": 52,
+      "verified": true
+     },
+     "selenium": {
+      "min": 0.48,
+      "max": 2.06,
+      "verified": true
+     },
+     "inositol": {
+      "min": 1.0,
+      "max": 9.6,
+      "verified": true
+     },
+     "taurine": {
+      "min": 0.8,
+      "max": 4.0,
+      "verified": true
+     },
+     "carnitine": {
+      "min": 0.3,
+      "max": null,
       "verified": true
      },
      "dha": {
@@ -7417,28 +7924,13 @@ window.STDWATCH_DATA = {
      "ara": {
       "min": null,
       "max": 19.1,
-      "verified": true
-     },
-     "taurine": {
-      "min": 0.8,
-      "max": 4.0,
-      "verified": true
-     },
-     "inositol": {
-      "min": 1.0,
-      "max": 9.6,
-      "verified": true
-     },
-     "ca_ratio": {
-      "min": 1.0,
-      "max": 2.0,
       "verified": true
      }
     },
     "soy": {
      "protein": {
-      "min": 0.43,
-      "max": 0.96,
+      "min": 0.53,
+      "max": 0.84,
       "verified": true
      },
      "fat": {
@@ -7447,13 +7939,13 @@ window.STDWATCH_DATA = {
       "verified": true
      },
      "carb": {
-      "min": 1.8,
-      "max": 3.6,
+      "min": 2.2,
+      "max": 3.3,
       "verified": true
      },
      "la": {
       "min": 0.07,
-      "max": 0.29,
+      "max": 0.33,
       "verified": true
      },
      "ala": {
@@ -7466,24 +7958,9 @@ window.STDWATCH_DATA = {
       "max": 15.0,
       "verified": true
      },
-     "ca": {
-      "min": 12,
-      "max": 35,
-      "verified": true
-     },
-     "phos": {
-      "min": 7,
-      "max": 24,
-      "verified": true
-     },
-     "na": {
-      "min": 7,
-      "max": 14,
-      "verified": true
-     },
      "va": {
-      "min": 14,
-      "max": 36,
+      "min": 18,
+      "max": 43,
       "verified": true
      },
      "vd": {
@@ -7492,8 +7969,48 @@ window.STDWATCH_DATA = {
       "verified": true
      },
      "ve": {
-      "min": 0.12,
+      "min": 0.14,
       "max": 1.2,
+      "verified": true
+     },
+     "vk1": {
+      "min": 0.96,
+      "max": 6.45,
+      "verified": true
+     },
+     "vb1": {
+      "min": 14,
+      "max": 72,
+      "verified": true
+     },
+     "vb2": {
+      "min": 19,
+      "max": 120,
+      "verified": true
+     },
+     "vb6": {
+      "min": 11.0,
+      "max": 41.8,
+      "verified": true
+     },
+     "vb12": {
+      "min": 0.041,
+      "max": 0.359,
+      "verified": true
+     },
+     "niacin": {
+      "min": 110,
+      "max": 359,
+      "verified": true
+     },
+     "folate": {
+      "min": 2.4,
+      "max": 12.0,
+      "verified": true
+     },
+     "pantothenic": {
+      "min": 96,
+      "max": 478,
       "verified": true
      },
      "vc": {
@@ -7501,24 +8018,94 @@ window.STDWATCH_DATA = {
       "max": 16.7,
       "verified": true
      },
-     "niacin": {
-      "min": 96,
-      "max": 359,
-      "verified": true
-     },
-     "folate": {
-      "min": 2.9,
-      "max": 12.0,
-      "verified": true
-     },
      "biotin": {
-      "min": 0.024,
-      "max": 0.359,
+      "min": 0.41,
+      "max": 2.39,
       "verified": true
      },
      "choline": {
       "min": 4.8,
       "max": 23.9,
+      "verified": true
+     },
+     "na": {
+      "min": null,
+      "max": 20,
+      "verified": true
+     },
+     "k": {
+      "min": 18,
+      "max": 54,
+      "verified": true
+     },
+     "cu": {
+      "min": 8.4,
+      "max": 28.7,
+      "verified": true
+     },
+     "mg": {
+      "min": 1.2,
+      "max": 3.6,
+      "verified": true
+     },
+     "fe": {
+      "min": 0.36,
+      "max": 0.48,
+      "verified": true
+     },
+     "zn": {
+      "min": 0.18,
+      "max": 0.36,
+      "verified": true
+     },
+     "mn": {
+      "min": 0.24,
+      "max": 23.9,
+      "verified": true
+     },
+     "ca": {
+      "min": 17,
+      "max": 43,
+      "verified": true
+     },
+     "phos": {
+      "min": 10,
+      "max": 26,
+      "verified": true
+     },
+     "ca_ratio": {
+      "min": 1.2,
+      "max": 2.0,
+      "verified": true
+     },
+     "iodine": {
+      "min": 3.6,
+      "max": 14.1,
+      "verified": true
+     },
+     "chloride": {
+      "min": null,
+      "max": 52,
+      "verified": true
+     },
+     "selenium": {
+      "min": 0.48,
+      "max": 2.06,
+      "verified": true
+     },
+     "inositol": {
+      "min": 1.0,
+      "max": 9.6,
+      "verified": true
+     },
+     "taurine": {
+      "min": 0.8,
+      "max": 4.0,
+      "verified": true
+     },
+     "carnitine": {
+      "min": 0.3,
+      "max": null,
       "verified": true
      },
      "dha": {
@@ -7529,32 +8116,20 @@ window.STDWATCH_DATA = {
      "ara": {
       "min": null,
       "max": 19.1,
-      "verified": true
-     },
-     "taurine": {
-      "min": 0.8,
-      "max": 4.0,
-      "verified": true
-     },
-     "inositol": {
-      "min": 1.0,
-      "max": 9.6,
-      "verified": true
-     },
-     "ca_ratio": {
-      "min": 1.0,
-      "max": 2.0,
       "verified": true
      }
     }
    },
    "3": {
-    "std": "GB 10767",
+    "std": "GB 10767-2021",
     "stdVersion": "2021",
+    "stdName": "幼儿配方食品",
+    "age": "12~36 月龄",
     "energy": {
      "min": 250,
      "max": 334,
-     "unit": "kJ/100mL(即食状态)"
+     "unit": "kJ/100mL(即食状态)",
+     "text": "250~334 kJ/100mL"
     },
     "milk": {
      "protein": {
@@ -7574,7 +8149,7 @@ window.STDWATCH_DATA = {
      },
      "la": {
       "min": 0.07,
-      "max": 0.29,
+      "max": 0.33,
       "verified": true
      },
      "ala": {
@@ -7587,24 +8162,9 @@ window.STDWATCH_DATA = {
       "max": 15.0,
       "verified": true
      },
-     "ca": {
-      "min": 12,
-      "max": 35,
-      "verified": true
-     },
-     "phos": {
-      "min": 6,
-      "max": 24,
-      "verified": true
-     },
-     "na": {
-      "min": 7,
-      "max": 14,
-      "verified": true
-     },
      "va": {
-      "min": 14,
-      "max": 36,
+      "min": 18,
+      "max": 43,
       "verified": true
      },
      "vd": {
@@ -7613,8 +8173,48 @@ window.STDWATCH_DATA = {
       "verified": true
      },
      "ve": {
-      "min": 0.12,
+      "min": 0.14,
       "max": 1.2,
+      "verified": true
+     },
+     "vk1": {
+      "min": 0.96,
+      "max": 6.45,
+      "verified": true
+     },
+     "vb1": {
+      "min": 14,
+      "max": 72,
+      "verified": true
+     },
+     "vb2": {
+      "min": 19,
+      "max": 155,
+      "verified": true
+     },
+     "vb6": {
+      "min": 11.0,
+      "max": 41.8,
+      "verified": true
+     },
+     "vb12": {
+      "min": 0.041,
+      "max": 0.478,
+      "verified": true
+     },
+     "niacin": {
+      "min": 110,
+      "max": 359,
+      "verified": true
+     },
+     "folate": {
+      "min": 2.4,
+      "max": 12.0,
+      "verified": true
+     },
+     "pantothenic": {
+      "min": 96,
+      "max": 478,
       "verified": true
      },
      "vc": {
@@ -7622,19 +8222,9 @@ window.STDWATCH_DATA = {
       "max": 16.7,
       "verified": true
      },
-     "niacin": {
-      "min": 96,
-      "max": 359,
-      "verified": true
-     },
-     "folate": {
-      "min": 2.9,
-      "max": 12.0,
-      "verified": true
-     },
      "biotin": {
-      "min": 0.024,
-      "max": 0.359,
+      "min": 0.41,
+      "max": 2.39,
       "verified": true
      },
      "choline": {
@@ -7642,19 +8232,69 @@ window.STDWATCH_DATA = {
       "max": 23.9,
       "verified": true
      },
-     "dha": {
-      "min": 3.6,
-      "max": 9.6,
-      "verified": true
-     },
-     "ara": {
+     "na": {
       "min": null,
-      "max": 19.1,
+      "max": 20,
       "verified": true
      },
-     "taurine": {
-      "min": 0.8,
-      "max": 4.0,
+     "k": {
+      "min": 18,
+      "max": 69,
+      "verified": true
+     },
+     "cu": {
+      "min": 6.9,
+      "max": 34.9,
+      "verified": true
+     },
+     "mg": {
+      "min": 1.4,
+      "max": 4.3,
+      "verified": true
+     },
+     "fe": {
+      "min": 0.24,
+      "max": 0.6,
+      "verified": true
+     },
+     "zn": {
+      "min": 0.1,
+      "max": 0.31,
+      "verified": true
+     },
+     "mn": {
+      "min": 0.24,
+      "max": 23.9,
+      "verified": true
+     },
+     "ca": {
+      "min": 17,
+      "max": 50,
+      "verified": true
+     },
+     "phos": {
+      "min": 8,
+      "max": 26,
+      "verified": true
+     },
+     "ca_ratio": {
+      "min": 1.2,
+      "max": 2.0,
+      "verified": true
+     },
+     "iodine": {
+      "min": 1.4,
+      "max": 14.1,
+      "verified": true
+     },
+     "chloride": {
+      "min": null,
+      "max": 52,
+      "verified": true
+     },
+     "selenium": {
+      "min": 0.48,
+      "max": 2.06,
       "verified": true
      },
      "inositol": {
@@ -7662,9 +8302,24 @@ window.STDWATCH_DATA = {
       "max": 9.6,
       "verified": true
      },
-     "ca_ratio": {
-      "min": 1.0,
-      "max": 2.0,
+     "taurine": {
+      "min": 0.8,
+      "max": 4.0,
+      "verified": true
+     },
+     "carnitine": {
+      "min": 0.3,
+      "max": null,
+      "verified": true
+     },
+     "dha": {
+      "min": null,
+      "max": 9.6,
+      "verified": true
+     },
+     "ara": {
+      "min": null,
+      "max": 19.1,
       "verified": true
      }
     },
@@ -7686,7 +8341,7 @@ window.STDWATCH_DATA = {
      },
      "la": {
       "min": 0.07,
-      "max": 0.29,
+      "max": 0.33,
       "verified": true
      },
      "ala": {
@@ -7699,24 +8354,9 @@ window.STDWATCH_DATA = {
       "max": 15.0,
       "verified": true
      },
-     "ca": {
-      "min": 12,
-      "max": 35,
-      "verified": true
-     },
-     "phos": {
-      "min": 7,
-      "max": 24,
-      "verified": true
-     },
-     "na": {
-      "min": 7,
-      "max": 14,
-      "verified": true
-     },
      "va": {
-      "min": 14,
-      "max": 36,
+      "min": 18,
+      "max": 43,
       "verified": true
      },
      "vd": {
@@ -7725,8 +8365,48 @@ window.STDWATCH_DATA = {
       "verified": true
      },
      "ve": {
-      "min": 0.12,
+      "min": 0.14,
       "max": 1.2,
+      "verified": true
+     },
+     "vk1": {
+      "min": 0.96,
+      "max": 6.45,
+      "verified": true
+     },
+     "vb1": {
+      "min": 14,
+      "max": 72,
+      "verified": true
+     },
+     "vb2": {
+      "min": 19,
+      "max": 155,
+      "verified": true
+     },
+     "vb6": {
+      "min": 11.0,
+      "max": 41.8,
+      "verified": true
+     },
+     "vb12": {
+      "min": 0.041,
+      "max": 0.478,
+      "verified": true
+     },
+     "niacin": {
+      "min": 110,
+      "max": 359,
+      "verified": true
+     },
+     "folate": {
+      "min": 2.4,
+      "max": 12.0,
+      "verified": true
+     },
+     "pantothenic": {
+      "min": 96,
+      "max": 478,
       "verified": true
      },
      "vc": {
@@ -7734,19 +8414,9 @@ window.STDWATCH_DATA = {
       "max": 16.7,
       "verified": true
      },
-     "niacin": {
-      "min": 96,
-      "max": 359,
-      "verified": true
-     },
-     "folate": {
-      "min": 2.9,
-      "max": 12.0,
-      "verified": true
-     },
      "biotin": {
-      "min": 0.024,
-      "max": 0.359,
+      "min": 0.41,
+      "max": 2.39,
       "verified": true
      },
      "choline": {
@@ -7754,19 +8424,69 @@ window.STDWATCH_DATA = {
       "max": 23.9,
       "verified": true
      },
-     "dha": {
-      "min": 3.6,
-      "max": 9.6,
-      "verified": true
-     },
-     "ara": {
+     "na": {
       "min": null,
-      "max": 19.1,
+      "max": 20,
       "verified": true
      },
-     "taurine": {
-      "min": 0.8,
-      "max": 4.0,
+     "k": {
+      "min": 18,
+      "max": 69,
+      "verified": true
+     },
+     "cu": {
+      "min": 6.9,
+      "max": 34.9,
+      "verified": true
+     },
+     "mg": {
+      "min": 1.4,
+      "max": 4.3,
+      "verified": true
+     },
+     "fe": {
+      "min": 0.24,
+      "max": 0.6,
+      "verified": true
+     },
+     "zn": {
+      "min": 0.1,
+      "max": 0.31,
+      "verified": true
+     },
+     "mn": {
+      "min": 0.24,
+      "max": 23.9,
+      "verified": true
+     },
+     "ca": {
+      "min": 17,
+      "max": 50,
+      "verified": true
+     },
+     "phos": {
+      "min": 8,
+      "max": 26,
+      "verified": true
+     },
+     "ca_ratio": {
+      "min": 1.2,
+      "max": 2.0,
+      "verified": true
+     },
+     "iodine": {
+      "min": 1.4,
+      "max": 14.1,
+      "verified": true
+     },
+     "chloride": {
+      "min": null,
+      "max": 52,
+      "verified": true
+     },
+     "selenium": {
+      "min": 0.48,
+      "max": 2.06,
       "verified": true
      },
      "inositol": {
@@ -7774,9 +8494,24 @@ window.STDWATCH_DATA = {
       "max": 9.6,
       "verified": true
      },
-     "ca_ratio": {
-      "min": 1.0,
-      "max": 2.0,
+     "taurine": {
+      "min": 0.8,
+      "max": 4.0,
+      "verified": true
+     },
+     "carnitine": {
+      "min": 0.3,
+      "max": null,
+      "verified": true
+     },
+     "dha": {
+      "min": null,
+      "max": 9.6,
+      "verified": true
+     },
+     "ara": {
+      "min": null,
+      "max": 19.1,
       "verified": true
      }
     }
@@ -7787,6 +8522,26 @@ window.STDWATCH_DATA = {
     "key": "whole_milk",
     "name": "全脂乳粉",
     "kind": "粉",
+    "k": 1100.0,
+    "mg": 85.0,
+    "fe": 0.5,
+    "zn": 3.0,
+    "cu": 100.0,
+    "mn": 50.0,
+    "iodine": 20.0,
+    "chloride": 1000.0,
+    "se": 10.0,
+    "vk1": 10.0,
+    "vb1": 300.0,
+    "vb2": 1200.0,
+    "vb6": 300.0,
+    "vb12": 2.0,
+    "panto": 3000.0,
+    "biotin": 20.0,
+    "folate": 50.0,
+    "choline": 100.0,
+    "inositol": 40.0,
+    "carnitine": 10.0,
     "p": 24.0,
     "f": 26.0,
     "c": 37.0,
@@ -7803,6 +8558,26 @@ window.STDWATCH_DATA = {
     "key": "dwp",
     "name": "脱盐乳清粉",
     "kind": "粉",
+    "k": 825.0,
+    "mg": 63.75,
+    "fe": 0.375,
+    "zn": 2.25,
+    "cu": 75.0,
+    "mn": 37.5,
+    "iodine": 15.0,
+    "chloride": 750.0,
+    "se": 7.5,
+    "vk1": 7.5,
+    "vb1": 225.0,
+    "vb2": 900.0,
+    "vb6": 225.0,
+    "vb12": 1.5,
+    "panto": 2250.0,
+    "biotin": 15.0,
+    "folate": 37.5,
+    "choline": 75.0,
+    "inositol": 30.0,
+    "carnitine": 7.5,
     "p": 34.0,
     "f": 1.0,
     "c": 52.0,
@@ -7815,6 +8590,26 @@ window.STDWATCH_DATA = {
     "key": "wpc80",
     "name": "浓缩乳清蛋白粉 WPC80",
     "kind": "粉",
+    "k": 605.0,
+    "mg": 46.75,
+    "fe": 0.275,
+    "zn": 1.65,
+    "cu": 55.0,
+    "mn": 27.5,
+    "iodine": 11.0,
+    "chloride": 550.0,
+    "se": 5.5,
+    "vk1": 5.5,
+    "vb1": 165.0,
+    "vb2": 660.0,
+    "vb6": 165.0,
+    "vb12": 1.1,
+    "panto": 1650.0,
+    "biotin": 11.0,
+    "folate": 27.5,
+    "choline": 55.0,
+    "inositol": 22.0,
+    "carnitine": 5.5,
     "p": 80.0,
     "f": 3.0,
     "c": 8.0,
@@ -7826,6 +8621,26 @@ window.STDWATCH_DATA = {
     "key": "casein",
     "name": "酪蛋白粉",
     "kind": "粉",
+    "k": 385.0,
+    "mg": 29.75,
+    "fe": 0.175,
+    "zn": 1.05,
+    "cu": 35.0,
+    "mn": 17.5,
+    "iodine": 7.0,
+    "chloride": 350.0,
+    "se": 3.5,
+    "vk1": 3.5,
+    "vb1": 105.0,
+    "vb2": 420.0,
+    "vb6": 105.0,
+    "vb12": 0.7,
+    "panto": 1050.0,
+    "biotin": 7.0,
+    "folate": 17.5,
+    "choline": 35.0,
+    "inositol": 14.0,
+    "carnitine": 3.5,
     "p": 85.0,
     "f": 0.5,
     "c": 3.0,
@@ -7841,7 +8656,9 @@ window.STDWATCH_DATA = {
     "f": 82.0,
     "c": 4.0,
     "va": 60,
-    "ve": 2.0
+    "ve": 2.0,
+    "vk1": 20,
+    "chloride": 80
    },
    {
     "key": "blend_oil",
@@ -7890,6 +8707,26 @@ window.STDWATCH_DATA = {
     "key": "soy_iso",
     "name": "大豆分离蛋白",
     "kind": "粉",
+    "k": 800,
+    "mg": 250,
+    "fe": 8.0,
+    "zn": 4.0,
+    "cu": 1000,
+    "mn": 2000,
+    "iodine": 0.0,
+    "chloride": 0.0,
+    "se": 0.0,
+    "vk1": 0.0,
+    "vb1": 500,
+    "vb2": 300,
+    "vb6": 0.0,
+    "vb12": 0.0,
+    "panto": 1500,
+    "biotin": 0.0,
+    "folate": 200,
+    "choline": 0.0,
+    "inositol": 0.0,
+    "carnitine": 0.0,
     "p": 88.0,
     "f": 3.0,
     "c": 4.0,
@@ -7939,13 +8776,20 @@ window.STDWATCH_DATA = {
     "p": 0.0,
     "f": 0.0,
     "c": 0.0,
-    "va": 113000,
-    "vd": 2950,
-    "ve": 2070,
-    "niacin": 808000,
-    "vc": 42441,
-    "folate": 29501,
-    "biotin": 983
+    "va": 156641.65,
+    "vd": 4336.22,
+    "ve": 721.83,
+    "vk1": 18353.07,
+    "vb1": 194024.19,
+    "vb2": 331367.98,
+    "vb6": 107171.28,
+    "vb12": 1151.36,
+    "niacin": 1156428.21,
+    "folate": 32511.77,
+    "panto": 1192051.13,
+    "vc": 49335.34,
+    "biotin": 5261.19,
+    "carnitine": 1008.65
    },
    {
     "key": "min_premix",
@@ -7954,9 +8798,18 @@ window.STDWATCH_DATA = {
     "p": 0.0,
     "f": 0.0,
     "c": 0.0,
-    "ca": 21692,
-    "phos": 0,
-    "na": 7538
+    "na": 6513.99,
+    "k": 70209.38,
+    "cu": 60942.9,
+    "mg": 3778.8,
+    "fe": 1320.55,
+    "zn": 469.55,
+    "mn": 35687.45,
+    "ca": 43077.2,
+    "phos": 3505.08,
+    "iodine": 23683.11,
+    "chloride": 36956.38,
+    "se": 3454.09
    },
    {
     "key": "choline_premix",
@@ -7965,7 +8818,7 @@ window.STDWATCH_DATA = {
     "p": 0.0,
     "f": 0.0,
     "c": 0.0,
-    "choline": 149060
+    "choline": 259047.73
    },
    {
     "key": "inositol_premix",
@@ -7974,7 +8827,7 @@ window.STDWATCH_DATA = {
     "p": 0.0,
     "f": 0.0,
     "c": 0.0,
-    "inositol": 191501
+    "inositol": 236026.47
    },
    {
     "key": "dha_oil",
@@ -8142,14 +8995,14 @@ window.STDWATCH_DATA = {
   "advice": {
    "protein": {
     "over": "蛋白质偏高：下调乳清蛋白粉/酪蛋白粉，或降低乳粉比例并用乳脂补脂肪。",
-    "under": "蛋白质不足：上调乳粉/乳清蛋白粉。乳基还要满足「乳清蛋白 ≥60%」。"
+    "under": "蛋白质不足：上调乳粉/乳清蛋白粉。乳基 1 段还要满足「乳清蛋白 ≥60%」。"
    },
    "fat": {
     "over": "脂肪偏高：下调乳脂/植物油，注意亚油酸与α-亚麻酸比例不能破限。",
     "under": "脂肪不足：增加乳脂或植物油。"
    },
    "carb": {
-    "over": "碳水偏高：下调葡萄糖浆/麦芽糊精。乳基还要保证乳糖占碳水 ≥90%（1段）。",
+    "over": "碳水偏高：下调葡萄糖浆/麦芽糊精。乳基 1/2 段要保证乳糖占碳水 ≥90%。",
     "under": "碳水不足：增加葡萄糖聚合物/乳糖。"
    },
    "la": {
@@ -8176,6 +9029,42 @@ window.STDWATCH_DATA = {
     "over": "钠偏高：检查矿物质预混料钠含量与乳粉批次。",
     "under": "钠偏低：通常无需干预，确认计算无误即可。"
    },
+   "k": {
+    "over": "钾偏高：下调矿物质预混料钾源。",
+    "under": "钾偏低：上调矿物质预混料钾源。"
+   },
+   "cu": {
+    "over": "铜偏高：下调矿物质预混料铜源。",
+    "under": "铜偏低：上调矿物质预混料铜源。"
+   },
+   "mg": {
+    "over": "镁偏高：下调矿物质预混料镁源。",
+    "under": "镁偏低：上调矿物质预混料镁源。"
+   },
+   "fe": {
+    "over": "铁偏高：下调矿物质预混料铁源；豆基下限高于乳基。",
+    "under": "铁偏低：上调矿物质预混料铁源。"
+   },
+   "zn": {
+    "over": "锌偏高：下调矿物质预混料锌源。",
+    "under": "锌偏低：上调矿物质预混料锌源。"
+   },
+   "mn": {
+    "over": "锰偏高：下调矿物质预混料锰源。",
+    "under": "锰偏低：上调矿物质预混料锰源。"
+   },
+   "iodine": {
+    "over": "碘偏高：下调矿物质预混料碘源。",
+    "under": "碘偏低：上调矿物质预混料碘源。"
+   },
+   "chloride": {
+    "over": "氯偏高：检查乳原料与预混料的氯化物。",
+    "under": "氯偏低：上调氯化物来源。"
+   },
+   "selenium": {
+    "over": "硒偏高：下调矿物质预混料硒源。",
+    "under": "硒偏低：上调矿物质预混料硒源。"
+   },
    "va": {
     "over": "维生素A偏高：下调维生素预混料用量。",
     "under": "维生素A偏低：上调维生素预混料用量；注意与维E配伍。"
@@ -8188,9 +9077,25 @@ window.STDWATCH_DATA = {
     "over": "维生素E偏高：减少抗氧化物添加量。",
     "under": "维生素E偏低：增加抗氧化物/上调维生素预混料。"
    },
-   "vc": {
-    "over": "维生素C偏高：下调维生素预混料用量；注意高剂量对风味的影响。",
-    "under": "维生素C偏低：上调维生素预混料用量。"
+   "vk1": {
+    "over": "维生素K1偏高：下调维生素预混料用量。",
+    "under": "维生素K1偏低：上调维生素预混料用量。"
+   },
+   "vb1": {
+    "over": "维生素B1偏高：下调维生素预混料用量。",
+    "under": "维生素B1偏低：上调维生素预混料用量。"
+   },
+   "vb2": {
+    "over": "维生素B2偏高：下调维生素预混料用量。",
+    "under": "维生素B2偏低：上调维生素预混料用量。"
+   },
+   "vb6": {
+    "over": "维生素B6偏高：下调维生素预混料用量。",
+    "under": "维生素B6偏低：上调维生素预混料用量。"
+   },
+   "vb12": {
+    "over": "维生素B12偏高：下调维生素预混料用量。",
+    "under": "维生素B12偏低：上调维生素预混料用量。"
    },
    "niacin": {
     "over": "烟酸偏高：下调维生素预混料用量。",
@@ -8200,32 +9105,44 @@ window.STDWATCH_DATA = {
     "over": "叶酸偏高：下调维生素预混料用量。",
     "under": "叶酸偏低：上调维生素预混料用量。"
    },
+   "pantothenic": {
+    "over": "泛酸偏高：下调维生素预混料用量。",
+    "under": "泛酸偏低：上调维生素预混料用量。"
+   },
+   "vc": {
+    "over": "维生素C偏高：下调维生素预混料用量；注意高剂量对风味的影响。",
+    "under": "维生素C偏低：上调维生素预混料用量。"
+   },
    "biotin": {
     "over": "生物素偏高：下调维生素预混料用量。",
     "under": "生物素偏低：上调维生素预混料用量。"
    },
    "choline": {
     "over": "胆碱偏高：下调胆碱预混料用量。",
-    "under": "胆碱偏低：上调胆碱预混料用量（1段起为必需成分）。"
-   },
-   "dha": {
-    "over": "DHA偏高：下调DHA藻油添加量（按油的实际纯度折算）。",
-    "under": "DHA偏低：上调DHA藻油（0.4g/100g藻油按40%纯度折算）。注意：加了 DHA 必须同时加等量 ARA，EPA 不得超过 DHA。"
-   },
-   "ara": {
-    "over": "ARA偏高：下调ARA油添加量。",
-    "under": "ARA偏低：上调ARA油（0.4g/100g油按40%纯度折算）。"
-   },
-   "taurine": {
-    "over": "牛磺酸偏高：下调牛磺酸添加量。",
-    "under": "牛磺酸偏低：上调牛磺酸添加量。"
+    "under": "胆碱偏低：上调胆碱预混料用量（1/2 段为必需成分，3 段为可选成分）。"
    },
    "inositol": {
     "over": "肌醇偏高：下调肌醇预混料用量。",
     "under": "肌醇偏低：上调肌醇预混料用量。"
    },
+   "taurine": {
+    "over": "牛磺酸偏高：下调牛磺酸添加量。",
+    "under": "牛磺酸偏低：上调牛磺酸添加量。"
+   },
+   "carnitine": {
+    "over": "左旋肉碱偏高：下调预混料中的左旋肉碱。",
+    "under": "左旋肉碱偏低：上调预混料中的左旋肉碱。"
+   },
+   "dha": {
+    "over": "DHA偏高：下调DHA藻油添加量（按油的实际纯度折算）。1/2 段下限 3.6 mg/100kJ。",
+    "under": "DHA偏低：上调DHA藻油。注意：加了 DHA 必须同时加等量 ARA，EPA 不得超过 DHA。"
+   },
+   "ara": {
+    "over": "ARA偏高：下调ARA油添加量。",
+    "under": "ARA偏低：上调ARA油（DHA 与 ARA 需同量级）。"
+   },
    "ca_ratio": {
-    "over": "钙磷比越界：优先调磷（幅度更可控），再调钙，比例须落在 1:1~2:1。",
+    "over": "钙磷比越界：优先调磷（幅度更可控），再调钙。1 段 1:1~2:1，2/3 段 1.2:1~2:1。",
     "under": "钙磷比越界：优先调磷，再调钙。"
    },
    "energy": {
@@ -8233,7 +9150,7 @@ window.STDWATCH_DATA = {
     "under": "能量偏低：增加乳粉或油脂。"
    }
   },
-  "note": "限值取自 GB 10765/10766/10767-2021 原文（每 100 kJ 基准）。标记「待核对」的项请与标准正文再核一次。能量按粉剂每 100g 给，即食状态能量要按冲调倍数折算。"
+  "note": "限值逐表取自 GB 10765-2021 / GB 10766-2021 / GB 10767-2021 原文（除能量外均为每 100 kJ）；1/2 段胆碱、锰、硒为必需成分，3 段归入可选择成分；豆基在蛋白质、铁、锌、磷上与乳基不同。能量按粉剂每 100g 计算，标准给的即食状态能量需按冲调倍数折算。原料成分表是行业典型参考值（演示用），请用供应商 CoA 实测值覆盖。"
  }
 ],
 
