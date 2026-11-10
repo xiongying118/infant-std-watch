@@ -1645,6 +1645,17 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
   background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:11.5px}
 .gbc-trust.ok{background:#dcfce7;border-color:#bbf7d0;color:#15803d}
 .gbc-flag.wait{background:#fef3c7;color:#b45309;border-color:#fde68a}
+/* 真实工作台是空表：输入框不能再是透明边框，否则用户看不出哪里能填。
+   只作用于研发视图，质量管理工具的既有外观不动。 */
+#v-rdtools .qwt-tbl input[type=text],
+#v-rdtools .qwt-tbl input[type=number],
+#v-rdtools .qwt-tbl input[type=date],
+#v-rdtools .qwt-tbl select{
+  border-color:#dbe3ee;background:#fff
+}
+#v-rdtools .qwt-tbl input:hover,
+#v-rdtools .qwt-tbl select:hover{border-color:#93c5fd}
+#v-rdtools .qwt-tbl input::placeholder{color:#94a3b8}
 
 </style>
 </head>
