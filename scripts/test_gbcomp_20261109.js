@@ -62,8 +62,9 @@ const limCell = async (p, nk, col) => (await p.textContent(
   await openTool(p);
   ck(await p.locator('#gbCalc .gbc-head').count() === 1, '营养素配比计算工具能打开');
   ck((await p.locator('#gbCalc .gbc-srcbar').count()) === 1, '有「计算值怎么来的」说明条');
-  ck((await p.locator('#gbCalc .gbc-srcbar').innerText()).includes('行业典型参考值'),
-     '说明条写明内置值是演示/参考值，不是实测值');
+  const srcBar = await p.locator('#gbCalc .gbc-srcbar').innerText();
+  ck(srcBar.includes('非实测') && srcBar.includes('不可用于配方注册'),
+     '说明条写明内置参考基线非实测、不可用于申报');
   ck(await p.locator('#gbCalc .gbc-row').count() >= 8, '默认配方原料行都在');
   ck(await p.locator('#gbCalc .gbc-row .cmp').count() >= 8, '每味原料都有「成分」入口');
   ck(await p.locator('#gbCalc .gbc-row .gbc-flag').count() >= 8, '每味原料都标了数据来源');
@@ -132,7 +133,7 @@ const limCell = async (p, nk, col) => (await p.textContent(
 
   console.log('=== 恢复内置参考值 ===');
   await p.click('#gbCalc .gbc-ctl .btn:has-text("原料成分录入")');
-  await p.click('#gbCalc .gbc-comp-f .btn:has-text("恢复内置参考值")');
+  await p.click('#gbCalc .gbc-comp-f .btn:has-text("恢复内置")');
   const protein3 = await val(p, 2);
   ck(protein3 === protein0, '恢复内置值后计算值回到初始（' + protein3 + '）');
 

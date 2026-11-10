@@ -53,6 +53,17 @@ function QW_persist(){
     }catch(e){ /* 循环引用等，忽略 */ }
   }, 400);
 }
+/* ★ 防抖 400ms 有个真坑：用户填完立刻关标签页，最后一次输入还没落盘。
+   关页 / 切后台时强制 flush 一次，保证「录了就不会丢」。 */
+function QW_flush(){
+  clearTimeout(_qwSaveTimer);
+  if(typeof Store === "undefined" || !Store.qw) return;
+  try{ Store.qw.set("all", JSON.parse(JSON.stringify(_QWD_MEM))); }catch(e){}
+}
+if(typeof window !== "undefined"){
+  window.addEventListener("pagehide", QW_flush);
+  window.addEventListener("beforeunload", QW_flush);
+}
 /* 从存储恢复（页面启动时调一次） */
 function QW_restore(){
   if(typeof Store === "undefined" || !Store.qw) return;
@@ -81,12 +92,44 @@ document.addEventListener("change", function(e){
 /* ------------------------------------------------------------
    通用表格
    ------------------------------------------------------------ */
+/* ★ 结果自动判定（2026-11-10）★
+   以前「状态 / 是否在区间」是下拉手选 —— 填了到期日还要自己选「已过期」，
+   那是假的。现在按行内真实数据算，结果列只读，不给手改。 */
+function QW_autoVal(r, a){
+  if(!a) return "";
+  if(a.rule === "expiry"){
+    const d = String(r[a.date]==null?"":r[a.date]).trim();
+    const L = a.labels || {};
+    if(!d) return L.pending || "待录入";
+    const t = new Date(d + (d.length<=10 ? "T00:00:00" : ""));
+    if(isNaN(t.getTime())) return L.pending || "待录入";
+    const today = new Date(); today.setHours(0,0,0,0);
+    const days = Math.ceil((t - today) / 86400000);
+    if(days < 0) return L.expired || "已过期";
+    if(days <= (a.warnDays||90)) return L.warn || "临近到期";
+    return L.ok || "有效";
+  }
+  if(a.rule === "inRange"){
+    const lo = parseFloat(r[a.lo]), hi = parseFloat(r[a.hi]), v = parseFloat(r[a.val]);
+    if(isNaN(lo) || isNaN(hi) || isNaN(v)) return "待录入";
+    if(v < lo) return "低于区间";
+    if(v > hi) return "高于区间";
+    return "在区间内";
+  }
+  return "待录入";
+}
+function QW_applyAuto(st, cfg){
+  const a = cfg.auto;
+  if(!a || !Array.isArray(st.rows)) return;
+  st.rows.forEach(function(r){ r[a.col] = QW_autoVal(r, a); });
+}
 function QW_table(key, cfg){
   const st = QWD[key] || (QWD[key] = {
     rows: (cfg.seed||[]).map(r=>Object.assign({}, r))
   });
   const cols = cfg.cols || [];
   const computed = cfg.computed || {};
+  QW_applyAuto(st, cfg);
 
   // 计算列（公式）
   if(computed.rpn){
@@ -156,8 +199,18 @@ function QW_table(key, cfg){
         <td class="idx">${i+1}</td>
         ${cols.map(c=>{
           const v = r[c.key];
+          /* 自动判定列：只读，显示由本行其它字段算出来的结果 */
+          if(cfg.auto && c.key === cfg.auto.col){
+            const av = QW_autoVal(r, cfg.auto);
+            const cls = /过期|高于|低于|超限/.test(av) ? "bad"
+                      : /临近|待录入/.test(av) ? "warn" : "ok";
+            return `<td class="cmp ${cls}"><b>${escHtml(av)}</b><i>自动判定</i></td>`;
+          }
           if(c.type==="select"){
+            /* 人工判定列默认「待判定」，不再预置一个像真的一样的结论 */
+            const isResult = (jd.col === c.key);
             return `<td><select onchange="QW_set('${key}',${i},'${c.key}',this.value)">
+              ${isResult?`<option value="" ${String(v||"")===""?"selected":""}>待判定</option>`:""}
               ${(c.opts||[]).map(o=>`<option ${o===v?"selected":""}>${escHtml(o)}</option>`).join("")}
             </select></td>`;
           }
@@ -180,6 +233,9 @@ function QW_table(key, cfg){
         }).join("")}
         <td><button class="x" onclick="QW_delRow('${key}',${i})" title="删除">×</button></td>
       </tr>`).join("")}
+      ${st.rows.length ? "" : `<tr class="qwt-empty"><td colspan="${cols.length+2}">
+        <b>还没有记录</b> · 点上方「+ ${escHtml(cfg.addLabel||"加一行")}」开始录入，
+        或用「导入数据」把现有台账粘贴进来。本表不会自动填入任何示例数据。</td></tr>`}
       </tbody>
     </table>
     </div>
@@ -193,14 +249,21 @@ function clampN(v,lo,hi){
 function QW_set(key,i,col,v){
   const st = QWD[key]; if(!st) return;
   st.rows[i][col] = v;
+  QW_applyAuto(st, QW_CFG[key] || {});
   QW_render(key);
 }
 function QW_addRow(key){
   const st = QWD[key]; if(!st) return;
-  const tpl = st.rows[0] || {};
+  const cfg = QW_CFG[key] || {};
   const row = {};
-  Object.keys(tpl).forEach(k=>{ row[k] = (typeof tpl[k]==="number") ? 0 : ""; });
+  /* 空表加行必须按列定义生成完整字段；以前 st.rows[0] 为空时生成 {}，
+     依赖演示数据才碰巧能用 —— 现在没有演示数据了，这里必须自给自足。 */
+  (cfg.cols||[]).forEach(c=>{ row[c.key] = ""; });
+  Object.keys(st.rows[0]||{}).forEach(k=>{ if(!(k in row)) row[k] = ""; });
+  /* 层别分析按 dim 分组，新行不落在当前维度上就会「加了看不见」 */
+  if(st.dim && ("dim" in row)) row.dim = st.dim;
   st.rows.push(row);
+  QW_applyAuto(st, cfg);
   QW_render(key);
 }
 /* ★ 删除行 → 二次确认（2026-11-03）★ */
@@ -1384,7 +1447,9 @@ function QW_flow(key, cfg){
   </div>`;
 }
 function QW_flowStep(key,i){ QWD[key].step = i; QW_render(key); }
-function QW_flowSet(key,k,v){ QWD[key].vals[k] = v; }
+/* ★ 只写数据不重绘 = 界面是死的，用户以为没生效。
+   focus.js 会在重绘后恢复焦点与光标位置，可以放心重绘。 */
+function QW_flowSet(key,k,v){ QWD[key].vals[k] = v; QW_render(key); }
 /* 流程导出：把所有环节的字段值摊平成一张表 */
 function QW_flowExport(key){
   const st = QWD[key]; if(!st) return;
@@ -1404,6 +1469,43 @@ function QW_flowExport(key){
 /* ------------------------------------------------------------
    原料替代测算
    ------------------------------------------------------------ */
+/* ★ 原料替代：以前「现状原料 / 候选原料」的名称、供应商、单价、成分全是
+   写死的展示文字，用户只能改「当前用量」和「替代比例」两个数字 ——
+   这是最典型的假工具。现在整张原料表都可以录，数据来自用户自己的
+   报价单与供应商 CoA。 */
+const QW_SUB_FIELDS = [
+  {k:"name",  t:"原料名称",   w:"16%", type:"text"},
+  {k:"sup",   t:"供应商",     w:"12%", type:"text"},
+  {k:"price", t:"单价 元/kg", w:"10%", type:"number"},
+  {k:"p",     t:"蛋白 g/100g",w:"10%", type:"number"},
+  {k:"f",     t:"脂肪 g/100g",w:"10%", type:"number"},
+  {k:"c",     t:"碳水 g/100g",w:"10%", type:"number"},
+  {k:"ca",    t:"钙 mg/100g", w:"10%", type:"number"},
+  {k:"phos",  t:"磷 mg/100g", w:"10%", type:"number"},
+];
+function QW_subEditRow(key, path, r, tag){
+  const isCur = tag === "现状";
+  return `<tr class="${isCur?"cur":""}">
+    <td><span class="vd ${isCur?"ok":""}">${tag}</span></td>
+    ${QW_SUB_FIELDS.map(f=>`<td><input type="${f.type}" ${f.type==="number"?'step="any" min="0"':""}
+      value="${escHtml(r[f.k]==null?"":r[f.k])}"
+      oninput="QW_subSet('${key}','${path}.${f.k}',this.value)"></td>`).join("")}
+    <td>${isCur?"":`<button class="x" title="删除这个候选"
+      onclick="QW_subDelCand('${key}',${path.split(".")[1]})">×</button>`}</td>
+  </tr>`;
+}
+function QW_subAddCand(key){
+  const st = QWD[key]; if(!st) return;
+  if(!Array.isArray(st.cand)) st.cand = [];
+  const row = {}; QW_SUB_FIELDS.forEach(f=>{ row[f.k] = ""; });
+  st.cand.push(row); QW_render(key);
+}
+function QW_subDelCand(key,i){
+  const st = QWD[key]; if(!st || !st.cand || !st.cand[i]) return;
+  const doIt = function(){ st.cand.splice(i,1); QW_render(key); };
+  if(window.Guard && Guard.ask) Guard.ask("确定删除这个候选原料？", {onOk:doIt});
+  else doIt();
+}
 function QW_sub(key, cfg){
   const st = QWD[key] || (QWD[key] = JSON.parse(JSON.stringify(cfg.seed||{})));
   const cur = st.current, amt = parseFloat(st.useAmount)||0;
@@ -1442,7 +1544,25 @@ function QW_sub(key, cfg){
     ${window.QWGuide?window.QWGuide.box("sub", cfg):""}
     <div class="qwt-h"><b>${escHtml(cfg.title||"替代测算")}</b>
       <div class="sp"></div>
-      <span class="muted">现状：${escHtml(cur.name)}（${escHtml(cur.sup)}）</span></div>
+      <span class="muted">现状：${escHtml(cur.name||"未填写")}${cur.sup?"（"+escHtml(cur.sup)+"）":""}</span></div>
+    <div class="qwsub-edit">
+      <div class="qwsub-h"><b>原料数据（全部可编辑）</b>
+        <span class="muted">单价与成分填你自己的报价单 / 供应商 CoA，留空按 0 计</span>
+        <div class="sp"></div>
+        <button class="btn sm pri" onclick="QW_subAddCand('${key}')">+ 加一个候选原料</button>
+      </div>
+      <div class="qwt-wrap"><table class="qwt-tbl">
+        <thead><tr><th style="width:60px">角色</th>
+          ${QW_SUB_FIELDS.map(f=>`<th style="width:${f.w}">${f.t}</th>`).join("")}
+          <th style="width:34px"></th></tr></thead>
+        <tbody>
+          ${QW_subEditRow(key,"current",cur,"现状")}
+          ${(st.cand||[]).map((c,i)=>QW_subEditRow(key,"cand."+i,c,"候选"+(i+1))).join("")}
+        </tbody>
+      </table></div>
+      ${(st.cand||[]).length ? "" : `<div class="qwflag">还没有候选原料 ——
+        点「+ 加一个候选原料」填完上表，下面就会按你的数据算出营养与成本差异。</div>`}
+    </div>
     <div class="qwinput">
       <div class="qwflow-f"><div class="qwflow-k">当前用量</div>
         <div><input type="number" value="${amt}" oninput="QW_subSet('${key}','useAmount',this.value)">
@@ -1476,6 +1596,8 @@ function QW_sub(key, cfg){
           <td><span class="vd ${bad?"warn":"ok"}">${bad?"需验证":"可替代"}</span></td>
         </tr>`;
       }).join("")}
+      ${rows.length ? "" : `<tr class="qwt-empty"><td colspan="10">
+        还没有可测算的候选原料，先在上方录入候选原料的成分与单价。</td></tr>`}
       </tbody>
     </table>
     </div>
@@ -1485,9 +1607,15 @@ function QW_sub(key, cfg){
     ${window.QWForm?window.QWForm.box({title:"原料替代测算的计算公式与术语",formulas:subFormulas,terms:["sub.delta","sub.deltaPct","sub.per100kg","sub.stability"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
-function QW_subSet(key,col,v){
+function QW_subSet(key,path,v){
   const st=QWD[key]; if(!st) return;
-  st[col] = (col==="useAmount"||col==="replacePct") ? (parseFloat(v)||0) : v;
+  if(path==="useAmount"||path==="replacePct"){
+    st[path] = parseFloat(v)||0;
+  }else{
+    const b = String(path).split(".");
+    if(b[0]==="current" && st.current) st.current[b[1]] = v;
+    else if(b[0]==="cand" && st.cand && st.cand[+b[1]]) st.cand[+b[1]][b[2]] = v;
+  }
   QW_render(key);
 }
 
@@ -1888,7 +2016,7 @@ function QW_snExport(key){
   });
   QWIO.downloadCsv((cfg.title||"感官评价")+"_"+QWIO.today()+".csv", out);
 }
-function QW_snSet(key,si,col,v){ QWD[key].samples[si][col]=v; }
+function QW_snSet(key,si,col,v){ QWD[key].samples[si][col]=v; QW_render(key); }
 function QW_snScore(key,si,di,v){ QWD[key].samples[si].scores[di]=parseFloat(v)||0; QW_render(key); }
 
 /* ------------------------------------------------------------
@@ -1905,7 +2033,129 @@ function gbCalcWidget(key, cfg){
    渲染分发
    ------------------------------------------------------------ */
 const QW_CFG = {};
-function QW_register(key, cfg){ QW_CFG[key] = cfg; }
+
+/* ================================================================
+   真实工作台（2026-11-10 用户要求）
+   「我要的是全部能真实使用、能编辑的，而不是给我假的虚假演示」
+   · 工具不再预置任何编造的证号 / 供应商 / 批号 / 打分
+   · 用户浏览器里已落盘的旧演示数据要被识别并清掉，
+     但用户自己改过的行必须留下 —— 不能一刀切清空
+   · 每个工具都能备份 / 恢复 / 清空，数据带得走
+   ================================================================ */
+function QW_migrateDemo(key, cfg){
+  const demo = cfg.demoSeed, st = _QWD_MEM[key];
+  if(demo == null || !st) return;
+  const same = (a,b)=>{ try{ return JSON.stringify(a)===JSON.stringify(b); }
+                        catch(e){ return false; } };
+  let changed = false;
+  if(Array.isArray(demo)){
+    ["rows","samples","data"].forEach(function(f){
+      if(!Array.isArray(st[f])) return;
+      const n = st[f].length;
+      st[f] = st[f].filter(r=>!demo.some(d=>same(r,d)));
+      if(st[f].length !== n) changed = true;
+    });
+  }else if(typeof demo === "object"){
+    if(same(st, demo)){ delete _QWD_MEM[key]; changed = true; }
+  }
+  if(changed) QW_persist();
+}
+function QW_register(key, cfg){
+  QW_CFG[key] = cfg;
+  if(cfg && cfg.real) QW_migrateDemo(key, cfg);
+}
+
+/* 已录入的记录数（空表显示 0，让用户一眼看到这是自己的数据） */
+function QW_countRecords(key){
+  const st = _QWD_MEM[key];
+  if(!st) return 0;
+  if(Array.isArray(st)) return st.length;
+  if(Array.isArray(st.rows))
+    return st.rows.filter(r=>Object.keys(r).some(k=>String(r[k]==null?"":r[k]).trim()!=="")).length;
+  if(Array.isArray(st.samples)) return st.samples.length;
+  if(Array.isArray(st.data)) return st.data.length;
+  if(st.vals) return Object.keys(st.vals).filter(k=>String(st.vals[k]==null?"":st.vals[k]).trim()!=="").length;
+  return 0;
+}
+/* ★ 操作反馈一律走内联状态条 ★
+   本项目 toast() 是带 #dlgMask 的模态框，会整页挡死，绝不能用于保存反馈。 */
+const _QW_MSG = {};
+function QW_realBar(key, cfg){
+  const n = QW_countRecords(key);
+  const msg = _QW_MSG[key] || "";
+  return `<div class="qwreal">
+    <span class="qwreal-dot"></span>
+    <div class="qwreal-t"><b>真实工作台</b> · 不含任何预置数据，所有字段由你录入，
+      改动<b>自动保存在本机浏览器</b>（不会上传）。当前 <b>${n}</b> 条记录。
+      ${msg?`<div class="qwreal-msg">${escHtml(msg)}</div>`:""}</div>
+    <div class="sp"></div>
+    <div class="qwreal-btns">
+      <button class="btn sm" onclick="QW_exportTool('${key}')" title="导出本工具已录入的数据">⬇ 备份数据</button>
+      <button class="btn sm" onclick="QW_importTool('${key}')" title="从备份文件恢复本工具数据">⬆ 恢复</button>
+      <button class="btn sm" onclick="QW_resetTool('${key}')" title="清空本工具全部录入">清空</button>
+    </div>
+  </div>`;
+}
+/* 整页备份用：按 key 摘取工作台数据，不把质量管理工具的数据混进来 */
+function QW_snapshot(keys){
+  const out = {};
+  (keys || Object.keys(_QWD_MEM)).forEach(function(k){
+    if(k in _QWD_MEM) out[k] = _QWD_MEM[k];
+  });
+  return out;
+}
+function QW_restoreSnapshot(obj, keys){
+  Object.keys(obj || {}).forEach(function(k){
+    if(keys && keys.indexOf(k) < 0) return;
+    _QWD_MEM[k] = obj[k];
+  });
+  QW_persist();
+}
+function QW_downloadText(name, txt){
+  try{
+    const blob = new Blob(["\ufeff"+txt], {type:"text/plain;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); if(a.parentNode) a.parentNode.removeChild(a); }, 1000);
+  }catch(e){ if(typeof toast==="function") toast("导出失败："+e.message); }
+}
+function QW_exportTool(key){
+  const n = QW_countRecords(key);
+  const payload = {tool:key, exportedAt:new Date().toISOString(),
+                   data:_QWD_MEM[key]||null};
+  QW_downloadText("研发工具_"+key+"_"+new Date().toISOString().slice(0,10)+".json",
+                  JSON.stringify(payload, null, 2));
+  _QW_MSG[key] = "✓ 已备份 "+n+" 条记录到本地文件";
+  QW_render(key);
+}
+function QW_importTool(key){
+  if(!window.QWIO || !QWIO.pickFile){ return; }
+  QWIO.pickFile(function(txt){
+    let obj;
+    try{ obj = JSON.parse(String(txt).replace(/^\ufeff/, "")); }
+    catch(e){ _QW_MSG[key] = "✗ 不是有效的备份文件（需要 JSON）"; QW_render(key); return; }
+    if(!obj || obj.tool !== key || !("data" in obj)){
+      _QW_MSG[key] = "✗ 这份备份不是「"+key+"」的数据"; QW_render(key); return;
+    }
+    if(obj.data == null) delete _QWD_MEM[key];
+    else _QWD_MEM[key] = obj.data;
+    QW_persist();
+    _QW_MSG[key] = "✓ 已恢复 "+QW_countRecords(key)+" 条记录";
+    QW_render(key);
+  });
+}
+function QW_resetTool(key){
+  const ask = window.Guard && Guard.ask;
+  const doIt = function(){
+    delete _QWD_MEM[key];
+    _QW_MSG[key] = "✓ 已清空，本工具回到空白状态";
+    QW_persist(); QW_render(key);
+  };
+  if(ask) Guard.ask("确定清空这个工具里录入的<b>全部数据</b>？"
+      +"<br><span class='muted'>不可撤销，建议先点「备份数据」。</span>", {onOk:doIt});
+  else doIt();
+}
 
 function QW_render(key, host){
   const cfg = QW_CFG[key];
@@ -1930,6 +2180,8 @@ function QW_render(key, host){
   host.innerHTML = fn(key, cfg);
   /* 插入 DOM 之后再渲染计算型工具（它要往自己的容器里写） */
   if(cfg.type === "calc") gbRender();
+  /* 真实工作台状态条：放在最上面，明确「无预置数据 + 本机保存 + 可备份」 */
+  if(cfg.real) host.insertAdjacentHTML("afterbegin", QW_realBar(key, cfg));
   /* ★ 通用表格 / 清单类工具的「怎么用」引导 ★
      这两类是通用组件，没在各自的渲染函数里写引导（9 个 table 工具 + 1 个 checklist），
      统一在这里按 toolKey 补上。 */

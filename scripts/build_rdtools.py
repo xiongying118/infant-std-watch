@@ -356,6 +356,66 @@ M = [
 CAT_META = {g: {"icon": i, "hint": h} for g, i, h in GROUPS}
 
 
+# ============================================================
+# ★ 真实工作台（2026-11-10 用户要求）★
+#   「我要的是全部能真实使用、能编辑的，而不是给我假的虚假演示」
+#   → 源头就不许再带编造的业务数据：注册证号、供应商名、检测报告号、
+#     批号、打分、样品名……一律清空，工具打开是空白表，由用户自己录。
+#   保留字段名与结构（组件靠它生成输入控件），只清「值」。
+#   另存 demoRows 指纹：用户浏览器里已经落盘的旧演示数据要能被识别并清掉，
+#   但用户自己改过的行必须留下 —— 不能一刀切清空。
+# ============================================================
+AUTO_RULES = {
+    # 有效期自动判状态：填了到期日就自己算，不让人手选「已过期」
+    "reg_law": {"col": "res", "rule": "expiry", "date": "exp", "warnDays": 180},
+    # 原辅料检验报告：原本只有一个「有效/临期/过期」下拉，没有任何日期依据，
+    # 等于让人凭空选结论 → 补一个「报告到期日」列，按日期自动判
+    "raw_material_basis": {"col": "res", "rule": "expiry", "date": "due",
+                           "warnDays": 90,
+                           "labels": {"expired": "过期", "warn": "临期", "ok": "有效"}},
+    # 参照区间自动判：本配方实测 vs 下限/上限
+    "human_milk_research": {"col": "res", "rule": "inRange",
+                            "lo": "lo", "hi": "hi", "val": "ours"},
+}
+
+def blankify(v, field=""):
+    """清掉演示值，保留结构。数组类台账默认 0 行（用户自己加），
+    感官评分保留维度个数但清空分数。"""
+    if isinstance(v, dict):
+        return {k: blankify(x, k) for k, x in v.items()}
+    if isinstance(v, list):
+        if field == "scores":
+            return ["" for _ in v]
+        return []
+    if isinstance(v, bool):
+        return v
+    return ""          # 字符串（证号/供应商/批号）与数字一律清空
+
+
+def real_widget(key, w):
+    """把一个演示 widget 转成真实工作台配置。"""
+    out = dict(w)
+    demo = out.get("seed")
+    out["real"] = True
+    out["blank"] = True
+    # 指纹只存原演示数据，供前端一次性迁移；不参与渲染
+    if demo is not None:
+        out["demoSeed"] = demo
+    out["seed"] = blankify(demo) if demo is not None else demo
+    if key in AUTO_RULES:
+        out["auto"] = AUTO_RULES[key]
+        # 自动判定需要日期列，而原表只有「结论」下拉 —— 补上真实依据字段
+        if key == "raw_material_basis":
+            cols = list(out.get("cols") or [])
+            if not any(c.get("key") == "due" for c in cols):
+                at = next((i for i, c in enumerate(cols) if c.get("key") == "sup"),
+                          max(len(cols) - 1, 0))
+                cols.insert(at, {"key": "due", "label": "报告到期日",
+                                 "type": "date", "w": "13%"})
+            out["cols"] = cols
+    return out
+
+
 def main() -> int:
     keys = [m["moduleKey"] for m in M]
     assert len(keys) == len(set(keys)), "moduleKey 有重复：%s" % [
@@ -394,21 +454,29 @@ def main() -> int:
         for law in laws:
             assert law in flat, "%s 缺法规口径 %s" % (k, law)
 
-    # ★ 合并可交互组件定义 ★
+    # ★ 合并可交互组件定义（去演示化）★
     miss = []
     for m_ in M:
         w = RW.get(m_["moduleKey"])
         if not w:
             miss.append(m_["moduleKey"]); continue
-        m_["widget"] = w
+        m_["widget"] = real_widget(m_["moduleKey"], w)
     assert not miss, "这些模块还没有 widget：%s" % miss
-    print("  18 个模块全部挂上可交互组件")
+    # 出厂自检：不许再有编造的业务数据混进交付文件
+    _BAD = ("供应商", "国食注字", "WB-2603", "金装", "竞品", "P-2605", "标样")
+    for m_ in M:
+        dump = json.dumps(m_["widget"].get("seed"), ensure_ascii=False)
+        for bad in _BAD:
+            assert bad not in dump, "%s 的空白工作台里残留演示值 %s" % (
+                m_["moduleKey"], bad)
+    print("  18 个模块全部挂上可交互组件（空白真实工作台，无预置业务数据）")
 
     out = {"groups": [g for g, _, _ in GROUPS], "catMeta": CAT_META, "modules": M}
     js = json.dumps([out], ensure_ascii=False, indent=1)
 
     p = os.path.join(DATA, "_rdtools.txt")
-    io.open(p, "w", encoding="utf-8").write(js)
+    # ★ 必须写 LF：Windows 默认 CRLF 混进远端 data.js 会被发布校验拦下
+    io.open(p, "w", encoding="utf-8", newline="\n").write(js)
     print("已写入 %s（%d 字节）" % (p, os.path.getsize(p)))
     print("  %d 个功能点· %d 个分组" % (len(M), len(GROUPS)))
     for g in gnames:

@@ -268,7 +268,7 @@
   function pickFile(cb) {
     var inp = document.createElement("input");
     inp.type = "file";
-    inp.accept = ".csv,.txt,.tsv,text/csv,text/plain";
+    inp.accept = ".csv,.txt,.tsv,.json,text/csv,text/plain,application/json";
     inp.style.display = "none";
     document.body.appendChild(inp);
     inp.addEventListener("change", function () {

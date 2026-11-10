@@ -967,3 +967,14 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
   .gbc-grp-t{padding:6px 8px}
   .gbc-tblwrap{max-height:420px}
 }
+
+/* ★ 移动端规则必须在 theme.css 最末尾（index.html 的 style 在 head，
+   theme.css 在 body 末尾才 link，会覆盖同特异性 @media） */
+@media(max-width:720px){
+  .qwreal-t{flex:1 1 100%}
+  .qwreal-btns{width:100%}
+  .rddatabar .sp,.rdedit-h .sp{flex:1 1 100%}
+  .rdform textarea{font-size:12px}
+  .qwsub-edit .qwt-wrap,.qwsub-edit+.qwinput{overflow-x:auto}
+  .qwsub-edit .qwt-tbl{min-width:640px}
+}

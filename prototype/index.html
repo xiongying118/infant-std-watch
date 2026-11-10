@@ -1598,6 +1598,54 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
   .side{transition:none}
 }
 
+/* ===== 真实工作台（2026-11-10）：无预置数据 / 全字段可编辑 / 可备份 ===== */
+.rddatabar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  padding:9px 13px;margin:10px 0 12px;border:1px solid var(--line);
+  border-radius:9px;background:var(--panel);font-size:12px;color:var(--ink2)}
+.rddatabar .sp{flex:1}
+.rddb-i{font-size:15px}
+.rddb-msg{color:#15803d;font-weight:600;font-size:11.5px}
+.rd-bar{display:flex;align-items:center;gap:8px;padding:8px 0 10px;
+  border-bottom:1px dashed var(--line2);margin-bottom:10px}
+.rd-bar .sp{flex:1}
+.rdtag{font-size:11px;padding:2px 8px;border-radius:10px;
+  background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
+.rdtag.gray{background:#f1f5f9;color:var(--ink3);border-color:var(--line)}
+.rdempty{padding:9px 11px;border:1px dashed var(--line);border-radius:6px;
+  color:var(--ink3);font-size:12px;line-height:1.7;background:var(--line2)}
+.rdformbox{background:var(--panel)}
+.rdedit-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.rdedit-h .sp{flex:1}
+.rdform{display:grid;gap:12px}
+.rdform label{display:block;font-size:12.5px;font-weight:600;color:var(--ink2)}
+.rdform textarea{display:block;width:100%;margin-top:5px;padding:8px 10px;
+  border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);
+  font:inherit;font-size:12.5px;line-height:1.7;resize:vertical;box-sizing:border-box}
+.rdform textarea:focus{outline:2px solid #bfdbfe;outline-offset:0}
+.qwreal{display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  padding:9px 12px;margin-bottom:10px;border:1px solid #bbf7d0;
+  border-radius:8px;background:#f0fdf4;font-size:11.8px;line-height:1.7;color:#166534}
+.qwreal-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;flex:0 0 8px}
+.qwreal-t{flex:1;min-width:220px}
+.qwreal-msg{color:#15803d;font-weight:700;margin-top:2px}
+.qwreal-btns{display:flex;gap:6px;flex-wrap:wrap}
+.qwt-empty td{padding:16px 12px!important;text-align:center;color:var(--ink3);
+  font-size:12px;line-height:1.8;background:var(--line2)}
+.qwsub-edit{margin:10px 0;padding:10px;border:1px solid var(--line);
+  border-radius:7px;background:#fff}
+.qwsub-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  margin-bottom:8px;font-size:12.5px}
+.qwsub-h .sp{flex:1}
+.qwsub-edit .qwt-tbl tr.cur td{background:#eff6ff}
+.qwt-tbl td.cmp.warn b,.qwt-tbl td.cmp.bad b{color:#b91c1c}
+.gbc-srcbar.warn{border-color:#fecaca;background:#fef2f2;color:#991b1b}
+.gbc-srcbar.ok{border-color:#bbf7d0;background:#f0fdf4;color:#166534}
+.gbc-srcbar.warn b{color:#b91c1c}
+.gbc-trust{display:block;margin-top:5px;padding:6px 9px;border-radius:5px;
+  background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:11.5px}
+.gbc-trust.ok{background:#dcfce7;border-color:#bbf7d0;color:#15803d}
+.gbc-flag.wait{background:#fef3c7;color:#b45309;border-color:#fde68a}
+
 </style>
 </head>
 <body>
@@ -1966,8 +2014,10 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
       <div class="notice">
         <span>🧬</span>
         <div>
-          <b>18 个研发动作，6 个环节。</b>按婴配粉（1/2/3 段）研发的实际流程排：
+          <b>18 个真实工作台，6 个环节。</b>按婴配粉（1/2/3 段）研发的实际流程排：
           立项看法规 → 配方设计 → 小试中试 → 稳定性 → 注册合规 → 变更收口。
+          <br><b>本页不含任何预置业务数据</b> —— 台账、配方、检测值、项目记录全部由你录入并编辑，
+          自动保存在本机浏览器；结论按你填的数据实时重算。
           <div style="margin-top:9px" id="rdGroupHint"></div>
           <div style="margin-top:8px;color:var(--ink3);font-size:12px">
             法规口径：<b>GB 10765</b>（1段）· <b>GB 10766</b>（2段）· <b>GB 10767</b>（3段）·
@@ -1975,6 +2025,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
           </div>
         </div>
       </div>
+      <div class="rddatabar" id="rdDataBar"></div>
       <div class="tabs" id="rdTabs"></div>
       <div id="rdList"></div>
       <div id="rdDetail"></div>
@@ -2619,6 +2670,10 @@ const _ov = gbDraftGet("gbMatOverrides");
 let gbOverrides = (_ov && typeof _ov === "object" && !Array.isArray(_ov)) ? _ov : {};
 const _cm = gbDraftGet("gbCustomMats");
 let gbCustomMats = Array.isArray(_cm) ? _cm : [];
+/* ★ 2026-11-10：不再让内置参考基线冒充实测数据出结论。
+   打开「从零录入」后，内置原料的所有成分一律按 0 计，
+   只有用户自己录入的 CoA 值才参与计算。状态落盘。 */
+let gbNoBaseline = !!gbDraftGet("gbNoBaseline");
 let gbCompOpen  = false;      // 成分面板展开
 let gbCompKey   = null;       // 正在编辑的原料 key
 let gbImportOpen = false;     // CSV 导入面板
@@ -2666,6 +2721,18 @@ function gbSaveMats(){
   if(typeof Store === "undefined" || !Store.draft) return;
   Store.draft.set("gbMatOverrides", gbOverrides);
   Store.draft.set("gbCustomMats", gbCustomMats);
+  Store.draft.set("gbNoBaseline", gbNoBaseline);
+}
+/* 从零录入 / 载入参考基线 —— 用户自己决定要不要那套非实测基线 */
+function gbClearBaseline(){
+  gbNoBaseline = true; gbCompDraft = {}; gbSaveMats();
+  gbSavedMsg = "✓ 已清空内置参考值：未录入的成分按 0 计，请逐味填供应商 CoA 实测范围";
+  gbSavedTs = Date.now(); gbRender();
+}
+function gbLoadBaseline(){
+  gbNoBaseline = false; gbCompDraft = {}; gbSaveMats();
+  gbSavedMsg = "✓ 已载入内置参考基线（非实测，仅供试算，不可用于申报）";
+  gbSavedTs = Date.now(); gbRender();
 }
 /* 参与计算的原料表 = 内置库 + 自定义原料，再叠加用户录入的区间值。
    ★ 每味原料统一带 comp：{mkey: {min, max}}，gbCompute 按两侧各算一遍。
@@ -2678,7 +2745,7 @@ function gbAllMaterials(){
     GB_COMP_KEYS.forEach(nk=>{
       const mk = GB_KEYMAP[nk];
       comp[mk] = {min:0, max:0};
-      const built = gbNormComp(m[mk]);
+      const built = gbNoBaseline ? null : gbNormComp(m[mk]);
       if(built) comp[mk] = {min:built.min, max:built.max};
     });
     const ov = gbOverrides[m.key];
@@ -2775,7 +2842,10 @@ function gbResetComp(){
   if(!gbCompKey) return;
   const before = gbResultSnapshot();
   delete gbOverrides[gbCompKey];
-  gbCompDraft = {}; gbSavedMsg = "✓ 已恢复该原料的内置参考值并重新计算"; gbSavedTs = Date.now();
+  gbCompDraft = {};
+  gbSavedMsg = gbNoBaseline ? "✓ 已清空该原料录入值，未录成分按 0 计"
+                            : "✓ 已恢复该原料的内置参考基线（非实测）并重新计算";
+  gbSavedTs = Date.now();
   try { gbSaveMats(); } catch(e) {}
   gbRender();
   gbFlashChanged(before);
@@ -3216,16 +3286,31 @@ function gbVerdictHtml(r){
   return `<span class="gbc-tag ok">全部达标</span>`;
 }
 
-/* 数据来源说明条：讲清「计算值 = 原料成分 × 用量」，并标出录了几味实测值 */
+/* 数据来源可信度条：明确哪些是实测、哪些只是内置基线，不让参考值冒充实测结论 */
 function gbSrcBarHtml(){
-  return `<div class="gbc-srcbar">
+  const used = Array.from(new Set((gbState.recipe||[]).map(r=>r.key)));
+  const unmeasured = used.filter(k=>!gbIsMine(k)).length;
+  const mine = gbMatCountMine();
+  const trust = gbNoBaseline
+    ? (unmeasured
+        ? `⚠ <b>${unmeasured}/${used.length} 味投料原料尚未录入成分</b>，这些成分按 0 计。
+           请逐味填入供应商 CoA 实测范围，计算值才可用于判定。`
+        : `✓ 全部投料原料已录入成分，计算值按你录入的实测值算出。`)
+    : (unmeasured
+        ? `⚠ <b>${unmeasured}/${used.length} 味投料原料仍用内置参考基线</b>（非实测数据）。
+           当前计算值<b>仅供试算，不可用于配方注册 / 申报</b>。点每行「成分」录 CoA 实测范围，
+           或点「清空参考值」从零录入。`
+        : `✓ 全部投料原料已录入实测成分，计算值按你录入的数据得出。`);
+  return `<div class="gbc-srcbar ${unmeasured?"warn":"ok"}">
     <span>ⓘ 按 <b>GB 10765 / 10766 / 10767-2021</b> 三份产品标准的表 1~4 全项核算：
       <b>${(GB.nutrients||[]).length} 项指标 · ${GB_COMP_KEYS.length} 个可录入成分</b>。
       计算值 = 各原料 <b>每 100g 营养成分</b> × 添加量累加，再换算到国标「每 100 kJ」口径；
       每个成分按 <b>下限 ~ 上限</b> 录两值，计算值也是同口径区间。
-      内置成分表是<b>行业典型参考值（演示用）</b>，不是实测值；点每行的「成分」把供应商 CoA / 实测值录进来，计算值立刻按你的数据重算。</span>
+      <span class="gbc-trust ${unmeasured?"":"ok"}">${trust}</span></span>
     <span class="sp"></span>
-    <span class="cnt">已录入实测 <b>${gbMatCountMine()}</b> 味原料</span>
+    <span class="cnt">已录入实测 <b>${mine}</b> 味原料${gbNoBaseline?" · 参考基线已清空":""}</span>
+    <button class="btn sm" onclick="gbClearBaseline()">清空参考值 · 从零录入</button>
+    <button class="btn sm" onclick="gbLoadBaseline()">载入参考基线（非实测）</button>
     ${gbSavedMsg?`<span class="cnt" style="color:#15803d;font-weight:700">${escHtml(gbSavedMsg)}</span>`:""}
     ${gbCompMsg?`<span class="cnt">${escHtml(gbCompMsg)}</span>`:""}
   </div>`;
@@ -3275,7 +3360,9 @@ function gbCompHtml(){
     <div class="gbc-comp-h">
       <b>原料成分录入（${GB_COMP_KEYS.length} 项 · 每 100g 原料 · 下限 ~ 上限）</b>
       <span class="muted">当前：<b>${escHtml(m.name)}</b>
-        ${gbIsMine(m.key)?'<span class="gbc-flag mine">实测录入</span>':'<span class="gbc-flag">内置参考值</span>'}
+        ${gbIsMine(m.key)?'<span class="gbc-flag mine">实测录入</span>'
+          :(gbNoBaseline?'<span class="gbc-flag wait">待录入</span>'
+                        :'<span class="gbc-flag">内置参考基线 · 非实测</span>')}
         <span class="muted">投料 ${kg.toFixed(2)} kg/1000kg</span></span>
       <span class="sp"></span>
       <button class="btn sm" onclick="gbToggleComp()">收起 ✕</button>
@@ -3298,10 +3385,12 @@ function gbCompHtml(){
         : (gbSavedMsg ? `<span id="gbSavedLine">${escHtml(gbSavedMsg)}</span>` : "")}
     </div>
     <div class="gbc-comp-f">
-      <span class="hint">${isCustom?"自定义原料：两框都留空按 0 计。":(base?"两框都留空 = 用回内置参考值；填 0 = 明确该成分为 0。":"")} 边填边算，点保存落盘。</span>
+      <span class="hint">${isCustom?"自定义原料：两框都留空按 0 计。"
+        :(gbNoBaseline?"参考基线已清空：两框都留空 = 该成分按 0 计，请填 CoA 实测范围。"
+                      :(base?"两框都留空 = 用回内置参考基线（非实测）；填 0 = 明确该成分为 0。":""))} 边填边算，点保存落盘。</span>
       <span class="sp"></span>
       ${isCustom?`<button class="btn sm" onclick="gbDelCustom('${m.key}')">删除该原料</button>`:""}
-      <button class="btn sm" onclick="gbResetComp()">恢复内置参考值</button>
+      <button class="btn sm" onclick="gbResetComp()">${gbNoBaseline?"清空该原料录入值":"恢复内置参考基线"}</button>
       <button class="btn sm pri" onclick="gbSaveComp()">保存并重新计算</button>
     </div>
   </div>`;
@@ -3403,8 +3492,10 @@ function gbRender(){
                    oninput="gbSetAmt(${i},this.value)">
             <span class="u">kg</span>
             <span class="kd">${escHtml(m.kind)}</span>
-            <span class="gbc-flag ${gbIsMine(row.key)?"mine":""}"
-                  title="${gbIsMine(row.key)?"已录入实测/CoA 成分，计算值按录入值算":"内置行业典型参考值，点「成分」可改成实测值"}">${gbIsMine(row.key)?"实测":"内置"}</span>
+            <span class="gbc-flag ${gbIsMine(row.key)?"mine":(gbNoBaseline?"wait":"")}"
+                  title="${gbIsMine(row.key)?"已录入实测/CoA 成分，计算值按录入值算"
+                    :(gbNoBaseline?"尚未录入成分，按 0 计，点「成分」填写"
+                                  :"内置参考基线（非实测），点「成分」改成实测值")}">${gbIsMine(row.key)?"实测":(gbNoBaseline?"待录":"基线")}</span>
             <button class="cmp ${gbCompOpen&&gbCompKey===row.key?"on":""}"
                     onclick="gbToggleComp('${row.key}')"
                     title="录入 / 修改该原料每 100g 的营养成分">成分</button>
@@ -3534,6 +3625,107 @@ const RD = Array.isArray(_rdRaw) ? (_rdRaw[0] || null) : _rdRaw;
 let curRdGroup = "全部";
 let curRdKey = null;
 
+/* ================================================================
+   研发卡片内容可编辑（2026-11-10 用户要求「全部能真实使用、能编辑」）
+   · 适用场景 / 实操步骤 / 配套表单 / 项目记录 全部可改写并落盘
+   · 「落地案例」原本是编出来的示例，改成默认空白的「本厂项目记录」
+   · 卡片内容和工具里的台账一起可整页备份 / 恢复
+   ================================================================ */
+const RD_TEXT_KEY = "rd.moduleText.v2";
+let RD_TEXT = {};
+let rdEditKey = null;
+let rdMsg = "";
+function rdLoadText(){
+  try{ RD_TEXT = (typeof Store !== "undefined" && Store.draft.get(RD_TEXT_KEY)) || {}; }
+  catch(e){ RD_TEXT = {}; }
+}
+function rdSaveText(){
+  try{ if(typeof Store !== "undefined") Store.draft.set(RD_TEXT_KEY, RD_TEXT); }
+  catch(e){ /* 存储不可用时仍保留在内存 */ }
+}
+function rdText(m){
+  const u = RD_TEXT[m.moduleKey] || {};
+  return {
+    whenToUse: u.whenToUse != null ? u.whenToUse : m.whenToUse,
+    steps:     u.steps     != null ? u.steps     : m.steps,
+    template:  u.template  != null ? u.template  : m.template,
+    note:      u.note      != null ? u.note      : "",
+    edited:    !!u.__edited
+  };
+}
+function rdStartEdit(key){ rdEditKey = key; rdMsg = ""; renderRdTools(); }
+function rdCancelEdit(){ rdEditKey = null; renderRdTools(); }
+function rdSaveForm(key){
+  const get = id => { const el = document.getElementById(id); return el ? el.value : ""; };
+  const u = RD_TEXT[key] || (RD_TEXT[key] = {});
+  u.whenToUse = get("rdF_whenToUse");
+  u.steps = get("rdF_steps").split("\n")
+    .map(s=>s.replace(/^\s*\d+\s*[.、)]\s*/, "").trim()).filter(Boolean);
+  u.template = get("rdF_template");
+  u.note = get("rdF_note");
+  u.__edited = true;
+  rdSaveText(); rdEditKey = null;
+  rdMsg = "✓ 已保存本模块内容（本机浏览器）";
+  renderRdTools();
+}
+function rdResetForm(key){
+  delete RD_TEXT[key]; rdSaveText(); rdEditKey = null;
+  rdMsg = "✓ 已恢复通用做法，本厂项目记录已清空";
+  renderRdTools();
+}
+/* 通用做法模板：用户主动载入、明确要求改写，不是自动塞给他的假数据 */
+function rdLoadTemplate(key){
+  const m = (RD && RD.modules || []).find(x=>x.moduleKey===key);
+  if(!m) return;
+  const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
+  set("rdF_whenToUse", m.whenToUse);
+  set("rdF_steps", (m.steps||[]).map((s,i)=>(i+1)+". "+s).join("\n"));
+  set("rdF_template", m.template);
+  set("rdF_note", "【通用做法参考，请改写为本厂实际】\n"+m.case);
+}
+function rdKeys(){ return (RD && RD.modules || []).map(m=>m.moduleKey); }
+function rdExportAll(){
+  const payload = {
+    kind: "stdwatch.rdtools.full",
+    exportedAt: new Date().toISOString(),
+    texts: RD_TEXT,
+    workbench: (typeof QW_snapshot === "function") ? QW_snapshot(rdKeys()) : {}
+  };
+  if(typeof QW_downloadText === "function")
+    QW_downloadText("研发管理_全量备份_"+new Date().toISOString().slice(0,10)+".json",
+                    JSON.stringify(payload, null, 2));
+  rdMsg = "✓ 已导出全量备份（含 18 个工具的数据与卡片内容）";
+  renderRdTools();
+}
+function rdImportAll(){
+  if(!window.QWIO || !QWIO.pickFile) return;
+  QWIO.pickFile(function(txt){
+    let o;
+    try{ o = JSON.parse(String(txt).replace(/^\ufeff/, "")); }
+    catch(e){ rdMsg = "✗ 不是有效的备份文件（需要 JSON）"; renderRdTools(); return; }
+    if(!o || o.kind !== "stdwatch.rdtools.full"){
+      rdMsg = "✗ 这不是「研发管理」的全量备份"; renderRdTools(); return;
+    }
+    RD_TEXT = o.texts || {}; rdSaveText();
+    if(typeof QW_restoreSnapshot === "function")
+      QW_restoreSnapshot(o.workbench || {}, rdKeys());
+    rdMsg = "✓ 已恢复全量备份；打开任一工具即可看到数据";
+    rdEditKey = null;
+    renderRdTools();
+  });
+}
+function rdRenderDataBar(){
+  const el = $("#rdDataBar"); if(!el) return;
+  const n = rdKeys().filter(k=>(RD_TEXT[k]||{}).__edited).length;
+  el.innerHTML = `<span class="rddb-i">💾</span>
+    <span class="rddb-t">数据只存在这台电脑的浏览器里，不会上传。
+      已改写 <b>${n}</b> 个模块内容 · 建议定期备份。</span>
+    <span class="sp"></span>
+    ${rdMsg?`<span class="rddb-msg">${escHtml(rdMsg)}</span>`:""}
+    <button class="btn sm" onclick="rdExportAll()">⬇ 全量备份</button>
+    <button class="btn sm" onclick="rdImportAll()">⬆ 恢复备份</button>`;
+}
+
 function renderRdTools(){
   const badge = $("#rdBadge");
   if(badge) badge.textContent = RD ? RD.modules.length : "—";
@@ -3582,6 +3774,7 @@ function renderRdTools(){
   $("#rdList").innerHTML = html;
   $$("#rdList .rdcard-h").forEach(el=>el.onclick=()=>toggleRd(el.dataset.key));
   $("#rdDetail").innerHTML = "";
+  rdRenderDataBar();
 }
 
 function rdCardHtml(m){
@@ -3610,53 +3803,82 @@ function rdCardHtml(m){
 
 function rdDetailHtml(m){
   const hasW = !!(m.widget && m.widget.type);
+  const t = rdText(m);
+  const k = escHtml(m.moduleKey);
+  /* ---- 编辑态：四块内容全部可改写 ---- */
+  if(rdEditKey === m.moduleKey){
+    return `<div class="qmcard-b rdformbox">
+      <div class="rdedit-h"><b>✎ 编辑「${escHtml(m.name)}」</b>
+        <div class="sp"></div>
+        <button class="btn sm" onclick="rdLoadTemplate('${k}')">载入通用做法模板</button>
+        <button class="btn sm pri" onclick="rdSaveForm('${k}')">✓ 保存</button>
+        <button class="btn sm" onclick="rdCancelEdit()">取消</button>
+        <button class="btn sm" onclick="rdResetForm('${k}')">恢复默认</button>
+      </div>
+      <div class="rdform">
+        <label>适用场景<textarea id="rdF_whenToUse" rows="3">${escHtml(t.whenToUse)}</textarea></label>
+        <label>实操步骤（每行一步，编号自动生成）<textarea id="rdF_steps" rows="8">${escHtml((t.steps||[]).map((s,i)=>(i+1)+". "+s).join("\n"))}</textarea></label>
+        <label>配套表单 / 字段<textarea id="rdF_template" rows="4">${escHtml(t.template)}</textarea></label>
+        <label>本厂项目记录（写真实批号、日期、检测数据；默认空白）
+          <textarea id="rdF_note" rows="5" placeholder="例：2026-11-10 三批中试，批号 XXX，实测 XXX，评审结论 XXX">${escHtml(t.note)}</textarea></label>
+      </div>
+      <div class="qmtip">改动保存在本机浏览器。「载入通用做法模板」只给文字参考，
+        <b>必须改写为本厂实际后才能用于申报</b>。</div>
+    </div>`;
+  }
+  /* ---- 展示态：不再自动塞编造的「落地案例」 ---- */
   return `
   <div class="qmcard-b">
+    <div class="rd-bar">
+      <span class="rdtag ${t.edited?"":"gray"}">${t.edited?"已按本厂改写":"通用做法 · 可改写"}</span>
+      <div class="sp"></div>
+      <button class="btn sm" onclick="rdStartEdit('${k}')">✎ 编辑本模块内容</button>
+    </div>
     ${hasW?`
     <div class="qmrow">
       <div class="qmk">工具</div>
       <div class="qmv">
         <div class="qwb-toolbar">
-          <button class="btn sm pri" onclick="RD_open('${escHtml(m.moduleKey)}')">▶ 打开工具</button>
-          <span class="muted">能直接用：数据可改，结论实时重算</span>
+          <button class="btn sm pri" onclick="RD_open('${k}')">▶ 打开工具</button>
+          <span class="muted">空白工作台：数据由你录入，结论实时重算</span>
         </div>
         <div data-qw-host></div>
       </div>
     </div>`:""}
     <div class="qmrow">
       <div class="qmk">适用场景</div>
-      <div class="qmv">${escHtml(m.whenToUse)}</div>
+      <div class="qmv">${escHtml(t.whenToUse)}</div>
     </div>
     <div class="qmrow">
       <div class="qmk">实操步骤</div>
       <div class="qmv">
         <ol class="qmsteps">
-          ${m.steps.map((s,i)=>`<li><span class="n">${i+1}</span><span>${escHtml(s)}</span></li>`).join("")}
+          ${(t.steps||[]).map((s,i)=>`<li><span class="n">${i+1}</span><span>${escHtml(s)}</span></li>`).join("")}
         </ol>
       </div>
     </div>
     <div class="qmrow">
       <div class="qmk">配套表单 / 字段</div>
       <div class="qmv">
-        <div class="qmtpl">${escHtml(m.template)}</div>
-        <button class="btn sm" onclick="copyRdTpl('${escHtml(m.moduleKey)}')">复制字段</button>
+        <div class="qmtpl">${escHtml(t.template)}</div>
+        <button class="btn sm" onclick="copyRdTpl('${k}')">复制字段</button>
       </div>
     </div>
     <div class="qmrow">
-      <div class="qmk">落地案例</div>
-      <div class="qmv"><div class="qmcase">${escHtml(m.case)}</div></div>
+      <div class="qmk">本厂项目记录</div>
+      <div class="qmv">${t.note
+        ? `<div class="qmcase">${escHtml(t.note).replace(/\n/g,"<br>")}</div>`
+        : `<div class="rdempty">（空白）点右上「✎ 编辑本模块内容」，记录本厂真实批号、
+            检测数据、评审结论与时间。这里不会自动填入示例数字。</div>`}</div>
     </div>
-    <div class="qmtip">
-      案例为婴配粉厂实际场景，数据与时间为示例量级 —— <b>照着做可以，别照抄数字</b>；
-      标准条款以现行版本为准。
-    </div>
+    <div class="qmtip">标准条款以现行版本为准；工具里的结论全部由你录入的数据计算得出。</div>
   </div>`;
 }
 
 function copyRdTpl(key){
   const m = (RD && RD.modules || []).find(x=>x.moduleKey===key);
   if(!m) return;
-  const txt = m.name + "\n" + m.template;
+  const txt = m.name + "\n" + rdText(m).template;
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(
       ()=>toast("已复制字段模板"), ()=>toast("复制失败，请手动选中"));
@@ -3677,6 +3899,7 @@ function RD_open(key){
 
 function toggleRd(key){
   curRdKey = (curRdKey === key) ? null : key;
+  rdEditKey = null;
   renderRdTools();
 }
 
@@ -6222,6 +6445,7 @@ PERM_STATE = loadPerm();          // 恢复本机已授权状态（8 小时内�
   try{
     restoreSubs();                                // 订阅勾选
     if(typeof QW_restore === "function") QW_restore();   // 34 个工具的草稿
+    rdLoadText();                                 // 研发卡片里用户改写的内容
   }catch(e){ console.warn("恢复本机状态失败", e); }
 })();
 
