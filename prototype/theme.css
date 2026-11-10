@@ -946,3 +946,24 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
   .gbc-tbl{min-width:430px}
   .gbc-saved,.gbc-dirty,.gbc-warn{padding-left:11px;padding-right:11px}
 }
+
+/* ===== 三份产品标准全项核算（2026-11-09）=====
+   39 项指标 / 36 个可录入成分，按表 1~4 分组，否则找不到要改的那一项。
+   分组标题横跨整行；表格分组行吸顶，滚动时始终知道在看哪一类。 */
+.gbc-grp-t{grid-column:1/-1;margin:11px 0 2px;padding:6px 9px;
+  border-left:3px solid var(--brand);background:#f1f5f9;border-radius:0 5px 5px 0;
+  font-size:11.5px;font-weight:700;color:var(--ink2);display:flex;
+  align-items:center;gap:10px;flex-wrap:wrap}
+.gbc-grp-t:first-child{margin-top:2px}
+.gbc-grp-t span{font-weight:400;font-size:10.5px;color:var(--ink3)}
+.gbc-tbl tr.gbc-grp-row td{position:sticky;top:0;z-index:1;
+  background:#e8eef7;color:#1e3a5f;text-align:left;font-size:11px;font-weight:700;
+  letter-spacing:.3px;padding:6px 10px;border-bottom:1px solid #cbd5e1}
+.gbc-tbl tr.gbc-grp-row td span{font-weight:400;color:#64748b;margin-left:8px}
+.gbc-tblwrap{max-height:460px}
+.gbc-grid{max-height:360px}
+.gbc-tbl td .vf.gray{background:#f1f5f9;color:#64748b}
+@media(max-width:900px){
+  .gbc-grp-t{padding:6px 8px}
+  .gbc-tblwrap{max-height:420px}
+}

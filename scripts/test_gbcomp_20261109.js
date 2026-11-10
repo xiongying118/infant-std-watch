@@ -42,8 +42,12 @@ async function openTool(p) {
   });
   await p.waitForTimeout(500);
 }
-const val = async (p, n) => (await p.textContent(
-  '#gbCalc .gbc-tbl tbody tr:nth-child(' + n + ') td.v') || '').trim();
+/* ★ 表格按标准表 1~4 插了分组标题行，tr:nth-child(n) 会指到标题行。
+   统一用第 n 个 td.v（顺序与 GB.nutrients 一致）。 */
+const val = async (p, n) => (await p.locator(
+  '#gbCalc .gbc-tbl tbody td.v').nth(n - 1).textContent() || '').trim();
+const limCell = async (p, nk, col) => (await p.textContent(
+  '#gbCalc .gbc-tbl tbody tr[data-nk="' + nk + '"] td:nth-child(' + col + ')') || '').trim();
 
 (async () => {
   const b = await chromium.launch({ headless: true, executablePath: EXE });
@@ -203,6 +207,68 @@ const val = async (p, n) => (await p.textContent(
     ck(m.rowW <= m.rowC + 2, w + 'px 视口原料行不溢出（' + m.rowW + '/' + m.rowC + '）');
     ck(m.fldW <= m.fldC + 2, w + 'px 视口双输入框不溢出（' + m.fldW + '/' + m.fldC + '）');
   }
+
+  console.log('=== 三个产品标准全项核算 ===');
+  await p.setViewportSize({ width: 1440, height: 1000 });
+  await p.waitForTimeout(300);
+  if (await p.locator('#gbCalc .gbc-comp').count() === 0) {
+    await p.click('#gbCalc .gbc-ctl .btn:has-text("原料成分录入")');
+  }
+  ck(await p.locator('#gbCalc .gbc-tbl tbody tr[data-nk]').count() === 39,
+     '★ 计算表列出 39 项指标（三份标准表 1~4 并集）');
+  ck(await p.locator('#gbCalc .gbc-tbl tbody tr.gbc-grp-row').count() === 4,
+     '★ 按宏量/维生素/矿物质/可选择成分分成 4 组');
+  ck(await p.locator('#gbCalc .gbc-grid .gbc-fld').count() === 36,
+     '★ 原料成分可录入 36 项（39 项减去能量与 2 个比值）');
+  ck(await p.locator('#gbCalc .gbc-grid .gbc-grp-t').count() === 4,
+     '成分录入面板同样按 4 组分区');
+  ck(await p.locator('#gbCalc .gbc-grid .gbc-fld input').count() === 72,
+     '36 项 × 下限/上限 = 72 个输入框');
+  ck((await p.locator('#gbCalc .gbc-srcbar').innerText()).includes('39 项指标'),
+     '说明条写明按三份标准全项核算');
+  for (const key of ['vk1', 'vb1', 'vb2', 'vb6', 'vb12', 'pantothenic',
+                     'k', 'cu', 'mg', 'fe', 'zn', 'mn', 'iodine',
+                     'chloride', 'selenium', 'carnitine']) {
+    ck(await p.locator('#gbCalc .gbc-tbl tbody tr[data-nk="' + key + '"]').count() === 1,
+       '新增标准指标已入表：' + key);
+  }
+  const segSel = p.locator('#gbCalc .gbc-ctl select').first();
+  await segSel.selectOption('1');
+  await p.waitForTimeout(250);
+  ck((await p.locator('#gbCalc .gbc-sub').innerText()).includes('GB 10765-2021'),
+     '★ 切 1 段显示 GB 10765-2021《婴儿配方食品》');
+  ck((await p.locator('#gbCalc .gbc-sub').innerText()).includes('250~295'),
+     '1 段即食能量 250~295 kJ/100mL');
+  ck((await limCell(p, 'protein', 4)) === '0.720', '1 段乳基蛋白上限 0.720 g/100kJ');
+  ck((await limCell(p, 'va', 4)) === '36.0', '1 段维生素A 上限 36.0 μg/100kJ');
+  ck((await limCell(p, 'ca_ratio', 3)) === '1.00', '1 段钙磷比下限 1:1');
+  await segSel.selectOption('2');
+  await p.waitForTimeout(250);
+  ck((await p.locator('#gbCalc .gbc-sub').innerText()).includes('GB 10766-2021'),
+     '★ 切 2 段显示 GB 10766-2021');
+  ck((await p.locator('#gbCalc .gbc-sub').innerText()).includes('250~314'),
+     '2 段即食能量 250~314 kJ/100mL');
+  ck((await limCell(p, 'protein', 4)) === '0.840', '2 段乳基蛋白上限 0.840 g/100kJ');
+  ck((await limCell(p, 'vb6', 3)) === '11.0', '2 段 VB6 下限 11.0 μg/100kJ');
+  await segSel.selectOption('3');
+  await p.waitForTimeout(250);
+  ck((await p.locator('#gbCalc .gbc-sub').innerText()).includes('GB 10767-2021'),
+     '★ 切 3 段显示 GB 10767-2021');
+  ck((await p.locator('#gbCalc .gbc-sub').innerText()).includes('250~334'),
+     '3 段即食能量 250~334 kJ/100mL');
+  ck((await limCell(p, 'vb2', 4)) === '155.0', '3 段 VB2 上限 155.0 μg/100kJ');
+  ck((await limCell(p, 'protein', 4)) === '0.960', '3 段蛋白上限 0.960 g/100kJ');
+  ck((await limCell(p, 'dha', 3)).indexOf('—') === 0 &&
+     (await limCell(p, 'dha', 3)).includes('起'), '3 段 DHA 只有上限（N.S. 下限）');
+  ck((await p.locator('#gbCalc .gbc-tbl tbody tr[data-nk="choline"] .vf.gray').innerText()).includes('可选'),
+     '3 段胆碱标注为可选择成分');
+  await segSel.selectOption('1');
+  await p.locator('#gbCalc .gbc-ctl select').nth(1).selectOption('豆基');
+  await p.waitForTimeout(250);
+  ck((await limCell(p, 'protein', 3)) === '0.530', '1 段豆基蛋白下限 0.530 g/100kJ');
+  ck((await limCell(p, 'fe', 3)) === '0.15', '1 段豆基铁下限 0.15 mg/100kJ');
+  await p.locator('#gbCalc .gbc-ctl select').nth(1).selectOption('乳基');
+  await segSel.selectOption('3');
 
   console.log('=== JS 报错 ===');
   ck(errs.length === 0, '全程无 JS 报错' + (errs.length ? '：' + errs.slice(0, 3).join(' | ') : ''));

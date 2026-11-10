@@ -2565,7 +2565,12 @@ const GB = Array.isArray(_gbRaw) ? (_gbRaw[0] || null) : _gbRaw;
    ★ 这张表必须**跟着 NUTRIENTS 一起维护** ★
      加了新营养素（如叶酸、生物素、胆碱、肌醇）却忘了加到这里 →
      那几项永远算成 0，页面显示「不足」，而原料库里明明有值。 */
-const GB_KEYMAP = {
+/* ★★ 2026-11-09：映射表改由 build_gbnutrition.py 生成，随 GB.keymap 下发 ★★
+   三个产品标准的表 1~4 并集是 39 项指标 / 36 个可录入原料成分字段，
+   手写这张表必然漏项（漏了就永远算成 0，页面显示「不足」）。
+   下面只在 data.js 还没带 keymap 时兜底。 */
+const GB_KEYMAP = (GB && GB.keymap && Object.keys(GB.keymap).length)
+  ? GB.keymap : {
   protein: "p", fat: "f", carb: "c",
   la: "la", ala: "ala",
   ca: "ca", phos: "phos", na: "na",
@@ -2574,6 +2579,15 @@ const GB_KEYMAP = {
   choline: "choline", inositol: "inositol",
   dha: "dha", ara: "ara", taurine: "taurine",
 };
+const GB_GROUPS = (GB && Array.isArray(GB.groups) && GB.groups.length)
+  ? GB.groups : ["宏量营养素", "维生素", "矿物质", "可选择成分"];
+function gbGroupOf(nkey){
+  const nt = (GB && GB.nutrients || []).find(x=>x.key===nkey);
+  return (nt && nt.group) || GB_GROUPS[0];
+}
+function gbStandard(){
+  return (GB && GB.standards && gbState && GB.standards[gbState.seg]) || null;
+}
 
 /* 钙磷比这类「比值型」指标不能简单相加，要单独算 */
 const GB_RATIO_KEYS = { ca_ratio: ["ca", "phos"] };
@@ -2826,9 +2840,11 @@ function gbLivePreview(){
   catch(e) { r = null; }
   finally { gbOverrides = saved; }
   if(!r) return;
-  const trs = document.querySelectorAll("#gbCalc .gbc-tbl tbody tr");
-  r.rows.forEach((row,i)=>{
-    const tr = trs[i]; if(!tr) return;
+  /* ★ 表格里插了分组标题行，不能再用 tr 下标对齐 rows，按 data-nk 找 */
+  r.rows.forEach(row=>{
+    const tr = document.querySelector(
+      '#gbCalc .gbc-tbl tbody tr[data-nk="' + row.key + '"]');
+    if(!tr) return;
     const td = tr.querySelector("td.v");
     if(td) td.innerHTML = gbRangeHtml(row.valMin, row.valMax, row.dec);
     const bad = row.verdict==="超限", low = row.verdict==="不足";
@@ -3196,7 +3212,9 @@ function gbVerdictHtml(r){
 /* 数据来源说明条：讲清「计算值 = 原料成分 × 用量」，并标出录了几味实测值 */
 function gbSrcBarHtml(){
   return `<div class="gbc-srcbar">
-    <span>ⓘ 右侧计算值 = 各原料 <b>每 100g 营养成分</b> × 添加量累加，再换算到国标口径。
+    <span>ⓘ 按 <b>GB 10765 / 10766 / 10767-2021</b> 三份产品标准的表 1~4 全项核算：
+      <b>${(GB.nutrients||[]).length} 项指标 · ${GB_COMP_KEYS.length} 个可录入成分</b>。
+      计算值 = 各原料 <b>每 100g 营养成分</b> × 添加量累加，再换算到国标「每 100 kJ」口径；
       每个成分按 <b>下限 ~ 上限</b> 录两值，计算值也是同口径区间。
       内置成分表是<b>行业典型参考值（演示用）</b>，不是实测值；点每行的「成分」把供应商 CoA / 实测值录进来，计算值立刻按你的数据重算。</span>
     <span class="sp"></span>
@@ -3214,24 +3232,33 @@ function gbCompHtml(){
   if(!m) return "";
   const isCustom = gbCustomMats.some(x=>x.key===m.key);
   const base = (GB.materials||[]).find(x=>x.key===m.key) || null;
-  const fields = GB_COMP_KEYS.map(nkey=>{
-    const mk = GB_KEYMAP[nkey];
-    const nt = (GB.nutrients||[]).find(x=>x.key===nkey) || {};
-    const cur = m.comp[mk] || {min:0, max:0};
-    const d = gbCompDraft[mk] || {};
-    const has = k => Object.prototype.hasOwnProperty.call(d, k);
-    const lo = has("min") ? d.min : cur.min;
-    const hi = has("max") ? d.max : cur.max;
-    return `<div class="gbc-fld">
-      <label title="${escHtml((nt.name||nkey)+" · 每 100g 原料 · 下限~上限")}">${escHtml(nt.name||nkey)} <i>${escHtml(nt.srcUnit||"")}/100g</i></label>
-      <input type="number" step="any" min="0" placeholder="下限" value="${escHtml(String(lo))}"
-             data-mk="${mk}" data-base="${escHtml(String(lo))}"
-             oninput="gbSetCompDraft('${mk}','min',this.value)" onchange="gbSetCompDraft('${mk}','min',this.value)">
-      <span class="dash">~</span>
-      <input type="number" step="any" min="0" placeholder="上限" value="${escHtml(String(hi))}"
-             data-mk="${mk}" data-base="${escHtml(String(hi))}"
-             oninput="gbSetCompDraft('${mk}','max',this.value)" onchange="gbSetCompDraft('${mk}','max',this.value)">
-    </div>`;
+  /* ★ 36 项 × 2 框 = 72 个输入框，按三个产品标准的表 1~4 分组，
+     否则一屏铺满根本找不到要改的那一项。 */
+  const fields = GB_GROUPS.map(grp=>{
+    const ks = GB_COMP_KEYS.filter(k=>gbGroupOf(k)===grp);
+    if(!ks.length) return "";
+    const cells = ks.map(nkey=>{
+      const mk = GB_KEYMAP[nkey];
+      const nt = (GB.nutrients||[]).find(x=>x.key===nkey) || {};
+      const cur = m.comp[mk] || {min:0, max:0};
+      const d = gbCompDraft[mk] || {};
+      const has = k => Object.prototype.hasOwnProperty.call(d, k);
+      const lo = has("min") ? d.min : cur.min;
+      const hi = has("max") ? d.max : cur.max;
+      const u = (nt.srcUnit||"").replace("ug","μg");
+      return `<div class="gbc-fld">
+        <label title="${escHtml((nt.name||nkey)+" · 每 100g 原料 · 下限~上限")}">${escHtml(nt.name||nkey)} <i>${escHtml(u)}/100g</i></label>
+        <input type="number" step="any" min="0" placeholder="下限" value="${escHtml(String(lo))}"
+               data-mk="${mk}" data-base="${escHtml(String(lo))}"
+               oninput="gbSetCompDraft('${mk}','min',this.value)" onchange="gbSetCompDraft('${mk}','min',this.value)">
+        <span class="dash">~</span>
+        <input type="number" step="any" min="0" placeholder="上限" value="${escHtml(String(hi))}"
+               data-mk="${mk}" data-base="${escHtml(String(hi))}"
+               oninput="gbSetCompDraft('${mk}','max',this.value)" onchange="gbSetCompDraft('${mk}','max',this.value)">
+      </div>`;
+    }).join("");
+    return `<div class="gbc-grp-t">${escHtml(grp)}
+      <span>${ks.length} 项 · 每 100g 原料 · 下限 ~ 上限</span></div>${cells}`;
   }).join("");
   const tabs = all.map(x=>`<button class="gbc-mtab ${x.key===m.key?"on":""}"
       onclick="gbPickComp('${x.key}')">${escHtml(x.name)}${gbIsMine(x.key)?'<span class="mine"> ·实测</span>':""}</button>`).join("");
@@ -3239,7 +3266,7 @@ function gbCompHtml(){
     .filter(r=>r.key===m.key).reduce((s,r)=>s+(Number(r.amount)||0), 0);
   return `<div class="gbc-comp">
     <div class="gbc-comp-h">
-      <b>原料成分录入（每 100g 原料 · 下限 ~ 上限）</b>
+      <b>原料成分录入（${GB_COMP_KEYS.length} 项 · 每 100g 原料 · 下限 ~ 上限）</b>
       <span class="muted">当前：<b>${escHtml(m.name)}</b>
         ${gbIsMine(m.key)?'<span class="gbc-flag mine">实测录入</span>':'<span class="gbc-flag">内置参考值</span>'}
         <span class="muted">投料 ${kg.toFixed(2)} kg/1000kg</span></span>
@@ -3277,10 +3304,10 @@ function gbCompHtml(){
 function gbImportHtml(){
   if(!gbImportOpen) return "";
   return `<div class="gbc-imp">
-    <div><b>批量导入原料成分</b>　先「导出当前成分表」拿模板（首行表头
-      <code>key,name,kind,p,f,c,la,ala,ca,phos,na,va,…</code>），把供应商规格范围填好，
+    <div><b>批量导入原料成分</b>　先「导出当前成分表」拿模板（共 <b>${GB_COMP_KEYS.length} 列</b>成分，
+      覆盖三份产品标准表 1~4 全部营养素），把供应商规格范围填好，
       整段粘贴到下面点「导入并覆盖」。单格写 <code>24~26</code> 表示下限 24、上限 26；
-      只写一个数字则上下限相同。单位与内置表一致：p/f/c 为 g/100g，其余为 mg 或 μg/100g。</div>
+      只写一个数字则上下限相同。单位以成分面板标注为准（g / mg / μg 每 100g 原料）。</div>
     <textarea id="gbCsvText" placeholder="key,name,kind,p,f,c,ca,phos,na&#10;whole_milk,全脂乳粉,粉,24.5,26.1,37.2,912,705,376"></textarea>
     <div class="row">
       <button class="btn sm pri" onclick="gbImportCsv()">导入并覆盖</button>
@@ -3315,8 +3342,10 @@ function gbRender(){
       <span id="gbVerdictTag">${gbVerdictHtml(r)}</span>
     </div>
     <div class="gbc-sub">
-      目标 ${escHtml(L.std||"")}-${escHtml(L.stdVersion||"")}　|
-      计划备案 2026-02-03　| 申请人 李工　| 2026-09-22 15:52
+      目标 ${escHtml(L.std||"")}${escHtml(L.stdName?("《"+L.stdName+"》"):"")}
+      　| 适用 ${escHtml(L.age||"—")}
+      　| 即食能量 ${escHtml((L.energy&&L.energy.text)||"—")}（需按冲调倍数折算）
+      　| 计划备案 2026-02-03　| 申请人 李工
     </div>
   </div>
 
@@ -3393,25 +3422,35 @@ function gbRender(){
           <th>营养素</th><th>计算值（低~高）</th><th>下限</th><th>上限</th><th>判定</th>
         </tr></thead>
         <tbody>
-        ${r.rows.map(row=>{
-          const bad = row.verdict==="超限", low = row.verdict==="不足";
-          const risk = row.verdict==="波动越界";
-          const vc = bad?"bad":(low||risk?"low":"ok");
-          return `<tr class="${vc}">
-            <td>${escHtml(row.name)}
-              ${row.note==="待核对"?'<span class="vf" title="内置参考值，请与标准正文核对">待核对</span>':""}
-              ${row.note==="国标未设限"?'<span class="vf gray">未设限</span>':""}</td>
-            <td class="v">${gbRangeHtml(row.valMin, row.valMax, row.dec)}</td>
-            <td>${row.min==null?(row.max==null?"—":"—"):row.min.toFixed(row.dec)}${row.min==null&&row.max!=null?'<span class="vns">起</span>':""}</td>
-            <td>${row.max==null?"—":row.max.toFixed(row.dec)}</td>
-            <td><span class="vd ${vc}">${row.verdict}</span></td>
-          </tr>`;
+        ${GB_GROUPS.map(grp=>{
+          const rs = r.rows.filter(x=>gbGroupOf(x.key)===grp);
+          if(!rs.length) return "";
+          return `<tr class="gbc-grp-row"><td colspan="5">${escHtml(grp)}
+              <span>${rs.length} 项${grp==="可选择成分"?" · 未添加按 0 计":""}</span></td></tr>` +
+            rs.map(row=>{
+              const bad = row.verdict==="超限", low = row.verdict==="不足";
+              const risk = row.verdict==="波动越界";
+              const vc = bad?"bad":(low||risk?"low":"ok");
+              const nt = (GB.nutrients||[]).find(x=>x.key===row.key) || {};
+              const opt = (nt.optionalSegs||[]).indexOf(gbState.seg) >= 0;
+              return `<tr class="${vc}" data-nk="${row.key}">
+                <td>${escHtml(row.name)}
+                  ${opt?'<span class="vf gray" title="该段位列入标准表 4 可选择成分">可选</span>':""}
+                  ${row.note==="待核对"?'<span class="vf" title="内置参考值，请与标准正文核对">待核对</span>':""}
+                  ${row.note==="国标未设限"?'<span class="vf gray">未设限</span>':""}</td>
+                <td class="v">${gbRangeHtml(row.valMin, row.valMax, row.dec)}</td>
+                <td>${row.min==null?"—":row.min.toFixed(row.dec)}${row.min==null&&row.max!=null?'<span class="vns">起</span>':""}</td>
+                <td>${row.max==null?"—":row.max.toFixed(row.dec)}</td>
+                <td><span class="vd ${vc}">${row.verdict}</span></td>
+              </tr>`;
+            }).join("");
         }).join("")}
         </tbody>
       </table>
       </div>
-      <div class="gbc-unit">单位：${escHtml((GB.nutrients[1]||{}).unit||"")} 等，按国标口径换算。
-        计算值按各原料成分的下限、上限各算一遍，显示「下限~上限」；两端相同则只显示一个值。</div>
+      <div class="gbc-unit">除能量与比值型指标外，限值均为「每 100 kJ」，取自当前段位产品标准表 1~4；
+        能量按粉剂每 100g 计算，与标准给的即食状态能量需按冲调倍数折算。
+        计算值按各原料成分的下限、上限各算一遍，<b>永远显示两个数</b>；两端相同则写成 x~x。</div>
     </div>
   </div>
 
