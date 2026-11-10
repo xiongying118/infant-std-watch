@@ -837,9 +837,16 @@ td .no{font-family:ui-monospace,Consolas,monospace}
 .gbc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));
   gap:8px 12px;padding:11px 14px;max-height:288px;overflow-y:auto}
 .gbc-fld{display:flex;align-items:center;gap:5px;min-width:0}
-.gbc-fld label{flex:1;min-width:0;font-size:11.5px;color:var(--ink2);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gbc-fld label i{font-style:normal;color:var(--ink3);font-size:10px}
+/* ★ 单位不能被省略号吃掉 ★
+   原来名称 + <i>单位</i> 一起塞在 label 里做 ellipsis，长名称（维生素A（RE））
+   会把 "μg/100g" 截成 "μ…"，录数时看不出该填 mg 还是 μg。
+   → 名称单独一个可省略的 span，单位 flex:0 0 auto 永远完整显示。 */
+.gbc-fld label{flex:1;min-width:0;display:flex;align-items:center;gap:3px;
+  font-size:11.5px;color:var(--ink2);overflow:hidden}
+.gbc-fld label .nm{flex:1 1 auto;min-width:0;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.gbc-fld label i{flex:0 0 auto;font-style:normal;color:var(--ink3);
+  font-size:10px;white-space:nowrap}
 .gbc-fld input{width:66px;flex:0 0 66px;border:1px solid var(--line);
   border-radius:5px;padding:4px 5px;font:inherit;font-size:12px;
   text-align:right;background:#fff;min-width:0}
@@ -3247,7 +3254,7 @@ function gbCompHtml(){
       const hi = has("max") ? d.max : cur.max;
       const u = (nt.srcUnit||"").replace("ug","μg");
       return `<div class="gbc-fld">
-        <label title="${escHtml((nt.name||nkey)+" · 每 100g 原料 · 下限~上限")}">${escHtml(nt.name||nkey)} <i>${escHtml(u)}/100g</i></label>
+        <label title="${escHtml((nt.name||nkey)+" · "+u+"/100g 原料 · 下限~上限")}"><span class="nm">${escHtml(nt.name||nkey)}</span><i>${escHtml(u)}/100g</i></label>
         <input type="number" step="any" min="0" placeholder="下限" value="${escHtml(String(lo))}"
                data-mk="${mk}" data-base="${escHtml(String(lo))}"
                oninput="gbSetCompDraft('${mk}','min',this.value)" onchange="gbSetCompDraft('${mk}','min',this.value)">
