@@ -5150,7 +5150,10 @@ window.STDWATCH_DATA = {
        "val": "临近到期"
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "name": "金装 1 段婴儿配方奶粉",
        "seg": "1段",
@@ -5187,7 +5190,13 @@ window.STDWATCH_DATA = {
        "exp": "2026-10-05",
        "res": "已过期"
       }
-     ]
+     ],
+     "auto": {
+      "col": "res",
+      "rule": "expiry",
+      "date": "exp",
+      "warnDays": 180
+     }
     }
    },
    {
@@ -5242,6 +5251,12 @@ window.STDWATCH_DATA = {
        "w": "10%"
       },
       {
+       "key": "due",
+       "label": "报告到期日",
+       "type": "date",
+       "w": "13%"
+      },
+      {
        "key": "sup",
        "label": "供应商",
        "type": "text",
@@ -5280,7 +5295,10 @@ window.STDWATCH_DATA = {
        "val": "过期"
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "name": "全脂乳粉",
        "kind": "蛋白/脂肪",
@@ -5317,7 +5335,18 @@ window.STDWATCH_DATA = {
        "sup": "供应商 G",
        "res": "临期"
       }
-     ]
+     ],
+     "auto": {
+      "col": "res",
+      "rule": "expiry",
+      "date": "due",
+      "warnDays": 90,
+      "labels": {
+       "expired": "过期",
+       "warn": "临期",
+       "ok": "有效"
+      }
+     }
     }
    },
    {
@@ -5414,7 +5443,10 @@ window.STDWATCH_DATA = {
        ]
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "txt": "每 100g 含钙 480mg",
        "kind": "含量声称",
@@ -5469,7 +5501,10 @@ window.STDWATCH_DATA = {
     "widget": {
      "type": "calc",
      "fn": "gbCalcWidget",
-     "note": "见页面下方「营养素配比计算」工作台"
+     "note": "见页面下方「营养素配比计算」工作台",
+     "real": true,
+     "blank": true,
+     "seed": null
     }
    },
    {
@@ -5582,7 +5617,10 @@ window.STDWATCH_DATA = {
        ]
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "comp": "钙",
        "age": "6-12月",
@@ -5613,7 +5651,14 @@ window.STDWATCH_DATA = {
        "ours": 38,
        "res": "在区间内"
       }
-     ]
+     ],
+     "auto": {
+      "col": "res",
+      "rule": "inRange",
+      "lo": "lo",
+      "hi": "hi",
+      "val": "ours"
+     }
     }
    },
    {
@@ -5636,6 +5681,23 @@ window.STDWATCH_DATA = {
      "type": "sub",
      "title": "原料替代测算",
      "seed": {
+      "current": {
+       "name": "",
+       "sup": "",
+       "price": "",
+       "p": "",
+       "f": "",
+       "c": "",
+       "ca": "",
+       "phos": ""
+      },
+      "cand": [],
+      "useAmount": "",
+      "replacePct": ""
+     },
+     "real": true,
+     "blank": true,
+     "demoSeed": {
       "current": {
        "name": "脱盐乳清粉",
        "sup": "供应商 S",
@@ -5764,7 +5826,10 @@ window.STDWATCH_DATA = {
        "val": "生效"
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "no": "2B",
        "ver": "v1.0",
@@ -5893,7 +5958,10 @@ window.STDWATCH_DATA = {
        "val": "异常"
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "no": "T-260401-01",
        "conc": 12,
@@ -5942,7 +6010,10 @@ window.STDWATCH_DATA = {
       "中试批号",
       "工艺参数项"
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "dim": "中试批号",
        "grp": "P-260501-01",
@@ -5997,7 +6068,10 @@ window.STDWATCH_DATA = {
       "质构",
       "冲调性"
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "sample": "标样",
        "scores": [
@@ -6052,6 +6126,13 @@ window.STDWATCH_DATA = {
      "title": "加速试验与保质期推算",
      "mode": "accel",
      "seed": {
+      "samples": [],
+      "limit": "",
+      "targetMonths": ""
+     },
+     "real": true,
+     "blank": true,
+     "demoSeed": {
       "samples": [
        {
         "temp": 37,
@@ -6204,7 +6285,10 @@ window.STDWATCH_DATA = {
        "val": "已检异常"
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "name": "2段乳基",
        "batch": "B260201",
@@ -6256,6 +6340,13 @@ window.STDWATCH_DATA = {
      "title": "货架期判定",
      "mode": "shelf",
      "seed": {
+      "samples": [],
+      "limit": "",
+      "targetMonths": ""
+     },
+     "real": true,
+     "blank": true,
+     "demoSeed": {
       "samples": [
        {
         "temp": 25,
@@ -6372,7 +6463,10 @@ window.STDWATCH_DATA = {
        ]
       }
      ],
-     "keyPoint": "提交前做形式审查：材料齐不齐、签字盖章全不全、编号规则对不对。"
+     "keyPoint": "提交前做形式审查：材料齐不齐、签字盖章全不全、编号规则对不对。",
+     "real": true,
+     "blank": true,
+     "seed": null
     }
    },
    {
@@ -6465,7 +6559,10 @@ window.STDWATCH_DATA = {
        "val": "不符合"
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "name": "3段乳基",
        "batch": "B260315",
@@ -6588,7 +6685,10 @@ window.STDWATCH_DATA = {
        "val": "终止"
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "id": "F-001",
        "prod": "特医配方 A",
@@ -6749,7 +6849,10 @@ window.STDWATCH_DATA = {
        "val": "待审批"
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "no": "CR-2608-01",
        "what": "脱盐乳清粉比例 12%→13%",
@@ -6848,7 +6951,10 @@ window.STDWATCH_DATA = {
        "val": "竞品"
       }
      ],
-     "seed": [
+     "seed": [],
+     "real": true,
+     "blank": true,
+     "demoSeed": [
       {
        "type": "母乳研究",
        "name": "中国母乳队列",
