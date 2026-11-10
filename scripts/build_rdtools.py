@@ -402,6 +402,13 @@ def real_widget(key, w):
     if demo is not None:
         out["demoSeed"] = demo
     out["seed"] = blankify(demo) if demo is not None else demo
+    # ★ flow 表单的假进度藏在 phases[].fields[].v 里（不在 seed 中）：
+    #   「已提交 v3.2」「报告 WB-2603-118」这类编造值必须一并清空。
+    if out.get("type") == "flow":
+        out["phases"] = [
+            dict(ph, fields=[dict(f, v="") for f in (ph.get("fields") or [])])
+            for ph in (out.get("phases") or [])
+        ]
     if key in AUTO_RULES:
         out["auto"] = AUTO_RULES[key]
         # 自动判定需要日期列，而原表只有「结论」下拉 —— 补上真实依据字段
@@ -463,12 +470,19 @@ def main() -> int:
         m_["widget"] = real_widget(m_["moduleKey"], w)
     assert not miss, "这些模块还没有 widget：%s" % miss
     # 出厂自检：不许再有编造的业务数据混进交付文件
-    _BAD = ("供应商", "国食注字", "WB-2603", "金装", "竞品", "P-2605", "标样")
+    _BAD = ("国食注字", "WB-2603", "供应商 S", "供应商 T", "金装",
+            "P-2605", "标样", "已提交 v", "报告 WB-")
     for m_ in M:
-        dump = json.dumps(m_["widget"].get("seed"), ensure_ascii=False)
+        w = m_["widget"]
+        # seed 与 flow 表单预置值都要查；title/stats 里的「竞品」是分类词，不算演示数据
+        dump = json.dumps({"seed": w.get("seed"), "phases": w.get("phases")},
+                          ensure_ascii=False)
         for bad in _BAD:
             assert bad not in dump, "%s 的空白工作台里残留演示值 %s" % (
                 m_["moduleKey"], bad)
+        if w.get("type") == "flow":
+            assert all(not f.get("v") for ph in w["phases"] for f in ph["fields"]), \
+                "%s 的流程表单还带预置进度" % m_["moduleKey"]
     print("  18 个模块全部挂上可交互组件（空白真实工作台，无预置业务数据）")
 
     out = {"groups": [g for g, _, _ in GROUPS], "catMeta": CAT_META, "modules": M}

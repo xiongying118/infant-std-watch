@@ -70,7 +70,11 @@ const KEYS = ['reg_law', 'raw_material_basis', 'label_claim', 'nutrient_calc',
       hits: bad.filter(x => dump.includes(x)),
       blankCols: (r.modules.find(m => m.moduleKey === 'raw_material_basis')
                   .widget.cols || []).some(c => c.key === 'due'),
-      auto: r.modules.filter(m => m.widget.auto).map(m => m.moduleKey)
+      auto: r.modules.filter(m => m.widget.auto).map(m => m.moduleKey),
+      flowBlank: (() => {
+        const f = r.modules.find(m => m.moduleKey === 'reg_filing').widget.phases || [];
+        return f.length > 0 && f.every(ph => (ph.fields || []).every(x => !x.v));
+      })()
     };
   });
   ck(dataCheck.n === 18, '18 个研发模块');
@@ -79,6 +83,7 @@ const KEYS = ['reg_law', 'raw_material_basis', 'label_claim', 'nutrient_calc',
      '★ 出厂数据里没有编造的证号/供应商/批号/案例（命中：' + dataCheck.hits.join(',') + '）');
   ck(dataCheck.blankCols, '原辅料台账补了「报告到期日」真实依据字段');
   ck(dataCheck.auto.length >= 3, '至少 3 张表的结果由数据自动判定：' + dataCheck.auto.join(','));
+  ck(dataCheck.flowBlank, '★ 注册申报流程表单也不再预置「已提交 / 报告编号」假进度');
 
   console.log('=== 2. 18 个工具逐个真实打开，空态不报错 ===');
   let opened = 0, withBar = 0, emptyOk = 0;
