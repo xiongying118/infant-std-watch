@@ -978,3 +978,18 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
   .qwsub-edit .qwt-wrap,.qwsub-edit+.qwinput{overflow-x:auto}
   .qwsub-edit .qwt-tbl{min-width:640px}
 }
+
+/* ★ 2026-11-11 用户截图：「标准更新提醒这几个字看不清」
+   侧栏换成深墨蓝底后，index.html <head> 里那套浅色主题的副标题规则没跟着换：
+     .nav a .tx .sub      → --ink3 #8A94A6 灰字压深蓝底，发糊
+     .nav a.on .tx .sub   → --brand #1B3A6B + opacity .72，深蓝压金灰选中底，几乎隐形
+   这里按深底重新给色：普通态用浅蓝灰、选中态用浅金（比白色主标题低一层级但清楚），
+   统一去掉 opacity 衰减。规则放在文件最末尾，覆盖 head 里的同特异性旧规则。 */
+.side .nav a .tx .sub{
+  color:rgba(206,222,244,.84);opacity:1;font-size:11.5px;font-weight:500;
+  letter-spacing:.2px;white-space:nowrap;
+}
+.side .nav a:hover .tx .sub{color:rgba(234,243,255,.92)}
+.side .nav a.on .tx .sub{
+  color:#F3E1A8;opacity:1;font-weight:600;
+}
