@@ -223,6 +223,79 @@ ENERGY = {"1": (250, 295), "2": (250, 314), "3": (250, 334)}
 
 
 # ============================================================
+# 二·补、GB 19644-2024《食品安全国家标准 乳粉和调制乳粉》表 2 理化指标
+# ------------------------------------------------------------
+# 用户 2026-11-11 要求「配方设计增加 GB19644 的」→ 营养素配比计算增加第 4 套标准。
+# ★ 这是乳粉/调制乳粉的产品标准，指标与婴配 39 项营养素完全不同：
+#   只管蛋白质、脂肪、水分、杂质度、复原乳酸度，口径是每 100g 成品，
+#   没有维生素/矿物质限值。绝不把婴配的每 100 kJ 限值套过来，也不编指标。
+# 数据来源（两份官方全文一致）：
+#   http://www.fzmq.gov.cn/xjwz/zwgk/zfxxgkzdgz/spypaq/spaqbz/202408/P020240801607629157296.pdf
+#   http://jckspj.customs.gov.cn/spj/fileDir/resource/cms/article/4576937/4645053/2025031711203133174.pdf
+#   2024-02-08 发布 / 2025-02-08 实施，代替 GB 19644-2010。
+# 表 2 脚注：a 非脂乳固体(%) = 100% − 脂肪(%) − 水分(%)，乳粉蛋白质下限 =
+#   非脂乳固体 × 该奶畜比例；b 脂肪下限仅适用于全脂乳粉。
+#   杂质度、复原乳酸度两行只列「乳粉」，调制乳粉未设限；水分 ≤5.0 全体适用。
+# ============================================================
+
+def _c44(key, name, kind, ratio=None, pmin=None, fmin=None,
+         amin=None, amax=None, imax=None):
+    return {
+        "key": key, "name": name, "kind": kind,
+        "proteinRatio": ratio, "proteinMin": pmin, "fatMin": fmin,
+        "acidityMin": amin, "acidityMax": amax,
+        "impurityMax": imax, "waterMax": 5.0,
+    }
+
+
+GB44_CLASSES = [
+    _c44("bovine", "牛乳粉", "乳粉", 0.34, None, 26.0, None, 18.0, 16.0),
+    _c44("bovine_mod", "调制牛乳粉", "调制乳粉", None, 16.5),
+    _c44("goat", "羊乳粉", "乳粉", 0.34, None, 26.0, 7.0, 14.0, 16.0),
+    _c44("goat_mod", "调制羊乳粉", "调制乳粉", None, 16.5),
+    _c44("yak", "牦牛乳粉", "乳粉", 0.39, None, 33.0, 12.5, 18.0, 16.0),
+    _c44("yak_mod", "调制牦牛乳粉", "调制乳粉", None, 18.6),
+    _c44("camel", "骆驼乳粉", "乳粉", 0.36, None, 28.0, None, 24.0, 16.0),
+    _c44("camel_mod", "调制骆驼乳粉", "调制乳粉", None, 16.8),
+    _c44("donkey", "驴乳粉", "乳粉", 0.18, None, 2.5, None, 6.0, 16.0),
+    _c44("donkey_mod", "调制驴乳粉", "调制乳粉", None, 11.0),
+    _c44("horse", "马乳粉", "乳粉", 0.18, None, 10.0, None, 10.0, 16.0),
+    _c44("horse_mod", "调制马乳粉", "调制乳粉", None, 11.5),
+]
+
+GB44_ITEMS = [
+    {"key": "protein", "name": "蛋白质", "unit": "g/100g", "dec": 2,
+     "mode": "calc", "group": "配方计算项", "method": "GB 5009.5",
+     "hint": "按各原料蛋白成分 × 投料量累加；乳粉下限 = 非脂乳固体 × 品种比例"},
+    {"key": "fat", "name": "脂肪", "unit": "g/100g", "dec": 2,
+     "mode": "calc", "group": "配方计算项", "method": "GB 5009.6",
+     "hint": "按各原料脂肪成分 × 投料量累加；下限仅适用于全脂乳粉"},
+    {"key": "water", "name": "水分", "unit": "g/100g", "dec": 2,
+     "mode": "input", "group": "检测录入项", "method": "GB 5009.3",
+     "hint": "录入成品检测值；乳粉蛋白质下限需要它算非脂乳固体"},
+    {"key": "impurity", "name": "杂质度", "unit": "mg/kg", "dec": 1,
+     "mode": "input", "group": "检测录入项", "method": "GB 5413.30",
+     "hint": "录入成品检测值；表 2 只对乳粉设限"},
+    {"key": "acidity", "name": "复原乳酸度", "unit": "°T", "dec": 1,
+     "mode": "input", "group": "检测录入项", "method": "GB 5009.239",
+     "hint": "录入成品检测值；表 2 只对乳粉设限"},
+]
+
+GB44 = {
+    "std": "GB 19644-2024",
+    "stdVersion": "2024",
+    "stdName": "乳粉和调制乳粉",
+    "age": "—",
+    "source": "GB 19644-2024 表 2 理化指标（2024-02-08 发布，2025-02-08 实施）",
+    "note": ("蛋白质（乳粉）下限 =（100 − 脂肪 − 水分）× 品种比例；"
+             "脂肪下限仅适用于全脂乳粉；调制乳粉蛋白质为固定下限，"
+             "脂肪/杂质度/复原乳酸度表 2 未设限；水分 ≤5.0 g/100g 全体适用。"),
+    "classes": GB44_CLASSES,
+    "items": GB44_ITEMS,
+}
+
+
+# ============================================================
 # 三、原料库（每 100g 原料）
 #   p/f/c → g/100g；维生素/矿物质按各自 srcUnit（mg 或 μg）
 #   ★ 全部 36 个字段都可在页面录入，没写到的字段按 0 计。
@@ -523,6 +596,7 @@ def main() -> int:
         "groups": [G_MACRO, G_VIT, G_MIN, G_OPT],
         "standards": STANDARDS,
         "limits": limits,
+        "gb19644": GB44,
         "materials": MATERIALS,
         "defaultRecipe": DEFAULT_RECIPE,
         "flow": FLOW,

@@ -993,3 +993,12 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
 .side .nav a.on .tx .sub{
   color:#F3E1A8;opacity:1;font-weight:600;
 }
+
+/* ★ 2026-11-11 GB 19644-2024 表 2：水分 / 杂质度 / 复原乳酸度录入框
+   表格里直接录实测值，边填边判定；空态要有可见边框，否则看不出能填。 */
+.gbc-v44{width:98px;max-width:100%;box-sizing:border-box;padding:3px 6px;
+  border:1px solid var(--line);border-radius:5px;background:#fff;color:var(--ink);
+  font-size:12px;font-family:inherit;line-height:1.4}
+.gbc-v44:focus{outline:2px solid var(--brand-3);border-color:var(--brand-3)}
+.gbc-v44::placeholder{color:var(--ink3)}
+@media(max-width:720px){.gbc-v44{width:84px;font-size:11.5px}}

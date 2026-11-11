@@ -3071,6 +3071,18 @@ function gbImportCsv(){
 /* 计算状态 */
 let gbState = null;
 
+/* ★ 2026-11-11：第 4 套标准 GB 19644-2024（乳粉和调制乳粉）★
+   与 1/2/3 段并列放在「段位」下拉里；它走表 2 理化指标，
+   不套用婴配 39 项营养素限值（口径完全不同，硬套就是编数据）。 */
+function gbIs44(){
+  return !!(GB && GB.gb19644 && gbState && String(gbState.seg) === "19644");
+}
+function gb44Class(){
+  const cs = (GB && GB.gb19644 && GB.gb19644.classes) || [];
+  return cs.find(c => c.key === (gbState && gbState.gb44Class)) || cs[0] || null;
+}
+function gbSet44Class(k){ gbState.gb44Class = k; gbSave(); gbRender(); }
+
 function gbInit(){
   if(!GB) return;
   /* ★ 2026-11-01：配方状态也要落盘 ★
@@ -3084,16 +3096,20 @@ function gbInit(){
       basis: saved.basis || "乳基",
       version: saved.version || "3.2",
       recipe: saved.recipe.map(r=>({key:r.key, amount:r.amount})),
-      flowStep: saved.flowStep || 1
+      flowStep: saved.flowStep || 1,
+      gb44Class: saved.gb44Class || "bovine",
+      gb44Test: (saved.gb44Test && typeof saved.gb44Test === "object") ? saved.gb44Test : {}
     };
     return;
   }
   gbState = {
-    seg: "3",                 // 段位
+    seg: "3",                 // 段位 / 或 "19644"
     basis: "乳基",             // 乳基 / 豆基
     version: "3.2",
     recipe: GB.defaultRecipe.map(r=>({key:r.key, amount:r.amount})),
     flowStep: 1,              // 流转走到第几步
+    gb44Class: "bovine",      // GB 19644 表 2 的产品类别
+    gb44Test: {},             // 水分 / 杂质度 / 复原乳酸度实测值
   };
 }
 /* 配方状态存盘（改任何一项都调） */
@@ -3102,7 +3118,8 @@ function gbSave(){
   Store.draft.set("gbRecipe", {
     seg: gbState.seg, basis: gbState.basis, version: gbState.version,
     recipe: gbState.recipe.map(r=>({key:r.key, amount:r.amount})),
-    flowStep: gbState.flowStep
+    flowStep: gbState.flowStep,
+    gb44Class: gbState.gb44Class, gb44Test: gbState.gb44Test || {}
   });
 }
 
@@ -3144,6 +3161,7 @@ function pickAdvice(key, verdict){
    为什么换算到 100kJ：国标限值就是按 100kJ 给的，不换算没法比。 */
 function gbCompute(){
   if(!GB || !gbState) return null;
+  if(gbIs44()) return gbCompute44();
   const mats = {};
   gbAllMaterials().forEach(m=>{ mats[m.key] = m; });
 
@@ -3263,6 +3281,110 @@ function gbCompute(){
   };
 }
 
+/* ================================================================
+   GB 19644-2024 表 2 理化指标核算（2026-11-11 用户要求「配方设计增加 GB19644 的」）
+   ----------------------------------------------------------------
+   · 蛋白质 / 脂肪：按各原料成分 × 投料量累加（每 100g 成品），可算区间
+   · 水分 / 杂质度 / 复原乳酸度：标准只给限值，值必须来自成品检测 → 页面可录入
+   · 乳粉蛋白质下限 =（100 − 脂肪 − 水分）× 品种比例（表 2 脚注 a），
+     脂肪取计算下限 → 非脂乳固体最大 → 蛋白要求最高，判定偏保守
+   · 脂肪下限仅适用于全脂乳粉；调制乳粉的脂肪/杂质度/酸度表 2 未设限
+   ★ 数据全部来自 GB 19644-2024 表 2 原文，不套用婴配每 100 kJ 限值、不编指标
+   ================================================================ */
+function gbCompute44(){
+  const G44 = GB.gb19644, C = gb44Class() || G44.classes[0];
+  const test = (gbState.gb44Test && typeof gbState.gb44Test === "object") ? gbState.gb44Test : {};
+  const mats = {}; gbAllMaterials().forEach(m=>{ mats[m.key] = m; });
+  const totalLo = {}, totalHi = {};
+  let sumAmount = 0;
+  gbState.recipe.forEach(r=>{
+    const m = mats[r.key];
+    if(!m || !r.amount) return;
+    sumAmount += r.amount;
+    const k = r.amount / 1000;
+    GB_COMP_KEYS.forEach(nkey=>{
+      const c = m.comp[GB_KEYMAP[nkey]];
+      if(!c) return;
+      totalLo[nkey] = (totalLo[nkey] || 0) + c.min * k;
+      totalHi[nkey] = (totalHi[nkey] || 0) + c.max * k;
+    });
+  });
+  const energyOf = t => (t.protein||0)*17 + (t.carb||0)*17 + (t.fat||0)*37;
+  const eLo = energyOf(totalLo), eHi = energyOf(totalHi);
+  const raw = key => {
+    const a = totalLo[key] || 0, b = totalHi[key] || 0;
+    return {min:Math.min(a,b), max:Math.max(a,b)};
+  };
+  const num = v => (v==null || v==="" || !isFinite(Number(v))) ? null : Number(v);
+  const fat = raw("fat"), water = num(test.water);
+  let proteinMin = null, proteinWait = false;
+  if(C.proteinMin != null) proteinMin = C.proteinMin;
+  else if(C.proteinRatio != null){
+    if(water == null) proteinWait = true;
+    else proteinMin = Math.max(0, 100 - fat.min - water) * C.proteinRatio;
+  }
+  const limOf = key => {
+    if(key === "protein")  return proteinMin == null ? null : {min:proteinMin, max:null};
+    if(key === "fat")      return C.fatMin == null ? null : {min:C.fatMin, max:null};
+    if(key === "water")    return {min:null, max:C.waterMax};
+    if(key === "impurity") return C.impurityMax == null ? null : {min:null, max:C.impurityMax};
+    if(key === "acidity")  return (C.acidityMin == null && C.acidityMax == null)
+                                  ? null : {min:C.acidityMin, max:C.acidityMax};
+    return null;
+  };
+  const ADV44 = {
+    protein:"蛋白质偏低：提高乳粉/乳蛋白原料占比；乳粉下限随脂肪、水分变化，先核这两个数。",
+    fat:"脂肪偏低：提高全脂乳粉或油脂用量（脂肪限值仅适用于全脂乳粉）。",
+    water:"水分超限：检查干燥工艺与包装防潮，复测 GB 5009.3。",
+    impurity:"杂质度超限：核查原料净乳与过滤、环境粉尘，复测 GB 5413.30。",
+    acidity:"复原乳酸度越界：核查原料乳新鲜度与中和工序，复测 GB 5009.239。"
+  };
+  const rows = G44.items.map(it=>{
+    const L = limOf(it.key);
+    let valMin = 0, valMax = 0, hasRange = false, missing = false, testVal = null;
+    if(it.mode === "calc"){
+      const v = raw(it.key);
+      valMin = v.min; valMax = v.max;
+      hasRange = Math.abs(valMax - valMin) > 1e-12;
+    } else {
+      testVal = test[it.key];
+      const t = num(testVal);
+      if(t == null) missing = true;
+      else { valMin = t; valMax = t; }
+    }
+    let verdict = "—", note = "", advice = "";
+    if(proteinWait && it.key === "protein"){
+      verdict = "待录入"; note = "需先录水分算非脂乳固体";
+      advice = "在「水分」一栏录入成品检测值，蛋白质下限会自动算出。";
+    } else if(L == null){
+      note = "该标准未设限";
+    } else if(missing){
+      verdict = "待录入"; note = "需录入检测值";
+      advice = "送检后把实测值填进本行输入框，判定会自动更新。";
+    } else {
+      const tol = 1e-9;
+      const partLow  = L.min != null && valMin < L.min - tol;
+      const partHigh = L.max != null && valMax > L.max + tol;
+      if(L.min != null && valMax < L.min - tol){ verdict="不足"; advice=ADV44[it.key]||""; }
+      else if(L.max != null && valMin > L.max + tol){ verdict="超限"; advice=ADV44[it.key]||""; }
+      else if(partLow || partHigh){ verdict="波动越界"; advice=ADV44[it.key]||""; }
+      else verdict = "达标";
+    }
+    return {key:it.key, name:it.name, unit:it.unit, dec:it.dec,
+            valMin, valMax, hasRange,
+            min:L?L.min:null, max:L?L.max:null,
+            verdict, note, advice, mode:it.mode, group:it.group,
+            method:it.method, hint:it.hint, testVal:testVal};
+  });
+  return {
+    rows, sumAmount, remain:1000 - sumAmount,
+    energyLo:Math.min(eLo,eHi), energyHi:Math.max(eLo,eHi), hasEnergyRange:false,
+    limitInfo:{std:G44.std, stdName:G44.stdName, age:"—",
+               energy:{text:"—"}, source:G44.source, note:G44.note},
+    cls:C, water:water, fat:fat
+  };
+}
+
 /* 区间文本：两端相等只显示一个数；否则显示 下限~上限。
    ★ force = 该指标确实受「区间成分」影响时，即使差值小于默认小数位，
      也要多加几位把两个数都显示出来 —— 用户录了区间就必须看到两个数，
@@ -3291,9 +3413,11 @@ function gbVerdictHtml(r){
   const nOver = r.rows.filter(x=>x.verdict==="超限").length;
   const nLow  = r.rows.filter(x=>x.verdict==="不足").length;
   const nRisk = r.rows.filter(x=>x.verdict==="波动越界").length;
+  const nWait = r.rows.filter(x=>x.verdict==="待录入").length;
   if(nOver) return `<span class="gbc-tag bad">${nOver} 项超限</span>`;
   if(nLow)  return `<span class="gbc-tag warn">${nLow} 项不足</span>`;
   if(nRisk) return `<span class="gbc-tag warn">${nRisk} 项波动越界</span>`;
+  if(nWait) return `<span class="gbc-tag warn">${nWait} 项待录入</span>`;
   return `<span class="gbc-tag ok">全部达标</span>`;
 }
 
@@ -3313,10 +3437,14 @@ function gbSrcBarHtml(){
            或点「清空参考值」从零录入。`
         : `✓ 全部投料原料已录入实测成分，计算值按你录入的数据得出。`);
   return `<div class="gbc-srcbar ${unmeasured?"warn":"ok"}">
-    <span>ⓘ 按 <b>GB 10765 / 10766 / 10767-2021</b> 三份产品标准的表 1~4 全项核算：
+    <span>${gbIs44()
+      ? `ⓘ 按 <b>GB 19644-2024 表 2 理化指标</b>核算：<b>5 项指标 · 2 项由配方计算、3 项需录成品检测值</b>。
+           蛋白质 / 脂肪 = 各原料每 100g 成分 × 添加量累加；水分 / 杂质度 / 复原乳酸度填实测值即自动判定。
+           乳粉蛋白质下限 =（100 − 脂肪 − 水分）× 品种比例，脂肪限值仅适用于全脂乳粉。`
+      : `ⓘ 按 <b>GB 10765 / 10766 / 10767-2021</b> 三份产品标准的表 1~4 全项核算：
       <b>${(GB.nutrients||[]).length} 项指标 · ${GB_COMP_KEYS.length} 个可录入成分</b>。
       计算值 = 各原料 <b>每 100g 营养成分</b> × 添加量累加，再换算到国标「每 100 kJ」口径；
-      每个成分按 <b>下限 ~ 上限</b> 录两值，计算值也是同口径区间。
+      每个成分按 <b>下限 ~ 上限</b> 录两值，计算值也是同口径区间。`}
       <span class="gbc-trust ${unmeasured?"":"ok"}">${trust}</span></span>
     <span class="sp"></span>
     <span class="cnt">已录入实测 <b>${mine}</b> 味原料${gbNoBaseline?" · 参考基线已清空":""}</span>
@@ -3435,6 +3563,9 @@ function gbRender(){
   const mats = {};
   gbAllMaterials().forEach(m=>{ mats[m.key] = m; });
   const L = r.limitInfo;
+  const is44 = gbIs44();
+  const groups = is44 ? ["配方计算项","检测录入项"] : GB_GROUPS;
+  const grpOf = is44 ? (x=>x.group || "配方计算项") : (x=>gbGroupOf(x.key));
 
   // ---- 顶部：版本与段位 ----
   let h = `
@@ -3444,30 +3575,42 @@ function gbRender(){
       <span class="gbc-ver">配方 F-IF-001 版本 ${escHtml(gbState.version)}</span>
     </div>
     <div class="gbc-meta">
-      <span class="gbc-tag">${escHtml(gbState.basis)}</span>
-      <span class="gbc-tag">${gbState.seg}段</span>
+      <span class="gbc-tag">${is44?escHtml((r.cls||{}).name||"乳粉"):escHtml(gbState.basis)}</span>
+      <span class="gbc-tag">${is44?"乳粉/调制乳粉":gbState.seg+"段"}</span>
       <span id="gbVerdictTag">${gbVerdictHtml(r)}</span>
     </div>
-    <div class="gbc-sub">
-      目标 ${escHtml(L.std||"")}${escHtml(L.stdName?("《"+L.stdName+"》"):"")}
+    <div class="gbc-sub">${is44
+      ? `目标 ${escHtml(L.std||"")}${escHtml(L.stdName?("《"+L.stdName+"》"):"")}
+         　| 产品类别 <b>${escHtml((r.cls||{}).name||"—")}</b>
+         　| 依据 ${escHtml(L.source||"表 2 理化指标")}
+         　| 蛋白质下限按非脂乳固体动态计算`
+      : `目标 ${escHtml(L.std||"")}${escHtml(L.stdName?("《"+L.stdName+"》"):"")}
       　| 适用 ${escHtml(L.age||"—")}
       　| 即食能量 ${escHtml((L.energy&&L.energy.text)||"—")}（需按冲调倍数折算）
-      　| 计划备案 2026-02-03　| 申请人 李工
+      　| 计划备案 2026-02-03　| 申请人 李工`}
     </div>
   </div>
 
   <div class="gbc-ctl">
-    <label>段位
+    <label>段位 / 标准
       <select onchange="gbSetSeg(this.value)">
         ${["1","2","3"].map(s=>`<option value="${s}" ${s===gbState.seg?"selected":""}>
           ${s}段（${GB.limits[s].std}）</option>`).join("")}
+        ${(GB.gb19644 && GB.gb19644.classes) ? `<option value="19644" ${gbState.seg==="19644"?"selected":""}>
+          乳粉/调制乳粉（${escHtml(GB.gb19644.std)}）</option>` : ""}
       </select>
     </label>
-    <label>产品类型
-      <select onchange="gbSetBasis(this.value)">
-        ${["乳基","豆基"].map(b=>`<option ${b===gbState.basis?"selected":""}>${b}</option>`).join("")}
-      </select>
-    </label>
+    ${is44
+      ? `<label>产品类别
+          <select onchange="gbSet44Class(this.value)">
+            ${GB.gb19644.classes.map(c=>`<option value="${escHtml(c.key)}" ${c.key===gbState.gb44Class?"selected":""}>${escHtml(c.name)}</option>`).join("")}
+          </select>
+        </label>`
+      : `<label>产品类型
+          <select onchange="gbSetBasis(this.value)">
+            ${["乳基","豆基"].map(b=>`<option ${b===gbState.basis?"selected":""}>${b}</option>`).join("")}
+          </select>
+        </label>`}
     <label>配方版本
       <input type="text" value="${escHtml(gbState.version)}" style="width:74px"
              oninput="gbState.version=this.value">
@@ -3523,62 +3666,58 @@ function gbRender(){
     <!-- 右：营养素核算 vs 国标 -->
     <div class="gbc-panel">
       <div class="gbc-ph">
-        <span class="n">2</span> 营养素核算 vs ${escHtml(L.std||"")}-${escHtml(L.stdVersion||"")}（${gbState.seg}段）
+        <span class="n">2</span> 营养素核算 vs ${escHtml(L.std||"")}（${is44?"表 2 理化指标":gbState.seg+"段"}）
       </div>
       <div class="gbc-tblwrap">
       <table class="gbc-tbl">
         <thead><tr>
-          <th>营养素</th><th>计算值（低~高）</th><th>下限</th><th>上限</th><th>判定</th>
+          <th>${is44?"理化指标":"营养素"}</th><th>${is44?"计算值 / 实测值":"计算值（低~高）"}</th><th>下限</th><th>上限</th><th>判定</th>
         </tr></thead>
         <tbody>
-        ${GB_GROUPS.map(grp=>{
-          const rs = r.rows.filter(x=>gbGroupOf(x.key)===grp);
+        ${groups.map(grp=>{
+          const rs = r.rows.filter(x=>grpOf(x)===grp);
           if(!rs.length) return "";
           return `<tr class="gbc-grp-row"><td colspan="5">${escHtml(grp)}
-              <span>${rs.length} 项${grp==="可选择成分"?" · 未添加按 0 计":""}</span></td></tr>` +
+              <span>${rs.length} 项${!is44 && grp==="可选择成分"?" · 未添加按 0 计":""}</span></td></tr>` +
             rs.map(row=>{
               const bad = row.verdict==="超限", low = row.verdict==="不足";
-              const risk = row.verdict==="波动越界";
-              const vc = bad?"bad":(low||risk?"low":"ok");
+              const risk = row.verdict==="波动越界", wait = row.verdict==="待录入";
+              const vc = bad?"bad":(low||risk||wait?"low":"ok");
               const nt = (GB.nutrients||[]).find(x=>x.key===row.key) || {};
-              const opt = (nt.optionalSegs||[]).indexOf(gbState.seg) >= 0;
+              const opt = !is44 && (nt.optionalSegs||[]).indexOf(gbState.seg) >= 0;
               return `<tr class="${vc}" data-nk="${row.key}">
                 <td>${escHtml(row.name)}
+                  ${is44 && row.method?`<span class="vf gray" title="检验方法 ${escHtml(row.method)}">${escHtml(row.method)}</span>`:""}
                   ${opt?'<span class="vf gray" title="该段位列入标准表 4 可选择成分">可选</span>':""}
-                  ${row.note==="待核对"?'<span class="vf" title="内置参考值，请与标准正文核对">待核对</span>':""}
-                  ${row.note==="国标未设限"?'<span class="vf gray">未设限</span>':""}</td>
-                <td class="v">${gbRangeHtml(row.valMin, row.valMax, row.dec)}</td>
-                <td>${row.min==null?"—":row.min.toFixed(row.dec)}${row.min==null&&row.max!=null?'<span class="vns">起</span>':""}</td>
-                <td>${row.max==null?"—":row.max.toFixed(row.dec)}</td>
-                <td><span class="vd ${vc}">${row.verdict}</span></td>
+                  ${!is44 && row.note==="待核对"?'<span class="vf" title="内置参考值，请与标准正文核对">待核对</span>':""}
+                  ${!is44 && row.note==="国标未设限"?'<span class="vf gray">未设限</span>':""}
+                  ${is44 && row.note==="该标准未设限"?'<span class="vf gray">未设限</span>':""}
+                  ${is44 && row.note && row.note!=="该标准未设限"?`<span class="vf" title="${escHtml(row.note)}">提示</span>`:""}</td>
+                <td class="v">${is44 && row.mode==="input"
+                    ? `<input class="gbc-v44" type="number" step="any" value="${row.testVal==null?"":escHtml(String(row.testVal))}" placeholder="录实测" oninput="gb44SetTest('${row.key}',this.value)" title="${escHtml(row.hint||"")}">`
+                    : gbRangeHtml(row.valMin, row.valMax, row.dec)}</td>
+                <td data-lim44="${row.key}">${row.min==null?"—":row.min.toFixed(row.dec)}${row.min==null&&row.max!=null?'<span class="vns">起</span>':""}</td>
+                <td data-max44="${row.key}">${row.max==null?"—":row.max.toFixed(row.dec)}</td>
+                <td><span class="vd ${vc}" data-vd44="${row.key}">${row.verdict}</span></td>
               </tr>`;
             }).join("");
         }).join("")}
         </tbody>
       </table>
       </div>
-      <div class="gbc-unit">除能量与比值型指标外，限值均为「每 100 kJ」，取自当前段位产品标准表 1~4；
+      <div class="gbc-unit">${is44
+        ? `限值取自 <b>GB 19644-2024 表 2 理化指标</b>，口径为每 100g 成品；蛋白质（乳粉）下限
+            = 非脂乳固体 × 品种比例，非脂乳固体 =（100 − 脂肪 − 水分），按脂肪计算下限推算（判定偏保守）；
+            脂肪下限仅适用于全脂乳粉；调制乳粉的脂肪 / 杂质度 / 复原乳酸度表 2 未设限。
+            水分、杂质度、复原乳酸度需录入<b>成品检测实测值</b>才参与判定，未录入时显示「待录入」。`
+        : `除能量与比值型指标外，限值均为「每 100 kJ」，取自当前段位产品标准表 1~4；
         能量按粉剂每 100g 计算，与标准给的即食状态能量需按冲调倍数折算。
-        计算值按各原料成分的下限、上限各算一遍，<b>永远显示两个数</b>；两端相同则写成 x~x。</div>
+        计算值按各原料成分的下限、上限各算一遍，<b>永远显示两个数</b>；两端相同则写成 x~x。`}</div>
     </div>
   </div>
 
   <!-- 超限项的调整建议 -->
-  ${(()=>{
-    const bads = r.rows.filter(x=>["超限","不足","波动越界"].indexOf(x.verdict)>=0);
-    if(!bads.length) return `
-      <div class="gbc-tip ok">✓ 全部指标在国标范围内，可以进入配方评审。</div>`;
-    return `<div class="gbc-bads">
-      <div class="gbc-bh">⚠ ${bads.length} 项需要处理</div>
-      ${bads.map(x=>`<div class="gbc-bad">
-        <span class="vd ${x.verdict==="超限"?"bad":"low"}">${x.verdict}</span>
-        <b>${escHtml(x.name)}</b>
-        <span class="num">${gbRangeText(x.valMin, x.valMax, x.dec, x.hasRange)} ${escHtml(x.unit)}
-          ${x.min!=null?`（限 ${x.min}~${x.max}）`:""}</span>
-        <div class="adv">${escHtml(x.advice || "调整对应原料添加量后重算。")}</div>
-      </div>`).join("")}
-    </div>`;
-  })()}
+  <div id="gbAdviceBox">${gbAdviceHtml(r)}</div>
 
   <!-- 配方版本流转 -->
   <div class="gbc-flow">
@@ -3605,9 +3744,64 @@ function gbRender(){
   host.innerHTML = h;
 }
 
+/* 超限 / 不足的调整建议（GB 19644 模式也要能实时刷新，抽成函数） */
+function gbAdviceHtml(r){
+  const bads = r.rows.filter(x=>["超限","不足","波动越界"].indexOf(x.verdict)>=0);
+  const waits = r.rows.filter(x=>x.verdict==="待录入");
+  if(!bads.length) return `<div class="gbc-tip ok">${waits.length
+      ? `ⓘ ${waits.length} 项等待录入成品检测值（${waits.map(x=>escHtml(x.name)).join("、")}），录入后自动判定。`
+      : `✓ 全部指标在国标范围内，可以进入配方评审。`}</div>`;
+  return `<div class="gbc-bads">
+      <div class="gbc-bh">⚠ ${bads.length} 项需要处理${waits.length?`（另有 ${waits.length} 项待录入）`:""}</div>
+      ${bads.map(x=>`<div class="gbc-bad">
+        <span class="vd ${x.verdict==="超限"?"bad":"low"}">${x.verdict}</span>
+        <b>${escHtml(x.name)}</b>
+        <span class="num">${gbRangeText(x.valMin, x.valMax, x.dec, x.hasRange)} ${escHtml(x.unit)}
+          ${x.min!=null?`（限 ${x.min}~${x.max}）`:""}</span>
+        <div class="adv">${escHtml(x.advice || "调整对应原料添加量后重算。")}</div>
+      </div>`).join("")}
+    </div>`;
+}
+
+/* ★ GB 19644 检测值录入：边填边算，只补丁判定/限值，不重绘整表（保焦点）★
+   只写数据不重绘 = 图是死的；整表重绘 = 输入框失焦，两个坑都避开。 */
+function gb44SetTest(k, v){
+  if(!gbState.gb44Test) gbState.gb44Test = {};
+  if(v == null || v === "" || !isFinite(Number(v))) delete gbState.gb44Test[k];
+  else gbState.gb44Test[k] = Number(v);
+  gbSave();
+  gb44Live();
+}
+function gb44Live(){
+  if(!gbIs44()) return;
+  const r = gbCompute();
+  if(!r) return;
+  r.rows.forEach(row=>{
+    const vc = row.verdict==="超限" ? "bad"
+      : (["不足","波动越界","待录入"].indexOf(row.verdict)>=0 ? "low" : "ok");
+    const tr = document.querySelector(`#gbCalc tr[data-nk="${row.key}"]`);
+    if(tr) tr.className = vc;
+    const vd = document.querySelector(`[data-vd44="${row.key}"]`);
+    if(vd){ vd.className = "vd " + vc; vd.textContent = row.verdict; }
+    const lm = document.querySelector(`[data-lim44="${row.key}"]`);
+    if(lm) lm.innerHTML = (row.min==null ? "—" : row.min.toFixed(row.dec))
+      + (row.min==null && row.max!=null ? '<span class="vns">起</span>' : "");
+    const mx = document.querySelector(`[data-max44="${row.key}"]`);
+    if(mx) mx.textContent = row.max==null ? "—" : row.max.toFixed(row.dec);
+  });
+  const tag = document.getElementById("gbVerdictTag");
+  if(tag) tag.innerHTML = gbVerdictHtml(r);
+  const box = document.getElementById("gbAdviceBox");
+  if(box) box.innerHTML = gbAdviceHtml(r);
+}
+
 /* ---- 交互 ----
    ★ 每个改动都调 gbSave()，保证刷新后配方还在 ★ */
-function gbSetSeg(s){ gbState.seg = s; gbSave(); gbRender(); }
+function gbSetSeg(s){
+  gbState.seg = s;
+  if(s === "19644" && !gbState.gb44Class) gbState.gb44Class = "bovine";
+  gbSave(); gbRender();
+}
 function gbSetBasis(b){ gbState.basis = b; gbSave(); gbRender(); }
 function gbSetAmt(i,v){ gbState.recipe[i].amount = parseFloat(v)||0; gbSave(); gbRender(); }
 function gbSetMat(i,k){ gbState.recipe[i].key = k; gbSave(); gbRender(); }
