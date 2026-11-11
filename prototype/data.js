@@ -8623,6 +8623,212 @@ window.STDWATCH_DATA = {
     }
    }
   },
+  "gb19644": {
+   "std": "GB 19644-2024",
+   "stdVersion": "2024",
+   "stdName": "乳粉和调制乳粉",
+   "age": "—",
+   "source": "GB 19644-2024 表 2 理化指标（2024-02-08 发布，2025-02-08 实施）",
+   "note": "蛋白质（乳粉）下限 =（100 − 脂肪 − 水分）× 品种比例；脂肪下限仅适用于全脂乳粉；调制乳粉蛋白质为固定下限，脂肪/杂质度/复原乳酸度表 2 未设限；水分 ≤5.0 g/100g 全体适用。",
+   "classes": [
+    {
+     "key": "bovine",
+     "name": "牛乳粉",
+     "kind": "乳粉",
+     "proteinRatio": 0.34,
+     "proteinMin": null,
+     "fatMin": 26.0,
+     "acidityMin": null,
+     "acidityMax": 18.0,
+     "impurityMax": 16.0,
+     "waterMax": 5.0
+    },
+    {
+     "key": "bovine_mod",
+     "name": "调制牛乳粉",
+     "kind": "调制乳粉",
+     "proteinRatio": null,
+     "proteinMin": 16.5,
+     "fatMin": null,
+     "acidityMin": null,
+     "acidityMax": null,
+     "impurityMax": null,
+     "waterMax": 5.0
+    },
+    {
+     "key": "goat",
+     "name": "羊乳粉",
+     "kind": "乳粉",
+     "proteinRatio": 0.34,
+     "proteinMin": null,
+     "fatMin": 26.0,
+     "acidityMin": 7.0,
+     "acidityMax": 14.0,
+     "impurityMax": 16.0,
+     "waterMax": 5.0
+    },
+    {
+     "key": "goat_mod",
+     "name": "调制羊乳粉",
+     "kind": "调制乳粉",
+     "proteinRatio": null,
+     "proteinMin": 16.5,
+     "fatMin": null,
+     "acidityMin": null,
+     "acidityMax": null,
+     "impurityMax": null,
+     "waterMax": 5.0
+    },
+    {
+     "key": "yak",
+     "name": "牦牛乳粉",
+     "kind": "乳粉",
+     "proteinRatio": 0.39,
+     "proteinMin": null,
+     "fatMin": 33.0,
+     "acidityMin": 12.5,
+     "acidityMax": 18.0,
+     "impurityMax": 16.0,
+     "waterMax": 5.0
+    },
+    {
+     "key": "yak_mod",
+     "name": "调制牦牛乳粉",
+     "kind": "调制乳粉",
+     "proteinRatio": null,
+     "proteinMin": 18.6,
+     "fatMin": null,
+     "acidityMin": null,
+     "acidityMax": null,
+     "impurityMax": null,
+     "waterMax": 5.0
+    },
+    {
+     "key": "camel",
+     "name": "骆驼乳粉",
+     "kind": "乳粉",
+     "proteinRatio": 0.36,
+     "proteinMin": null,
+     "fatMin": 28.0,
+     "acidityMin": null,
+     "acidityMax": 24.0,
+     "impurityMax": 16.0,
+     "waterMax": 5.0
+    },
+    {
+     "key": "camel_mod",
+     "name": "调制骆驼乳粉",
+     "kind": "调制乳粉",
+     "proteinRatio": null,
+     "proteinMin": 16.8,
+     "fatMin": null,
+     "acidityMin": null,
+     "acidityMax": null,
+     "impurityMax": null,
+     "waterMax": 5.0
+    },
+    {
+     "key": "donkey",
+     "name": "驴乳粉",
+     "kind": "乳粉",
+     "proteinRatio": 0.18,
+     "proteinMin": null,
+     "fatMin": 2.5,
+     "acidityMin": null,
+     "acidityMax": 6.0,
+     "impurityMax": 16.0,
+     "waterMax": 5.0
+    },
+    {
+     "key": "donkey_mod",
+     "name": "调制驴乳粉",
+     "kind": "调制乳粉",
+     "proteinRatio": null,
+     "proteinMin": 11.0,
+     "fatMin": null,
+     "acidityMin": null,
+     "acidityMax": null,
+     "impurityMax": null,
+     "waterMax": 5.0
+    },
+    {
+     "key": "horse",
+     "name": "马乳粉",
+     "kind": "乳粉",
+     "proteinRatio": 0.18,
+     "proteinMin": null,
+     "fatMin": 10.0,
+     "acidityMin": null,
+     "acidityMax": 10.0,
+     "impurityMax": 16.0,
+     "waterMax": 5.0
+    },
+    {
+     "key": "horse_mod",
+     "name": "调制马乳粉",
+     "kind": "调制乳粉",
+     "proteinRatio": null,
+     "proteinMin": 11.5,
+     "fatMin": null,
+     "acidityMin": null,
+     "acidityMax": null,
+     "impurityMax": null,
+     "waterMax": 5.0
+    }
+   ],
+   "items": [
+    {
+     "key": "protein",
+     "name": "蛋白质",
+     "unit": "g/100g",
+     "dec": 2,
+     "mode": "calc",
+     "group": "配方计算项",
+     "method": "GB 5009.5",
+     "hint": "按各原料蛋白成分 × 投料量累加；乳粉下限 = 非脂乳固体 × 品种比例"
+    },
+    {
+     "key": "fat",
+     "name": "脂肪",
+     "unit": "g/100g",
+     "dec": 2,
+     "mode": "calc",
+     "group": "配方计算项",
+     "method": "GB 5009.6",
+     "hint": "按各原料脂肪成分 × 投料量累加；下限仅适用于全脂乳粉"
+    },
+    {
+     "key": "water",
+     "name": "水分",
+     "unit": "g/100g",
+     "dec": 2,
+     "mode": "input",
+     "group": "检测录入项",
+     "method": "GB 5009.3",
+     "hint": "录入成品检测值；乳粉蛋白质下限需要它算非脂乳固体"
+    },
+    {
+     "key": "impurity",
+     "name": "杂质度",
+     "unit": "mg/kg",
+     "dec": 1,
+     "mode": "input",
+     "group": "检测录入项",
+     "method": "GB 5413.30",
+     "hint": "录入成品检测值；表 2 只对乳粉设限"
+    },
+    {
+     "key": "acidity",
+     "name": "复原乳酸度",
+     "unit": "°T",
+     "dec": 1,
+     "mode": "input",
+     "group": "检测录入项",
+     "method": "GB 5009.239",
+     "hint": "录入成品检测值；表 2 只对乳粉设限"
+    }
+   ]
+  },
   "materials": [
    {
     "key": "whole_milk",
