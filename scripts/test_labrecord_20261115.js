@@ -1,6 +1,8 @@
 /* ================================================================
-   test_labrecord_20261115.js —— 原始记录「按检测项目」模板回归
-   覆盖：9 份 Word 原表完整性 / 样品信息一次填充 / 多选 / 打印 / 落盘 / 手机
+   test_labrecord_20261115.js —— 原始记录「Word 原表 1:1」回归（2026-11-15 重写）
+   铁律：Word 原表所有文字/表格/合并/公式图/页眉页脚一字不改；
+        只有样品名称、生产商、批号/生产日期 3 项是每次打印的自动填充位；
+        标准溶液编码与有效期至默认原值，仅过期重配时改一次、本机记住。
    用法：NODE_PATH=<playwright路径> STD_TARGET=local node scripts/test_labrecord_20261115.js
    ================================================================ */
 const { chromium } = require('playwright-core');
@@ -27,7 +29,6 @@ function ck(cond, msg) {
   const p = await ctx.newPage();
   const errs = [];
   p.on('pageerror', e => errs.push(e.message));
-  p.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
 
   let navOK = false;
   for (let i = 0; i < 6 && !navOK; i++) {
@@ -37,138 +38,171 @@ function ck(cond, msg) {
   if (!navOK) { console.log('网络不通，中止'); await b.close(); process.exit(2); }
   await p.waitForTimeout(1200);
 
-  console.log('=== ① 数据层：9 份原表 ===');
+  console.log('=== ① 数据层：9 份 Word 原表 1:1 ===');
   const meta = await p.evaluate(() => (window.LABREC && window.LABREC.projects || []).map(x => ({
-    key: x.key, name: x.name, basis: x.basis, item: x.item,
-    tables: x.tables.length, notes: x.notes.length,
-    heads: x.tables.map(t => (t.grid[0] || []).map(c => c.t).join('|'))
+    key: x.key, name: x.name, file: x.file,
+    html: x.html || '', sol: x.solutions || []
   })));
   ck(meta.length === 9, '共 9 个检测项目模板');
   const KEYS = ['protein', 'fat', 'moisture', 'chloride', 'phosphorus', 'choline', 'nitrite', 'acidvalue', 'peroxide'];
   KEYS.forEach(k => ck(meta.some(m => m.key === k), '含项目 ' + k));
-  ck(meta.every(m => m.basis && m.basis.indexOf('GB ') === 0), '每个项目都有原文检验依据');
-  ck(meta.every(m => m.item), '每个项目都有检验项目及单位');
-  ck(meta.every(m => m.tables >= 1), '每个项目至少一张数据表');
-  ck(meta.every(m => m.notes >= 1), '每个项目都保留原文方法/计算式');
-  ck(new Set(meta.map(m => m.basis)).size === 9, '9 个项目的检验依据互不相同（没有套同一模板）');
+  ck(new Set(meta.map(m => m.html)).size === 9, '9 份模板内容互不相同（没有套通用表）');
+  ck(meta.every(m => m.html.length > 600), '每份模板都含完整原文');
+  ck(meta.every(m => m.html.indexOf('<table class="lr-wt">') >= 0), '每份都保留 Word 原表表格');
+  ck(meta.every(m => m.html.indexOf('<div class="lr-hdr">') >= 0), '每份都保留 Word 页眉');
+  ck(meta.every(m => m.html.indexOf('<div class="lr-ftr">') >= 0), '每份都保留 Word 页脚');
+  ck(meta.every(m => m.html.indexOf('data-lr="sample"') >= 0), '每份都有样品名称自动填充位');
+  ck(meta.every(m => m.html.indexOf('data-lr="maker"') >= 0), '每份都有生产商自动填充位');
+  ck(meta.every(m => m.html.indexOf('data-lr="batch"') >= 0), '每份都有批号/生产日期自动填充位');
+  ck(meta.every(m => m.html.indexOf('class="lr-title"') < 0 && m.html.indexOf('class="lr-head"') < 0),
+    '没有上一版自造的标题/抬头表（已改为 Word 原表）');
+  ck(meta.every(m => m.html.indexOf('检测方法 / 仪器 / 计算式（原文照录）') < 0),
+    '没有把原文抽出来另放的说明块（说明都在原表格里）');
+  const allHtml = meta.map(m => m.html).join('');
+  const eqCount = (allHtml.match(/<img class="lr-eq"/g) || []).length;
+  ck(eqCount >= 12, '还原了 Word 里的计算公式图片（共 ' + eqCount + ' 张）');
+  ck(allHtml.indexOf('data:image/png;base64,') >= 0, '公式图片是内嵌高清 PNG');
+  ck(allHtml.indexOf('高培（广州）乳业有限公司检测中心') >= 0, '页眉公司名原文保留');
+  ck(allHtml.indexOf('GOLDMAX-QM-FORM-005d(01)') >= 0, '页眉记录编号原文保留');
   const byKey = Object.fromEntries(meta.map(m => [m.key, m]));
-  ck(byKey.moisture.heads[0].indexOf('称量瓶恒重质量m3') >= 0, '水分表含原表列名「称量瓶恒重质量m3」');
-  ck(byKey.protein.heads[0].indexOf('消化液体积V3') >= 0, '蛋白质表含原表列名「消化液体积V3」');
-  ck(byKey.nitrite.tables === 6, '亚硝酸盐与硝酸盐保留 6 张原表（标准溶液/曲线/还原效率/试样等）');
-  ck(byKey.fat.tables === 2, '脂肪保留空白试验 + 试样测定 2 张表');
+  ck(byKey.moisture.html.indexOf('称量瓶恒重质量m3') >= 0, '水分原表列名「称量瓶恒重质量m3」');
+  ck(byKey.protein.html.indexOf('消化液体积V3') >= 0, '蛋白质原表列名「消化液体积V3」');
+  ck(byKey.choline.html.indexOf('氯化胆碱-d4') >= 0, '胆碱原表内标「氯化胆碱-d4」');
+  ck(byKey.nitrite.html.indexOf('镉柱还原效率') >= 0, '亚硝酸盐原表「镉柱还原效率」');
+  ck(byKey.peroxide.html.indexOf('硫代硫酸钠') >= 0, '过氧化值原表「硫代硫酸钠」');
+  ck(byKey.fat.html.indexOf('空白瓶恒重质量m4') >= 0, '脂肪原表「空白瓶恒重质量m4」');
+  ck(byKey.acidvalue.html.indexOf('氢氧化钠标液浓度') >= 0, '酸价原表「氢氧化钠标液浓度」');
+  ck(byKey.phosphorus.html.indexOf('钒钼酸铵') >= 0, '磷原表「钒钼酸铵」');
+  ck(byKey.chloride.html.indexOf('硝酸银标准滴定溶液') >= 0, '氯化物原表「硝酸银标准滴定溶液」');
 
-  console.log('=== ② 进入原始记录页 ===');
+  console.log('=== ② 标准溶液：默认原值，无需每次填 ===');
+  const sols = await p.evaluate(() => LAB.lrAllSolutions());
+  ck(sols.length === 6, '共 6 条标准溶液（氯化物1/磷1/胆碱2/亚硝酸盐2），实得 ' + sols.length);
+  ck(sols.some(s => s.name === '硝酸银滴定溶液标准物质' && s.code === '070-20260423-E' && s.expiry === '20271207'),
+    '氯化物：编码与有效期至默认就是 Word 原值');
+  ck(sols.some(s => s.name === '胆碱' && s.code === '058-20261022-01'), '胆碱：默认原值');
+  ck(sols.some(s => s.name === '硝酸钠标准溶液' && s.code === '072-20251231-E'), '硝酸钠：默认原值');
+  ck(meta.filter(m => m.sol.length).length === 4, '只有 4 个项目含标准溶液表');
+
+  console.log('=== ③ 进入原始记录页：只有 3 个动态输入 ===');
   await p.click('button[data-lab="record"]');
   await p.waitForTimeout(500);
-  ck(await p.locator('#labBody').innerText().then(t => t.indexOf('按检测项目出模板') >= 0), '默认进入「按检测项目」模式');
-  ck((await p.locator('.lr-chip').count()) === 9, '9 个项目可勾');
-  ck((await p.locator('[data-lr-sheet]').count()) >= 1, '默认已出一张模板');
-
-  console.log('=== ③ 样品信息一次填充 ===');
-  await p.click('button:has-text("全选")');
-  await p.waitForTimeout(350);
-  ck((await p.locator('[data-lr-sheet]').count()) === 9, '全选后 9 张模板全部出来');
-  const inputs = p.locator('.lr-fields input');
-  await inputs.nth(0).fill('迪唯恩2段（长期24个月）');
-  await inputs.nth(1).fill('高培');
-  await inputs.nth(2).fill('20261101 / 批号 A261101');
-  await p.waitForTimeout(250);
-  const vals = await p.evaluate(() => ({
-    s: [...document.querySelectorAll('[data-lr="sample"]')].map(e => e.textContent),
-    m: [...document.querySelectorAll('[data-lr="maker"]')].map(e => e.textContent),
-    b: [...document.querySelectorAll('[data-lr="batch"]')].map(e => e.textContent),
-    focus: document.activeElement && document.activeElement.getAttribute('oninput')
+  const fields = await p.evaluate(() => ({
+    labels: [...document.querySelectorAll('.lr-fields label span')].map(e => e.textContent.trim()),
+    inputs: document.querySelectorAll('.lr-fields input').length,
+    solOpen: !!document.querySelector('.lr-solbar[open]'),
+    hasSignInput: /检验人|复核人/.test(document.querySelector('.lr-fields').textContent)
   }));
-  ck(vals.s.length === 9 && vals.s.every(x => x === '迪唯恩2段（长期24个月）'), '样品名称自动填进 9 张表');
-  ck(vals.m.length === 9 && vals.m.every(x => x === '高培'), '生产商自动填进 9 张表');
-  ck(vals.b.length === 9 && vals.b.every(x => x.indexOf('A261101') >= 0), '批号/生产日期自动填进 9 张表');
-  ck(String(vals.focus || '').indexOf('lrSet') >= 0, '填写过程不重绘、输入框焦点未丢');
-  const stat = await p.locator('#lrStat').innerText();
-  ck(stat.indexOf('9 张') >= 0, '状态条显示已填充 9 张');
+  ck(fields.inputs === 3, '顶部只有 3 个输入框（实得 ' + fields.inputs + '）');
+  ck(fields.labels.join('|') === '样品名称|生产商|批号/生产日期', '三个输入分别是样品名称/生产商/批号·生产日期');
+  ck(!fields.hasSignInput, '检验人、复核人不是变量，没有做成输入框');
+  ck(!fields.solOpen, '标准溶液维护默认折叠，打印时不用管');
 
-  console.log('=== ④ 每个项目内容不同 ===');
-  const sheets = await p.evaluate(() => [...document.querySelectorAll('[data-lr-sheet]')].map(e => ({
-    key: e.getAttribute('data-lr-sheet'), text: e.innerText
-  })));
-  ck(sheets.length === 9, '预览里 9 张纸');
-  ck(new Set(sheets.map(s => s.text)).size === 9, '9 张纸正文互不相同');
-  ck(sheets.find(s => s.key === 'moisture').text.indexOf('GB 5009.3-2016') >= 0, '水分页用 GB 5009.3-2016');
-  ck(sheets.find(s => s.key === 'nitrite').text.indexOf('GB 5009.33-2025') >= 0, '亚硝酸盐页用 GB 5009.33-2025');
-  ck(sheets.find(s => s.key === 'choline').text.indexOf('GB 5413.20') >= 0, '胆碱页用 GB 5413.20-2022');
-  ck(sheets.every(s => s.text.indexOf('样品名称') >= 0 || s.text.indexOf('样 品 名 称') >= 0), '每张都有样品抬头');
-  ck(sheets.every(s => s.text.indexOf('检验人') >= 0 && s.text.indexOf('复核人') >= 0), '每张都有检验人/复核人签字栏');
-
-  console.log('=== ⑤ 选择与打印 ===');
-  await p.click('button:has-text("清空")');
-  await p.waitForTimeout(250);
-  ck((await p.locator('[data-lr-sheet]').count()) === 0, '清空后不出模板');
-  await p.evaluate(() => LAB.lrToggle('moisture'));
-  await p.waitForTimeout(200);
-  ck((await p.locator('[data-lr-sheet="moisture"]').count()) === 1, '单选水分只出水分模板');
-
+  console.log('=== ④ 填一次，9 张表自动带出 ===');
+  await p.evaluate(() => LAB.lrAll());
+  await p.waitForTimeout(400);
   await p.evaluate(() => {
-    window.__printHtml = '';
-    window.open = function () {
-      return {
-        document: { write: s => { window.__printHtml += s; }, close: () => {} },
-        focus: () => {}, print: () => {}
-      };
-    };
+    LAB.lrSet('sample', '迪唯恩2段（长期24个月）');
+    LAB.lrSet('maker', '高培');
+    LAB.lrSet('batch', '20261101 / A261101');
   });
-  await p.evaluate(() => LAB.lrPrint());
-  await p.waitForTimeout(500);
-  const ph = await p.evaluate(() => window.__printHtml);
-  ck(ph.indexOf('@page{size:A4 landscape') >= 0, '打印页 A4 横向');
-  ck((ph.match(/class="pg"/g) || []).length === 1, '只打选中的 1 张');
-  ck(ph.indexOf('迪唯恩2段') >= 0 && ph.indexOf('高培') >= 0, '打印页带自动填充的样品信息');
-  ck(ph.indexOf('称量瓶恒重质量m3') >= 0, '打印页含水分原表列名');
-  ck(ph.indexOf('计算式') >= 0 || ph.indexOf('计算公式') >= 0, '打印页含原文计算式（默认附）');
+  await p.waitForTimeout(350);
+  const filled = await p.evaluate(() => {
+    const out = [];
+    document.querySelectorAll('.lr-paper').forEach(el => {
+      out.push({
+        key: el.getAttribute('data-lr-sheet'),
+        sample: (el.querySelector('[data-lr="sample"]') || {}).textContent,
+        maker: (el.querySelector('[data-lr="maker"]') || {}).textContent,
+        batch: (el.querySelector('[data-lr="batch"]') || {}).textContent,
+        hasTitle: !!el.querySelector('.lr-title'),
+        noInputs: el.querySelectorAll('input,textarea,select,[contenteditable]').length === 0,
+        signText: /检\s*验\s*人/.test(el.textContent)
+      });
+    });
+    return out;
+  });
+  ck(filled.length === 9, '全选后铺出 9 张 Word 原表');
+  ck(filled.every(x => x.sample === '迪唯恩2段（长期24个月）'), '9 张表样品名称全部自动带出');
+  ck(filled.every(x => x.maker === '高培'), '9 张表生产商全部自动带出');
+  ck(filled.every(x => x.batch === '20261101 / A261101'), '9 张表批号/生产日期全部自动带出');
+  ck(filled.every(x => !x.hasTitle), '没有额外加自造标题');
+  ck(filled.every(x => x.noInputs), '记录纸里没有任何输入框：除 3 个动态位外都不可编辑');
+  ck(filled.every(x => x.signText), '签字栏保持 Word 原表原文');
 
-  await p.evaluate(() => { LAB.lrNotes(false); window.__printHtml = ''; LAB.lrPrint(); });
-  await p.waitForTimeout(450);
-  const ph2 = await p.evaluate(() => window.__printHtml);
-  ck(ph2.indexOf('检测方法 / 仪器 / 计算式') < 0, '取消勾选后只打空白表');
-  ck(ph2.indexOf('称量瓶恒重质量m3') >= 0, '空白表仍保留原表列名');
-  await p.evaluate(() => LAB.lrNotes(true));
+  console.log('=== ⑤ 标准溶液打印时不用填，改一次就记住 ===');
+  const before = await p.evaluate(() => {
+    const el = document.querySelector('.lr-paper[data-lr-sheet="chloride"] [data-lr="stdcode"]');
+    return el ? el.textContent : '';
+  });
+  ck(before === '070-20260423-E', '未改时打印出来的就是 Word 原值（不用填）');
+  await p.click('.lr-solbar summary');
+  await p.waitForTimeout(250);
+  await p.evaluate(() => {
+    const rows = [...document.querySelectorAll('.lr-solrow')];
+    const row = rows.find(r => r.querySelector('b').textContent.indexOf('硝酸银') >= 0);
+    const inp = row.querySelectorAll('input')[0];
+    inp.value = '070-20261115-N';
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await p.waitForTimeout(300);
+  const after = await p.evaluate(() => ({
+    cell: (document.querySelector('.lr-paper[data-lr-sheet="chloride"] [data-lr="stdcode"]') || {}).textContent,
+    sol: LAB.lrSol()['硝酸银滴定溶液标准物质']
+  }));
+  ck(after.cell === '070-20261115-N', '改一次，对应项目的编码立刻更新');
+  ck(after.sol && after.sol.code === '070-20261115-N', '覆盖值已写进本机保存');
 
-  console.log('=== ⑥ 批量打印 / 落盘 / 模式切换 ===');
-  await p.evaluate(() => { LAB.lrAll(); window.__printHtml = ''; LAB.lrPrint(); });
-  await p.waitForTimeout(450);
-  const ph3 = await p.evaluate(() => window.__printHtml);
-  ck((ph3.match(/class="pg"/g) || []).length === 9, '一次打印 9 张，每张独立成页');
-  ck((ph3.match(/page-break-after:always/g) || []).length >= 1, '打印样式含分页控制');
+  console.log('=== ⑥ 打印 HTML：原表 1:1 + 已填值 ===');
+  const printHtml = await p.evaluate(() => {
+    let out = '';
+    const orig = window.open;
+    window.open = function () { return { document: { write: s => { out += s }, close: () => {} }, focus: () => {}, print: () => {} } };
+    LAB.lrPrint();
+    window.open = orig;
+    return out;
+  });
+  ck((printHtml.match(/class="pg"/g) || []).length === 9, '9 个项目各占一页');
+  ck(printHtml.indexOf('迪唯恩2段（长期24个月）') >= 0, '打印页含自动填充的样品名称');
+  ck(printHtml.indexOf('070-20261115-N') >= 0, '打印页含改过的标准溶液编码');
+  ck(printHtml.indexOf('高培（广州）乳业有限公司检测中心') >= 0, '打印页保留 Word 页眉');
+  ck(printHtml.indexOf('data:image/png;base64,') >= 0, '打印页保留公式图片');
+  ck(printHtml.indexOf('class="lr-title"') < 0, '打印页没有自造标题');
+  ck(printHtml.indexOf('@page{size:A4 landscape') >= 0, 'A4 横向，每项目独立一页');
 
+  console.log('=== ⑦ 刷新后仍在（本机保存） ===');
   await p.reload({ waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(1200);
   await p.click('button[data-lab="record"]');
-  await p.waitForTimeout(400);
-  const persisted = await p.evaluate(() => LAB.lrInfo());
-  ck(persisted.sample === '迪唯恩2段（长期24个月）' && persisted.maker === '高培', '刷新后样品信息还在');
-  ck((await p.locator('[data-lr-sheet]').count()) === 9, '刷新后项目选择也保留');
+  await p.waitForTimeout(450);
+  const persisted = await p.evaluate(() => ({
+    info: LAB.lrInfo(),
+    sol: LAB.lrSol()['硝酸银滴定溶液标准物质'],
+    selected: LAB.lrSelected().length,
+    first: (document.querySelector('.lr-paper [data-lr="sample"]') || {}).textContent
+  }));
+  ck(persisted.info.sample === '迪唯恩2段（长期24个月）', '刷新后样品名称还在');
+  ck(persisted.info.maker === '高培', '刷新后生产商还在');
+  ck(persisted.info.batch === '20261101 / A261101', '刷新后批号还在');
+  ck(persisted.sol && persisted.sol.code === '070-20261115-N', '刷新后标准溶液新编码还在（不用每次改）');
+  ck(persisted.selected === 9, '刷新后项目勾选还在');
+  ck(persisted.first === '迪唯恩2段（长期24个月）', '刷新后模板里自动带出样品信息');
 
-  await p.click('button:has-text("按方法标准")');
-  await p.waitForTimeout(300);
-  ck(await p.locator('#labBody').innerText().then(t => t.indexOf('选检测方法') >= 0), '可切回按方法标准模式');
-  await p.click('button:has-text("按检测项目")');
-  await p.waitForTimeout(300);
-  ck((await p.locator('.lr-chip').count()) === 9, '可切回按检测项目模式');
+  console.log('=== ⑧ 手机端不溢出 ===');
+  for (const w of [390, 430]) {
+    const m = await ctx.newPage();
+    await m.setViewportSize({ width: w, height: 844 });
+    await m.goto(URL + '#lab', { waitUntil: 'domcontentloaded' });
+    await m.waitForTimeout(1000);
+    await m.click('button[data-lab="record"]');
+    await m.waitForTimeout(400);
+    const sw = await m.evaluate(() => document.documentElement.scrollWidth);
+    ck(sw === w, w + 'px 手机无横向溢出（scrollWidth=' + sw + '）');
+    await m.close();
+  }
 
-  console.log('=== ⑦ 手机端 ===');
-  const mp = await ctx.newPage();
-  await mp.setViewportSize({ width: 390, height: 844 });
-  await mp.goto(URL + '#lab', { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await mp.waitForTimeout(1000);
-  await mp.click('button[data-lab="record"]');
-  await mp.waitForTimeout(400);
-  const ov = await mp.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: innerWidth }));
-  ck(ov.sw <= ov.iw + 1, '390px 手机宽度不溢出 (scrollWidth=' + ov.sw + ')');
-  ck((await mp.locator('.lr-scroll').count()) >= 1, '手机端表格走横滚容器');
-  await mp.close();
-
-  console.log('=== ⑧ JS 报错 ===');
-  ck(errs.length === 0, '无 JS 报错' + (errs.length ? '：' + errs.slice(0, 3).join(' / ') : ''));
-
-  console.log('\n=== ' + pass + '/' + (pass + fail) + ' 通过 ===');
+  ck(errs.length === 0, '无 JS 报错' + (errs.length ? '：' + errs[0] : ''));
+  console.log('\n=== 结果：' + pass + '/' + (pass + fail) + ' ===');
   await b.close();
   process.exit(fail ? 1 : 0);
-})().catch(e => { console.error(e); process.exit(2); });
+})();

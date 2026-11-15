@@ -49,7 +49,10 @@ H = {
 # ★ .tmp_v 里是本机临时凭据（tok.txt = 47 字节 "Bearer ghp_…"），
 #   2026-11-08 dry-run 发现它会被推到公开仓库 → 必须永久排除。
 SKIP_DIRS = {".git", "__pycache__", "node_modules", "_shots", ".idea", ".vscode",
-             ".tmp_v"}
+             ".tmp_v",
+             # 本机解析 Word 原表的中间产物（OOXML / 公式图 / editor_sdk 抽取结果），
+             # 体积大且含用户本地文档内容，生成物已内嵌进 prototype/labrecord.js
+             "record_oo", "record_media", "record_src"}
 SKIP_SUFFIX = (".pyc", ".log", ".bak")
 
 # ★ 本机临时目录，绝不能推 ★

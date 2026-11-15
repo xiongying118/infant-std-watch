@@ -29,13 +29,18 @@
   var ST = {};                // 本机覆盖层
   var REC = null;             // 当前原始记录草稿
 
-  /* ===== 按检测项目的真实模板（2026-11-15）=====
-     9 份 Word 原表逐格读取后生成 prototype/labrecord.js。
-     样品信息填一次，自动带进所有选中的项目；刷新不丢。 */
+  /* ===== 按检测项目的真实模板（2026-11-15 重做）=====
+     prototype/labrecord.js 由 9 份 Word 原表的原生 OOXML 1:1 生成：
+     段落 / 表格 / 合并单元格 / 公式图片 / 页眉页脚一字不改。
+     这里只做「填空」：
+       · 样品名称、生产商、批号或生产日期 —— 填一次，全部项目自动带出
+       · 标准溶液编码、有效期至 —— 保留 Word 原值；只有过期重配时
+         在「标准溶液维护」里改一次，本机记住，打印时无需填写 */
   var LRMODE  = "project";    // project | method
-  var LRINFO  = null;         // 样品公共信息
+  var LRINFO  = null;         // 样品公共信息（仅 3 项）
   var LRSEL   = null;         // 选中的项目 {key:1}
-  var LRNOTES = true;         // 打印是否附检测方法与计算式
+  var LRSOL   = null;         // 标准溶液覆盖表 {名称:{code,expiry}}
+  var LRNOTES = true;         // 兼容旧调用（方法说明已在原表内）
 
   function esc(s){
     return String(s==null?"":s).replace(/[&<>"]/g, function(c){
@@ -733,9 +738,11 @@
   }
 
   /* ================================================================
-     ⑦-a 原始记录「按检测项目」模式（2026-11-15）
-     9 份 Word 原表逐格读取 → prototype/labrecord.js。
-     抬头/列名/预置值/检验依据/仪器与方法说明全部照抄原表，不编数值。
+     ⑦-a 原始记录「按检测项目」模式（2026-11-15 重做）
+     ★ Word 原表 1:1：labrecord.js 里已是 Word 原生 OOXML 还原的完整记录纸，
+       这里只把 3 个动态位填上，绝不增删任何原文内容。
+     ★ 标准溶液编码 / 有效期至默认就是 Word 原表里的值，打印不用填；
+       过期重配才在「标准溶液维护」改一次，改完全站按溶液名称记住。
      ================================================================ */
   function lrProjects(){ return (global.LABREC && global.LABREC.projects) || []; }
   function lrProject(k){
@@ -745,13 +752,36 @@
   }
   function lrInfo(){
     if(!LRINFO){
-      LRINFO={sample:"",maker:"",batch:"",testDate:today(),tester:"",reviewer:""};
-      var s=global.Store?global.Store.get("lab.record.info.v1",null):null;
+      LRINFO={sample:"",maker:"",batch:""};
+      var s=global.Store?global.Store.get("lab.record.info.v2",null):null;
       if(s&&typeof s==="object"){
-        Object.keys(LRINFO).forEach(function(k){ if(s[k]!=null) LRINFO[k]=String(s[k]); });
+        ["sample","maker","batch"].forEach(function(k){ if(s[k]!=null) LRINFO[k]=String(s[k]); });
       }
     }
     return LRINFO;
+  }
+  /* 只保存用户改过的标准溶液；没改过的一律用 Word 原值 */
+  function lrSol(){
+    if(!LRSOL){
+      LRSOL=global.Store?global.Store.get("lab.record.sol.v1",null):null;
+      if(!LRSOL||typeof LRSOL!=="object") LRSOL={};
+    }
+    return LRSOL;
+  }
+  function lrAllSolutions(){
+    var seen={},out=[],O=lrSol();
+    lrProjects().forEach(function(p){
+      (p.solutions||[]).forEach(function(s){
+        if(seen[s.name]) return;
+        seen[s.name]=1;
+        var o=O[s.name]||{};
+        out.push({name:s.name,
+                  code:o.code!=null?o.code:s.code,
+                  expiry:o.expiry!=null?o.expiry:s.expiry,
+                  origCode:s.code,origExpiry:s.expiry});
+      });
+    });
+    return out;
   }
   function lrSel(){
     if(!LRSEL){
@@ -769,93 +799,81 @@
   function lrSave(){
     if(!global.Store) return;
     var s=lrSel(), I=lrInfo();
-    global.Store.set("lab.record.info.v1", I);
+    global.Store.set("lab.record.info.v2", I);
+    global.Store.set("lab.record.sol.v1", lrSol());
     global.Store.set("lab.record.sel.v1",
       lrProjects().filter(function(p){ return s[p.key]; }).map(function(p){ return p.key; }));
   }
-  function lrGridHtml(t){
-    var h='<table class="lr-grid"><tbody>';
-    t.grid.forEach(function(line,ri){
-      h+='<tr>';
-      line.forEach(function(c){
-        h+='<td class="'+(ri===0?"hd":"")+'"'+
-           (c.cs>1?' colspan="'+c.cs+'"':'')+
-           (c.rs>1?' rowspan="'+c.rs+'"':'')+'>'+esc(c.t)+'</td>';
+  /* 把 Word 原表里的动态占位填上；其余 HTML 原样返回 */
+  function lrFill(html){
+    var I=lrInfo(), O=lrSol();
+    return (html||"").replace(/<span class="lr-dyn"([^>]*)>([\s\S]*?)<\/span>/g,
+      function(all,attrs,inner){
+        var k=(attrs.match(/data-lr="([^"]+)"/)||[])[1];
+        var nm=(attrs.match(/data-std="([^"]+)"/)||[])[1];
+        var v=inner;
+        if(k==="sample"||k==="maker"||k==="batch") v=I[k]||"";
+        else if((k==="stdcode"||k==="stdexp")&&nm&&O[nm]){
+          v = (k==="stdcode")
+              ? (O[nm].code!=null?O[nm].code:inner)
+              : (O[nm].expiry!=null?O[nm].expiry:inner);
+        }
+        return '<span class="lr-dyn"'+attrs+'>'+esc(v)+'</span>';
       });
-      h+='</tr>';
-    });
-    return h+'</tbody></table>';
   }
-  function lrNotesHtml(p,mode){
-    if(!p.notes||!p.notes.length) return "";
-    var body=p.notes.map(function(n){
-      return '<div class="lr-note-p">'+esc(n).split(String.fromCharCode(10)).join('<br>')+'</div>';
-    }).join("");
-    if(mode==="screen"){
-      return '<details class="lr-notes"><summary>检测方法 / 仪器 / 计算式（原文照录）</summary>'+body+'</details>';
-    }
-    return '<div class="lr-notes"><div class="lr-notes-h">检测方法 / 仪器 / 计算式（原文照录）</div>'+body+'</div>';
-  }
-  /* 一张记录纸。mode: screen | print | plain（plain = 不附方法说明） */
-  function lrSheetHtml(p,mode){
-    var I=lrInfo(), h='<div class="lr-paper" data-lr-sheet="'+esc(p.key)+'">';
-    h+='<div class="lr-title">检测中心原始记录</div>';
-    h+='<table class="lr-head"><tbody>';
-    h+='<tr><th>样 品 名 称：</th><td data-lr="sample">'+esc(I.sample)+'</td>'+
-       '<th>生产商名称：</th><td data-lr="maker">'+esc(I.maker)+'</td></tr>';
-    h+='<tr><th>批号/生产日期：</th><td data-lr="batch">'+esc(I.batch)+'</td>'+
-       '<th>检测日期：</th><td data-lr="testDate">'+esc(I.testDate)+'</td></tr>';
-    h+='<tr><th>检验依据：</th><td colspan="3">'+esc(p.basis)+'</td></tr>';
-    h+='<tr><th>检验项目及数据记录：</th><td colspan="3">'+esc(p.item)+'</td></tr>';
-    h+='</tbody></table>';
-    p.tables.forEach(function(t){
-      h+='<div class="lr-tcap">'+esc(t.cap)+'</div>'+lrGridHtml(t);
-    });
-    h+='<table class="lr-sign"><tbody>'+
-       '<tr><th>检验人：</th><td data-lr="tester">'+esc(I.tester)+'</td>'+
-       '<th>复核人：</th><td data-lr="reviewer">'+esc(I.reviewer)+'</td></tr>'+
-       '<tr><th>检验日期：</th><td data-lr="testDate">'+esc(I.testDate)+'</td>'+
-       '<th>复核日期：</th><td></td></tr></tbody></table>';
-    if(mode!=="plain") h+=lrNotesHtml(p,mode);
-    h+='</div>';
-    return h;
+  function lrSheetHtml(p){
+    return '<div class="lr-paper" data-lr-sheet="'+esc(p.key)+'">'+lrFill(p.html)+'</div>';
   }
   function lrPreviewHtml(){
     var picked=lrSelected();
-    if(!picked.length) return '<div class="card empty">上面勾一个检测项目，对应的原始记录模板就出来。</div>';
+    if(!picked.length) return '<div class="card empty">上面勾一个检测项目，对应的 Word 原始记录就出来。</div>';
     return picked.map(function(p){
       return '<div class="card lr-card" style="margin-bottom:12px"><div class="card-h">'+
         '<h3>'+esc(p.name)+'（'+esc(p.unit)+'）</h3>'+
-        '<span class="muted">'+esc(p.basis)+'</span><div class="sp"></div>'+
+        '<span class="muted">'+esc(p.file)+' · Word 原表 1:1</span><div class="sp"></div>'+
         '<button class="btn sm" onclick="LAB.lrPrintOne(\''+esc(p.key)+'\')">🖨 只打这张</button></div>'+
-        '<div class="lr-scroll">'+lrSheetHtml(p,"screen")+'</div></div>';
+        '<div class="lr-scroll">'+lrSheetHtml(p)+'</div></div>';
     }).join("");
   }
   function viewRecordByProject(){
     var I=lrInfo(), ps=lrProjects(), s=lrSel(), n=lrSelected().length;
-    var F=[["sample","样品名称"],["maker","生产商"],["batch","批号/生产日期"],
-           ["testDate","检测日期"],["tester","检验人"],["reviewer","复核人"]];
+    var F=[["sample","样品名称"],["maker","生产商"],["batch","批号/生产日期"]];
     var h='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
       '<h3>原始记录 · 按检测项目出模板</h3>'+
-      '<span class="muted">9 个检测项目各有自己的原表；样品信息填一次，全部自动带出</span>'+
-      '<div class="sp"></div>'+
+      '<span class="muted">9 个检测项目，各有自己的 Word 原表</span><div class="sp"></div>'+
       '<button class="btn sm pri" onclick="LAB.lrMode(\'project\')">按检测项目</button>'+
       '<button class="btn sm" onclick="LAB.lrMode(\'method\')">按方法标准</button></div>'+
       '<div class="notice" style="margin:10px 0"><span>📋</span><div>'+
-      '<b>模板按你们 9 份 Word 原始记录 1:1 还原</b>：抬头、列名、预置值、检验依据、仪器与方法说明都是原表文字。'+
-      '样品名称、生产商、批号/生产日期、检测日期、检验人、复核人<b>只填一次</b>，勾几个项目就出几张，可一次打印。</div></div>'+
+      '<b>Word 原表 1:1 还原</b>：表格、合并单元格、方法说明、计算公式、公式图片、页眉页脚全部照抄，一个字没改。'+
+      '只有<b>样品名称、生产商、批号/生产日期</b>是动态位，填一次全部项目自动带出；'+
+      '检验日期、检验人、复核人和所有预置数值都保持原表原样（打印后手写）。</div></div>'+
       '<div class="lr-fields">'+F.map(function(f){
-        return '<label><span>'+f[1]+'</span><input type="'+(f[0]==="testDate"?"date":"text")+'" '+
-               'value="'+esc(I[f[0]])+'" placeholder="'+(f[0]==="testDate"?"":f[1])+'" '+
+        return '<label><span>'+f[1]+'</span><input type="text" '+
+               'value="'+esc(I[f[0]])+'" placeholder="'+f[1]+'" '+
                'oninput="LAB.lrSet(\''+f[0]+'\',this.value)"></label>';
       }).join("")+'</div>'+
       '<div class="lr-stat" id="lrStat">已把样品信息自动填进 '+n+' 张记录表 · 本机已保存，刷新不丢</div></div>';
+    /* 标准溶液：默认 Word 原值，只在过期重配时改一次，不参与每次打印 */
+    var sols=lrAllSolutions();
+    if(sols.length){
+      h+='<details class="lr-solbar" style="margin-bottom:12px">'+
+        '<summary>标准溶液维护（仅过期重配时改一次，平时不用管）</summary>'+
+        '<div class="muted" style="font-size:11.5px;line-height:1.6;margin:8px 0 2px">'+
+        '编码和有效期至<b>打印时不用填</b>，默认就是 Word 原表里的值。'+
+        '哪种标准溶液过期重新配制了，在这里改一次即可，本机记住，'+
+        '之后所有项目的打印都用新值，不用每次改。</div>'+
+        '<div class="lr-solgrid">'+sols.map(function(x,i){
+          return '<div class="lr-solrow"><b>'+esc(x.name)+'</b>'+
+            '<label>编码<input type="text" value="'+esc(x.code)+'" '+
+              'oninput="LAB.lrSetSol('+i+',\'code\',this.value)"></label>'+
+            '<label>有效期至<input type="text" value="'+esc(x.expiry)+'" '+
+              'oninput="LAB.lrSetSol('+i+',\'expiry\',this.value)"></label></div>';
+        }).join("")+'</div></details>';
+    }
     h+='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
       '<h3>选择检测项目</h3><span class="muted">共 '+ps.length+' 个项目模板</span><div class="sp"></div>'+
       '<button class="btn sm" onclick="LAB.lrAll()">全选</button>'+
       '<button class="btn sm" onclick="LAB.lrNone()">清空</button>'+
-      '<label class="lr-chk"><input type="checkbox" '+(LRNOTES?"checked":"")+
-      ' onchange="LAB.lrNotes(this.checked)">附方法与计算式</label>'+
       '<button class="btn pri sm" id="lrPrintBtn" onclick="LAB.lrPrint()">🖨 打印选中（'+n+'）</button></div>'+
       '<div class="lr-chips">'+ps.map(function(p){
         return '<label class="lr-chip '+(s[p.key]?"on":"")+'">'+
@@ -870,11 +888,23 @@
   function lrSet(k,v){
     lrInfo()[k]=v; lrSave();
     var I=lrInfo(), n=0;
-    [].forEach.call(document.querySelectorAll("[data-lr]"),function(el){
-      el.textContent=I[el.getAttribute("data-lr")]||""; n++;
+    [].forEach.call(document.querySelectorAll('.lr-dyn[data-lr="'+k+'"]'),function(el){
+      el.textContent=I[k]||""; n++;
     });
     var st=document.getElementById("lrStat");
-    if(st) st.textContent="已把样品信息自动填进 "+lrSelected().length+" 张记录表（"+n+" 处）· 本机已保存，刷新不丢";
+    if(st) st.textContent="已把「"+k+"」填进 "+n+" 处 · 本机已保存，刷新不丢";
+  }
+  function lrSetSol(i,k,v){
+    var x=lrAllSolutions()[i];
+    if(!x) return;
+    var O=lrSol(); if(!O[x.name]) O[x.name]={};
+    O[x.name][k]=v; lrSave();
+    [].forEach.call(document.querySelectorAll('.lr-dyn[data-lr^="std"]'),function(el){
+      if(el.getAttribute("data-std")!==x.name) return;
+      var d=O[x.name]||{}, key=el.getAttribute("data-lr");
+      if(key==="stdcode"&&d.code!=null) el.textContent=d.code;
+      if(key==="stdexp"&&d.expiry!=null) el.textContent=d.expiry;
+    });
   }
   function lrRedraw(){
     var host=document.getElementById("lrPreview");
@@ -896,30 +926,28 @@
   }
   function lrAll(){ var s=lrSel(); lrProjects().forEach(function(p){ s[p.key]=1; }); lrSave(); lrRedraw(); }
   function lrNone(){ LRSEL={}; lrSave(); lrRedraw(); }
-  function lrNotes(v){ LRNOTES=!!v; }
+  function lrNotes(){ return false; }   /* 兼容旧调用，方法说明已在原表内 */
   function lrMode(m){ LRMODE=m; render(); }
 
   var LR_PRINT_CSS = [
-    '@page{size:A4 landscape;margin:10mm 9mm}',
+    '@page{size:A4 landscape;margin:9mm 8mm}',
     '*{box-sizing:border-box}',
-    'body{font-family:"Microsoft YaHei",SimSun,sans-serif;font-size:9pt;color:#000;margin:0}',
+    'body{font-family:"Microsoft YaHei",SimSun,sans-serif;font-size:8pt;color:#000;margin:0;background:#fff}',
     '.pg{page-break-after:always;break-after:page}',
     '.pg:last-child{page-break-after:auto;break-after:auto}',
     '.lr-paper{width:100%}',
-    '.lr-title{text-align:center;font-size:15pt;font-weight:700;letter-spacing:2px;margin:0 0 7pt}',
-    '.lr-head,.lr-grid,.lr-sign{border-collapse:collapse;width:100%;margin-bottom:5pt}',
-    '.lr-head th,.lr-head td,.lr-grid td,.lr-sign th,.lr-sign td{border:0.6pt solid #333;padding:3pt 4pt;font-size:8.5pt;height:23pt;vertical-align:middle;word-break:break-all}',
-    '.lr-head th{width:18%;font-weight:600;background:#f1f1f1;text-align:left}',
-    '.lr-head td{width:32%}',
-    '.lr-grid td{text-align:center;height:27pt;font-size:7.6pt;line-height:1.25;padding:2pt}',
-    '.lr-grid td.hd{font-weight:600;background:#f1f1f1;height:36pt}',
-    '.lr-sign th{width:16%;font-weight:600;background:#f1f1f1;text-align:left}',
-    '.lr-sign td{width:34%}',
-    '.lr-tcap{font-size:8.5pt;font-weight:600;margin:6pt 0 2pt}',
-    '.lr-notes{margin-top:9pt;border-top:0.6pt solid #666;padding-top:5pt}',
-    '.lr-notes-h{font-size:8.5pt;font-weight:600;margin-bottom:3pt}',
-    '.lr-note-p{font-size:7.4pt;line-height:1.5;margin:0 0 5pt;word-break:break-all;color:#222}',
-    'summary{display:none}'
+    '.lr-hdr,.lr-ftr{font-size:7.6pt;white-space:pre-wrap;color:#000}',
+    '.lr-hdr{border-bottom:0.5pt solid #666;padding-bottom:3pt;margin-bottom:6pt}',
+    '.lr-ftr{border-top:0.5pt solid #666;padding-top:3pt;margin-top:6pt;text-align:center}',
+    '.lr-wp{font-size:8pt;line-height:1.45;margin:1pt 0;white-space:pre-wrap;word-break:break-all}',
+    '.lr-wt{border-collapse:collapse;width:100%;margin:2pt 0;table-layout:fixed}',
+    '.lr-wt td{border:0.6pt solid #333;padding:2pt 3pt;font-size:7.6pt;line-height:1.35;',
+      'vertical-align:middle;word-break:break-all;white-space:pre-wrap;height:18pt}',
+    '.lr-wt .lr-wt{margin:1pt 0}',
+    '.lr-wt .lr-wt td{font-size:7pt;padding:1.5pt 2pt;height:16pt}',
+    '.lr-eq{max-width:100%;height:auto;vertical-align:middle}',
+    '.lr-dyn{font-weight:600}',
+    'span.lr-dyn:empty{display:inline-block;min-width:60pt;border-bottom:0.5pt solid #666}'
   ].join("");
 
   function lrPrint(only){
@@ -929,7 +957,7 @@
     var w=window.open("","_blank");
     if(!w){ if(st) st.textContent="浏览器拦了新窗口，请允许弹出窗口后重试。"; return; }
     var body=picked.map(function(p){
-      return '<div class="pg">'+lrSheetHtml(p,LRNOTES?"print":"plain")+'</div>';
+      return '<div class="pg">'+lrSheetHtml(p)+'</div>';
     }).join("");
     w.document.write('<!doctype html><html><head><meta charset="utf-8">'+
       '<title>原始记录 · '+esc(today())+'</title><style>'+LR_PRINT_CSS+'</style></head><body>'+
@@ -1479,7 +1507,10 @@
     lrSheetHtml: lrSheetHtml,
     lrProjects: lrProjects,
     lrInfo: lrInfo,
-    lrSelected: lrSelected
+    lrSelected: lrSelected,
+    lrSol: lrSol,
+    lrAllSolutions: lrAllSolutions,
+    lrSetSol: lrSetSol
   };
 
 })(window);
