@@ -1115,3 +1115,44 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   .lr-fields{grid-template-columns:1fr 1fr;gap:8px}
   .lr-soltab{padding:5px 9px;font-size:11px}
 }
+
+/* ===== 2026-11-15 第七版：样品清单 Excel 多行导入 + 批量打印 ===== */
+.lr-sub{font-size:12.5px;font-weight:600;color:var(--ink);margin:12px 0 4px}
+.lr-importbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 10px}
+.lr-importbar .btn,.lr-filebtn{cursor:pointer}
+.lr-importbar .muted{font-size:11px;flex:1 1 260px;line-height:1.5}
+.lr-pastebox{margin:0 0 10px;padding:10px;border:1px dashed var(--line);border-radius:8px}
+.lr-pastebox textarea{display:block;width:100%;min-height:88px;box-sizing:border-box;
+  padding:8px;border:1px solid var(--line);border-radius:6px;
+  background:var(--panel);color:var(--ink);font-family:inherit;font-size:12px;line-height:1.5}
+.lr-pastebox>div{margin-top:8px}
+.lr-rowswrap{width:100%;max-width:100%;overflow-x:auto}
+.lr-rows{width:100%;min-width:700px;border-collapse:collapse;table-layout:fixed}
+.lr-rows th,.lr-rows td{border:1px solid var(--line);padding:6px 8px;
+  font-size:12px;color:var(--ink);vertical-align:middle}
+.lr-rows th{background:rgba(127,127,127,.08);font-weight:600;text-align:left;color:var(--ink2)}
+.lr-rows .c-no{width:64px;text-align:center}
+.lr-rows .c-op{width:44px;text-align:center}
+/* 当前预览行用浅底 + 左侧色条，别用深色底（序号/删除按钮会看不清） */
+.lr-rows tr.on{background:rgba(37,99,235,.07)}
+.lr-rows tr.on td:first-child{box-shadow:inset 3px 0 0 var(--brand)}
+.lr-rows input{width:100%;box-sizing:border-box;padding:5px 7px;
+  border:1px solid var(--line);border-radius:5px;
+  background:var(--panel);color:var(--ink);font-family:inherit;font-size:12px}
+.lr-rows input:focus{outline:2px solid var(--brand-3);border-color:var(--brand-3)}
+.lr-rows .lr-no{cursor:pointer;color:var(--brand);font-weight:600}
+.lr-rowfocus{display:block;font-size:10px;font-weight:400;color:var(--ink3)}
+.lr-rows .c-op button{border:0;background:transparent;color:var(--ink3);
+  cursor:pointer;font-size:17px;line-height:1;padding:0 4px}
+.lr-rowsel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:9px 12px;margin-bottom:12px;border:1px solid var(--line);
+  border-radius:8px;background:var(--panel);font-size:12px;color:var(--ink2)}
+.lr-rowsel select{padding:4px 8px;border:1px solid var(--line);border-radius:5px;
+  background:var(--panel);color:var(--ink);font-family:inherit;font-size:12px;max-width:240px}
+.lr-rowsel .muted{font-size:11px}
+/* ★ 移动端规则必须留在文件最末尾 */
+@media(max-width:720px){
+  .lr-rows{min-width:620px}
+  .lr-importbar .muted{flex-basis:100%}
+  .lr-rowsel .muted{flex-basis:100%}
+}

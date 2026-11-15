@@ -99,20 +99,29 @@ function ck(cond, msg) {
   ck(sols.some(s => s.name === '硝酸钠标准溶液' && s.code === '072-20251231-E'), '硝酸钠：默认原值');
   ck(meta.filter(m => m.sol.length).length === 4, '只有 4 个项目含标准溶液表');
 
-  console.log('=== ④ 进入原始记录页：只有 4 个动态输入 ===');
+  console.log('=== ④ 样品清单：Excel 多行导入，带序号 ===');
   await p.click('button[data-lab="record"]');
   await p.waitForTimeout(500);
   const fields = await p.evaluate(() => ({
-    labels: [...document.querySelectorAll('.lr-fields label span')].map(e => e.textContent.trim()),
-    inputs: document.querySelectorAll('.lr-fields input').length,
+    rows: document.querySelectorAll('.lr-rows tbody tr').length,
+    heads: [...document.querySelectorAll('.lr-rows thead th')].map(e => e.textContent.trim()),
+    inputs: document.querySelectorAll('.lr-rows tbody tr:first-child input').length,
+    serial: ((document.querySelector('.lr-rows tbody .lr-no') || {}).textContent || '').trim(),
     solOpen: !!document.querySelector('.lr-solbar[open]'),
-    hasSignInput: /检验人|复核人/.test(document.querySelector('.lr-fields').textContent)
+    hasSignInput: /检验人|复核人/.test(document.querySelector('.lr-rows').textContent),
+    buttons: [...document.querySelectorAll('.lr-importbar button,.lr-importbar label')]
+      .map(e => e.textContent.trim())
   }));
-  ck(fields.inputs === 4, '顶部只有 4 个输入框（实得 ' + fields.inputs + '）');
-  ck(fields.labels.join('|') === '样品名称|生产商|批号/生产日期|检测日期',
-    '四个输入分别是样品名称/生产商/批号·生产日期/检测日期');
+  ck(fields.rows === 1, '默认 1 行样品清单');
+  ck(fields.heads.slice(0, 5).join('|') === '序号|样品名称|生产商|批号/生产日期|检测日期',
+    '清单表头：带序号 + 4 个动态字段');
+  ck(fields.inputs === 4, '每行只有 4 个输入框（实得 ' + fields.inputs + '）');
+  ck(/^1/.test(fields.serial), '第一行序号为 1');
   ck(!fields.hasSignInput, '检验人、复核人不是变量，没有做成输入框');
   ck(!fields.solOpen, '标准溶液维护默认折叠，打印时不用管');
+  ck(fields.buttons.some(x => /导入 Excel/.test(x)) && fields.buttons.some(x => /粘贴/.test(x)) &&
+     fields.buttons.some(x => /下载 Excel 模板/.test(x)) && fields.buttons.some(x => /添加一行/.test(x)),
+    '★ 有 Excel/CSV 导入、粘贴区域、下载模板、添加一行');
   const defSol = await p.evaluate(() => ({
     view: LAB.lrSolView(),
     rows: [...document.querySelectorAll('.lr-solrow b')].map(e => e.textContent),
@@ -298,7 +307,112 @@ function ck(cond, msg) {
   ck(persisted.first === '迪唯恩2段（长期24个月）', '刷新后模板里自动带出样品信息');
   ck(persisted.imgOK, '刷新后 Word 原页底图仍在');
 
-  console.log('=== ⑩ 手机端不溢出 ===');
+  console.log('=== ⑩ Excel 导入多行 + 一次打印全部样品 × 全部项目 ===');
+  await p.evaluate(() => {
+    LAB.lrTogglePaste();
+    document.getElementById('lrPaste').value =
+      '序号\t样品名称\t生产商\t批号/生产日期\t检测日期\n' +
+      '1\t迪唯恩2段（长期24个月）\t高培\tA001\t20261115\n' +
+      '2\t迪唯恩3段\t高培\tA002\t20261116\n' +
+      '3\t迪唯恩4段\t高培\tA003\t20261117\n';
+    LAB.lrImportPaste();
+  });
+  await p.waitForTimeout(400);
+  const imp = await p.evaluate(() => ({
+    rows: LAB.lrRows().length,
+    list: LAB.lrRows().map(r => r.sample + '|' + r.batch + '|' + r.date),
+    tr: document.querySelectorAll('.lr-rows tbody tr').length,
+    serials: [...document.querySelectorAll('.lr-rows tbody .lr-no')]
+      .map(e => e.textContent.replace(/\s/g, '')),
+    count: LAB.lrPrintCount(),
+    btn: (document.getElementById('lrPrintBtn') || {}).textContent,
+    sel: !!document.querySelector('.lr-rowsel select')
+  }));
+  ck(imp.rows === 3, '粘贴 Excel 区域一次导入 3 行（实得 ' + imp.rows + '）');
+  ck(imp.tr === 3, '页面往下排出 3 行，不再只有一行');
+  ck(imp.serials.join('|') === '1预览中|2|3', '序号 1/2/3 依次排列');
+  ck(imp.list[0] === '迪唯恩2段（长期24个月）|A001|20261115' &&
+     imp.list[2] === '迪唯恩4段|A003|20261117',
+     '认表头 + 认序号列，4 列按名落到对应字段');
+  ck(imp.sel, '出现「预览第 N 个样品」切换');
+  ck(imp.count === 27 && /27 份/.test(imp.btn), '9 项目 × 3 样品 = 27 份，按钮直接显示总份数');
+
+  await p.evaluate(() => LAB.lrPreviewRow(2));
+  await p.waitForTimeout(300);
+  const pv = await p.evaluate(() => ({
+    info: LAB.lrInfo().sample,
+    text: (document.querySelector('.lr-paper text.lr-dyn[data-lr="sample"]') || {}).textContent
+  }));
+  ck(pv.info === '迪唯恩4段' && pv.text === '迪唯恩4段', '切到第 3 行，预览动态位跟着换成这一行');
+
+  await p.evaluate(() => { LAB.lrNone(); LAB.lrToggle('protein'); LAB.lrToggle('fat'); });
+  await p.waitForTimeout(300);
+  const batch = await p.evaluate(() => {
+    let out = ''; const orig = window.open;
+    window.open = function () { return { document: { write: s => { out += s }, close: () => {} }, focus: () => {}, print: () => {} } };
+    LAB.lrPrint(); window.open = orig;
+    return { html: out, cnt: LAB.lrPrintCount(), btn: (document.getElementById('lrPrintBtn') || {}).textContent };
+  });
+  ck(batch.cnt === 6 && /6 份/.test(batch.btn), '3 样品 × 2 项目 = 6 份');
+  ck((batch.html.match(/class="pg"/g) || []).length === 6,
+    '一次送 6 页（protein/fat 各 1 页 × 3 行）');
+  ['A001', 'A002', 'A003', '20261116', '20261117'].forEach(v =>
+    ck(batch.html.indexOf(v) >= 0, '打印内容含第 N 行样品值 ' + v));
+  ck((batch.html.match(/迪唯恩2段（长期24个月）/g) || []).length === 2,
+    '第 1 行样品在两个项目里各出现一次，没有串到别的行');
+
+  await p.evaluate(() => LAB.lrAll());
+  await p.waitForTimeout(200);
+  const all = await p.evaluate(() => {
+    let out = ''; const orig = window.open;
+    window.open = function () { return { document: { write: s => { out += s }, close: () => {} }, focus: () => {}, print: () => {} } };
+    LAB.lrPrint(); window.open = orig; return out;
+  });
+  ck((all.match(/class="pg"/g) || []).length === 39,
+    '★ 全选 9 项目 × 3 样品一次出 39 页，不用一个一个打');
+  ck((all.match(/loading="eager"/g) || []).length === 39, '批量打印 39 页全部 eager，等齐才送印');
+
+  // 真 .xlsx 文件：按需加载解析库并走 FileReader → XLSX.read → sheet_to_csv
+  await p.evaluate(async () => {
+    await new Promise((res, rej) => {
+      if (window.XLSX) return res();
+      const s = document.createElement('script');
+      s.src = 'vendor/xlsx.full.min.js'; s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['序号', '样品名称', '生产商', '批号/生产日期', '检测日期'],
+      [1, 'XLSX甲', '厂A', 'B001', '20261118'],
+      [2, 'XLSX乙', '厂B', 'B002', '20261119']
+    ]);
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+    const dt = new DataTransfer();
+    dt.items.add(new File([buf], 'demo.xlsx',
+      { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    const inp = document.getElementById('lrFile');
+    inp.files = dt.files;
+    inp.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await p.waitForFunction(() => LAB.lrRows().length === 2 && LAB.lrRows()[0].sample === 'XLSX甲',
+    null, { timeout: 20000 }).catch(() => {});
+  const xl = await p.evaluate(() => ({
+    rows: LAB.lrRows().map(r => r.sample + '|' + r.maker + '|' + r.batch + '|' + r.date),
+    lib: !!window.XLSX
+  }));
+  ck(xl.lib, 'Excel 解析库按需加载成功（不拖首页）');
+  ck(xl.rows.length === 2 && xl.rows[0] === 'XLSX甲|厂A|B001|20261118' &&
+     xl.rows[1] === 'XLSX乙|厂B|B002|20261119',
+     '★ 真 .xlsx 文件导入 2 行，表头与序号列都能识别');
+
+  // 恢复单行，避免影响后面的手机端断言
+  await p.evaluate(() => {
+    LAB.lrClearRows();
+    LAB.lrSet('sample', '迪唯恩2段（长期24个月）');
+    LAB.lrSet('maker', '高培'); LAB.lrSet('batch', '20261101 / A261101'); LAB.lrSet('date', '20261115');
+  });
+
+  console.log('=== ⑪ 手机端不溢出 ===');
   for (const w of [390, 430]) {
     const m = await ctx.newPage();
     await m.setViewportSize({ width: w, height: 844 });

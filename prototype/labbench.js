@@ -37,7 +37,9 @@
        · 标准溶液编码、有效期至 —— 保留 Word 原值；只有过期重配时
          在「标准溶液维护」里改一次，本机记住，打印时无需填写 */
   var LRMODE  = "project";    // project | method
-  var LRINFO  = null;         // 样品公共信息（仅 3 项）
+  var LRINFO  = null;         // 兼容旧数据：单条样品信息（lab.record.info.v2）
+  var LRROWS  = null;         // ★ 样品清单（可 Excel 导入多行）[{sample,maker,batch,date}]
+  var LRPREVIEW = 0;          // 当前预览的是清单里第几行（0 起）
   var LRSEL   = null;         // 选中的项目 {key:1}
   var LRSOL   = null;         // 标准溶液覆盖表 {名称:{code,expiry}}
   var LRSOLVIEW = null;       // 标准溶液维护查看范围：null=跟随项目 / "all" / 项目 key
@@ -752,15 +754,43 @@
     for(var i=0;i<ps.length;i++) if(ps[i].key===k) return ps[i];
     return null;
   }
-  function lrInfo(){
-    if(!LRINFO){
-      LRINFO={sample:"",maker:"",batch:"",date:""};
-      var s=global.Store?global.Store.get("lab.record.info.v2",null):null;
-      if(s&&typeof s==="object"){
-        ["sample","maker","batch","date"].forEach(function(k){ if(s[k]!=null) LRINFO[k]=String(s[k]); });
+  var LR_KEYS=["sample","maker","batch","date"];
+  function lrBlank(){ return {sample:"",maker:"",batch:"",date:""}; }
+  /* ★ 样品清单：可以从 Excel / CSV / 粘贴区域一次导入多行，逐行往下排带序号。
+     老版本只存一条 lab.record.info.v2，首次打开自动升级成 1 行清单。 */
+  function lrRows(){
+    if(!LRROWS){
+      var s=global.Store?global.Store.get("lab.record.rows.v1",null):null;
+      if(s&&s.length&&typeof s==="object"){
+        LRROWS=s.map(function(r){
+          var o=lrBlank();
+          LR_KEYS.forEach(function(k){ if(r&&r[k]!=null) o[k]=String(r[k]); });
+          return o;
+        });
+      } else {
+        var old=global.Store?global.Store.get("lab.record.info.v2",null):null;
+        var o=lrBlank();
+        if(old&&typeof old==="object")
+          LR_KEYS.forEach(function(k){ if(old[k]!=null) o[k]=String(old[k]); });
+        LRROWS=[o];
       }
+      if(!LRROWS.length) LRROWS=[lrBlank()];
+      var pv=global.Store?global.Store.get("lab.record.preview.v1",0):0;
+      LRPREVIEW=Math.min(Math.max(0,parseInt(pv,10)||0),LRROWS.length-1);
     }
-    return LRINFO;
+    return LRROWS;
+  }
+  /* 兼容旧调用：返回「当前预览的那一行」 */
+  function lrInfo(){
+    var R=lrRows();
+    return R[Math.min(LRPREVIEW,R.length-1)]||lrBlank();
+  }
+  /* 打印时用：丢掉 Excel 尾部的全空行；全是空行也保留 1 份空白表 */
+  function lrActiveRows(){
+    var R=lrRows().filter(function(r){
+      return LR_KEYS.some(function(k){ return String(r[k]||"").trim(); });
+    });
+    return R.length?R:[lrBlank()];
   }
   /* 只保存用户改过的标准溶液；没改过的一律用 Word 原值 */
   function lrSol(){
@@ -893,8 +923,10 @@
   }
   function lrSave(){
     if(!global.Store) return;
-    var s=lrSel(), I=lrInfo();
-    global.Store.set("lab.record.info.v2", I);
+    var s=lrSel(), R=lrRows();
+    global.Store.set("lab.record.rows.v1", R);
+    global.Store.set("lab.record.preview.v1", LRPREVIEW);
+    global.Store.set("lab.record.info.v2", R[Math.min(LRPREVIEW,R.length-1)]||lrBlank());
     global.Store.set("lab.record.sol.v1", lrSol());
     /* 先把已保存的查看范围读回来，避免首次保存冲掉上次的「全部」 */
     lrSolView();
@@ -903,8 +935,8 @@
       lrProjects().filter(function(p){ return s[p.key]; }).map(function(p){ return p.key; }));
   }
   /* 把 Word 原表里的动态占位填上；其余 HTML 原样返回 */
-  function lrFill(html){
-    var I=lrInfo(), O=lrSol();
+  function lrFill(html,I){
+    I=I||lrInfo(); var O=lrSol();
     return (html||"").replace(/<span class="lr-dyn"([^>]*)>([\s\S]*?)<\/span>/g,
       function(all,attrs,inner){
         var k=(attrs.match(/data-lr="([^"]+)"/)||[])[1];
@@ -925,8 +957,8 @@
   function lrAbs(u){
     try{ return new URL(u, location.href).href; }catch(e){ return u; }
   }
-  function lrFieldVal(f){
-    var I=lrInfo(), O=lrSol();
+  function lrFieldVal(f,I){
+    I=I||lrInfo(); var O=lrSol();
     if(f.k==="sample"||f.k==="maker"||f.k==="batch"||f.k==="date") return I[f.k]||"";
     if(f.std && O[f.std]){
       if(f.k==="stdcode") return O[f.std].code!=null?O[f.std].code:(f.v||"");
@@ -954,8 +986,8 @@
       el.removeAttribute("lengthAdjust");
     }
   }
-  function lrFieldSvg(f){
-    var v=lrFieldVal(f), maxw=Math.max(20,f.w-8);
+  function lrFieldSvg(f,I){
+    var v=lrFieldVal(f,I), maxw=Math.max(20,f.w-8);
     /* 原示例值已在生成底图时只涂掉文字本身，这里绝不再盖白块，
        否则会把 Word 的表格竖框线一起遮断。 */
     var a='class="lr-dyn" data-lr="'+esc(f.k)+'"'+
@@ -965,40 +997,95 @@
     if(v && lrTextUnits(v)*f.fs>maxw) a+=' textLength="'+maxw+'" lengthAdjust="spacingAndGlyphs"';
     return '<text '+a+'>'+esc(v)+'</text>';
   }
-  function lrPageInner(g,pno,src,forPrint){
+  function lrPageInner(g,pno,src,forPrint,I){
     var fs=g.fields.filter(function(f){ return f.pg===pno+1; });
     /* 预览按需加载（9 个项目共 13 页不会一上来全拉）；打印一律 eager，
        且 lrPrint 会等齐所有位图才调用 print()，绝不出空白页。 */
     var ld=forPrint?' loading="eager"':' loading="lazy" decoding="async"';
     return '<img class="lr-pageimg"'+ld+' src="'+esc(lrAbs(src))+'" alt="">'+
       '<svg class="lr-ov" viewBox="0 0 '+g.w+' '+g.h+'" preserveAspectRatio="none" '+
-      'xmlns="http://www.w3.org/2000/svg">'+fs.map(lrFieldSvg).join("")+'</svg>';
+      'xmlns="http://www.w3.org/2000/svg">'+
+      fs.map(function(f){ return lrFieldSvg(f,I); }).join("")+'</svg>';
   }
-  function lrSheetHtml(p){
+  function lrSheetHtml(p,I){
     var g=(global.LABPAGES||{})[p.key];
     if(!g||!g.pages||!g.pages.length)
-      return '<div class="lr-paper" data-lr-sheet="'+esc(p.key)+'">'+lrFill(p.html)+'</div>';
+      return '<div class="lr-paper" data-lr-sheet="'+esc(p.key)+'">'+lrFill(p.html,I)+'</div>';
     return '<div class="lr-paper" data-lr-sheet="'+esc(p.key)+'">'+
       g.pages.map(function(src,i){
         return '<div class="lr-pagewrap" data-lr-page="'+(i+1)+'">'+
-               lrPageInner(g,i,src)+'</div>';
+               lrPageInner(g,i,src,false,I)+'</div>';
       }).join("")+'</div>';
+  }
+  function lrRowSelHtml(){
+    var R=lrRows(), n=R.length;
+    if(n<=1) return '';
+    var opts='';
+    for(var i=0;i<n;i++){
+      var r=R[i];
+      opts+='<option value="'+i+'"'+(i===LRPREVIEW?' selected':'')+'>'+
+        (i+1)+' · '+esc(r.sample||r.batch||'（未填）')+'</option>';
+    }
+    return '<div class="lr-rowsel">预览第 <select onchange="LAB.lrPreviewRow(+this.value)">'+
+      opts+'</select> / '+n+' 个样品'+
+      '<span class="muted"> · 打印时按清单逐份生成全部记录，不用一行一行打</span></div>';
   }
   function lrPreviewHtml(){
     var picked=lrSelected();
     if(!picked.length) return '<div class="card empty">上面勾一个检测项目，对应的 Word 原始记录就出来。</div>';
-    return picked.map(function(p){
+    return lrRowSelHtml()+picked.map(function(p){
       return '<div class="card lr-card" style="margin-bottom:12px"><div class="card-h">'+
         '<h3>'+esc(p.name)+'（'+esc(p.unit)+'）</h3>'+
         '<span class="muted">'+esc(p.file)+' · Word 原页 100% 复刻（共 '+((global.LABPAGES||{})[p.key]||{pages:[]}).pages.length+' 页）</span><div class="sp"></div>'+
-        '<button class="btn sm" onclick="LAB.lrPrintOne(\''+esc(p.key)+'\')">🖨 只打这张</button></div>'+
+        '<button class="btn sm" onclick="LAB.lrPrintOne(\''+esc(p.key)+'\')">🖨 只打此项目（全部样品）</button></div>'+
         '<div class="lr-scroll">'+lrSheetHtml(p)+'</div></div>';
     }).join("");
   }
+  /* ★ 样品清单：Excel / CSV / 粘贴区域一次导入多行，逐行往下排带序号 */
+  var LR_HEADS=[["sample","样品名称"],["maker","生产商"],
+                ["batch","批号/生产日期"],["date","检测日期"]];
+  function lrRowsHtml(){
+    var R=lrRows();
+    var t='<div class="lr-rowswrap"><table class="lr-rows"><thead><tr>'+
+      '<th class="c-no">序号</th>'+LR_HEADS.map(function(f){
+        return '<th>'+f[1]+'</th>'; }).join("")+'<th class="c-op"></th></tr></thead><tbody>';
+    R.forEach(function(r,i){
+      t+='<tr'+(i===LRPREVIEW?' class="on"':'')+'>'+
+        '<td class="lr-no" title="点这里预览这个样品" onclick="LAB.lrPreviewRow('+i+')">'+
+          (i+1)+'<span class="lr-rowfocus">'+(i===LRPREVIEW?'预览中':'')+'</span></td>'+
+        LR_HEADS.map(function(f){
+          return '<td><input type="text" data-row="'+i+'" data-k="'+f[0]+'" '+
+            'value="'+esc(r[f[0]])+'" placeholder="'+f[1]+'" '+
+            'oninput="LAB.lrSetRow(+this.dataset.row,this.dataset.k,this.value)"></td>';
+        }).join("")+
+        '<td class="c-op"><button type="button" title="删除这一行" '+
+          'onclick="LAB.lrDelRow('+i+')">×</button></td></tr>';
+    });
+    return t+'</tbody></table></div>';
+  }
+  function lrImportBarHtml(){
+    return '<div class="lr-importbar">'+
+      '<button class="btn sm" onclick="LAB.lrAddRow()">＋ 添加一行</button>'+
+      '<label class="btn sm lr-filebtn" for="lrFile">📥 导入 Excel / CSV</label>'+
+      '<input type="file" id="lrFile" accept=".xlsx,.xls,.csv,.txt" style="display:none" '+
+        'onchange="LAB.lrImportFile(this)">'+
+      '<button class="btn sm" onclick="LAB.lrTogglePaste()">📋 粘贴 Excel 区域</button>'+
+      '<button class="btn sm" onclick="LAB.lrTemplate()">⬇ 下载 Excel 模板</button>'+
+      '<button class="btn sm" onclick="LAB.lrClearRows()">清空</button>'+
+      '<span class="muted">列顺序：样品名称 / 生产商 / 批号/生产日期 / 检测日期'+
+      '（可带表头、可带序号列）</span></div>'+
+      '<div id="lrPasteBox" class="lr-pastebox" style="display:none">'+
+      '<textarea id="lrPaste" placeholder="在 Excel 里框选多行，Ctrl+C 后粘贴到这里；'+
+      '每行一个样品，列之间用 Tab 或逗号分隔"></textarea>'+
+      '<div><button class="btn sm pri" onclick="LAB.lrImportPaste()">导入这些行</button> '+
+      '<button class="btn sm" onclick="LAB.lrTogglePaste()">收起</button></div></div>';
+  }
+  function lrPrintCount(){
+    return lrActiveRows().length*lrSelected().length;
+  }
   function viewRecordByProject(){
-    var I=lrInfo(), ps=lrProjects(), s=lrSel(), n=lrSelected().length;
-    var F=[["sample","样品名称",""],["maker","生产商",""],["batch","批号/生产日期",""],
-           ["date","检测日期","如 20261115，留空则打印后手写"]];
+    var ps=lrProjects(), s=lrSel(), n=lrSelected().length;
+    var rows=lrActiveRows().length, total=lrPrintCount();
     var h='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
       '<h3>原始记录 · 按检测项目出模板</h3>'+
       '<span class="muted">9 个检测项目，各有自己的 Word 原表</span><div class="sp"></div>'+
@@ -1007,22 +1094,21 @@
       '<div class="notice" style="margin:10px 0"><span>📋</span><div>'+
       '<b>Word 原页 100% 复刻</b>：每页直接用 Word 导出的原页，标题位置、字体字号、列宽行高、'+
       '框线、公式图、页码、哪一页放什么内容全部原样，打印不带浏览器页眉页脚。'+
-      '只有<b>样品名称、生产商、批号/生产日期、检测日期</b>是动态位，填一次全部项目自动带出；'+
-      '检测日期不写死，留空即可打印后手写。其余（检验人、复核人、检验日期、预置数值）保持原表原样。</div></div>'+
-      '<div class="lr-fields">'+F.map(function(f){
-        return '<label><span>'+f[1]+'</span><input type="text" '+
-               'value="'+esc(I[f[0]])+'" placeholder="'+(f[2]||f[1])+'" '+
-               'oninput="LAB.lrSet(\''+f[0]+'\',this.value)"></label>';
-      }).join("")+'</div>'+
-      '<div class="lr-stat" id="lrStat">已把样品信息自动填进 '+n+' 张记录表 · 本机已保存，刷新不丢</div></div>';
+      '只有<b>样品名称、生产商、批号/生产日期、检测日期</b>是动态位；'+
+      '下面清单可以从 Excel 导入多行，勾好检测项目后<b>一次打印全部样品 × 全部项目</b>，'+
+      '不用一行一行改、一个一个打。检测日期留空即可打印后手写。</div></div>'+
+      '<h4 class="lr-sub">样品清单（'+rows+' 个样品 · 往下排，带序号）</h4>'+
+      lrImportBarHtml()+lrRowsHtml()+
+      '<div class="lr-stat" id="lrStat">已保存 '+rows+' 个样品 × '+n+' 个项目 = '+
+        total+' 份记录 · 本机已保存，刷新不丢</div></div>';
     /* 标准溶液：默认 Word 原值，只在过期重配时改一次；
        ★ 按检测项目过滤，默认只出当前项目的，点「全部」才出全部 */
     h+=lrSolPanelHtml();
     h+='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
-      '<h3>选择检测项目</h3><span class="muted">共 '+ps.length+' 个项目模板</span><div class="sp"></div>'+
+      '<h3>选择检测项目</h3><span class="muted">共 '+ps.length+' 个 · 选 1 个 / 几个 / 全部都行</span><div class="sp"></div>'+
       '<button class="btn sm" onclick="LAB.lrAll()">全选</button>'+
       '<button class="btn sm" onclick="LAB.lrNone()">清空</button>'+
-      '<button class="btn pri sm" id="lrPrintBtn" onclick="LAB.lrPrint()">🖨 打印选中（'+n+'）</button></div>'+
+      '<button class="btn pri sm" id="lrPrintBtn" onclick="LAB.lrPrint()">🖨 打印全部（'+total+' 份）</button></div>'+
       '<div class="lr-chips">'+ps.map(function(p){
         return '<label class="lr-chip '+(s[p.key]?"on":"")+'">'+
           '<input type="checkbox" '+(s[p.key]?"checked":"")+
@@ -1033,15 +1119,162 @@
     return h;
   }
   /* ---- 交互：输入只改占位符文本，不重绘，保住焦点 ---- */
-  function lrSet(k,v){
-    lrInfo()[k]=v; lrSave();
-    var I=lrInfo(), n=0;
-    [].forEach.call(document.querySelectorAll('.lr-dyn[data-lr="'+k+'"]'),function(el){
-      lrUpdateText(el,I[k]||""); n++;
-    });
+  function lrStatMsg(s){
     var st=document.getElementById("lrStat");
-    var zh={sample:"样品名称",maker:"生产商",batch:"批号/生产日期",date:"检测日期"}[k]||k;
-    if(st) st.textContent="已把「"+zh+"」填进 "+n+" 处 · 本机已保存，刷新不丢";
+    if(st) st.textContent=s;
+  }
+  var LR_ZH={sample:"样品名称",maker:"生产商",batch:"批号/生产日期",date:"检测日期"};
+  function lrSetRow(i,k,v){
+    var R=lrRows(); if(!R[i]) return;
+    R[i][k]=v; lrSave();
+    if(i===LRPREVIEW){
+      var n=0;
+      [].forEach.call(document.querySelectorAll('.lr-paper .lr-dyn[data-lr="'+k+'"]'),
+        function(el){ lrUpdateText(el,v); n++; });
+      lrStatMsg("已把第 "+(i+1)+" 行「"+(LR_ZH[k]||k)+"」填进 "+n+" 处 · 本机已保存");
+    }
+    var sel=document.querySelector(".lr-rowsel select");
+    if(sel&&sel.options[i])
+      sel.options[i].textContent=(i+1)+" · "+(R[i].sample||R[i].batch||"（未填）");
+  }
+  function lrSet(k,v){ lrSetRow(LRPREVIEW,k,v); }  /* 兼容旧调用：改当前预览行 */
+  function lrPreviewRow(i){
+    LRPREVIEW=Math.min(Math.max(0,parseInt(i,10)||0),lrRows().length-1);
+    lrSave(); lrRedraw();
+  }
+  function lrAddRow(){
+    var R=lrRows(); R.push(lrBlank()); LRPREVIEW=R.length-1;
+    lrSave(); render();
+    setTimeout(function(){ lrStatMsg("已添加第 "+R.length+" 行，填好后点「打印全部」"); },0);
+  }
+  function lrDelRow(i){
+    var R=lrRows();
+    if(R.length<=1){ LRROWS=[lrBlank()]; LRPREVIEW=0; }
+    else { R.splice(i,1); if(LRPREVIEW>=R.length) LRPREVIEW=R.length-1; }
+    lrSave(); render();
+  }
+  function lrClearRows(){
+    LRROWS=[lrBlank()]; LRPREVIEW=0; lrSave(); render();
+  }
+  /* ---- Excel / CSV / 粘贴区域导入：解析成多行样品清单 ---- */
+  function lrSplit(line,sep){
+    var out=[],cur="",q=false;
+    for(var i=0;i<line.length;i++){
+      var c=line.charAt(i);
+      if(c==='"'){
+        if(q&&line.charAt(i+1)==='"'){ cur+='"'; i++; } else q=!q;
+      } else if(!q&&(c===sep||(sep===","&&(c==="\t"||c==="，")))){
+        out.push(cur); cur="";
+      } else cur+=c;
+    }
+    out.push(cur);
+    return out.map(function(x){ return x.replace(/^\ufeff/,"").trim(); });
+  }
+  function lrHeadMap(cells){
+    var RE=[["sample",/样品名称|样品名|品名|样品|sample/i],
+            ["maker",/生产商|生产厂家|生产单位|厂家|maker/i],
+            ["batch",/批号|生产日期|批次|batch/i],
+            ["date",/检测日期|检验日期|检测时间|date/i],
+            ["_no",/序号|编号|no\.?|#/i]], map=[], hits=0;
+    cells.forEach(function(c){
+      var k="";
+      for(var i=0;i<RE.length;i++) if(RE[i][1].test(c)){ k=RE[i][0]; break; }
+      if(k&&k!=="_no") hits++;
+      map.push(k);
+    });
+    return hits>=2?map:null;
+  }
+  function lrImportText(txt,forceSep){
+    var lines=String(txt||"").replace(/\r/g,"").split("\n")
+      .filter(function(l){ return l.trim(); });
+    if(!lines.length){ lrStatMsg("没有读到数据行"); return 0; }
+    var sep=forceSep||(lines[0].indexOf("\t")>=0?"\t":",");
+    var first=lrSplit(lines[0],sep), map=lrHeadMap(first), start=0;
+    if(map) start=1;
+    else {
+      var drop=(first.length>4&&/^\d+$/.test(first[0]))?1:0;
+      map=[];
+      for(var j=0;j<first.length;j++) map.push(j<drop?"_no":(LR_KEYS[j-drop]||"_no"));
+    }
+    var out=[];
+    for(var i=start;i<lines.length;i++){
+      var c=lrSplit(lines[i],sep), r=lrBlank(), any=false;
+      map.forEach(function(k,j){
+        if(k&&k!=="_no"&&LR_KEYS.indexOf(k)>=0){
+          r[k]=c[j]!=null?c[j]:""; if(r[k]) any=true;
+        }
+      });
+      if(any) out.push(r);
+    }
+    if(!out.length){ lrStatMsg("没识别到有效行，请检查列顺序"); return 0; }
+    LRROWS=out; LRPREVIEW=0; lrSave(); render();
+    setTimeout(function(){
+      lrStatMsg("已导入 "+out.length+" 个样品 · 勾好项目点「打印全部」一次出 "+
+        lrPrintCount()+" 份记录"); },0);
+    return out.length;
+  }
+  /* Excel 解析库 881KB，只在真的导入 .xlsx 时才按需加载，不拖首页 */
+  function lrLoadXLSX(cb){
+    if(global.XLSX){ cb(true); return; }
+    var s=document.createElement("script");
+    s.src=lrAbs("vendor/xlsx.full.min.js");
+    s.onload=function(){ cb(!!global.XLSX); };
+    s.onerror=function(){ cb(false); };
+    document.head.appendChild(s);
+  }
+  function lrImportFile(inp){
+    var f=inp&&inp.files&&inp.files[0]; if(!f) return;
+    var nm=(f.name||"").toLowerCase(), xl=/\.(xlsx|xls)$/.test(nm);
+    var fr=new FileReader();
+    fr.onload=function(e){
+      var buf=e.target.result;
+      var done=function(){ inp.value=""; };
+      try{
+        if(xl){
+          lrLoadXLSX(function(ok){
+            if(!ok){ lrStatMsg("Excel 解析库加载失败，请另存为 CSV 或用「粘贴 Excel 区域」"); done(); return; }
+            try{
+              var wb=global.XLSX.read(new Uint8Array(buf),{type:"array"});
+              var sh=wb.Sheets[wb.SheetNames[0]];
+              lrImportText(global.XLSX.utils.sheet_to_csv(sh,{blankrows:false}),",");
+            }catch(err2){ lrStatMsg("Excel 读取失败："+err2.message); }
+            done();
+          });
+        } else {
+          var s=new TextDecoder("utf-8").decode(new Uint8Array(buf));
+          if(s.indexOf("\ufffd")>=0){         // Excel 另存的 CSV 常是 GBK
+            try{ s=new TextDecoder("gbk").decode(new Uint8Array(buf)); }catch(e2){}
+          }
+          lrImportText(s,""); done();
+        }
+      }catch(err){ lrStatMsg("导入失败："+err.message); done(); }
+    };
+    fr.readAsArrayBuffer(f);
+  }
+  function lrTogglePaste(){
+    var b=document.getElementById("lrPasteBox"); if(!b) return;
+    var show=b.style.display==="none";
+    b.style.display=show?"":"none";
+    if(show){ var t=document.getElementById("lrPaste"); if(t) t.focus(); }
+  }
+  function lrImportPaste(){
+    var t=document.getElementById("lrPaste"); if(t) lrImportText(t.value,"");
+  }
+  function lrTemplate(){
+    var q=function(v){
+      v=String(v==null?"":v);
+      return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
+    };
+    var csv="\ufeff序号,样品名称,生产商,批号/生产日期,检测日期\n"+
+      lrRows().map(function(r,i){
+        return [i+1,r.sample,r.maker,r.batch,r.date].map(q).join(",");
+      }).join("\n")+"\n";
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+    a.download="原始记录样品清单.csv";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1000);
+    lrStatMsg("已下载 CSV 模板，用 Excel 填好后点「导入 Excel / CSV」");
   }
   /* 按溶液名称定位（过滤后索引会变，绝不能用位置下标）；兼容旧的数字下标 */
   function lrSetSol(name,k,v){
@@ -1061,16 +1294,21 @@
   function lrRedraw(){
     var host=document.getElementById("lrPreview");
     if(host) host.innerHTML=lrPreviewHtml();
-    var n=lrSelected().length, btn=document.getElementById("lrPrintBtn");
-    if(btn) btn.textContent="🖨 打印选中（"+n+"）";
+    var n=lrSelected().length, rows=lrActiveRows().length, btn=document.getElementById("lrPrintBtn");
+    if(btn) btn.textContent="🖨 打印全部（"+lrPrintCount()+" 份）";
     var s=lrSel(), ps=lrProjects();
     [].forEach.call(document.querySelectorAll(".lr-chip"),function(el,i){
       var p=ps[i]; if(!p) return;
       el.className="lr-chip "+(s[p.key]?"on":"");
       var cb=el.querySelector("input"); if(cb) cb.checked=!!s[p.key];
     });
-    var st=document.getElementById("lrStat");
-    if(st) st.textContent="已把样品信息自动填进 "+n+" 张记录表 · 本机已保存，刷新不丢";
+    [].forEach.call(document.querySelectorAll(".lr-rows tbody tr"),function(tr,i){
+      tr.className=(i===LRPREVIEW)?"on":"";
+      var b=tr.querySelector(".lr-rowfocus");
+      if(b) b.textContent=i===LRPREVIEW?"预览中":"";
+    });
+    lrStatMsg("当前 "+rows+" 个样品 × "+n+" 个项目 = "+lrPrintCount()+
+      " 份记录 · 本机已保存，刷新不丢");
     lrSolRender();
   }
   function lrToggle(k){
@@ -1111,17 +1349,23 @@
     var picked=only?[lrProject(only)].filter(Boolean):lrSelected();
     var st=document.getElementById("lrStat");
     if(!picked.length){ if(st) st.textContent="先勾一个检测项目再打印。"; return; }
+    /* ★ 批量：样品清单每一行 × 勾选的每个项目，一次全部送打印 */
+    var rows=lrActiveRows(), body="", pages=0;
+    rows.forEach(function(I){
+      picked.forEach(function(p){
+        var g=(global.LABPAGES||{})[p.key];
+        if(!g||!g.pages||!g.pages.length){
+          body+='<div class="pg">'+lrFill(p.html,I)+'</div>'; pages++; return;
+        }
+        g.pages.forEach(function(src,i){
+          body+='<div class="pg" style="width:'+g.w+'pt;height:'+g.h+'pt">'+
+                lrPageInner(g,i,src,true,I)+'</div>';
+          pages++;
+        });
+      });
+    });
     var w=window.open("","_blank");
     if(!w){ if(st) st.textContent="浏览器拦了新窗口，请允许弹出窗口后重试。"; return; }
-    var body=picked.map(function(p){
-      var g=(global.LABPAGES||{})[p.key];
-      if(!g||!g.pages||!g.pages.length)
-        return '<div class="pg">'+lrFill(p.html)+'</div>';
-      return g.pages.map(function(src,i){
-        return '<div class="pg" style="width:'+g.w+'pt;height:'+g.h+'pt">'+
-               lrPageInner(g,i,src,true)+'</div>';
-      }).join("");
-    }).join("");
     w.document.write('<!doctype html><html><head><meta charset="utf-8">'+
       '<title></title><style>'+LR_PRINT_CSS+'</style></head><body>'+
       body+'</body></html>');
@@ -1132,12 +1376,13 @@
       var tries=0;
       (function wait(){
         var ready=imgs.every(function(im){ return im.complete && im.naturalWidth>0; });
-        if(!imgs.length || ready || tries++>240){   // 慢网最多等 60 秒
+        if(!imgs.length || ready || tries++>480){   // 批量页数多，慢网最多等 120 秒
           w.focus(); w.print();
         } else setTimeout(wait,250);
       })();
     },80);
-    if(st) st.textContent="已送打印："+picked.map(function(p){return p.name;}).join("、");
+    if(st) st.textContent="已送打印："+rows.length+" 个样品 × "+picked.length+
+      " 个项目 = "+(rows.length*picked.length)+" 份记录 / "+pages+" 页";
   }
   function lrPrintOne(k){ lrPrint(k); }
 
@@ -1671,6 +1916,19 @@
     /* 按检测项目（真实 Word 模板） */
     lrMode: lrMode,
     lrSet: lrSet,
+    lrRows: lrRows,
+    lrActiveRows: lrActiveRows,
+    lrSetRow: lrSetRow,
+    lrAddRow: lrAddRow,
+    lrDelRow: lrDelRow,
+    lrClearRows: lrClearRows,
+    lrPreviewRow: lrPreviewRow,
+    lrImportText: lrImportText,
+    lrImportFile: lrImportFile,
+    lrImportPaste: lrImportPaste,
+    lrTogglePaste: lrTogglePaste,
+    lrTemplate: lrTemplate,
+    lrPrintCount: lrPrintCount,
     lrToggle: lrToggle,
     lrAll: lrAll,
     lrNone: lrNone,
