@@ -113,6 +113,18 @@ function ck(cond, msg) {
     '四个输入分别是样品名称/生产商/批号·生产日期/检测日期');
   ck(!fields.hasSignInput, '检验人、复核人不是变量，没有做成输入框');
   ck(!fields.solOpen, '标准溶液维护默认折叠，打印时不用管');
+  const defSol = await p.evaluate(() => ({
+    view: LAB.lrSolView(),
+    rows: [...document.querySelectorAll('.lr-solrow b')].map(e => e.textContent),
+    tabs: [...document.querySelectorAll('.lr-soltab')].map(e => e.textContent.trim()),
+    on: ((document.querySelector('.lr-soltab.on') || {}).textContent || '').trim()
+  }));
+  ck(defSol.view !== 'all', '★ 默认不是「全部」');
+  ck(defSol.rows.length === 1 && defSol.rows[0] === '硝酸银滴定溶液标准物质',
+    '★ 默认只列一个项目自己的标准溶液（1 条，不是 6 条）');
+  ck(defSol.tabs[0] === '全部' && defSol.tabs.length === 10,
+    '★ 有「全部」按钮 + 9 个检测项目按钮');
+  ck(defSol.on === '氯化物', '默认高亮当前查看的项目');
 
   console.log('=== ⑤ 预览 = Word 原页，不再重排文字 ===');
   await p.evaluate(() => LAB.lrAll());
@@ -209,6 +221,34 @@ function ck(cond, msg) {
   }));
   ck(after.cell === '070-20261115-N', '改一次，对应项目的编码立刻更新');
   ck(after.sol && after.sol.code === '070-20261115-N', '覆盖值已写进本机保存');
+
+  console.log('=== ⑦-a 点项目只出它自己的，点「全部」才出全部 ===');
+  const solState = () => p.evaluate(() => ({
+    view: LAB.lrSolView(),
+    rows: [...document.querySelectorAll('.lr-solrow b')].map(e => e.textContent),
+    on: ((document.querySelector('.lr-soltab.on') || {}).textContent || '').trim(),
+    empty: !!document.querySelector('.lr-solempty')
+  }));
+  await p.evaluate(() => LAB.lrSetSolView('choline'));
+  const vCholine = await solState();
+  ck(vCholine.view === 'choline' && vCholine.rows.length === 2 &&
+     vCholine.rows.indexOf('胆碱') >= 0 && vCholine.rows.indexOf('氯化胆碱-d4') >= 0,
+     '点「胆碱」只出它自己的 2 条');
+  await p.evaluate(() => LAB.lrSetSolView('nitrite'));
+  const vNitrite = await solState();
+  ck(vNitrite.rows.length === 2 && vNitrite.rows.indexOf('硝酸钠标准溶液') >= 0,
+     '点「亚硝酸盐与硝酸盐」只出它自己的 2 条');
+  await p.evaluate(() => LAB.lrSetSolView('all'));
+  const vAll = await solState();
+  ck(vAll.view === 'all' && vAll.rows.length === 6 && vAll.on === '全部',
+     '★ 只有点「全部」才把 6 条全列出来');
+  await p.evaluate(() => { LAB.lrNone(); LAB.lrToggle('protein'); });
+  await p.waitForTimeout(200);
+  const vProtein = await solState();
+  ck(vProtein.view === 'protein' && vProtein.rows.length === 0 && vProtein.empty,
+     '点没有标准溶液的项目：只提示，不冒出别的项目');
+  await p.evaluate(() => LAB.lrAll());   // 恢复 9 个项目全选，供后续打印/持久化断言
+  await p.waitForTimeout(200);
 
   console.log('=== ⑧ 打印：13 页原页 + 无浏览器页眉页脚 ===');
   const printHtml = await p.evaluate(() => {

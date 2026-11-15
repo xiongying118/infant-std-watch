@@ -40,6 +40,8 @@
   var LRINFO  = null;         // 样品公共信息（仅 3 项）
   var LRSEL   = null;         // 选中的项目 {key:1}
   var LRSOL   = null;         // 标准溶液覆盖表 {名称:{code,expiry}}
+  var LRSOLVIEW = null;       // 标准溶液维护查看范围：null=跟随项目 / "all" / 项目 key
+  var LRSOLVIEW_READ = false; // 本机范围只读一次，null 本身也是有效状态
   var LRNOTES = true;         // 兼容旧调用（方法说明已在原表内）
 
   function esc(s){
@@ -783,6 +785,99 @@
     });
     return out;
   }
+  /* ★ 标准溶液维护按检测项目过滤（2026-11-15）：
+     默认只看当前项目自己的溶液，只有点「全部」才把 9 个项目的都列出来。
+     9 份 Word 原表里只有 4 个项目含标准溶液表，其余项目不显示空卡片。 */
+  function lrSolProjects(){
+    return lrProjects().filter(function(p){ return (p.solutions||[]).length; });
+  }
+  function lrSolView(){
+    if(!LRSOLVIEW_READ){
+      LRSOLVIEW_READ=true;
+      var v=global.Store?global.Store.get("lab.record.solview.v1",null):null;
+      LRSOLVIEW=(v==="all"||lrProject(v))?v:null;
+    }
+    if(LRSOLVIEW) return LRSOLVIEW;
+    var sel=lrSelected();
+    if(sel.length===1){
+      var p=lrProject(sel[0].key);
+      if(p&&(p.solutions||[]).length) return sel[0].key;
+    }
+    /* 当前项目没有标准溶液表（或多选/未选）时，默认展示第一个有溶液的项目 */
+    var ps=lrSolProjects();
+    return ps.length?ps[0].key:"all";
+  }
+  function lrSolRows(v){
+    var O=lrSol(), seen={}, out=[], src=[];
+    if(v==="all"){
+      lrProjects().forEach(function(p){ src=src.concat(p.solutions||[]); });
+    } else {
+      var p=lrProject(v); src=(p&&p.solutions)||[];
+    }
+    src.forEach(function(s){
+      if(seen[s.name]) return;
+      seen[s.name]=1;
+      var o=O[s.name]||{};
+      out.push({name:s.name,
+                code:o.code!=null?o.code:s.code,
+                expiry:o.expiry!=null?o.expiry:s.expiry});
+    });
+    return out;
+  }
+  function lrSolTabsHtml(v){
+    var t='<div class="lr-soltabs" id="lrSolTabs">'+
+      '<button type="button" class="lr-soltab '+(v==="all"?"on":"")+'" '+
+        'onclick="LAB.lrSetSolView(\'all\')">全部</button>';
+    /* 9 个项目全列，点哪个项目高亮哪个；没有标准溶液表的会给出明确提示 */
+    lrProjects().forEach(function(p){
+      t+='<button type="button" class="lr-soltab '+(v===p.key?"on":"")+'" '+
+         'onclick="LAB.lrSetSolView(\''+esc(p.key)+'\')">'+esc(p.name)+'</button>';
+    });
+    return t+'</div>';
+  }
+  function lrSolBodyHtml(v){
+    var rows=lrSolRows(v);
+    if(!rows.length){
+      var p=lrProject(v);
+      return '<div class="lr-solempty">'+esc(p?p.name:"当前范围")+
+        '的 Word 原表里没有标准溶液，不用维护。点上面的项目或「全部」查看其他项目。</div>';
+    }
+    return '<div class="lr-solgrid">'+rows.map(function(x){
+      return '<div class="lr-solrow"><b>'+esc(x.name)+'</b>'+
+        '<label>编码<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.code)+'" '+
+          'oninput="LAB.lrSetSol(this.dataset.name,\'code\',this.value)"></label>'+
+        '<label>有效期至<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.expiry)+'" '+
+          'oninput="LAB.lrSetSol(this.dataset.name,\'expiry\',this.value)"></label></div>';
+    }).join("")+'</div>';
+  }
+  function lrSolPanelHtml(){
+    var v=lrSolView();
+    var nm=(v==="all")?"全部":((lrProject(v)||{name:v}).name);
+    return '<details class="lr-solbar" id="lrSolBar" style="margin-bottom:12px">'+
+      '<summary id="lrSolSummary">标准溶液维护（当前：'+esc(nm)+'）· 只列这个项目的，点「全部」才出全部</summary>'+
+      '<div class="muted" style="font-size:11.5px;line-height:1.6;margin:8px 0 2px">'+
+      '编码和有效期至<b>打印时不用填</b>，默认就是 Word 原表里的值。'+
+      '9 份原表里只有 4 个项目有标准溶液，这里默认只列其中一个项目；'+
+      '点上面的项目名切换，点「全部」才一次看全。'+
+      '哪种溶液过期重新配制了，改一次本机记住，不用每次打印都改。</div>'+
+      lrSolTabsHtml(v)+'<div id="lrSolBody">'+lrSolBodyHtml(v)+'</div></details>';
+  }
+  function lrSolRender(){
+    var bar=document.getElementById("lrSolBar");
+    if(!bar) return;
+    var v=lrSolView();
+    var nm=(v==="all")?"全部":((lrProject(v)||{name:v}).name);
+    var sm=document.getElementById("lrSolSummary");
+    if(sm) sm.textContent="标准溶液维护（当前："+nm+"）· 只列这个项目的，点「全部」才出全部";
+    var tabs=document.getElementById("lrSolTabs");
+    if(tabs) tabs.outerHTML=lrSolTabsHtml(v);
+    var body=document.getElementById("lrSolBody");
+    if(body) body.innerHTML=lrSolBodyHtml(v);
+  }
+  function lrSetSolView(v){
+    LRSOLVIEW=(v==="all"||lrProject(v))?v:null;
+    lrSave(); lrSolRender();
+  }
   function lrSel(){
     if(!LRSEL){
       LRSEL={};
@@ -801,6 +896,9 @@
     var s=lrSel(), I=lrInfo();
     global.Store.set("lab.record.info.v2", I);
     global.Store.set("lab.record.sol.v1", lrSol());
+    /* 先把已保存的查看范围读回来，避免首次保存冲掉上次的「全部」 */
+    lrSolView();
+    global.Store.set("lab.record.solview.v1", LRSOLVIEW);
     global.Store.set("lab.record.sel.v1",
       lrProjects().filter(function(p){ return s[p.key]; }).map(function(p){ return p.key; }));
   }
@@ -917,23 +1015,9 @@
                'oninput="LAB.lrSet(\''+f[0]+'\',this.value)"></label>';
       }).join("")+'</div>'+
       '<div class="lr-stat" id="lrStat">已把样品信息自动填进 '+n+' 张记录表 · 本机已保存，刷新不丢</div></div>';
-    /* 标准溶液：默认 Word 原值，只在过期重配时改一次，不参与每次打印 */
-    var sols=lrAllSolutions();
-    if(sols.length){
-      h+='<details class="lr-solbar" style="margin-bottom:12px">'+
-        '<summary>标准溶液维护（仅过期重配时改一次，平时不用管）</summary>'+
-        '<div class="muted" style="font-size:11.5px;line-height:1.6;margin:8px 0 2px">'+
-        '编码和有效期至<b>打印时不用填</b>，默认就是 Word 原表里的值。'+
-        '哪种标准溶液过期重新配制了，在这里改一次即可，本机记住，'+
-        '之后所有项目的打印都用新值，不用每次改。</div>'+
-        '<div class="lr-solgrid">'+sols.map(function(x,i){
-          return '<div class="lr-solrow"><b>'+esc(x.name)+'</b>'+
-            '<label>编码<input type="text" value="'+esc(x.code)+'" '+
-              'oninput="LAB.lrSetSol('+i+',\'code\',this.value)"></label>'+
-            '<label>有效期至<input type="text" value="'+esc(x.expiry)+'" '+
-              'oninput="LAB.lrSetSol('+i+',\'expiry\',this.value)"></label></div>';
-        }).join("")+'</div></details>';
-    }
+    /* 标准溶液：默认 Word 原值，只在过期重配时改一次；
+       ★ 按检测项目过滤，默认只出当前项目的，点「全部」才出全部 */
+    h+=lrSolPanelHtml();
     h+='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
       '<h3>选择检测项目</h3><span class="muted">共 '+ps.length+' 个项目模板</span><div class="sp"></div>'+
       '<button class="btn sm" onclick="LAB.lrAll()">全选</button>'+
@@ -959,8 +1043,11 @@
     var zh={sample:"样品名称",maker:"生产商",batch:"批号/生产日期",date:"检测日期"}[k]||k;
     if(st) st.textContent="已把「"+zh+"」填进 "+n+" 处 · 本机已保存，刷新不丢";
   }
-  function lrSetSol(i,k,v){
-    var x=lrAllSolutions()[i];
+  /* 按溶液名称定位（过滤后索引会变，绝不能用位置下标）；兼容旧的数字下标 */
+  function lrSetSol(name,k,v){
+    var all=lrAllSolutions(), x=null;
+    if(typeof name==="number") x=all[name];
+    else for(var i=0;i<all.length;i++) if(all[i].name===name){ x=all[i]; break; }
     if(!x) return;
     var O=lrSol(); if(!O[x.name]) O[x.name]={};
     O[x.name][k]=v; lrSave();
@@ -984,13 +1071,25 @@
     });
     var st=document.getElementById("lrStat");
     if(st) st.textContent="已把样品信息自动填进 "+n+" 张记录表 · 本机已保存，刷新不丢";
+    lrSolRender();
   }
   function lrToggle(k){
-    var s=lrSel(); if(s[k]) delete s[k]; else s[k]=1;
+    var s=lrSel();
+    if(s[k]){
+      delete s[k];
+      if(LRSOLVIEW===k) LRSOLVIEW=null;      // 取消该项目后回到跟随当前项目
+    } else {
+      s[k]=1;
+      if(lrSelected().length===1) LRSOLVIEW=k; // ★ 只点一个项目 → 只列它的标准溶液
+    }
     lrSave(); lrRedraw();
   }
-  function lrAll(){ var s=lrSel(); lrProjects().forEach(function(p){ s[p.key]=1; }); lrSave(); lrRedraw(); }
-  function lrNone(){ LRSEL={}; lrSave(); lrRedraw(); }
+  function lrAll(){
+    var s=lrSel(); lrProjects().forEach(function(p){ s[p.key]=1; });
+    LRSOLVIEW="all";                          // ★ 只有点「全部/全选」才显示全部
+    lrSave(); lrRedraw();
+  }
+  function lrNone(){ LRSEL={}; LRSOLVIEW=null; lrSave(); lrRedraw(); }
   function lrNotes(){ return false; }   /* 兼容旧调用，方法说明已在原表内 */
   function lrMode(m){ LRMODE=m; render(); }
 
@@ -1584,7 +1683,10 @@
     lrSelected: lrSelected,
     lrSol: lrSol,
     lrAllSolutions: lrAllSolutions,
-    lrSetSol: lrSetSol
+    lrSetSol: lrSetSol,
+    lrSolView: lrSolView,
+    lrSolRows: lrSolRows,
+    lrSetSolView: lrSetSolView
   };
 
 })(window);

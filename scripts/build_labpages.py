@@ -48,6 +48,7 @@ LABELS = {
 }
 
 SCALE = 4.0          # 288 dpi，A4 ≈ 2382×3368，灰度 PNG ≈ 450KB/页
+SUN = r"C:\Windows\Fonts\simsun.ttc"   # 页码补字沿用 Word 原页的宋体
 
 
 def norm(s):
@@ -264,6 +265,171 @@ def erase_originals(doc, fields, spans):
     return n
 
 
+def update_fields(doc):
+    """导出 PDF 前先算页眉页脚里的 PAGE / NUMPAGES 域。
+
+    Word 只读打开时域结果缓存可能是空的，导出的 PDF 就会出现
+    「第  页 共  页」；酸价/过氧化值更彻底，页脚本来就没有域、只有留白，
+    这部分由 fix_page_numbers() 按 Word 留白位置补齐。"""
+    try:
+        doc.Fields.Update()
+    except Exception:
+        pass
+    for si in range(1, g(lambda: int(doc.Sections.Count), 0) + 1):
+        for kind in ("Headers", "Footers"):
+            for fi in (1, 2, 3):
+                try:
+                    getattr(doc.Sections(si), kind)(fi).Range.Fields.Update()
+                except Exception:
+                    pass
+
+
+def _all_spans(page):
+    """含空文本 span（空的页码域结果也带 bbox，正好是留白位置）。"""
+    out = []
+    for b in page.get_text("dict")["blocks"]:
+        for l in b.get("lines", []):
+            for s in l.get("spans", []):
+                out.append(dict(bbox=tuple(s["bbox"]), by=s["origin"][1],
+                                size=s["size"], t=s["text"]))
+    return out
+
+
+def fix_page_numbers(pdf, key):
+    """逐页核对页码并修到正常：
+
+    · 已有完整「第 X 页 共 Y 页」（氯化物、亚硝酸盐等静态文字）→ 一个字不动
+    · 页码域结果为空 / Word 原表只留了空位（酸价、过氧化值）→ 在留白处补数字
+    · 页码被长表格压住（胆碱第 1 页）→ 只把这一行挪到表格下方空白处，
+      擦字时按文字 bbox 精确涂白并补回被碰到的框线，绝不改动其它内容
+    """
+    import pymupdf
+    total, notes = len(pdf), []
+    try:
+        sun = pymupdf.Font(fontfile=SUN)
+    except Exception:
+        sun = pymupdf.Font("helv")
+
+    for pno, page in enumerate(pdf, 1):
+        S = _all_spans(page)
+        foot = [s for s in S if s["bbox"][1] > 750 and re.search(r"[第页共]", s["t"] or "")]
+        if not foot:
+            notes.append("p%d:无页脚" % pno)
+            continue
+        joined = "".join(s["t"] for s in foot)
+        marks = [s for s in foot if (s["t"] or "").strip() in ("第", "页", "共")]
+        nums = [s for s in S if s["bbox"][1] > 750
+                and re.fullmatch(r"\s*\d+\s*", s["t"] or "")]
+        if len(marks) < 4:                       # 静态整行页码
+            if re.search(r"\d", joined):
+                notes.append("p%d:原样(%s)" % (pno, joined.strip()[:22]))
+            else:
+                notes.append("p%d:未识别页脚(%s)" % (pno, joined.strip()[:22]))
+            continue
+
+        di = [s for s in marks if s["t"].strip() == "第"]
+        ye = sorted([s for s in marks if s["t"].strip() == "页"],
+                    key=lambda s: s["bbox"][0])
+        go = [s for s in marks if s["t"].strip() == "共"]
+        if not (di and len(ye) >= 2 and go):
+            notes.append("p%d:页脚结构异常" % pno)
+            continue
+        di, go, ye1, ye2 = di[0], go[0], ye[0], ye[-1]
+        by, size = di["by"], di["size"]
+        g1 = (di["bbox"][2] + ye1["bbox"][0]) / 2
+        g2 = (go["bbox"][2] + ye2["bbox"][0]) / 2
+        x0 = min(s["bbox"][0] for s in foot)
+        x1 = max(s["bbox"][2] for s in foot + nums)
+        ytop = min(s["bbox"][1] for s in foot)
+        ybot = max(s["bbox"][3] for s in foot + nums)
+
+        def has_num(cx):
+            return any(abs((s["bbox"][0] + s["bbox"][2]) / 2 - cx) < 13
+                       and abs(s["by"] - by) < 6 for s in nums)
+
+        own = set(id(s) for s in foot + nums)
+        clash = [s for s in S if id(s) not in own and (s["t"] or "").strip()
+                 and s["bbox"][1] < ybot - 1 and s["bbox"][3] > ytop + 1]
+
+        # 收集页底附近的框线，擦字后若线被碰到就原样补回
+        hlines, vlines = [], []
+        for dr in page.get_drawings():
+            for it in dr["items"]:
+                if it[0] != "re":
+                    continue
+                r = it[1]
+                if r.height < 1.6 and r.width > 3 and r.y0 > 700:
+                    hlines.append((r.y0, r.x0, r.x1))
+                elif r.width < 1.6 and r.height > 3 and r.y0 > 700:
+                    vlines.append((r.x0, r.y0, r.y1))
+
+        try:
+            page.insert_font(fontname="lrsun", fontfile=SUN)
+            fname = "lrsun"
+        except Exception:
+            fname = "helv"
+
+        if not clash:
+            # 只往留白里补数字，汉字、框线、位置全部保持 Word 原样
+            added = 0
+            for cx, num in ((g1, pno), (g2, total)):
+                if has_num(cx):
+                    continue
+                w = sun.text_length(str(num), fontsize=size)
+                page.insert_text((cx - w / 2, by), str(num),
+                                 fontname=fname, fontsize=size, color=(0, 0, 0))
+                added += 1
+            notes.append("p%d:%s%s" % (pno, "补数字" if added else "域已更新",
+                                       "" if not added else "(%d/%d)" % (pno, total)))
+            continue
+
+        # 页码被表格压住：擦掉这一行，挪到表格下方空白重写完整页码
+        rects = []
+        for s in foot + nums:
+            if not (s["t"] or "").strip():
+                continue
+            r = pymupdf.Rect(s["bbox"][0] + 0.4, s["bbox"][1] + 0.4,
+                             s["bbox"][2] - 0.4, s["bbox"][3] - 0.4)
+            rects.append(r)
+            page.draw_rect(r, color=None, fill=(1, 1, 1), overlay=True)
+        for y, ax, bx in hlines:
+            if any(r.y0 - 1 <= y <= r.y1 + 1 for r in rects):
+                page.draw_line(pymupdf.Point(ax, y), pymupdf.Point(bx, y),
+                               color=(0, 0, 0), width=0.6, overlay=True)
+        for x, ay, by2 in vlines:
+            if any(r.x0 - 1 <= x <= r.x1 + 1 for r in rects):
+                page.draw_line(pymupdf.Point(x, ay), pymupdf.Point(x, by2),
+                               color=(0, 0, 0), width=0.6, overlay=True)
+        bottom = max([y for y, _, _ in hlines if y > ytop] or [ybot])
+        new_by = min(page.rect.height - 16, max(bottom + 15, ybot + 10, 806))
+        text = "第 %d 页 共 %d 页" % (pno, total)
+        w = sun.text_length(text, fontsize=size)
+        page.insert_text(((x0 + x1) / 2 - w / 2, new_by), text,
+                         fontname=fname, fontsize=size, color=(0, 0, 0))
+        notes.append("p%d:移出表格(%s y=%.0f)" % (pno, text.strip(), new_by))
+    verify_page_numbers(pdf)
+    return notes
+
+
+def verify_page_numbers(pdf):
+    """★ 生成时自检：本项目每一页都必须有「第 当前页 页 共 总页数 页」，
+       少一个数字就中止重建，避免下次重跑又把空页码推上线。"""
+    total, bad = len(pdf), []
+    for pno, page in enumerate(pdf, 1):
+        foot = [s for s in _all_spans(page) if s["bbox"][1] > 750]
+        joined = "".join(s["t"] for s in foot)
+        digits = [(s["t"] or "").strip() for s in foot
+                  if re.fullmatch(r"\s*\d+\s*", s["t"] or "")]
+        m = re.search(r"第\s*(\d+)\s*页\s*共\s*(\d+)\s*页", joined)
+        ok = ((m and m.group(1) == str(pno) and m.group(2) == str(total))
+              or (str(pno) in digits and str(total) in digits))
+        if not ok:
+            bad.append((pno, joined.strip()[:40], digits))
+    if bad:
+        raise SystemExit("页码自检失败：" + repr(bad))
+    return total
+
+
 def render_pages(key, pdfpath, outdir, doc):
     from PIL import Image
     imgs, size = [], None
@@ -292,6 +458,10 @@ def main():
     word = W.Dispatch("Word.Application")
     word.Visible = False
     word.DisplayAlerts = 0
+    try:
+        word.Options.UpdateFieldsAtPrint = True   # 导出时把页码域算出来
+    except Exception:
+        pass
     out = {}
     try:
         for key, fn in FILES.items():
@@ -300,6 +470,7 @@ def main():
                 raise SystemExit("缺源文件：" + src)
             doc = word.Documents.Open(FileName=src, ConfirmConversions=False,
                                      ReadOnly=True, AddToRecentFiles=False, Visible=False)
+            update_fields(doc)
             tables = collect_cells(doc)
             pdfpath = os.path.join(PDFDIR, key + ".pdf")
             doc.ExportAsFixedFormat(pdfpath, 17)      # wdExportFormatPDF
@@ -310,6 +481,7 @@ def main():
             fields = calibrate(snap_fields(find_fields(row_rects(tables),
                                                       labrec[key]["solutions"]), borders), spans)
             erased = erase_originals(pdf, fields, spans)
+            pnotes = fix_page_numbers(pdf, key)
             imgs, size = render_pages(key, pdfpath, IMGDIR, pdf)
             pdf.close()
             out[key] = dict(w=size[0], h=size[1], pages=imgs, fields=fields)
@@ -318,6 +490,7 @@ def main():
                 kinds[f["k"]] = kinds.get(f["k"], 0) + 1
             print("%-11s pages=%d  %s  erased=%d  fields=%s" %
                   (key, len(imgs), "x".join(str(round(v)) for v in size), erased, kinds))
+            print("            页码: " + " | ".join(pnotes))
     finally:
         word.Quit()
 
