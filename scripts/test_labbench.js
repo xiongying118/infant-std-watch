@@ -253,6 +253,10 @@ function ck(cond,msg){
     if(b)b.click();
   });
   await p.waitForTimeout(900);
+  /* 2026-11-15：原始记录默认切到「按检测项目」9 份真实模板。
+     这一节守护的是原来的「按方法标准」生成器，先切模式再断言。 */
+  await p.evaluate(()=>{ if(window.LAB && window.LAB.lrMode) window.LAB.lrMode('method'); });
+  await p.waitForTimeout(500);
   const mo=await p.evaluate(()=>{
     const o=window.LAB.methodOptions();
     const nos=o.map(x=>String(x.no).replace(/\s+/g,'').toUpperCase());

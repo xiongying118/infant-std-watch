@@ -2297,6 +2297,8 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 <script src="labledger.js"></script>
 <!-- ★ JSA 工作台（2026-11-01）★ 可编辑 · 可联动 · 可交付 -->
 <script src="jsa.js"></script>
+<!-- ★ 原始记录 9 个项目模板（2026-11-15，由 9 份 Word 原表生成）★ 必须在 labbench.js 之前 -->
+<script src="labrecord.js"></script>
 <!-- ★ 实验室管理台账工具（2026-11-01）★ 设备/试剂/留样/QC/PT/原始记录 -->
 <script src="labbench.js"></script>
 <!-- ★ 工具工作台引擎（2026-10-22）★ 34 个可交互工具的实现 -->
@@ -6127,6 +6129,16 @@ function renderRunState(){
       + '<div style="margin-top:5px">手动执行一次：'
       + '<code>python scripts/crawler.py --run</code>；'
       + '常驻运行：<code>python scripts/crawler.py --serve</code></div></div>';
+  }else if(st.failedSources && st.failedSources.length){
+    box.className = "notice warn";
+    box.style.display = "flex";
+    var fs = st.failedSources.map(f => f.code).join("、");
+    box.innerHTML = '<span>⚠</span><div><b>有官方源没查到：' + fs + '</b>。'
+      + '该源本次抓取失败，它的数据<b>沿用上一版</b>（' + st.lastRun + ' 之前）。'
+      + '<div style="margin-top:5px"><b>这不是"官方没有新标准"</b> —— '
+      + '是这个源暂时访问不到，期间的新标准、换版、勘误<b>可能漏了</b>，'
+      + '不要按"最近没有变更"来判断。其余源本次已正常检查。'
+      + '</div></div>';
   }else if(!st.healthy){
     box.className = "notice warn";
     box.style.display = "flex";

@@ -29,6 +29,14 @@
   var ST = {};                // 本机覆盖层
   var REC = null;             // 当前原始记录草稿
 
+  /* ===== 按检测项目的真实模板（2026-11-15）=====
+     9 份 Word 原表逐格读取后生成 prototype/labrecord.js。
+     样品信息填一次，自动带进所有选中的项目；刷新不丢。 */
+  var LRMODE  = "project";    // project | method
+  var LRINFO  = null;         // 样品公共信息
+  var LRSEL   = null;         // 选中的项目 {key:1}
+  var LRNOTES = true;         // 打印是否附检测方法与计算式
+
   function esc(s){
     return String(s==null?"":s).replace(/[&<>"]/g, function(c){
       return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
@@ -724,6 +732,214 @@
     return html;
   }
 
+  /* ================================================================
+     ⑦-a 原始记录「按检测项目」模式（2026-11-15）
+     9 份 Word 原表逐格读取 → prototype/labrecord.js。
+     抬头/列名/预置值/检验依据/仪器与方法说明全部照抄原表，不编数值。
+     ================================================================ */
+  function lrProjects(){ return (global.LABREC && global.LABREC.projects) || []; }
+  function lrProject(k){
+    var ps=lrProjects();
+    for(var i=0;i<ps.length;i++) if(ps[i].key===k) return ps[i];
+    return null;
+  }
+  function lrInfo(){
+    if(!LRINFO){
+      LRINFO={sample:"",maker:"",batch:"",testDate:today(),tester:"",reviewer:""};
+      var s=global.Store?global.Store.get("lab.record.info.v1",null):null;
+      if(s&&typeof s==="object"){
+        Object.keys(LRINFO).forEach(function(k){ if(s[k]!=null) LRINFO[k]=String(s[k]); });
+      }
+    }
+    return LRINFO;
+  }
+  function lrSel(){
+    if(!LRSEL){
+      LRSEL={};
+      var s=global.Store?global.Store.get("lab.record.sel.v1",null):null;
+      if(s&&s.length){ s.forEach(function(k){ LRSEL[k]=1; }); }
+      else { var ps=lrProjects(); if(ps.length) LRSEL[ps[0].key]=1; }
+    }
+    return LRSEL;
+  }
+  function lrSelected(){
+    var s=lrSel();
+    return lrProjects().filter(function(p){ return s[p.key]; });
+  }
+  function lrSave(){
+    if(!global.Store) return;
+    var s=lrSel(), I=lrInfo();
+    global.Store.set("lab.record.info.v1", I);
+    global.Store.set("lab.record.sel.v1",
+      lrProjects().filter(function(p){ return s[p.key]; }).map(function(p){ return p.key; }));
+  }
+  function lrGridHtml(t){
+    var h='<table class="lr-grid"><tbody>';
+    t.grid.forEach(function(line,ri){
+      h+='<tr>';
+      line.forEach(function(c){
+        h+='<td class="'+(ri===0?"hd":"")+'"'+
+           (c.cs>1?' colspan="'+c.cs+'"':'')+
+           (c.rs>1?' rowspan="'+c.rs+'"':'')+'>'+esc(c.t)+'</td>';
+      });
+      h+='</tr>';
+    });
+    return h+'</tbody></table>';
+  }
+  function lrNotesHtml(p,mode){
+    if(!p.notes||!p.notes.length) return "";
+    var body=p.notes.map(function(n){
+      return '<div class="lr-note-p">'+esc(n).split(String.fromCharCode(10)).join('<br>')+'</div>';
+    }).join("");
+    if(mode==="screen"){
+      return '<details class="lr-notes"><summary>检测方法 / 仪器 / 计算式（原文照录）</summary>'+body+'</details>';
+    }
+    return '<div class="lr-notes"><div class="lr-notes-h">检测方法 / 仪器 / 计算式（原文照录）</div>'+body+'</div>';
+  }
+  /* 一张记录纸。mode: screen | print | plain（plain = 不附方法说明） */
+  function lrSheetHtml(p,mode){
+    var I=lrInfo(), h='<div class="lr-paper" data-lr-sheet="'+esc(p.key)+'">';
+    h+='<div class="lr-title">检测中心原始记录</div>';
+    h+='<table class="lr-head"><tbody>';
+    h+='<tr><th>样 品 名 称：</th><td data-lr="sample">'+esc(I.sample)+'</td>'+
+       '<th>生产商名称：</th><td data-lr="maker">'+esc(I.maker)+'</td></tr>';
+    h+='<tr><th>批号/生产日期：</th><td data-lr="batch">'+esc(I.batch)+'</td>'+
+       '<th>检测日期：</th><td data-lr="testDate">'+esc(I.testDate)+'</td></tr>';
+    h+='<tr><th>检验依据：</th><td colspan="3">'+esc(p.basis)+'</td></tr>';
+    h+='<tr><th>检验项目及数据记录：</th><td colspan="3">'+esc(p.item)+'</td></tr>';
+    h+='</tbody></table>';
+    p.tables.forEach(function(t){
+      h+='<div class="lr-tcap">'+esc(t.cap)+'</div>'+lrGridHtml(t);
+    });
+    h+='<table class="lr-sign"><tbody>'+
+       '<tr><th>检验人：</th><td data-lr="tester">'+esc(I.tester)+'</td>'+
+       '<th>复核人：</th><td data-lr="reviewer">'+esc(I.reviewer)+'</td></tr>'+
+       '<tr><th>检验日期：</th><td data-lr="testDate">'+esc(I.testDate)+'</td>'+
+       '<th>复核日期：</th><td></td></tr></tbody></table>';
+    if(mode!=="plain") h+=lrNotesHtml(p,mode);
+    h+='</div>';
+    return h;
+  }
+  function lrPreviewHtml(){
+    var picked=lrSelected();
+    if(!picked.length) return '<div class="card empty">上面勾一个检测项目，对应的原始记录模板就出来。</div>';
+    return picked.map(function(p){
+      return '<div class="card lr-card" style="margin-bottom:12px"><div class="card-h">'+
+        '<h3>'+esc(p.name)+'（'+esc(p.unit)+'）</h3>'+
+        '<span class="muted">'+esc(p.basis)+'</span><div class="sp"></div>'+
+        '<button class="btn sm" onclick="LAB.lrPrintOne(\''+esc(p.key)+'\')">🖨 只打这张</button></div>'+
+        '<div class="lr-scroll">'+lrSheetHtml(p,"screen")+'</div></div>';
+    }).join("");
+  }
+  function viewRecordByProject(){
+    var I=lrInfo(), ps=lrProjects(), s=lrSel(), n=lrSelected().length;
+    var F=[["sample","样品名称"],["maker","生产商"],["batch","批号/生产日期"],
+           ["testDate","检测日期"],["tester","检验人"],["reviewer","复核人"]];
+    var h='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
+      '<h3>原始记录 · 按检测项目出模板</h3>'+
+      '<span class="muted">9 个检测项目各有自己的原表；样品信息填一次，全部自动带出</span>'+
+      '<div class="sp"></div>'+
+      '<button class="btn sm pri" onclick="LAB.lrMode(\'project\')">按检测项目</button>'+
+      '<button class="btn sm" onclick="LAB.lrMode(\'method\')">按方法标准</button></div>'+
+      '<div class="notice" style="margin:10px 0"><span>📋</span><div>'+
+      '<b>模板按你们 9 份 Word 原始记录 1:1 还原</b>：抬头、列名、预置值、检验依据、仪器与方法说明都是原表文字。'+
+      '样品名称、生产商、批号/生产日期、检测日期、检验人、复核人<b>只填一次</b>，勾几个项目就出几张，可一次打印。</div></div>'+
+      '<div class="lr-fields">'+F.map(function(f){
+        return '<label><span>'+f[1]+'</span><input type="'+(f[0]==="testDate"?"date":"text")+'" '+
+               'value="'+esc(I[f[0]])+'" placeholder="'+(f[0]==="testDate"?"":f[1])+'" '+
+               'oninput="LAB.lrSet(\''+f[0]+'\',this.value)"></label>';
+      }).join("")+'</div>'+
+      '<div class="lr-stat" id="lrStat">已把样品信息自动填进 '+n+' 张记录表 · 本机已保存，刷新不丢</div></div>';
+    h+='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
+      '<h3>选择检测项目</h3><span class="muted">共 '+ps.length+' 个项目模板</span><div class="sp"></div>'+
+      '<button class="btn sm" onclick="LAB.lrAll()">全选</button>'+
+      '<button class="btn sm" onclick="LAB.lrNone()">清空</button>'+
+      '<label class="lr-chk"><input type="checkbox" '+(LRNOTES?"checked":"")+
+      ' onchange="LAB.lrNotes(this.checked)">附方法与计算式</label>'+
+      '<button class="btn pri sm" id="lrPrintBtn" onclick="LAB.lrPrint()">🖨 打印选中（'+n+'）</button></div>'+
+      '<div class="lr-chips">'+ps.map(function(p){
+        return '<label class="lr-chip '+(s[p.key]?"on":"")+'">'+
+          '<input type="checkbox" '+(s[p.key]?"checked":"")+
+          ' onchange="LAB.lrToggle(\''+esc(p.key)+'\')">'+
+          '<b>'+esc(p.name)+'</b><span class="muted">'+esc(p.unit)+'</span></label>';
+      }).join("")+'</div></div>';
+    h+='<div id="lrPreview">'+lrPreviewHtml()+'</div>';
+    return h;
+  }
+  /* ---- 交互：输入只改占位符文本，不重绘，保住焦点 ---- */
+  function lrSet(k,v){
+    lrInfo()[k]=v; lrSave();
+    var I=lrInfo(), n=0;
+    [].forEach.call(document.querySelectorAll("[data-lr]"),function(el){
+      el.textContent=I[el.getAttribute("data-lr")]||""; n++;
+    });
+    var st=document.getElementById("lrStat");
+    if(st) st.textContent="已把样品信息自动填进 "+lrSelected().length+" 张记录表（"+n+" 处）· 本机已保存，刷新不丢";
+  }
+  function lrRedraw(){
+    var host=document.getElementById("lrPreview");
+    if(host) host.innerHTML=lrPreviewHtml();
+    var n=lrSelected().length, btn=document.getElementById("lrPrintBtn");
+    if(btn) btn.textContent="🖨 打印选中（"+n+"）";
+    var s=lrSel(), ps=lrProjects();
+    [].forEach.call(document.querySelectorAll(".lr-chip"),function(el,i){
+      var p=ps[i]; if(!p) return;
+      el.className="lr-chip "+(s[p.key]?"on":"");
+      var cb=el.querySelector("input"); if(cb) cb.checked=!!s[p.key];
+    });
+    var st=document.getElementById("lrStat");
+    if(st) st.textContent="已把样品信息自动填进 "+n+" 张记录表 · 本机已保存，刷新不丢";
+  }
+  function lrToggle(k){
+    var s=lrSel(); if(s[k]) delete s[k]; else s[k]=1;
+    lrSave(); lrRedraw();
+  }
+  function lrAll(){ var s=lrSel(); lrProjects().forEach(function(p){ s[p.key]=1; }); lrSave(); lrRedraw(); }
+  function lrNone(){ LRSEL={}; lrSave(); lrRedraw(); }
+  function lrNotes(v){ LRNOTES=!!v; }
+  function lrMode(m){ LRMODE=m; render(); }
+
+  var LR_PRINT_CSS = [
+    '@page{size:A4 landscape;margin:10mm 9mm}',
+    '*{box-sizing:border-box}',
+    'body{font-family:"Microsoft YaHei",SimSun,sans-serif;font-size:9pt;color:#000;margin:0}',
+    '.pg{page-break-after:always;break-after:page}',
+    '.pg:last-child{page-break-after:auto;break-after:auto}',
+    '.lr-paper{width:100%}',
+    '.lr-title{text-align:center;font-size:15pt;font-weight:700;letter-spacing:2px;margin:0 0 7pt}',
+    '.lr-head,.lr-grid,.lr-sign{border-collapse:collapse;width:100%;margin-bottom:5pt}',
+    '.lr-head th,.lr-head td,.lr-grid td,.lr-sign th,.lr-sign td{border:0.6pt solid #333;padding:3pt 4pt;font-size:8.5pt;height:23pt;vertical-align:middle;word-break:break-all}',
+    '.lr-head th{width:18%;font-weight:600;background:#f1f1f1;text-align:left}',
+    '.lr-head td{width:32%}',
+    '.lr-grid td{text-align:center;height:27pt;font-size:7.6pt;line-height:1.25;padding:2pt}',
+    '.lr-grid td.hd{font-weight:600;background:#f1f1f1;height:36pt}',
+    '.lr-sign th{width:16%;font-weight:600;background:#f1f1f1;text-align:left}',
+    '.lr-sign td{width:34%}',
+    '.lr-tcap{font-size:8.5pt;font-weight:600;margin:6pt 0 2pt}',
+    '.lr-notes{margin-top:9pt;border-top:0.6pt solid #666;padding-top:5pt}',
+    '.lr-notes-h{font-size:8.5pt;font-weight:600;margin-bottom:3pt}',
+    '.lr-note-p{font-size:7.4pt;line-height:1.5;margin:0 0 5pt;word-break:break-all;color:#222}',
+    'summary{display:none}'
+  ].join("");
+
+  function lrPrint(only){
+    var picked=only?[lrProject(only)].filter(Boolean):lrSelected();
+    var st=document.getElementById("lrStat");
+    if(!picked.length){ if(st) st.textContent="先勾一个检测项目再打印。"; return; }
+    var w=window.open("","_blank");
+    if(!w){ if(st) st.textContent="浏览器拦了新窗口，请允许弹出窗口后重试。"; return; }
+    var body=picked.map(function(p){
+      return '<div class="pg">'+lrSheetHtml(p,LRNOTES?"print":"plain")+'</div>';
+    }).join("");
+    w.document.write('<!doctype html><html><head><meta charset="utf-8">'+
+      '<title>原始记录 · '+esc(today())+'</title><style>'+LR_PRINT_CSS+'</style></head><body>'+
+      body+'</body></html>');
+    w.document.close();
+    setTimeout(function(){ w.focus(); w.print(); },350);
+    if(st) st.textContent="已送打印："+picked.map(function(p){return p.name;}).join("、");
+  }
+  function lrPrintOne(k){ lrPrint(k); }
+
   /* ---------- ⑦ 原始记录生成器 ---------- */
   /* ================================================================
      方法候选清单
@@ -810,6 +1026,8 @@
   var MANUAL = [];
 
   function viewRecord(){
+    /* 默认「按检测项目」：9 份真实 Word 原表 + 样品信息一次填充 */
+    if(LRMODE==="project" && lrProjects().length) return viewRecordByProject();
     var tpls = global.LABDATA.RECORD_TEMPLATES || {};
     var opts = methodOptions();
 
@@ -823,7 +1041,10 @@
 
     var html = `<div class="card" style="margin-bottom:14px">
       <div class="card-h"><h3>原始记录生成器</h3>
-        <span class="muted">选方法 → 出记录表框架 → 填数据 → 导出打印签字</span></div>
+        <span class="muted">选方法 → 出记录表框架 → 填数据 → 导出打印签字</span>
+        <div class="sp"></div>
+        <button class="btn sm" onclick="LAB.lrMode('project')">← 按检测项目（真实模板）</button>
+        <button class="btn sm pri" onclick="LAB.lrMode('method')">按方法标准</button></div>
       <div class="notice" style="margin-bottom:12px"><span>📋</span>
         <div><b>原始记录不能事后补记。</b>这里出的是<b>空白表单框架</b>，
           检验时按实际情况手填并签字 —— 不能在电脑上填完再打印，那不叫原始记录。</div></div>
@@ -1245,7 +1466,20 @@
     exportQCRec: exportQCRec,
     exportPT: exportPT,
     exportRecord: exportRecord,
-    printRecord: printRecord
+    printRecord: printRecord,
+    /* 按检测项目（真实 Word 模板） */
+    lrMode: lrMode,
+    lrSet: lrSet,
+    lrToggle: lrToggle,
+    lrAll: lrAll,
+    lrNone: lrNone,
+    lrNotes: lrNotes,
+    lrPrint: lrPrint,
+    lrPrintOne: lrPrintOne,
+    lrSheetHtml: lrSheetHtml,
+    lrProjects: lrProjects,
+    lrInfo: lrInfo,
+    lrSelected: lrSelected
   };
 
 })(window);

@@ -1002,3 +1002,49 @@ tbody tr.warn td{background:rgba(183,121,31,.05)}
 .gbc-v44:focus{outline:2px solid var(--brand-3);border-color:var(--brand-3)}
 .gbc-v44::placeholder{color:var(--ink3)}
 @media(max-width:720px){.gbc-v44{width:84px;font-size:11.5px}}
+
+/* ===== 2026-11-15 原始记录「按检测项目」模板 =====
+   屏幕预览做成白纸；表格是打印用的真实版式，横滚容器是既定设计。 */
+.lr-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.lr-fields label{display:block;min-width:0}
+.lr-fields label span{display:block;font-size:12px;color:var(--ink3);margin-bottom:4px}
+.lr-fields input{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid var(--line);
+  border-radius:6px;background:var(--panel);color:var(--ink);font-family:inherit;font-size:13px}
+.lr-fields input:focus{outline:2px solid var(--brand-3);border-color:var(--brand-3)}
+.lr-stat{font-size:11.5px;color:var(--ink3);margin-top:10px;min-height:16px}
+.lr-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.lr-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--line);
+  border-radius:20px;background:var(--panel);cursor:pointer;font-size:12.5px;white-space:nowrap;
+  transition:border-color .15s,background .15s}
+.lr-chip:hover{border-color:var(--brand-3)}
+.lr-chip.on{border-color:var(--brand);background:var(--brand-3)}
+.lr-chip input{margin:0;accent-color:var(--brand);flex:0 0 auto}
+.lr-chip .muted{font-size:11px}
+.lr-chk{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2);white-space:nowrap}
+.lr-chk input{margin:0;accent-color:var(--brand)}
+.lr-card .card-h h3{white-space:nowrap}
+.lr-scroll{overflow-x:auto;background:#fff;padding:14px;border:1px solid var(--line);border-radius:8px}
+.lr-paper{background:#fff;color:#111;min-width:760px;padding:14px;box-sizing:border-box}
+.lr-title{text-align:center;font-size:18px;font-weight:700;letter-spacing:2px;margin:0 0 10px}
+.lr-head,.lr-grid,.lr-sign{border-collapse:collapse;width:100%;margin-bottom:8px;table-layout:auto}
+.lr-head th,.lr-head td,.lr-grid td,.lr-sign th,.lr-sign td{
+  border:1px solid #777;padding:5px 6px;font-size:11px;height:30px;vertical-align:middle;
+  word-break:break-all;color:#111}
+.lr-head th{width:18%;background:#f1f1f1;text-align:left;font-weight:600}
+.lr-head td{width:32%}
+.lr-grid td{border-color:#777;padding:4px;font-size:10px;text-align:center;height:30px;line-height:1.3}
+.lr-grid td.hd{background:#f1f1f1;font-weight:600;height:44px}
+.lr-sign th{width:16%;background:#f1f1f1;text-align:left;font-weight:600}
+.lr-sign td{width:34%}
+.lr-tcap{font-size:11px;font-weight:600;margin:9px 0 4px;color:#111}
+.lr-notes{margin-top:10px;border-top:1px solid #999;padding-top:8px;color:#222}
+.lr-notes summary{cursor:pointer;font-size:11px;font-weight:600;padding:3px 0}
+.lr-notes-h{font-size:11px;font-weight:600;margin-bottom:5px}
+.lr-note-p{font-size:10px;line-height:1.65;color:#333;margin:6px 0;word-break:break-all}
+/* ★ 移动端规则必须留在文件最末尾 */
+@media(max-width:720px){
+  .lr-fields{grid-template-columns:1fr 1fr;gap:8px}
+  .lr-paper{min-width:700px;padding:10px}
+  .lr-chips{gap:6px}
+  .lr-chip{padding:6px 9px;font-size:12px}
+}
