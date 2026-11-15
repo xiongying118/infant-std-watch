@@ -49,6 +49,7 @@ LABELS = {
 
 SCALE = 4.0          # 288 dpi，A4 ≈ 2382×3368，灰度 PNG ≈ 450KB/页
 SUN = r"C:\Windows\Fonts\simsun.ttc"   # 页码补字沿用 Word 原页的宋体
+YAHEI = r"C:\Windows\Fonts\msyh.ttc"  # Word 页脚汉字用的是微软雅黑
 
 
 def norm(s):
@@ -291,7 +292,7 @@ def _all_spans(page):
         for l in b.get("lines", []):
             for s in l.get("spans", []):
                 out.append(dict(bbox=tuple(s["bbox"]), by=s["origin"][1],
-                                size=s["size"], t=s["text"]))
+                                size=s["size"], t=s["text"], font=s.get("font", "")))
     return out
 
 
@@ -411,6 +412,116 @@ def fix_page_numbers(pdf, key):
     return notes
 
 
+def center_page_numbers(pdf):
+    """★ 13 页页码统一水平居中到页面正中。
+
+    Word 原表页脚普遍带 7~10pt 的右偏（页脚段落缩进），胆碱第 1 页
+    因为把表格里的有效期数字也算进了页码行，偏了 68pt。用户口径是
+    「都没居中」→ 这里把最终可见的那一行页码整体平移，字形/字号/基线
+    全部保持原样，只改水平位置；擦字时被碰到的框线原样补回。
+    """
+    import pymupdf
+    notes = []
+    for pno, page in enumerate(pdf, 1):
+        S = [s for s in _all_spans(page)
+             if s["bbox"][1] > 745 and (s["t"] or "").strip()]
+        groups = []
+        for s in S:
+            for gg in groups:
+                if abs(gg["by"] - s["by"]) < 2.5:
+                    gg["spans"].append(s)
+                    break
+            else:
+                groups.append(dict(by=s["by"], spans=[s]))
+        # 补进去的数字在内容流末尾，必须按 x 重排才是「第 1 页 共 1 页」
+        cand = [gg for gg in groups
+                if re.fullmatch(r"第\d+页共\d+页",
+                                re.sub(r"\s+", "", "".join(
+                                    x["t"] for x in sorted(gg["spans"],
+                                                           key=lambda s: s["bbox"][0]))))]
+        if not cand:
+            notes.append("p%d:未找到页码行" % pno)
+            continue
+        # 胆碱第 1 页旧页码行虽已被白底盖住，文本层仍在；取最靠下的新行
+        spans = sorted(max(cand, key=lambda gg: gg["by"])["spans"],
+                       key=lambda s: s["bbox"][0])
+        x0 = min(s["bbox"][0] for s in spans)
+        x1 = max(s["bbox"][2] for s in spans)
+        dx = page.rect.width / 2 - (x0 + x1) / 2
+        if abs(dx) < 1.2:
+            notes.append("p%d:已居中(%+.1f)" % (pno, dx))
+            continue
+
+        hlines, vlines = [], []
+        for dr in page.get_drawings():
+            for it in dr["items"]:
+                if it[0] != "re":
+                    continue
+                r = it[1]
+                if r.height < 1.6 and r.width > 3 and r.y0 > 700:
+                    hlines.append((r.y0, r.x0, r.x1))
+                elif r.width < 1.6 and r.height > 3 and r.y0 > 700:
+                    vlines.append((r.x0, r.y0, r.y1))
+        rects = []
+        for s in spans:
+            r = pymupdf.Rect(s["bbox"][0] + 0.3, s["bbox"][1] + 0.3,
+                             s["bbox"][2] - 0.3, s["bbox"][3] - 0.3)
+            rects.append(r)
+            # redaction 真正从文本层删字（不只是盖白），graphics=0 保留框线
+            page.add_redact_annot(r, fill=(1, 1, 1))
+        page.apply_redactions(images=2, graphics=0, text=0)
+        for y, ax, bx in hlines:
+            if any(r.y0 - 1 <= y <= r.y1 + 1 for r in rects):
+                page.draw_line(pymupdf.Point(ax, y), pymupdf.Point(bx, y),
+                               color=(0, 0, 0), width=0.6, overlay=True)
+        for x, ay, by2 in vlines:
+            if any(r.x0 - 1 <= x <= r.x1 + 1 for r in rects):
+                page.draw_line(pymupdf.Point(x, ay), pymupdf.Point(x, by2),
+                               color=(0, 0, 0), width=0.6, overlay=True)
+
+        fonts = {}
+        for fk, fp in (("yh", YAHEI), ("sun", SUN)):
+            name = "lrctr" + fk
+            try:
+                page.insert_font(fontname=name, fontfile=fp)
+                fonts[fk] = name
+            except Exception:
+                fonts[fk] = "helv"
+        for s in spans:
+            fk = "yh" if "YaHei" in (s.get("font") or "") else "sun"
+            page.insert_text((s["bbox"][0] + dx, s["by"]), s["t"],
+                             fontname=fonts[fk], fontsize=s["size"],
+                             color=(0, 0, 0))
+        notes.append("p%d:平移%+.1fpt" % (pno, dx))
+
+    # ★ 自检：重建后每页可见页码行必须正好落在页面正中，偏了就中止
+    for pno, page in enumerate(pdf, 1):
+        S = [s for s in _all_spans(page)
+             if s["bbox"][1] > 745 and (s["t"] or "").strip()]
+        groups = []
+        for s in S:
+            for gg in groups:
+                if abs(gg["by"] - s["by"]) < 2.5:
+                    gg["spans"].append(s)
+                    break
+            else:
+                groups.append(dict(by=s["by"], spans=[s]))
+        # 补进去的数字在内容流末尾，必须按 x 重排才是「第 1 页 共 1 页」
+        cand = [gg for gg in groups
+                if re.fullmatch(r"第\d+页共\d+页",
+                                re.sub(r"\s+", "", "".join(
+                                    x["t"] for x in sorted(gg["spans"],
+                                                           key=lambda s: s["bbox"][0]))))]
+        if not cand:
+            raise SystemExit("页码居中自检失败：p%d 找不到页码行" % pno)
+        ss = max(cand, key=lambda gg: gg["by"])["spans"]
+        mid = (min(s["bbox"][0] for s in ss) + max(s["bbox"][2] for s in ss)) / 2
+        if abs(mid - page.rect.width / 2) > 3:
+            raise SystemExit("页码居中自检失败：p%d 中心 %.1f，页中心 %.1f"
+                             % (pno, mid, page.rect.width / 2))
+    return notes
+
+
 def verify_page_numbers(pdf):
     """★ 生成时自检：本项目每一页都必须有「第 当前页 页 共 总页数 页」，
        少一个数字就中止重建，避免下次重跑又把空页码推上线。"""
@@ -482,6 +593,8 @@ def main():
                                                       labrec[key]["solutions"]), borders), spans)
             erased = erase_originals(pdf, fields, spans)
             pnotes = fix_page_numbers(pdf, key)
+            cnotes = center_page_numbers(pdf)
+            verify_page_numbers(pdf)
             imgs, size = render_pages(key, pdfpath, IMGDIR, pdf)
             pdf.close()
             out[key] = dict(w=size[0], h=size[1], pages=imgs, fields=fields)
@@ -491,6 +604,7 @@ def main():
             print("%-11s pages=%d  %s  erased=%d  fields=%s" %
                   (key, len(imgs), "x".join(str(round(v)) for v in size), erased, kinds))
             print("            页码: " + " | ".join(pnotes))
+            print("            居中: " + " | ".join(cnotes))
     finally:
         word.Quit()
 
