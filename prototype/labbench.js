@@ -752,10 +752,10 @@
   }
   function lrInfo(){
     if(!LRINFO){
-      LRINFO={sample:"",maker:"",batch:""};
+      LRINFO={sample:"",maker:"",batch:"",date:""};
       var s=global.Store?global.Store.get("lab.record.info.v2",null):null;
       if(s&&typeof s==="object"){
-        ["sample","maker","batch"].forEach(function(k){ if(s[k]!=null) LRINFO[k]=String(s[k]); });
+        ["sample","maker","batch","date"].forEach(function(k){ if(s[k]!=null) LRINFO[k]=String(s[k]); });
       }
     }
     return LRINFO;
@@ -812,7 +812,7 @@
         var k=(attrs.match(/data-lr="([^"]+)"/)||[])[1];
         var nm=(attrs.match(/data-std="([^"]+)"/)||[])[1];
         var v=inner;
-        if(k==="sample"||k==="maker"||k==="batch") v=I[k]||"";
+        if(k==="sample"||k==="maker"||k==="batch"||k==="date") v=I[k]||"";
         else if((k==="stdcode"||k==="stdexp")&&nm&&O[nm]){
           v = (k==="stdcode")
               ? (O[nm].code!=null?O[nm].code:inner)
@@ -837,19 +837,21 @@
   }
   function viewRecordByProject(){
     var I=lrInfo(), ps=lrProjects(), s=lrSel(), n=lrSelected().length;
-    var F=[["sample","样品名称"],["maker","生产商"],["batch","批号/生产日期"]];
+    var F=[["sample","样品名称",""],["maker","生产商",""],["batch","批号/生产日期",""],
+           ["date","检测日期","如 20261115，留空则打印后手写"]];
     var h='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
       '<h3>原始记录 · 按检测项目出模板</h3>'+
       '<span class="muted">9 个检测项目，各有自己的 Word 原表</span><div class="sp"></div>'+
       '<button class="btn sm pri" onclick="LAB.lrMode(\'project\')">按检测项目</button>'+
       '<button class="btn sm" onclick="LAB.lrMode(\'method\')">按方法标准</button></div>'+
       '<div class="notice" style="margin:10px 0"><span>📋</span><div>'+
-      '<b>Word 原表 1:1 还原</b>：表格、合并单元格、方法说明、计算公式、公式图片、页眉页脚全部照抄，一个字没改。'+
-      '只有<b>样品名称、生产商、批号/生产日期</b>是动态位，填一次全部项目自动带出；'+
-      '检验日期、检验人、复核人和所有预置数值都保持原表原样（打印后手写）。</div></div>'+
+      '<b>Word 原表 1:1 还原</b>：文字、字体字号、列宽行高、合并单元格、方法说明、计算公式、'+
+      '公式图片、页眉页脚全部照抄，按 A4 纵向原版式打印。'+
+      '只有<b>样品名称、生产商、批号/生产日期、检测日期</b>是动态位，填一次全部项目自动带出；'+
+      '检测日期不写死，留空即可打印后手写。其余（检验人、复核人、检验日期、预置数值）保持原表原样。</div></div>'+
       '<div class="lr-fields">'+F.map(function(f){
         return '<label><span>'+f[1]+'</span><input type="text" '+
-               'value="'+esc(I[f[0]])+'" placeholder="'+f[1]+'" '+
+               'value="'+esc(I[f[0]])+'" placeholder="'+(f[2]||f[1])+'" '+
                'oninput="LAB.lrSet(\''+f[0]+'\',this.value)"></label>';
       }).join("")+'</div>'+
       '<div class="lr-stat" id="lrStat">已把样品信息自动填进 '+n+' 张记录表 · 本机已保存，刷新不丢</div></div>';
@@ -892,7 +894,8 @@
       el.textContent=I[k]||""; n++;
     });
     var st=document.getElementById("lrStat");
-    if(st) st.textContent="已把「"+k+"」填进 "+n+" 处 · 本机已保存，刷新不丢";
+    var zh={sample:"样品名称",maker:"生产商",batch:"批号/生产日期",date:"检测日期"}[k]||k;
+    if(st) st.textContent="已把「"+zh+"」填进 "+n+" 处 · 本机已保存，刷新不丢";
   }
   function lrSetSol(i,k,v){
     var x=lrAllSolutions()[i];
@@ -929,22 +932,24 @@
   function lrNotes(){ return false; }   /* 兼容旧调用，方法说明已在原表内 */
   function lrMode(m){ LRMODE=m; render(); }
 
+  /* ★ 打印样式严格跟随 Word 原表：A4 纵向、宋体、原生字号/列宽/行高由
+       labrecord.js 的 inline style 给出，这里绝不统一覆盖 font-size / height。 */
   var LR_PRINT_CSS = [
-    '@page{size:A4 landscape;margin:9mm 8mm}',
+    '@page{size:A4 portrait;margin:20mm 20mm 20mm 22mm}',
     '*{box-sizing:border-box}',
-    'body{font-family:"Microsoft YaHei",SimSun,sans-serif;font-size:8pt;color:#000;margin:0;background:#fff}',
+    'body{font-family:"宋体",SimSun,serif;color:#000;margin:0;background:#fff}',
     '.pg{page-break-after:always;break-after:page}',
     '.pg:last-child{page-break-after:auto;break-after:auto}',
-    '.lr-paper{width:100%}',
-    '.lr-hdr,.lr-ftr{font-size:7.6pt;white-space:pre-wrap;color:#000}',
+    '.lr-paper{width:auto;min-width:0;padding:0;background:#fff;color:#000}',
+    '.lr-hdr,.lr-ftr{white-space:pre-wrap;color:#000}',
     '.lr-hdr{border-bottom:0.5pt solid #666;padding-bottom:3pt;margin-bottom:6pt}',
+    '.lr-hdr.lr-hdr-flex{display:flex;justify-content:space-between;gap:6pt}',
     '.lr-ftr{border-top:0.5pt solid #666;padding-top:3pt;margin-top:6pt;text-align:center}',
-    '.lr-wp{font-size:8pt;line-height:1.45;margin:1pt 0;white-space:pre-wrap;word-break:break-all}',
-    '.lr-wt{border-collapse:collapse;width:100%;margin:2pt 0;table-layout:fixed}',
-    '.lr-wt td{border:0.6pt solid #333;padding:2pt 3pt;font-size:7.6pt;line-height:1.35;',
-      'vertical-align:middle;word-break:break-all;white-space:pre-wrap;height:18pt}',
+    '.lr-wp{margin:0;white-space:pre-wrap;word-break:break-all}',
+    '.lr-wt{border-collapse:collapse;margin:2pt 0}',
+    '.lr-wt td{border:0.6pt solid #333;padding:2pt 3pt;',
+      'vertical-align:middle;word-break:break-all;white-space:pre-wrap}',
     '.lr-wt .lr-wt{margin:1pt 0}',
-    '.lr-wt .lr-wt td{font-size:7pt;padding:1.5pt 2pt;height:16pt}',
     '.lr-eq{max-width:100%;height:auto;vertical-align:middle}',
     '.lr-dyn{font-weight:600}',
     'span.lr-dyn:empty{display:inline-block;min-width:60pt;border-bottom:0.5pt solid #666}'
