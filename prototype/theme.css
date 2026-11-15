@@ -1085,3 +1085,24 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   .lr-solrow{grid-template-columns:1fr}
   .lr-fields{grid-template-columns:1fr 1fr;gap:8px}
 }
+
+/* ===== 2026-11-15 第四版：Word 原页整页 100% 复刻 =====
+   底图 = Word 自己导出的 PDF 逐页渲染，标题位置/页眉/框线/公式图/页码/分页
+   全部是 Word 原样，页面不再自行重排任何一个字。★ 必须排在最后覆盖旧规则。 */
+.lr-scroll{overflow-x:visible;padding:0;border:0;background:transparent;border-radius:0}
+.lr-paper{width:100%;max-width:794px;min-width:0;padding:0;margin:0 auto;
+  box-sizing:border-box;background:#fff;color:#111}
+.lr-pagewrap{position:relative;display:block;width:100%;aspect-ratio:595.32/841.92;
+  margin:0 auto 12px;background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.13);overflow:hidden}
+.lr-pagewrap:last-child{margin-bottom:0}
+.lr-pageimg,.lr-ov{position:absolute;left:0;top:0;width:100%;height:100%;
+  display:block;margin:0;padding:0;border:0}
+.lr-ov .lr-dyn{font-family:SimSun,'宋体',serif;fill:#000;font-weight:400}
+/* ★ 手机端也必须放最后：整页等比缩小，不横滚、不裁切 */
+@media(max-width:720px){
+  .lr-scroll{overflow-x:visible}
+  .lr-paper{min-width:0;padding:0}
+  .lr-pagewrap{box-shadow:none;border:1px solid var(--line)}
+  .lr-solrow{grid-template-columns:1fr}
+  .lr-fields{grid-template-columns:1fr 1fr;gap:8px}
+}

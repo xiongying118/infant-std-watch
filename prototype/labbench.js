@@ -821,8 +821,67 @@
         return '<span class="lr-dyn"'+attrs+'>'+esc(v)+'</span>';
       });
   }
+  /* ★★ 100% 复刻（2026-11-15 第四版）：底图是 Word 自己导出的 PDF 逐页渲染，
+     标题居中 / 页眉 / 框线 / 公式图 / 页码 / 什么东西在哪一页，全是 Word 原样。
+     浏览器重排 HTML 做不到这一点，所以页面上除动态位外不再重画任何文字。 */
+  function lrAbs(u){
+    try{ return new URL(u, location.href).href; }catch(e){ return u; }
+  }
+  function lrFieldVal(f){
+    var I=lrInfo(), O=lrSol();
+    if(f.k==="sample"||f.k==="maker"||f.k==="batch"||f.k==="date") return I[f.k]||"";
+    if(f.std && O[f.std]){
+      if(f.k==="stdcode") return O[f.std].code!=null?O[f.std].code:(f.v||"");
+      if(f.k==="stdexp") return O[f.std].expiry!=null?O[f.std].expiry:(f.v||"");
+    }
+    return f.v||"";
+  }
+  function lrTextUnits(v){
+    var n=0;
+    for(var i=0;i<v.length;i++) n += v.charCodeAt(i)<256?0.55:1;
+    return n;
+  }
+  /* 录值后不重绘（保焦点），只改这一个 <text> 的文字与压缩宽度 */
+  function lrUpdateText(el,v){
+    v=String(v==null?"":v);
+    el.textContent=v;
+    var w=parseFloat(el.getAttribute("data-w"))||0;
+    var fs=parseFloat(el.getAttribute("data-fs"))||10.5;
+    var maxw=Math.max(20,w-8);
+    if(v && lrTextUnits(v)*fs>maxw){
+      el.setAttribute("textLength",maxw);
+      el.setAttribute("lengthAdjust","spacingAndGlyphs");
+    } else {
+      el.removeAttribute("textLength");
+      el.removeAttribute("lengthAdjust");
+    }
+  }
+  function lrFieldSvg(f){
+    var v=lrFieldVal(f), maxw=Math.max(20,f.w-8);
+    /* 原示例值已在生成底图时只涂掉文字本身，这里绝不再盖白块，
+       否则会把 Word 的表格竖框线一起遮断。 */
+    var a='class="lr-dyn" data-lr="'+esc(f.k)+'"'+
+      (f.std?' data-std="'+esc(f.std)+'"':'')+
+      ' data-w="'+f.w+'" data-fs="'+f.fs+'"'+
+      ' x="'+f.tx+'" y="'+f.by+'" text-anchor="'+f.anchor+'" font-size="'+f.fs+'"';
+    if(v && lrTextUnits(v)*f.fs>maxw) a+=' textLength="'+maxw+'" lengthAdjust="spacingAndGlyphs"';
+    return '<text '+a+'>'+esc(v)+'</text>';
+  }
+  function lrPageInner(g,pno,src){
+    var fs=g.fields.filter(function(f){ return f.pg===pno+1; });
+    return '<img class="lr-pageimg" src="'+esc(lrAbs(src))+'" alt="">'+
+      '<svg class="lr-ov" viewBox="0 0 '+g.w+' '+g.h+'" preserveAspectRatio="none" '+
+      'xmlns="http://www.w3.org/2000/svg">'+fs.map(lrFieldSvg).join("")+'</svg>';
+  }
   function lrSheetHtml(p){
-    return '<div class="lr-paper" data-lr-sheet="'+esc(p.key)+'">'+lrFill(p.html)+'</div>';
+    var g=(global.LABPAGES||{})[p.key];
+    if(!g||!g.pages||!g.pages.length)
+      return '<div class="lr-paper" data-lr-sheet="'+esc(p.key)+'">'+lrFill(p.html)+'</div>';
+    return '<div class="lr-paper" data-lr-sheet="'+esc(p.key)+'">'+
+      g.pages.map(function(src,i){
+        return '<div class="lr-pagewrap" data-lr-page="'+(i+1)+'">'+
+               lrPageInner(g,i,src)+'</div>';
+      }).join("")+'</div>';
   }
   function lrPreviewHtml(){
     var picked=lrSelected();
@@ -830,7 +889,7 @@
     return picked.map(function(p){
       return '<div class="card lr-card" style="margin-bottom:12px"><div class="card-h">'+
         '<h3>'+esc(p.name)+'（'+esc(p.unit)+'）</h3>'+
-        '<span class="muted">'+esc(p.file)+' · Word 原表 1:1</span><div class="sp"></div>'+
+        '<span class="muted">'+esc(p.file)+' · Word 原页 100% 复刻（共 '+((global.LABPAGES||{})[p.key]||{pages:[]}).pages.length+' 页）</span><div class="sp"></div>'+
         '<button class="btn sm" onclick="LAB.lrPrintOne(\''+esc(p.key)+'\')">🖨 只打这张</button></div>'+
         '<div class="lr-scroll">'+lrSheetHtml(p)+'</div></div>';
     }).join("");
@@ -845,8 +904,8 @@
       '<button class="btn sm pri" onclick="LAB.lrMode(\'project\')">按检测项目</button>'+
       '<button class="btn sm" onclick="LAB.lrMode(\'method\')">按方法标准</button></div>'+
       '<div class="notice" style="margin:10px 0"><span>📋</span><div>'+
-      '<b>Word 原表 1:1 还原</b>：文字、字体字号、列宽行高、合并单元格、方法说明、计算公式、'+
-      '公式图片、页眉页脚全部照抄，按 A4 纵向原版式打印。'+
+      '<b>Word 原页 100% 复刻</b>：每页直接用 Word 导出的原页，标题位置、字体字号、列宽行高、'+
+      '框线、公式图、页码、哪一页放什么内容全部原样，打印不带浏览器页眉页脚。'+
       '只有<b>样品名称、生产商、批号/生产日期、检测日期</b>是动态位，填一次全部项目自动带出；'+
       '检测日期不写死，留空即可打印后手写。其余（检验人、复核人、检验日期、预置数值）保持原表原样。</div></div>'+
       '<div class="lr-fields">'+F.map(function(f){
@@ -891,7 +950,7 @@
     lrInfo()[k]=v; lrSave();
     var I=lrInfo(), n=0;
     [].forEach.call(document.querySelectorAll('.lr-dyn[data-lr="'+k+'"]'),function(el){
-      el.textContent=I[k]||""; n++;
+      lrUpdateText(el,I[k]||""); n++;
     });
     var st=document.getElementById("lrStat");
     var zh={sample:"样品名称",maker:"生产商",batch:"批号/生产日期",date:"检测日期"}[k]||k;
@@ -905,8 +964,8 @@
     [].forEach.call(document.querySelectorAll('.lr-dyn[data-lr^="std"]'),function(el){
       if(el.getAttribute("data-std")!==x.name) return;
       var d=O[x.name]||{}, key=el.getAttribute("data-lr");
-      if(key==="stdcode"&&d.code!=null) el.textContent=d.code;
-      if(key==="stdexp"&&d.expiry!=null) el.textContent=d.expiry;
+      if(key==="stdcode"&&d.code!=null) lrUpdateText(el,d.code);
+      if(key==="stdexp"&&d.expiry!=null) lrUpdateText(el,d.expiry);
     });
   }
   function lrRedraw(){
@@ -932,27 +991,18 @@
   function lrNotes(){ return false; }   /* 兼容旧调用，方法说明已在原表内 */
   function lrMode(m){ LRMODE=m; render(); }
 
-  /* ★ 打印样式严格跟随 Word 原表：A4 纵向、宋体、原生字号/列宽/行高由
-       labrecord.js 的 inline style 给出，这里绝不统一覆盖 font-size / height。 */
+  /* ★★ 打印 = Word 原页一页一张图，@page margin:0 让浏览器自带的
+     日期/标题/about:blank/1/1 页眉页脚没有落点，自动消失。 */
   var LR_PRINT_CSS = [
-    '@page{size:A4 portrait;margin:20mm 20mm 20mm 22mm}',
-    '*{box-sizing:border-box}',
-    'body{font-family:"宋体",SimSun,serif;color:#000;margin:0;background:#fff}',
-    '.pg{page-break-after:always;break-after:page}',
+    '@page{size:A4 portrait;margin:0}',
+    'html,body{margin:0;padding:0;background:#fff;',
+      '-webkit-print-color-adjust:exact;print-color-adjust:exact}',
+    '.pg{position:relative;display:block;margin:0;padding:0;overflow:hidden;',
+      'page-break-after:always;break-after:page}',
     '.pg:last-child{page-break-after:auto;break-after:auto}',
-    '.lr-paper{width:auto;min-width:0;padding:0;background:#fff;color:#000}',
-    '.lr-hdr,.lr-ftr{white-space:pre-wrap;color:#000}',
-    '.lr-hdr{border-bottom:0.5pt solid #666;padding-bottom:3pt;margin-bottom:6pt}',
-    '.lr-hdr.lr-hdr-flex{display:flex;justify-content:space-between;gap:6pt}',
-    '.lr-ftr{border-top:0.5pt solid #666;padding-top:3pt;margin-top:6pt;text-align:center}',
-    '.lr-wp{margin:0;white-space:pre-wrap;word-break:break-all}',
-    '.lr-wt{border-collapse:collapse;margin:2pt 0}',
-    '.lr-wt td{border:0.6pt solid #333;padding:2pt 3pt;',
-      'vertical-align:middle;word-break:break-all;white-space:pre-wrap}',
-    '.lr-wt .lr-wt{margin:1pt 0}',
-    '.lr-eq{max-width:100%;height:auto;vertical-align:middle}',
-    '.lr-dyn{font-weight:600}',
-    'span.lr-dyn:empty{display:inline-block;min-width:60pt;border-bottom:0.5pt solid #666}'
+    '.lr-pageimg,.lr-ov{position:absolute;left:0;top:0;width:100%;height:100%;',
+      'display:block;margin:0;padding:0;border:0}',
+    '.lr-dyn{font-family:SimSun,"宋体",serif;fill:#000;font-weight:400}'
   ].join("");
 
   function lrPrint(only){
@@ -962,13 +1012,28 @@
     var w=window.open("","_blank");
     if(!w){ if(st) st.textContent="浏览器拦了新窗口，请允许弹出窗口后重试。"; return; }
     var body=picked.map(function(p){
-      return '<div class="pg">'+lrSheetHtml(p)+'</div>';
+      var g=(global.LABPAGES||{})[p.key];
+      if(!g||!g.pages||!g.pages.length)
+        return '<div class="pg">'+lrFill(p.html)+'</div>';
+      return g.pages.map(function(src,i){
+        return '<div class="pg" style="width:'+g.w+'pt;height:'+g.h+'pt">'+
+               lrPageInner(g,i,src)+'</div>';
+      }).join("");
     }).join("");
     w.document.write('<!doctype html><html><head><meta charset="utf-8">'+
-      '<title>原始记录 · '+esc(today())+'</title><style>'+LR_PRINT_CSS+'</style></head><body>'+
+      '<title></title><style>'+LR_PRINT_CSS+'</style></head><body>'+
       body+'</body></html>');
     w.document.close();
-    setTimeout(function(){ w.focus(); w.print(); },350);
+    /* 位图全部解码完再送打印，避免出空白页 */
+    setTimeout(function(){
+      var d=w.document, imgs=d.querySelectorAll?[].slice.call(d.querySelectorAll("img.lr-pageimg")):[];
+      var tries=0;
+      (function wait(){
+        if(!imgs.length || imgs.every(function(im){ return im.complete; }) || tries++>60){
+          w.focus(); w.print();
+        } else setTimeout(wait,100);
+      })();
+    },80);
     if(st) st.textContent="已送打印："+picked.map(function(p){return p.name;}).join("、");
   }
   function lrPrintOne(k){ lrPrint(k); }

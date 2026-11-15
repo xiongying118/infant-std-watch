@@ -52,7 +52,7 @@ SKIP_DIRS = {".git", "__pycache__", "node_modules", "_shots", ".idea", ".vscode"
              ".tmp_v",
              # 本机解析 Word 原表的中间产物（OOXML / 公式图 / editor_sdk 抽取结果），
              # 体积大且含用户本地文档内容，生成物已内嵌进 prototype/labrecord.js
-             "record_oo", "record_media", "record_src"}
+             "record_oo", "record_media", "record_src", "record_pdf"}
 SKIP_SUFFIX = (".pyc", ".log", ".bak")
 
 # ★ 本机临时目录，绝不能推 ★
