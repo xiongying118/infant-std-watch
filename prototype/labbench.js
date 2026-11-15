@@ -867,9 +867,12 @@
     if(v && lrTextUnits(v)*f.fs>maxw) a+=' textLength="'+maxw+'" lengthAdjust="spacingAndGlyphs"';
     return '<text '+a+'>'+esc(v)+'</text>';
   }
-  function lrPageInner(g,pno,src){
+  function lrPageInner(g,pno,src,forPrint){
     var fs=g.fields.filter(function(f){ return f.pg===pno+1; });
-    return '<img class="lr-pageimg" src="'+esc(lrAbs(src))+'" alt="">'+
+    /* 预览按需加载（9 个项目共 13 页不会一上来全拉）；打印一律 eager，
+       且 lrPrint 会等齐所有位图才调用 print()，绝不出空白页。 */
+    var ld=forPrint?' loading="eager"':' loading="lazy" decoding="async"';
+    return '<img class="lr-pageimg"'+ld+' src="'+esc(lrAbs(src))+'" alt="">'+
       '<svg class="lr-ov" viewBox="0 0 '+g.w+' '+g.h+'" preserveAspectRatio="none" '+
       'xmlns="http://www.w3.org/2000/svg">'+fs.map(lrFieldSvg).join("")+'</svg>';
   }
@@ -1017,7 +1020,7 @@
         return '<div class="pg">'+lrFill(p.html)+'</div>';
       return g.pages.map(function(src,i){
         return '<div class="pg" style="width:'+g.w+'pt;height:'+g.h+'pt">'+
-               lrPageInner(g,i,src)+'</div>';
+               lrPageInner(g,i,src,true)+'</div>';
       }).join("");
     }).join("");
     w.document.write('<!doctype html><html><head><meta charset="utf-8">'+
@@ -1029,9 +1032,10 @@
       var d=w.document, imgs=d.querySelectorAll?[].slice.call(d.querySelectorAll("img.lr-pageimg")):[];
       var tries=0;
       (function wait(){
-        if(!imgs.length || imgs.every(function(im){ return im.complete; }) || tries++>60){
+        var ready=imgs.every(function(im){ return im.complete && im.naturalWidth>0; });
+        if(!imgs.length || ready || tries++>240){   // 慢网最多等 60 秒
           w.focus(); w.print();
-        } else setTimeout(wait,100);
+        } else setTimeout(wait,250);
       })();
     },80);
     if(st) st.textContent="已送打印："+picked.map(function(p){return p.name;}).join("、");

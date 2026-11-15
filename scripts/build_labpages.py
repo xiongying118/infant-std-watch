@@ -273,6 +273,9 @@ def render_pages(key, pdfpath, outdir, doc):
         pix = page.get_pixmap(matrix=__import__("pymupdf").Matrix(SCALE, SCALE),
                               colorspace=__import__("pymupdf").csGRAY, alpha=False)
         im = Image.frombytes("L", (pix.width, pix.height), pix.samples)
+        # Word 原页就是黑白文字：16 级灰度足够保住笔画边缘，
+        # 体积比 8bit 灰度 PNG 小约 36%，手机上 13 页也不至于卡。
+        im = im.quantize(colors=16)
         name = "%s_%d.png" % (key, i + 1)
         im.save(os.path.join(outdir, name), format="PNG", optimize=True)
         imgs.append("recpages/" + name)

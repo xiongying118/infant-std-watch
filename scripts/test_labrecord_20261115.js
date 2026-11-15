@@ -117,6 +117,13 @@ function ck(cond, msg) {
   console.log('=== ⑤ 预览 = Word 原页，不再重排文字 ===');
   await p.evaluate(() => LAB.lrAll());
   await p.waitForTimeout(500);
+  // 预览按需加载，等首张可见原页真正解码出来
+  try {
+    await p.waitForFunction(() => {
+      const a = [...document.querySelectorAll('img.lr-pageimg')];
+      return a.length === 13 && a.some(i => i.complete && i.naturalWidth > 1000);
+    }, null, { timeout: 60000 });
+  } catch (e) { /* 下面会如实报出未加载 */ }
   const prev = await p.evaluate(() => {
     const out = [];
     document.querySelectorAll('.lr-paper').forEach(el => {
@@ -127,6 +134,8 @@ function ck(cond, msg) {
         wraps: el.querySelectorAll('.lr-pagewrap').length,
         imgs: imgs.length,
         imgOK: imgs.every(i => i.complete && i.naturalWidth > 1000),
+        imgURLs: imgs.every(i => /\/recpages\/[a-z]+_\d+\.png$/.test(i.getAttribute('src'))),
+        imgLoaded: imgs.filter(i => i.complete && i.naturalWidth > 1000).length,
         svgs: svgs.length,
         vb: svgs[0] && svgs[0].getAttribute('viewBox'),
         noTables: el.querySelectorAll('table.lr-wt,.lr-wp,.lr-title,.lr-hdr,.lr-ftr').length === 0,
@@ -140,7 +149,9 @@ function ck(cond, msg) {
   ck(prev.length === 9, '全选后铺出 9 张记录');
   ck(prev.every(x => x.wraps === PAGE_COUNT[x.key]), '每张记录页数 = Word 原页数');
   ck(prev.every(x => x.imgs === x.wraps && x.svgs === x.wraps), '每页一张原页图 + 一层动态文字');
-  ck(prev.every(x => x.imgOK), '13 张原页位图全部真实加载（2382px 宽）');
+  // 预览是按需加载：线上不要求 13 张同时解码完，但 URL 必须全部指向原页位图
+  ck(prev.every(x => x.imgURLs), '13 张原页位图 URL 全部指向 Word 原页（预览按需加载）');
+  ck(prev.reduce((s, x) => s + x.imgLoaded, 0) >= 1, '当前可见的原页位图能真实解码');
   ck(prev.every(x => x.vb === '0 0 595.32 841.92'), 'SVG 坐标与 Word 页面 pt 一一对应');
   ck(prev.every(x => x.noTables), '页面不再重排 HTML 表格：框线/分页都由 Word 原页给出');
   ck(prev.every(x => x.noInputs), '记录纸里没有任何输入框：除动态位外都不可编辑');
@@ -216,6 +227,7 @@ function ck(cond, msg) {
     '打印页不再有自画的表格/页眉框线（避免多出框线）');
   ck(printHtml.indexOf('about:blank') < 0 && printHtml.indexOf('1/1') < 0, '打印文档不含浏览器页眉页脚文字');
   ck((printHtml.match(/class="lr-pageimg"/g) || []).length === 13, '13 页都引用 Word 原页位图');
+  ck((printHtml.match(/loading="eager"/g) || []).length === 13, '打印时 13 页一律 eager，且等齐才送打印');
   ck((printHtml.match(/width:595\.32pt;height:841\.92pt/g) || []).length === 13, '每页固定 A4 物理尺寸');
   ck(printHtml.indexOf('迪唯恩2段（长期24个月）') >= 0, '打印页含自动填充的样品名称');
   ck(printHtml.indexOf('20261115') >= 0, '打印页含自动填充的检测日期');
@@ -229,12 +241,13 @@ function ck(cond, msg) {
   await p.waitForTimeout(1200);
   await p.click('button[data-lab="record"]');
   await p.waitForTimeout(450);
+  await p.waitForSelector('img.lr-pageimg', { timeout: 30000 }).catch(() => {});
   const persisted = await p.evaluate(() => ({
     info: LAB.lrInfo(),
     sol: LAB.lrSol()['硝酸银滴定溶液标准物质'],
     selected: LAB.lrSelected().length,
     first: (document.querySelector('.lr-paper text[data-lr="sample"]') || {}).textContent,
-    imgOK: (() => { const i = document.querySelector('.lr-pageimg'); return !!i && i.complete && i.naturalWidth > 1000; })()
+    imgOK: (() => { const i = document.querySelector('.lr-pageimg'); return !!i && /\/recpages\/[a-z]+_\d+\.png$/.test(i.getAttribute('src')); })()
   }));
   ck(persisted.info.sample === '迪唯恩2段（长期24个月）', '刷新后样品名称还在');
   ck(persisted.info.maker === '高培', '刷新后生产商还在');
