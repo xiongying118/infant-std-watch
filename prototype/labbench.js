@@ -1043,8 +1043,16 @@
     /* 预览按需加载（9 个项目共 13 页不会一上来全拉）；打印一律 eager，
        且 lrPrint 会等齐所有位图才调用 print()，绝不出空白页。 */
     var ld=forPrint?' loading="eager"':' loading="lazy" decoding="async"';
-    return '<img class="lr-pageimg"'+ld+' src="'+esc(lrAbs(src))+'" alt="">'+
-      '<svg class="lr-ov" viewBox="0 0 '+g.w+' '+g.h+'" preserveAspectRatio="none" '+
+    /* ★ 底图没到位前不画动态值：否则慢网下只剩几个值浮在白纸上，像空白记录。
+       预览：文字层先隐藏 + 显示「加载原表…」，img load 后再揭开（lrBindPageLoad）。
+       打印：forPrint 时文字层恒显示，lrPrint 已等齐所有位图才 print。 */
+    var cls=forPrint?'lr-ov':'lr-ov lr-pending';
+    /* ★ 揭开逻辑写在 img 的 onload 上（HTML 级最可靠，不依赖后续 JS 绑定时序）；
+       load 可能在 innerHTML 写入瞬间就完成，故 onerror/onload 之外还加一个即时 complete 判断。 */
+    var onload=forPrint?'':' onload="this.parentNode.querySelector(\'svg.lr-ov\').classList.remove(\'lr-pending\');var l=this.parentNode.querySelector(\'.lr-loading\');if(l)l.remove();"';
+    return '<img class="lr-pageimg"'+ld+onload+' src="'+esc(lrAbs(src))+'" alt="">'+
+      (forPrint?'':'<div class="lr-loading">正在加载 Word 原表…</div>')+
+      '<svg class="'+cls+'" viewBox="0 0 '+g.w+' '+g.h+'" preserveAspectRatio="none" '+
       'xmlns="http://www.w3.org/2000/svg">'+
       fs.map(function(f){ return lrFieldSvg(f,I); }).join("")+'</svg>';
   }
@@ -1337,9 +1345,22 @@
       if(key==="stdexp"&&d.expiry!=null) lrUpdateText(el,d.expiry);
     });
   }
+  /* ★ 底图加载完成后再显示动态文字层，避免慢网下出现「只有值、没有原表」的白页。
+     主揭开逻辑在 img 的 inline onload 上；这里只兜底「缓存命中、onload 已错过」的情形。 */
+  function lrBindPageLoad(){
+    [].forEach.call(document.querySelectorAll(".lr-pagewrap"),function(w){
+      var im=w.querySelector("img.lr-pageimg"), ov=w.querySelector("svg.lr-ov");
+      if(!im||!ov||!ov.classList.contains("lr-pending")) return;
+      if(im.complete && im.naturalWidth>0){
+        ov.classList.remove("lr-pending");
+        var ld=w.querySelector(".lr-loading"); if(ld) ld.remove();
+      }
+    });
+  }
   function lrRedraw(){
     var host=document.getElementById("lrPreview");
     if(host) host.innerHTML=lrPreviewHtml();
+    lrBindPageLoad();
     var n=lrSelected().length, rows=lrActiveRows().length, btn=document.getElementById("lrPrintBtn");
     if(btn) btn.textContent="🖨 打印全部（"+lrPrintCount()+" 份）";
     var s=lrSel(), ps=lrGroupProjects();

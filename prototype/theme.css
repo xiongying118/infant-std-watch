@@ -1105,6 +1105,10 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .lr-pagewrap:last-child{margin-bottom:0}
 .lr-pageimg,.lr-ov{position:absolute;left:0;top:0;width:100%;height:100%;
   display:block;margin:0;padding:0;border:0}
+/* 底图未加载前不显示动态值，避免慢网下只剩几个值浮在白纸上 */
+.lr-ov.lr-pending{opacity:0}
+.lr-loading{position:absolute;left:0;right:0;top:38%;text-align:center;
+  color:#94a3b8;font-size:13px;line-height:1.7;pointer-events:none}
 .lr-ov .lr-dyn{font-family:SimSun,'宋体',serif;fill:#000;font-weight:400}
 /* ★ 手机端也必须放最后：整页等比缩小，不横滚、不裁切 */
 @media(max-width:720px){
