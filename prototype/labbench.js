@@ -44,6 +44,8 @@
   var LRSOL   = null;         // 标准溶液覆盖表 {名称:{code,expiry}}
   var LRSOLVIEW = null;       // 标准溶液维护查看范围：null=跟随项目 / "all" / 项目 key
   var LRSOLVIEW_READ = false; // 本机范围只读一次，null 本身也是有效状态
+  var LRGROUP = null;         // ★ 分类：phys 理化组 / chrom 色谱组 / all 全部
+  var LRGROUP_READ = false;
   var LRNOTES = true;         // 兼容旧调用（方法说明已在原表内）
 
   function esc(s){
@@ -754,6 +756,41 @@
     for(var i=0;i<ps.length;i++) if(ps[i].key===k) return ps[i];
     return null;
   }
+  /* ★ 分类（2026-11-16）：原有 9 项 = 理化组，新增 25 项 = 色谱组。
+     默认停在理化组，老用户打开还是原来那 9 项；点「色谱组」才换一批。 */
+  function lrGroups(){
+    var G=(global.LABREC&&global.LABREC.groups);
+    return (G&&G.length)?G:[
+      {key:"phys",name:"理化组"},{key:"chrom",name:"色谱组"}];
+  }
+  function lrGroup(){
+    if(!LRGROUP_READ){
+      LRGROUP_READ=true;
+      var v=global.Store?global.Store.get("lab.record.group.v1",null):null;
+      LRGROUP=(v==="phys"||v==="chrom"||v==="all")?v:"phys";
+    }
+    return LRGROUP||"phys";
+  }
+  function lrGroupProjects(){
+    var g=lrGroup();
+    return g==="all"?lrProjects():lrProjects().filter(function(p){
+      return (p.group||"phys")===g; });
+  }
+  function lrSetGroup(g){
+    var ok=false; lrGroups().forEach(function(x){ if(x.key===g) ok=true; });
+    LRGROUP=ok?g:"phys";
+    /* 切组只影响「看哪些项目」，不擅自改已勾项目；全选/清空按当前组来 */
+    lrSave(); render();
+  }
+  function lrGroupTabsHtml(){
+    var g=lrGroup();
+    return '<div class="lr-sub">项目分类</div><div class="lr-grouptabs" id="lrGroupTabs">'+lrGroups().map(function(x){
+      var n=x.key==="all"?lrProjects().length:
+        lrProjects().filter(function(p){ return (p.group||"phys")===x.key; }).length;
+      return '<button type="button" class="lr-grouptab '+(g===x.key?"on":"")+'" '+
+        'onclick="LAB.lrSetGroup(\''+esc(x.key)+'\')">'+esc(x.name)+' <i>'+n+'</i></button>';
+    }).join("")+'</div>';
+  }
   var LR_KEYS=["sample","maker","batch","date"];
   function lrBlank(){ return {sample:"",maker:"",batch:"",date:""}; }
   /* ★ 样品清单：可以从 Excel / CSV / 粘贴区域一次导入多行，逐行往下排带序号。
@@ -833,8 +870,10 @@
       var p=lrProject(sel[0].key);
       if(p&&(p.solutions||[]).length) return sel[0].key;
     }
-    /* 当前项目没有标准溶液表（或多选/未选）时，默认展示第一个有溶液的项目 */
-    var ps=lrSolProjects();
+    /* 当前项目没有标准溶液表（或多选/未选）时，默认展示「当前分类」里第一个有溶液的 */
+    var g=lrGroup(), ps=lrSolProjects().filter(function(p){
+      return g==="all"||(p.group||"phys")===g; });
+    if(!ps.length) ps=lrSolProjects();
     return ps.length?ps[0].key:"all";
   }
   function lrSolRows(v){
@@ -858,8 +897,8 @@
     var t='<div class="lr-soltabs" id="lrSolTabs">'+
       '<button type="button" class="lr-soltab '+(v==="all"?"on":"")+'" '+
         'onclick="LAB.lrSetSolView(\'all\')">全部</button>';
-    /* 9 个项目全列，点哪个项目高亮哪个；没有标准溶液表的会给出明确提示 */
-    lrProjects().forEach(function(p){
+    /* 只列当前分类的项目，点哪个高亮哪个；没有标准溶液表的给明确提示 */
+    lrGroupProjects().forEach(function(p){
       t+='<button type="button" class="lr-soltab '+(v===p.key?"on":"")+'" '+
          'onclick="LAB.lrSetSolView(\''+esc(p.key)+'\')">'+esc(p.name)+'</button>';
     });
@@ -887,7 +926,8 @@
       '<summary id="lrSolSummary">标准溶液维护（当前：'+esc(nm)+'）· 只列这个项目的，点「全部」才出全部</summary>'+
       '<div class="muted" style="font-size:11.5px;line-height:1.6;margin:8px 0 2px">'+
       '编码和有效期至<b>打印时不用填</b>，默认就是 Word 原表里的值。'+
-      '9 份原表里只有 4 个项目有标准溶液，这里默认只列其中一个项目；'+
+      lrProjects().length+' 份原表里只有 '+lrSolProjects().length+
+      ' 个项目有标准溶液，这里默认只列其中一个项目；'+
       '点上面的项目名切换，点「全部」才一次看全。'+
       '哪种溶液过期重新配制了，改一次本机记住，不用每次打印都改。</div>'+
       lrSolTabsHtml(v)+'<div id="lrSolBody">'+lrSolBodyHtml(v)+'</div></details>';
@@ -931,6 +971,7 @@
     /* 先把已保存的查看范围读回来，避免首次保存冲掉上次的「全部」 */
     lrSolView();
     global.Store.set("lab.record.solview.v1", LRSOLVIEW);
+    global.Store.set("lab.record.group.v1", lrGroup());
     global.Store.set("lab.record.sel.v1",
       lrProjects().filter(function(p){ return s[p.key]; }).map(function(p){ return p.key; }));
   }
@@ -1035,7 +1076,7 @@
     if(!picked.length) return '<div class="card empty">上面勾一个检测项目，对应的 Word 原始记录就出来。</div>';
     return lrRowSelHtml()+picked.map(function(p){
       return '<div class="card lr-card" style="margin-bottom:12px"><div class="card-h">'+
-        '<h3>'+esc(p.name)+'（'+esc(p.unit)+'）</h3>'+
+        '<h3>'+esc(p.name)+(p.unit?'（'+esc(p.unit)+'）':'')+'</h3>'+
         '<span class="muted">'+esc(p.file)+' · Word 原页 100% 复刻（共 '+((global.LABPAGES||{})[p.key]||{pages:[]}).pages.length+' 页）</span><div class="sp"></div>'+
         '<button class="btn sm" onclick="LAB.lrPrintOne(\''+esc(p.key)+'\')">🖨 只打此项目（全部样品）</button></div>'+
         '<div class="lr-scroll">'+lrSheetHtml(p)+'</div></div>';
@@ -1084,11 +1125,14 @@
     return lrActiveRows().length*lrSelected().length;
   }
   function viewRecordByProject(){
-    var ps=lrProjects(), s=lrSel(), n=lrSelected().length;
+    var ps=lrProjects(), s=lrSel(), n=lrSelected().length, gp=lrGroupProjects();
     var rows=lrActiveRows().length, total=lrPrintCount();
     var h='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
       '<h3>原始记录 · 按检测项目出模板</h3>'+
-      '<span class="muted">9 个检测项目，各有自己的 Word 原表</span><div class="sp"></div>'+
+      '<span class="muted">共 '+ps.length+' 个检测项目 · 当前分类 '+
+        (lrGroup()==="all"?"全部":((lrGroups().filter(function(x){
+          return x.key===lrGroup(); })[0]||{}).name||"理化组"))+
+        ' '+gp.length+' 个</span><div class="sp"></div>'+
       '<button class="btn sm pri" onclick="LAB.lrMode(\'project\')">按检测项目</button>'+
       '<button class="btn sm" onclick="LAB.lrMode(\'method\')">按方法标准</button></div>'+
       '<div class="notice" style="margin:10px 0"><span>📋</span><div>'+
@@ -1105,15 +1149,17 @@
        ★ 按检测项目过滤，默认只出当前项目的，点「全部」才出全部 */
     h+=lrSolPanelHtml();
     h+='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
-      '<h3>选择检测项目</h3><span class="muted">共 '+ps.length+' 个 · 选 1 个 / 几个 / 全部都行</span><div class="sp"></div>'+
-      '<button class="btn sm" onclick="LAB.lrAll()">全选</button>'+
+      '<h3>选择检测项目</h3><span class="muted">当前 '+gp.length+' 个 · 选 1 个 / 几个 / 全部都行</span><div class="sp"></div>'+
+      '<button class="btn sm" title="只选当前分类里的项目" onclick="LAB.lrAll()">全选本组</button>'+
       '<button class="btn sm" onclick="LAB.lrNone()">清空</button>'+
       '<button class="btn pri sm" id="lrPrintBtn" onclick="LAB.lrPrint()">🖨 打印全部（'+total+' 份）</button></div>'+
-      '<div class="lr-chips">'+ps.map(function(p){
+      lrGroupTabsHtml()+
+      '<div class="lr-chips">'+gp.map(function(p){
         return '<label class="lr-chip '+(s[p.key]?"on":"")+'">'+
           '<input type="checkbox" '+(s[p.key]?"checked":"")+
           ' onchange="LAB.lrToggle(\''+esc(p.key)+'\')">'+
-          '<b>'+esc(p.name)+'</b><span class="muted">'+esc(p.unit)+'</span></label>';
+          '<b>'+esc(p.name)+'</b>'+(p.unit?'<span class="muted">'+esc(p.unit)+'</span>':'')+
+          '</label>';
       }).join("")+'</div></div>';
     h+='<div id="lrPreview">'+lrPreviewHtml()+'</div>';
     return h;
@@ -1296,7 +1342,7 @@
     if(host) host.innerHTML=lrPreviewHtml();
     var n=lrSelected().length, rows=lrActiveRows().length, btn=document.getElementById("lrPrintBtn");
     if(btn) btn.textContent="🖨 打印全部（"+lrPrintCount()+" 份）";
-    var s=lrSel(), ps=lrProjects();
+    var s=lrSel(), ps=lrGroupProjects();
     [].forEach.call(document.querySelectorAll(".lr-chip"),function(el,i){
       var p=ps[i]; if(!p) return;
       el.className="lr-chip "+(s[p.key]?"on":"");
@@ -1323,7 +1369,7 @@
     lrSave(); lrRedraw();
   }
   function lrAll(){
-    var s=lrSel(); lrProjects().forEach(function(p){ s[p.key]=1; });
+    var s=lrSel(); lrGroupProjects().forEach(function(p){ s[p.key]=1; });
     LRSOLVIEW="all";                          // ★ 只有点「全部/全选」才显示全部
     lrSave(); lrRedraw();
   }
@@ -1937,6 +1983,10 @@
     lrPrintOne: lrPrintOne,
     lrSheetHtml: lrSheetHtml,
     lrProjects: lrProjects,
+    lrGroups: lrGroups,
+    lrGroup: lrGroup,
+    lrGroupProjects: lrGroupProjects,
+    lrSetGroup: lrSetGroup,
     lrInfo: lrInfo,
     lrSelected: lrSelected,
     lrSol: lrSol,

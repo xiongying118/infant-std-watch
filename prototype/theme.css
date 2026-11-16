@@ -1156,3 +1156,15 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   .lr-importbar .muted{flex-basis:100%}
   .lr-rowsel .muted{flex-basis:100%}
 }
+
+/* ===== 2026-11-16 分组：理化组 / 色谱组 ===== */
+.lr-grouptabs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 2px}
+.lr-grouptab{padding:6px 14px;border:1px solid var(--line);border-radius:999px;
+  background:var(--panel);color:var(--ink2);font-size:12px;cursor:pointer;line-height:1.5}
+.lr-grouptab i{font-style:normal;font-size:10.5px;opacity:.75;margin-left:3px}
+.lr-grouptab:hover{border-color:var(--brand)}
+.lr-grouptab.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+/* ★ 移动端规则必须留在文件最末尾 */
+@media(max-width:720px){
+  .lr-grouptab{padding:5px 10px;font-size:11.5px}
+}
