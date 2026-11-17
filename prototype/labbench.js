@@ -1115,8 +1115,9 @@
     }).join("");
   }
   /* ★ 样品清单：Excel / CSV / 粘贴区域一次导入多行，逐行往下排带序号 */
+  /* 网页清单不显示备注列；备注只存在数据里供 Excel 模板导出和导入过滤用 */
   var LR_HEADS=[["sample","样品名称"],["batch","批号/生产日期"],
-                ["maker","生产商"],["date","检测日期"],["note","备注"]];
+                ["maker","生产商"],["date","检测日期"]];
   function lrRowsHtml(){
     var R=lrRows(), st=lrPickCount();
     var t='<div class="lr-rowswrap"><table class="lr-rows"><thead><tr>'+
@@ -1134,7 +1135,6 @@
         '<td class="lr-no" title="点这里预览这个样品" onclick="LAB.lrPreviewRow('+i+')">'+
           (i+1)+'<span class="lr-rowfocus">'+(i===LRPREVIEW?'预览中':'')+'</span></td>'+
         LR_HEADS.map(function(f){
-          if(f[0]==="note") return '<td class="c-note">'+esc(r.note||"")+'</td>';
           return '<td><input type="text" data-row="'+i+'" data-k="'+f[0]+'" '+
             'value="'+esc(r[f[0]])+'" placeholder="'+f[1]+'" '+
             'oninput="LAB.lrSetRow(+this.dataset.row,this.dataset.k,this.value)"></td>';
@@ -1184,8 +1184,8 @@
       '<b>Word 原页 100% 复刻</b>：每页直接用 Word 导出的原页，标题位置、字体字号、列宽行高、'+
       '框线、公式图、页码、哪一页放什么内容全部原样，打印不带浏览器页眉页脚。'+
       '只有<b>样品名称、生产商、批号/生产日期、检测日期</b>是动态位；'+
-      '下面清单可以从 Excel 导入多行，<b>点每行左边方框选样品</b>（单选/多选/全选/反选都行，'+
-      'Excel 备注写「已出」的行不导入），再勾检测项目，<b>一次打印选中的样品 × 项目</b>。'+
+      '下面清单可以从 Excel 导入多行，<b>点每行左边方框选样品</b>（单选/多选/全选/反选都行），'+
+      '再勾检测项目，<b>一次打印选中的样品 × 项目</b>。'+
       '检测日期留空即可打印后手写。</div></div>'+
       '<h4 class="lr-sub" id="lrSampleHead">样品清单（共 '+lrPickCount().all+' 个 · 已选 '+
       lrPickCount().on+' 个 · 点左边方框勾选）</h4>'+
@@ -1352,7 +1352,7 @@
     var on=out.filter(function(r){ return r.pick!==false; }).length;
     setTimeout(function(){
       lrStatMsg("已导入 "+out.length+" 个样品（已勾选 "+on+" 个"+
-        (doneCnt?" · 备注已出 "+doneCnt+" 个已过滤":"")+"）· 点方框选样品，"+
+        (doneCnt?" · 已过滤 "+doneCnt+" 行":"")+"）· 点方框选样品，"+
         "全选/反选一键完成"); },0);
     return out.length;
   }

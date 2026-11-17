@@ -1161,7 +1161,7 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   .lr-rowsel .muted{flex-basis:100%}
 }
 
-/* ===== 2026-11-17 样品清单：点方框勾选；备注列只读（Excel 里写「已出」导入时直接过滤） ===== */
+/* ===== 2026-11-17 样品清单：点方框勾选（备注只在 Excel 里用，网页不显示） ===== */
 .lr-pickbar{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
 .lr-pickbar .lr-count{font-size:11.5px;font-weight:600;color:var(--brand);
   background:rgba(37,99,235,.08);padding:5px 10px;border-radius:999px;white-space:nowrap}
@@ -1169,7 +1169,6 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .lr-rows input.lr-pick{width:16px;height:16px;padding:0;box-sizing:border-box;
   accent-color:var(--brand);cursor:pointer;vertical-align:middle}
 .lr-rows input.lr-pick:disabled{cursor:not-allowed;opacity:.45}
-.lr-rows td.c-note{color:var(--ink2);word-break:break-all}
 
 /* ===== 2026-11-16 分组：理化组 / 色谱组 ===== */
 .lr-grouptabs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 2px}
