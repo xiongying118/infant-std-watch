@@ -1128,8 +1128,8 @@
       '<button class="btn sm" onclick="LAB.lrTogglePaste()">📋 粘贴 Excel 区域</button>'+
       '<button class="btn sm" onclick="LAB.lrTemplate()">⬇ 下载 Excel 模板</button>'+
       '<button class="btn sm" onclick="LAB.lrClearRows()">清空</button>'+
-      '<span class="muted">列顺序：样品名称 / 生产商 / 批号/生产日期 / 检测日期'+
-      '（可带表头、可带序号列）</span></div>'+
+      '<span class="muted">共用清单：下载模板 → Excel 里把不导的行「导入勾选」列清空 → 再导入，'+
+      '只导入打了 √ 的行（单选/多选/全选都行）；无勾选列则全部导入</span></div>'+
       '<div id="lrPasteBox" class="lr-pastebox" style="display:none">'+
       '<textarea id="lrPaste" placeholder="在 Excel 里框选多行，Ctrl+C 后粘贴到这里；'+
       '每行一个样品，列之间用 Tab 或逗号分隔"></textarea>'+
@@ -1231,8 +1231,16 @@
     out.push(cur);
     return out.map(function(x){ return x.replace(/^\ufeff/,"").trim(); });
   }
+  /* ★ Excel「导入勾选」列：只有勾上（√/是/Y/1/TRUE/X/勾）的行才导入。
+     用户下载模板后在 Excel 里把不导入的行勾去掉，实现单选/多选/全选。 */
+  function lrPickYes(v){
+    var s=String(v==null?"":v).trim().toUpperCase();
+    return s==="√"||s==="✓"||s==="✔"||s==="是"||s==="Y"||s==="YES"||
+           s==="1"||s==="TRUE"||s==="T"||s==="X"||s==="勾";
+  }
   function lrHeadMap(cells){
-    var RE=[["sample",/样品名称|样品名|品名|样品|sample/i],
+    var RE=[["_pick",/^导入勾选$|^是否导入$|^勾选$|^选择$|^需要导入$|^导入$|^√$|^pick$|^select$|^check/i],
+            ["sample",/样品名称|样品名|品名|样品|sample/i],
             ["maker",/生产商|生产厂家|生产单位|厂家|maker/i],
             ["batch",/批号|生产日期|批次|batch/i],
             ["date",/检测日期|检验日期|检测时间|date/i],
@@ -1257,20 +1265,27 @@
       map=[];
       for(var j=0;j<first.length;j++) map.push(j<drop?"_no":(LR_KEYS[j-drop]||"_no"));
     }
-    var out=[];
+    var hasPick=map.indexOf("_pick")>=0, out=[], skipped=0;
     for(var i=start;i<lines.length;i++){
-      var c=lrSplit(lines[i],sep), r=lrBlank(), any=false;
+      var c=lrSplit(lines[i],sep), r=lrBlank(), any=false, picked=true;
       map.forEach(function(k,j){
+        if(k==="_pick"){ picked=lrPickYes(c[j]); return; }
         if(k&&k!=="_no"&&LR_KEYS.indexOf(k)>=0){
           r[k]=c[j]!=null?c[j]:""; if(r[k]) any=true;
         }
       });
-      if(any) out.push(r);
+      if(!any) continue;
+      /* ★ 有勾选列时，只导入 Excel 里勾上的行；没勾选列就全导（兼容旧表/粘贴） */
+      if(hasPick && !picked){ skipped++; continue; }
+      out.push(r);
     }
-    if(!out.length){ lrStatMsg("没识别到有效行，请检查列顺序"); return 0; }
+    if(!out.length){ lrStatMsg(hasPick&&skipped?
+      ("Excel 里没勾任何行（跳过 "+skipped+" 行）· 在「导入勾选」列填 √ 再导入"):
+      "没识别到有效行，请检查列顺序"); return 0; }
     LRROWS=out; LRPREVIEW=0; lrSave(); render();
     setTimeout(function(){
-      lrStatMsg("已导入 "+out.length+" 个样品 · 勾好项目点「打印全部」一次出 "+
+      lrStatMsg("已导入 "+out.length+" 个样品"+(hasPick?("（Excel 勾选 "+out.length+
+        " / 跳过 "+skipped+"）"):"")+" · 勾好项目点「打印全部」一次出 "+
         lrPrintCount()+" 份记录"); },0);
     return out.length;
   }
@@ -1326,16 +1341,17 @@
       v=String(v==null?"":v);
       return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
     };
-    var csv="\ufeff序号,样品名称,生产商,批号/生产日期,检测日期\n"+
+    /* ★ 加「导入勾选」列，默认全 √（=全选）；在 Excel 里把不导入的行清空即取消勾选 */
+    var csv="\ufeff序号,样品名称,生产商,批号/生产日期,检测日期,导入勾选\n"+
       lrRows().map(function(r,i){
-        return [i+1,r.sample,r.maker,r.batch,r.date].map(q).join(",");
+        return [i+1,r.sample,r.maker,r.batch,r.date,"√"].map(q).join(",");
       }).join("\n")+"\n";
     var a=document.createElement("a");
     a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
     a.download="原始记录样品清单.csv";
     document.body.appendChild(a); a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1000);
-    lrStatMsg("已下载 CSV 模板，用 Excel 填好后点「导入 Excel / CSV」");
+    lrStatMsg("已下载模板（含「导入勾选」列，默认全 √）· 用 Excel 打开，把不导入的行勾选列清空，保存后再导入");
   }
   /* 按溶液名称定位（过滤后索引会变，绝不能用位置下标）；兼容旧的数字下标 */
   function lrSetSol(name,k,v){
