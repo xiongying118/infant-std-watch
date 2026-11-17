@@ -767,7 +767,8 @@
     if(!LRGROUP_READ){
       LRGROUP_READ=true;
       var v=global.Store?global.Store.get("lab.record.group.v1",null):null;
-      LRGROUP=(v==="phys"||v==="chrom"||v==="all")?v:"phys";
+      var valid=lrGroups().some(function(x){ return x.key===v; });
+      LRGROUP=valid?v:"phys";
     }
     return LRGROUP||"phys";
   }
@@ -847,6 +848,7 @@
         out.push({name:s.name,
                   code:o.code!=null?o.code:s.code,
                   expiry:o.expiry!=null?o.expiry:s.expiry,
+                  batch:o.batch!=null?o.batch:s.batch,
                   origCode:s.code,origExpiry:s.expiry});
       });
     });
@@ -889,7 +891,8 @@
       var o=O[s.name]||{};
       out.push({name:s.name,
                 code:o.code!=null?o.code:s.code,
-                expiry:o.expiry!=null?o.expiry:s.expiry});
+                expiry:o.expiry!=null?o.expiry:s.expiry,
+                batch:o.batch!=null?o.batch:s.batch});
     });
     return out;
   }
@@ -912,11 +915,14 @@
         '的 Word 原表里没有标准溶液，不用维护。点上面的项目或「全部」查看其他项目。</div>';
     }
     return '<div class="lr-solgrid">'+rows.map(function(x){
+      var batch = (x.batch!=null && x.batch!=="")
+        ? '<label>批号<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.batch)+'" '+
+            'oninput="LAB.lrSetSol(this.dataset.name,\'batch\',this.value)"></label>' : '';
       return '<div class="lr-solrow"><b>'+esc(x.name)+'</b>'+
         '<label>编码<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.code)+'" '+
           'oninput="LAB.lrSetSol(this.dataset.name,\'code\',this.value)"></label>'+
         '<label>有效期至<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.expiry)+'" '+
-          'oninput="LAB.lrSetSol(this.dataset.name,\'expiry\',this.value)"></label></div>';
+          'oninput="LAB.lrSetSol(this.dataset.name,\'expiry\',this.value)"></label>'+batch+'</div>';
     }).join("")+'</div>';
   }
   function lrSolPanelHtml(){
@@ -925,7 +931,7 @@
     return '<details class="lr-solbar" id="lrSolBar" style="margin-bottom:12px">'+
       '<summary id="lrSolSummary">标准溶液维护（当前：'+esc(nm)+'）· 只列这个项目的，点「全部」才出全部</summary>'+
       '<div class="muted" style="font-size:11.5px;line-height:1.6;margin:8px 0 2px">'+
-      '编码和有效期至<b>打印时不用填</b>，默认就是 Word 原表里的值。'+
+      '编码、批号和有效期至<b>打印时不用填</b>，默认就是 Word 原表里的值。'+
       lrProjects().length+' 份原表里只有 '+lrSolProjects().length+
       ' 个项目有标准溶液，这里默认只列其中一个项目；'+
       '点上面的项目名切换，点「全部」才一次看全。'+
@@ -984,10 +990,10 @@
         var nm=(attrs.match(/data-std="([^"]+)"/)||[])[1];
         var v=inner;
         if(k==="sample"||k==="maker"||k==="batch"||k==="date") v=I[k]||"";
-        else if((k==="stdcode"||k==="stdexp")&&nm&&O[nm]){
-          v = (k==="stdcode")
-              ? (O[nm].code!=null?O[nm].code:inner)
-              : (O[nm].expiry!=null?O[nm].expiry:inner);
+        else if((k==="stdcode"||k==="stdexp"||k==="stdbatch")&&nm&&O[nm]){
+          if(k==="stdcode") v=O[nm].code!=null?O[nm].code:inner;
+          else if(k==="stdexp") v=O[nm].expiry!=null?O[nm].expiry:inner;
+          else v=O[nm].batch!=null?O[nm].batch:inner;
         }
         return '<span class="lr-dyn"'+attrs+'>'+esc(v)+'</span>';
       });
@@ -1004,6 +1010,7 @@
     if(f.std && O[f.std]){
       if(f.k==="stdcode") return O[f.std].code!=null?O[f.std].code:(f.v||"");
       if(f.k==="stdexp") return O[f.std].expiry!=null?O[f.std].expiry:(f.v||"");
+      if(f.k==="stdbatch") return O[f.std].batch!=null?O[f.std].batch:(f.v||"");
     }
     return f.v||"";
   }
@@ -1343,6 +1350,7 @@
       var d=O[x.name]||{}, key=el.getAttribute("data-lr");
       if(key==="stdcode"&&d.code!=null) lrUpdateText(el,d.code);
       if(key==="stdexp"&&d.expiry!=null) lrUpdateText(el,d.expiry);
+      if(key==="stdbatch"&&d.batch!=null) lrUpdateText(el,d.batch);
     });
   }
   /* ★ 底图加载完成后再显示动态文字层，避免慢网下出现「只有值、没有原表」的白页。
