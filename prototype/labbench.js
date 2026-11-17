@@ -1126,16 +1126,17 @@
       '<th class="c-no">序号</th>'+LR_HEADS.map(function(f){
         return '<th>'+f[1]+'</th>'; }).join("")+'<th class="c-op"></th></tr></thead><tbody>';
     R.forEach(function(r,i){
-      var done=lrDoneNote(r.note), on=r.pick!==false&&!done;
-      t+='<tr class="'+(i===LRPREVIEW?'on ':'')+(done?'lr-done':'')+'">'+
+      var on=r.pick!==false;
+      t+='<tr'+(i===LRPREVIEW?' class="on"':'')+'>'+
         '<td class="c-pick"><input type="checkbox" class="lr-pick" data-row="'+i+'"'+
-          (on?' checked':'')+(done?' disabled title="备注「已出」，不导入"':' title="点这里勾选这个样品"')+
+          (on?' checked':'')+' title="点这里勾选这个样品"'+
           ' onchange="LAB.lrPickRow('+i+',this.checked)"></td>'+
         '<td class="lr-no" title="点这里预览这个样品" onclick="LAB.lrPreviewRow('+i+')">'+
           (i+1)+'<span class="lr-rowfocus">'+(i===LRPREVIEW?'预览中':'')+'</span></td>'+
         LR_HEADS.map(function(f){
+          if(f[0]==="note") return '<td class="c-note">'+esc(r.note||"")+'</td>';
           return '<td><input type="text" data-row="'+i+'" data-k="'+f[0]+'" '+
-            'value="'+esc(r[f[0]])+'" placeholder="'+(f[0]==="note"?'写「已出」则不导入':f[1])+'" '+
+            'value="'+esc(r[f[0]])+'" placeholder="'+f[1]+'" '+
             'oninput="LAB.lrSetRow(+this.dataset.row,this.dataset.k,this.value)"></td>';
         }).join("")+
         '<td class="c-op"><button type="button" title="删除这一行" '+
@@ -1156,11 +1157,9 @@
         '<button class="btn sm pri" onclick="LAB.lrPickAll(true)">☑ 全选</button>'+
         '<button class="btn sm" onclick="LAB.lrPickAll(false)">☐ 清空勾选</button>'+
         '<button class="btn sm" onclick="LAB.lrPickInvert()">⇄ 反选</button>'+
-        '<b class="lr-count" id="lrPickCount">已选 '+st.on+' / '+st.all+' 个样品'+
-          (st.done?'（备注已出 '+st.done+' 个，不导入）':'')+'</b></span>'+
+        '<b class="lr-count" id="lrPickCount">已选 '+st.on+' / '+st.all+' 个样品</b></span>'+
       '<button class="btn sm" onclick="LAB.lrClearRows()">清空清单</button>'+
-      '<span class="muted">点每行最左边的方框就能单选 / 多选，上面有全选、清空、反选；'+
-      '备注写「已出」的行自动不导入，全选也会跳过它</span></div>'+
+      '<span class="muted">点每行最左边的方框就能单选 / 多选，上面有全选、清空、反选</span></div>'+
       '<div id="lrPasteBox" class="lr-pastebox" style="display:none">'+
       '<textarea id="lrPaste" placeholder="在 Excel 里框选多行，Ctrl+C 后粘贴到这里；'+
       '每行一个样品，列之间用 Tab 或逗号分隔"></textarea>'+
@@ -1186,7 +1185,7 @@
       '框线、公式图、页码、哪一页放什么内容全部原样，打印不带浏览器页眉页脚。'+
       '只有<b>样品名称、生产商、批号/生产日期、检测日期</b>是动态位；'+
       '下面清单可以从 Excel 导入多行，<b>点每行左边方框选样品</b>（单选/多选/全选/反选都行，'+
-      '备注写「已出」的自动跳过），再勾检测项目，<b>一次打印选中的样品 × 项目</b>。'+
+      'Excel 备注写「已出」的行不导入），再勾检测项目，<b>一次打印选中的样品 × 项目</b>。'+
       '检测日期留空即可打印后手写。</div></div>'+
       '<h4 class="lr-sub" id="lrSampleHead">样品清单（共 '+lrPickCount().all+' 个 · 已选 '+
       lrPickCount().on+' 个 · 点左边方框勾选）</h4>'+
@@ -1220,10 +1219,7 @@
   var LR_ZH={sample:"样品名称",maker:"生产商",batch:"批号/生产日期",date:"检测日期"};
   function lrSetRow(i,k,v){
     var R=lrRows(); if(!R[i]) return;
-    R[i][k]=v;
-    if(k==="note") R[i].pick=!lrDoneNote(v);   // 备注写「已出」立刻取消勾选
-    lrSave();
-    if(k==="note"){ lrPickRefresh(); return; } // 只改 DOM 状态，输入框不失焦
+    R[i][k]=v; lrSave();
     if(i===LRPREVIEW){
       var n=0;
       [].forEach.call(document.querySelectorAll('.lr-paper .lr-dyn[data-lr="'+k+'"]'),
@@ -1242,17 +1238,15 @@
     if(all) all.checked=!!(st.all&&st.on===st.all);
     [].forEach.call(document.querySelectorAll(".lr-rows tbody tr"),function(tr,i){
       var r=R[i]; if(!r) return;
-      var done=lrDoneNote(r.note), on=r.pick!==false&&!done;
-      tr.className=(i===LRPREVIEW?"on ":"")+(done?"lr-done":"");
+      tr.className=(i===LRPREVIEW?"on":"");
       var cb=tr.querySelector("input.lr-pick");
-      if(cb){ cb.checked=on; cb.disabled=done;
-        cb.title=done?"备注「已出」，不导入":"点这里勾选这个样品"; }
+      if(cb){ cb.checked=r.pick!==false; cb.disabled=false;
+        cb.title="点这里勾选这个样品"; }
       var f=tr.querySelector(".lr-rowfocus");
       if(f) f.textContent=i===LRPREVIEW?"预览中":"";
     });
     var cnt=document.getElementById("lrPickCount");
-    if(cnt) cnt.textContent="已选 "+st.on+" / "+st.all+" 个样品"+
-      (st.done?"（备注已出 "+st.done+" 个，不导入）":"");
+    if(cnt) cnt.textContent="已选 "+st.on+" / "+st.all+" 个样品";
     var btn=document.getElementById("lrPrintBtn");
     if(btn) btn.textContent="🖨 打印全部（"+lrPrintCount()+" 份）";
     var head=document.getElementById("lrSampleHead");
@@ -1261,17 +1255,15 @@
       " 份记录 · 本机已保存，刷新不丢");
   }
   function lrPickRow(i,v){
-    var R=lrRows(), r=R[i]; if(!r||lrDoneNote(r.note)) return;
+    var R=lrRows(), r=R[i]; if(!r) return;
     r.pick=!!v; lrSave(); lrPickRefresh();
   }
   function lrPickAll(v){
-    lrRows().forEach(function(r){ if(!lrDoneNote(r.note)) r.pick=!!v; });
+    lrRows().forEach(function(r){ r.pick=!!v; });
     lrSave(); lrPickRefresh();
   }
   function lrPickInvert(){
-    lrRows().forEach(function(r){
-      if(!lrDoneNote(r.note)) r.pick=!(r.pick!==false);
-    });
+    lrRows().forEach(function(r){ r.pick=!(r.pick!==false); });
     lrSave(); lrPickRefresh();
   }
   function lrPreviewRow(i){
@@ -1350,18 +1342,18 @@
         }
       });
       if(!any) continue;
-      /* ★ 全部行都进清单；勾选状态在网页上点方框改；备注「已出」永不导入 */
-      if(lrDoneNote(r.note)) doneCnt++;
-      r.pick=!lrDoneNote(r.note)&&oldPick;
+      /* ★ Excel 备注写「已出」→ 这一行直接不导入；其余进清单，勾选在网页点方框 */
+      if(lrDoneNote(r.note)){ doneCnt++; continue; }
+      r.pick=oldPick;
       out.push(r);
     }
     if(!out.length){ lrStatMsg("没识别到有效行，请检查列顺序"); return 0; }
     LRROWS=out; LRPREVIEW=0; lrSave(); render();
     var on=out.filter(function(r){ return r.pick!==false; }).length;
     setTimeout(function(){
-      lrStatMsg("已导入 "+out.length+" 个样品（默认勾选 "+on+" 个"+
-        (doneCnt?" · 备注已出 "+doneCnt+" 个不导入":"")+"）· 在清单里点方框单选/多选，"+
-        "或用全选/反选，再点「打印全部」"); },0);
+      lrStatMsg("已导入 "+out.length+" 个样品（已勾选 "+on+" 个"+
+        (doneCnt?" · 备注已出 "+doneCnt+" 个已过滤":"")+"）· 点方框选样品，"+
+        "全选/反选一键完成"); },0);
     return out.length;
   }
   /* Excel 解析库 881KB，只在真的导入 .xlsx 时才按需加载，不拖首页 */
