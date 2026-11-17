@@ -792,8 +792,10 @@
         'onclick="LAB.lrSetGroup(\''+esc(x.key)+'\')">'+esc(x.name)+' <i>'+n+'</i></button>';
     }).join("")+'</div>';
   }
-  var LR_KEYS=["sample","maker","batch","date"];
-  function lrBlank(){ return {sample:"",maker:"",batch:"",date:""}; }
+  var LR_KEYS=["sample","batch","maker","date"];
+  /* ★ 备注写「已出」= 这行不导入/不打印；点清单左侧方框才勾选参与 */
+  function lrDoneNote(v){ return /已出|已完成|已出具|已出报告/.test(String(v||"")); }
+  function lrBlank(){ return {sample:"",maker:"",batch:"",date:"",note:"",pick:true}; }
   /* ★ 样品清单：可以从 Excel / CSV / 粘贴区域一次导入多行，逐行往下排带序号。
      老版本只存一条 lab.record.info.v2，首次打开自动升级成 1 行清单。 */
   function lrRows(){
@@ -803,13 +805,18 @@
         LRROWS=s.map(function(r){
           var o=lrBlank();
           LR_KEYS.forEach(function(k){ if(r&&r[k]!=null) o[k]=String(r[k]); });
+          if(r&&r.note!=null) o.note=String(r.note);
+          o.pick=(r&&r.pick!=null)?!!r.pick:!lrDoneNote(o.note);
           return o;
         });
       } else {
         var old=global.Store?global.Store.get("lab.record.info.v2",null):null;
         var o=lrBlank();
-        if(old&&typeof old==="object")
+        if(old&&typeof old==="object"){
           LR_KEYS.forEach(function(k){ if(old[k]!=null) o[k]=String(old[k]); });
+          if(old.note!=null) o.note=String(old.note);
+        }
+        o.pick=!lrDoneNote(o.note);
         LRROWS=[o];
       }
       if(!LRROWS.length) LRROWS=[lrBlank()];
@@ -823,12 +830,22 @@
     var R=lrRows();
     return R[Math.min(LRPREVIEW,R.length-1)]||lrBlank();
   }
-  /* 打印时用：丢掉 Excel 尾部的全空行；全是空行也保留 1 份空白表 */
-  function lrActiveRows(){
-    var R=lrRows().filter(function(r){
+  /* ★ 打印/出表只用「点方框勾上」且备注不是「已出」的行。
+     一条都没填过 → 仍保留 1 张空白表；有数据但一行没勾 → 0 份（提示先勾）。 */
+  function lrPickCount(){
+    var all=lrRows().filter(function(r){
       return LR_KEYS.some(function(k){ return String(r[k]||"").trim(); });
     });
-    return R.length?R:[lrBlank()];
+    return {all:all.length,
+      on:all.filter(function(r){ return r.pick!==false&&!lrDoneNote(r.note); }).length,
+      done:all.filter(function(r){ return lrDoneNote(r.note); }).length};
+  }
+  function lrActiveRows(){
+    var all=lrRows().filter(function(r){
+      return LR_KEYS.some(function(k){ return String(r[k]||"").trim(); });
+    });
+    if(!all.length) return [lrBlank()];
+    return all.filter(function(r){ return r.pick!==false&&!lrDoneNote(r.note); });
   }
   /* 只保存用户改过的标准溶液；没改过的一律用 Word 原值 */
   function lrSol(){
@@ -1098,20 +1115,27 @@
     }).join("");
   }
   /* ★ 样品清单：Excel / CSV / 粘贴区域一次导入多行，逐行往下排带序号 */
-  var LR_HEADS=[["sample","样品名称"],["maker","生产商"],
-                ["batch","批号/生产日期"],["date","检测日期"]];
+  var LR_HEADS=[["sample","样品名称"],["batch","批号/生产日期"],
+                ["maker","生产商"],["date","检测日期"],["note","备注"]];
   function lrRowsHtml(){
-    var R=lrRows();
+    var R=lrRows(), st=lrPickCount();
     var t='<div class="lr-rowswrap"><table class="lr-rows"><thead><tr>'+
+      '<th class="c-pick" title="点这里全选 / 取消全选（备注「已出」自动跳过）">'+
+        '<input type="checkbox" id="lrPickAll"'+(st.all&&st.on===st.all?' checked':'')+
+        ' onchange="LAB.lrPickAll(this.checked)"></th>'+
       '<th class="c-no">序号</th>'+LR_HEADS.map(function(f){
         return '<th>'+f[1]+'</th>'; }).join("")+'<th class="c-op"></th></tr></thead><tbody>';
     R.forEach(function(r,i){
-      t+='<tr'+(i===LRPREVIEW?' class="on"':'')+'>'+
+      var done=lrDoneNote(r.note), on=r.pick!==false&&!done;
+      t+='<tr class="'+(i===LRPREVIEW?'on ':'')+(done?'lr-done':'')+'">'+
+        '<td class="c-pick"><input type="checkbox" class="lr-pick" data-row="'+i+'"'+
+          (on?' checked':'')+(done?' disabled title="备注「已出」，不导入"':' title="点这里勾选这个样品"')+
+          ' onchange="LAB.lrPickRow('+i+',this.checked)"></td>'+
         '<td class="lr-no" title="点这里预览这个样品" onclick="LAB.lrPreviewRow('+i+')">'+
           (i+1)+'<span class="lr-rowfocus">'+(i===LRPREVIEW?'预览中':'')+'</span></td>'+
         LR_HEADS.map(function(f){
           return '<td><input type="text" data-row="'+i+'" data-k="'+f[0]+'" '+
-            'value="'+esc(r[f[0]])+'" placeholder="'+f[1]+'" '+
+            'value="'+esc(r[f[0]])+'" placeholder="'+(f[0]==="note"?'写「已出」则不导入':f[1])+'" '+
             'oninput="LAB.lrSetRow(+this.dataset.row,this.dataset.k,this.value)"></td>';
         }).join("")+
         '<td class="c-op"><button type="button" title="删除这一行" '+
@@ -1120,6 +1144,7 @@
     return t+'</tbody></table></div>';
   }
   function lrImportBarHtml(){
+    var st=lrPickCount();
     return '<div class="lr-importbar">'+
       '<button class="btn sm" onclick="LAB.lrAddRow()">＋ 添加一行</button>'+
       '<label class="btn sm lr-filebtn" for="lrFile">📥 导入 Excel / CSV</label>'+
@@ -1127,9 +1152,15 @@
         'onchange="LAB.lrImportFile(this)">'+
       '<button class="btn sm" onclick="LAB.lrTogglePaste()">📋 粘贴 Excel 区域</button>'+
       '<button class="btn sm" onclick="LAB.lrTemplate()">⬇ 下载 Excel 模板</button>'+
-      '<button class="btn sm" onclick="LAB.lrClearRows()">清空</button>'+
-      '<span class="muted">共用清单：下载模板 → Excel 里把不导的行「导入勾选」列清空 → 再导入，'+
-      '只导入打了 √ 的行（单选/多选/全选都行）；无勾选列则全部导入</span></div>'+
+      '<span class="lr-pickbar">'+
+        '<button class="btn sm pri" onclick="LAB.lrPickAll(true)">☑ 全选</button>'+
+        '<button class="btn sm" onclick="LAB.lrPickAll(false)">☐ 清空勾选</button>'+
+        '<button class="btn sm" onclick="LAB.lrPickInvert()">⇄ 反选</button>'+
+        '<b class="lr-count" id="lrPickCount">已选 '+st.on+' / '+st.all+' 个样品'+
+          (st.done?'（备注已出 '+st.done+' 个，不导入）':'')+'</b></span>'+
+      '<button class="btn sm" onclick="LAB.lrClearRows()">清空清单</button>'+
+      '<span class="muted">点每行最左边的方框就能单选 / 多选，上面有全选、清空、反选；'+
+      '备注写「已出」的行自动不导入，全选也会跳过它</span></div>'+
       '<div id="lrPasteBox" class="lr-pastebox" style="display:none">'+
       '<textarea id="lrPaste" placeholder="在 Excel 里框选多行，Ctrl+C 后粘贴到这里；'+
       '每行一个样品，列之间用 Tab 或逗号分隔"></textarea>'+
@@ -1154,11 +1185,13 @@
       '<b>Word 原页 100% 复刻</b>：每页直接用 Word 导出的原页，标题位置、字体字号、列宽行高、'+
       '框线、公式图、页码、哪一页放什么内容全部原样，打印不带浏览器页眉页脚。'+
       '只有<b>样品名称、生产商、批号/生产日期、检测日期</b>是动态位；'+
-      '下面清单可以从 Excel 导入多行，勾好检测项目后<b>一次打印全部样品 × 全部项目</b>，'+
-      '不用一行一行改、一个一个打。检测日期留空即可打印后手写。</div></div>'+
-      '<h4 class="lr-sub">样品清单（'+rows+' 个样品 · 往下排，带序号）</h4>'+
+      '下面清单可以从 Excel 导入多行，<b>点每行左边方框选样品</b>（单选/多选/全选/反选都行，'+
+      '备注写「已出」的自动跳过），再勾检测项目，<b>一次打印选中的样品 × 项目</b>。'+
+      '检测日期留空即可打印后手写。</div></div>'+
+      '<h4 class="lr-sub" id="lrSampleHead">样品清单（共 '+lrPickCount().all+' 个 · 已选 '+
+      lrPickCount().on+' 个 · 点左边方框勾选）</h4>'+
       lrImportBarHtml()+lrRowsHtml()+
-      '<div class="lr-stat" id="lrStat">已保存 '+rows+' 个样品 × '+n+' 个项目 = '+
+      '<div class="lr-stat" id="lrStat">已选 '+rows+' 个样品 × '+n+' 个项目 = '+
         total+' 份记录 · 本机已保存，刷新不丢</div></div>';
     /* 标准溶液：默认 Word 原值，只在过期重配时改一次；
        ★ 按检测项目过滤，默认只出当前项目的，点「全部」才出全部 */
@@ -1187,7 +1220,10 @@
   var LR_ZH={sample:"样品名称",maker:"生产商",batch:"批号/生产日期",date:"检测日期"};
   function lrSetRow(i,k,v){
     var R=lrRows(); if(!R[i]) return;
-    R[i][k]=v; lrSave();
+    R[i][k]=v;
+    if(k==="note") R[i].pick=!lrDoneNote(v);   // 备注写「已出」立刻取消勾选
+    lrSave();
+    if(k==="note"){ lrPickRefresh(); return; } // 只改 DOM 状态，输入框不失焦
     if(i===LRPREVIEW){
       var n=0;
       [].forEach.call(document.querySelectorAll('.lr-paper .lr-dyn[data-lr="'+k+'"]'),
@@ -1199,6 +1235,45 @@
       sel.options[i].textContent=(i+1)+" · "+(R[i].sample||R[i].batch||"（未填）");
   }
   function lrSet(k,v){ lrSetRow(LRPREVIEW,k,v); }  /* 兼容旧调用：改当前预览行 */
+  /* ★ 点方框勾选样品：单选 / 多选 / 全选 / 清空 / 反选，一键完成，完全在本页 */
+  function lrPickRefresh(){
+    var st=lrPickCount(), R=lrRows(), n=lrSelected().length;
+    var all=document.getElementById("lrPickAll");
+    if(all) all.checked=!!(st.all&&st.on===st.all);
+    [].forEach.call(document.querySelectorAll(".lr-rows tbody tr"),function(tr,i){
+      var r=R[i]; if(!r) return;
+      var done=lrDoneNote(r.note), on=r.pick!==false&&!done;
+      tr.className=(i===LRPREVIEW?"on ":"")+(done?"lr-done":"");
+      var cb=tr.querySelector("input.lr-pick");
+      if(cb){ cb.checked=on; cb.disabled=done;
+        cb.title=done?"备注「已出」，不导入":"点这里勾选这个样品"; }
+      var f=tr.querySelector(".lr-rowfocus");
+      if(f) f.textContent=i===LRPREVIEW?"预览中":"";
+    });
+    var cnt=document.getElementById("lrPickCount");
+    if(cnt) cnt.textContent="已选 "+st.on+" / "+st.all+" 个样品"+
+      (st.done?"（备注已出 "+st.done+" 个，不导入）":"");
+    var btn=document.getElementById("lrPrintBtn");
+    if(btn) btn.textContent="🖨 打印全部（"+lrPrintCount()+" 份）";
+    var head=document.getElementById("lrSampleHead");
+    if(head) head.textContent="样品清单（共 "+st.all+" 个 · 已选 "+st.on+" 个 · 点左边方框勾选）";
+    lrStatMsg("已选 "+st.on+" 个样品 × "+n+" 个项目 = "+lrPrintCount()+
+      " 份记录 · 本机已保存，刷新不丢");
+  }
+  function lrPickRow(i,v){
+    var R=lrRows(), r=R[i]; if(!r||lrDoneNote(r.note)) return;
+    r.pick=!!v; lrSave(); lrPickRefresh();
+  }
+  function lrPickAll(v){
+    lrRows().forEach(function(r){ if(!lrDoneNote(r.note)) r.pick=!!v; });
+    lrSave(); lrPickRefresh();
+  }
+  function lrPickInvert(){
+    lrRows().forEach(function(r){
+      if(!lrDoneNote(r.note)) r.pick=!(r.pick!==false);
+    });
+    lrSave(); lrPickRefresh();
+  }
   function lrPreviewRow(i){
     LRPREVIEW=Math.min(Math.max(0,parseInt(i,10)||0),lrRows().length-1);
     lrSave(); lrRedraw();
@@ -1231,15 +1306,15 @@
     out.push(cur);
     return out.map(function(x){ return x.replace(/^\ufeff/,"").trim(); });
   }
-  /* ★ Excel「导入勾选」列：只有勾上（√/是/Y/1/TRUE/X/勾）的行才导入。
-     用户下载模板后在 Excel 里把不导入的行勾去掉，实现单选/多选/全选。 */
+  /* 兼容老模板的「导入勾选」列（新模板已改成备注列）；新逻辑以网页上点方框为准 */
   function lrPickYes(v){
     var s=String(v==null?"":v).trim().toUpperCase();
     return s==="√"||s==="✓"||s==="✔"||s==="是"||s==="Y"||s==="YES"||
            s==="1"||s==="TRUE"||s==="T"||s==="X"||s==="勾";
   }
   function lrHeadMap(cells){
-    var RE=[["_pick",/^导入勾选$|^是否导入$|^勾选$|^选择$|^需要导入$|^导入$|^√$|^pick$|^select$|^check/i],
+    var RE=[["_oldpick",/^导入勾选$|^是否导入$|^勾选$|^选择$|^需要导入$|^导入$|^√$|^pick$|^select$|^check/i],
+            ["note",/备注|说明|note|remark/i],
             ["sample",/样品名称|样品名|品名|样品|sample/i],
             ["maker",/生产商|生产厂家|生产单位|厂家|maker/i],
             ["batch",/批号|生产日期|批次|batch/i],
@@ -1265,28 +1340,28 @@
       map=[];
       for(var j=0;j<first.length;j++) map.push(j<drop?"_no":(LR_KEYS[j-drop]||"_no"));
     }
-    var hasPick=map.indexOf("_pick")>=0, out=[], skipped=0;
+    var out=[], doneCnt=0;
     for(var i=start;i<lines.length;i++){
-      var c=lrSplit(lines[i],sep), r=lrBlank(), any=false, picked=true;
+      var c=lrSplit(lines[i],sep), r=lrBlank(), any=false, oldPick=true;
       map.forEach(function(k,j){
-        if(k==="_pick"){ picked=lrPickYes(c[j]); return; }
-        if(k&&k!=="_no"&&LR_KEYS.indexOf(k)>=0){
-          r[k]=c[j]!=null?c[j]:""; if(r[k]) any=true;
+        if(k==="_oldpick"){ oldPick=lrPickYes(c[j]); return; }
+        if(k&&k!=="_no"&&(LR_KEYS.indexOf(k)>=0||k==="note")){
+          r[k]=c[j]!=null?c[j]:""; if(k!=="note"&&r[k]) any=true;
         }
       });
       if(!any) continue;
-      /* ★ 有勾选列时，只导入 Excel 里勾上的行；没勾选列就全导（兼容旧表/粘贴） */
-      if(hasPick && !picked){ skipped++; continue; }
+      /* ★ 全部行都进清单；勾选状态在网页上点方框改；备注「已出」永不导入 */
+      if(lrDoneNote(r.note)) doneCnt++;
+      r.pick=!lrDoneNote(r.note)&&oldPick;
       out.push(r);
     }
-    if(!out.length){ lrStatMsg(hasPick&&skipped?
-      ("Excel 里没勾任何行（跳过 "+skipped+" 行）· 在「导入勾选」列填 √ 再导入"):
-      "没识别到有效行，请检查列顺序"); return 0; }
+    if(!out.length){ lrStatMsg("没识别到有效行，请检查列顺序"); return 0; }
     LRROWS=out; LRPREVIEW=0; lrSave(); render();
+    var on=out.filter(function(r){ return r.pick!==false; }).length;
     setTimeout(function(){
-      lrStatMsg("已导入 "+out.length+" 个样品"+(hasPick?("（Excel 勾选 "+out.length+
-        " / 跳过 "+skipped+"）"):"")+" · 勾好项目点「打印全部」一次出 "+
-        lrPrintCount()+" 份记录"); },0);
+      lrStatMsg("已导入 "+out.length+" 个样品（默认勾选 "+on+" 个"+
+        (doneCnt?" · 备注已出 "+doneCnt+" 个不导入":"")+"）· 在清单里点方框单选/多选，"+
+        "或用全选/反选，再点「打印全部」"); },0);
     return out.length;
   }
   /* Excel 解析库 881KB，只在真的导入 .xlsx 时才按需加载，不拖首页 */
@@ -1341,17 +1416,17 @@
       v=String(v==null?"":v);
       return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;
     };
-    /* ★ 加「导入勾选」列，默认全 √（=全选）；在 Excel 里把不导入的行清空即取消勾选 */
-    var csv="\ufeff序号,样品名称,生产商,批号/生产日期,检测日期,导入勾选\n"+
+    /* ★ 模板带「备注」列；备注写「已出」的行导入后自动不勾选，其余在网页上点方框选 */
+    var csv="\ufeff序号,样品名称,批号/生产日期,生产商,检测日期,备注\n"+
       lrRows().map(function(r,i){
-        return [i+1,r.sample,r.maker,r.batch,r.date,"√"].map(q).join(",");
+        return [i+1,r.sample,r.batch,r.maker,r.date,r.note||""].map(q).join(",");
       }).join("\n")+"\n";
     var a=document.createElement("a");
     a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
     a.download="原始记录样品清单.csv";
     document.body.appendChild(a); a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },1000);
-    lrStatMsg("已下载模板（含「导入勾选」列，默认全 √）· 用 Excel 打开，把不导入的行勾选列清空，保存后再导入");
+    lrStatMsg("已下载清单（含备注列）· 备注写「已出」的行不导入；勾选/全选/反选在网页清单里点一下就行");
   }
   /* 按溶液名称定位（过滤后索引会变，绝不能用位置下标）；兼容旧的数字下标 */
   function lrSetSol(name,k,v){
@@ -1393,13 +1468,7 @@
       el.className="lr-chip "+(s[p.key]?"on":"");
       var cb=el.querySelector("input"); if(cb) cb.checked=!!s[p.key];
     });
-    [].forEach.call(document.querySelectorAll(".lr-rows tbody tr"),function(tr,i){
-      tr.className=(i===LRPREVIEW)?"on":"";
-      var b=tr.querySelector(".lr-rowfocus");
-      if(b) b.textContent=i===LRPREVIEW?"预览中":"";
-    });
-    lrStatMsg("当前 "+rows+" 个样品 × "+n+" 个项目 = "+lrPrintCount()+
-      " 份记录 · 本机已保存，刷新不丢");
+    lrPickRefresh();
     lrSolRender();
   }
   function lrToggle(k){
@@ -1442,6 +1511,10 @@
     if(!picked.length){ if(st) st.textContent="先勾一个检测项目再打印。"; return; }
     /* ★ 批量：样品清单每一行 × 勾选的每个项目，一次全部送打印 */
     var rows=lrActiveRows(), body="", pages=0;
+    if(!rows.length){
+      if(st) st.textContent="样品清单里一行都没勾（备注「已出」的不算）· 点行首方框或「全选」再打印。";
+      return;
+    }
     rows.forEach(function(I){
       picked.forEach(function(p){
         var g=(global.LABPAGES||{})[p.key];
@@ -2014,6 +2087,11 @@
     lrDelRow: lrDelRow,
     lrClearRows: lrClearRows,
     lrPreviewRow: lrPreviewRow,
+    lrPickCount: lrPickCount,
+    lrPickRow: lrPickRow,
+    lrPickAll: lrPickAll,
+    lrPickInvert: lrPickInvert,
+    lrDoneNote: lrDoneNote,
     lrImportText: lrImportText,
     lrImportFile: lrImportFile,
     lrImportPaste: lrImportPaste,

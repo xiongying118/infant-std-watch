@@ -1161,6 +1161,18 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   .lr-rowsel .muted{flex-basis:100%}
 }
 
+/* ===== 2026-11-17 样品清单：点方框勾选 + 备注「已出」过滤 ===== */
+.lr-pickbar{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lr-pickbar .lr-count{font-size:11.5px;font-weight:600;color:var(--brand);
+  background:rgba(37,99,235,.08);padding:5px 10px;border-radius:999px;white-space:nowrap}
+.lr-rows .c-pick{width:42px;text-align:center}
+.lr-rows input.lr-pick{width:16px;height:16px;padding:0;box-sizing:border-box;
+  accent-color:var(--brand);cursor:pointer;vertical-align:middle}
+.lr-rows input.lr-pick:disabled{cursor:not-allowed;opacity:.45}
+.lr-rows tr.lr-done{background:rgba(127,127,127,.07)}
+.lr-rows tr.lr-done .lr-no{color:var(--ink3);text-decoration:line-through}
+.lr-rows tr.lr-done input:not(.lr-pick){opacity:.6}
+
 /* ===== 2026-11-16 分组：理化组 / 色谱组 ===== */
 .lr-grouptabs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 2px}
 .lr-grouptab{padding:6px 14px;border:1px solid var(--line);border-radius:999px;
@@ -1171,4 +1183,7 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 /* ★ 移动端规则必须留在文件最末尾 */
 @media(max-width:720px){
   .lr-grouptab{padding:5px 10px;font-size:11.5px}
+  .lr-rows{min-width:790px}
+  .lr-pickbar{width:100%}
+  .lr-pickbar .lr-count{flex-basis:100%;text-align:center}
 }
