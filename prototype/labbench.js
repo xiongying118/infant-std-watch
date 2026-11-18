@@ -951,7 +951,7 @@
       return '<div class="lr-solempty">'+esc(p?p.name:"当前范围")+
         '的 Word 原表里没有标准溶液，不用维护。点上面的项目或「全部」查看其他项目。</div>';
     }
-    return '<div class="lr-solgrid">'+rows.map(function(x){
+    var sols=rows.map(function(x){
       var batch = (x.batch!=null && x.batch!=="")
         ? '<label>批号<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.batch)+'" '+
             'oninput="LAB.lrSetSol(this.dataset.name,\'batch\',this.value)"></label>' : '';
@@ -960,23 +960,20 @@
           'oninput="LAB.lrSetSol(this.dataset.name,\'code\',this.value)"></label>'+
         '<label>有效期至<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.expiry)+'" '+
           'oninput="LAB.lrSetSol(this.dataset.name,\'expiry\',this.value)"></label>'+batch+'</div>';
-    }).join("")+'</div>';
-  }
-  /* 低聚半乳糖原表正文里的三处下划线是原料批号/干物质重量/GOS干含量：
-     默认 Word 原值，用户可在这里改一次，本机记住，打印时自动带到原页 */
-  function lrMatPanelHtml(){
-    if(!(global.LABPAGES||{}).gos3) return '';
-    var M=lrMat();
-    return '<details class="lr-solbar" style="margin-bottom:12px">'+
-      '<summary>原料信息（低聚半乳糖对照品，可填）</summary>'+
-      '<div class="muted" style="font-size:11.5px;line-height:1.6;margin:8px 0 4px">'+
-      '批号、干物质重量、GOS 干含量默认就是 Word 原表里的值，不填也能直接打印；'+
-      '换了原料再在这里改一次，本机记住。</div>'+
-      '<div class="lr-matgrid">'+Object.keys(LR_MAT_KEYS).map(function(k){
-        return '<label>'+LR_MAT_KEYS[k]+'<input type="text" data-mat="'+k+'" '+
+    });
+    /* ★ 低聚半乳糖对照品的三项（原表正文下划线）本来就是标准品，
+       直接作为标准溶液维护里和其他溶液并列的一行，不另起面板。
+       查看范围是低聚半乳糖本身或「全部」时才出现。 */
+    if((v==="gos3"||v==="all") && (global.LABPAGES||{}).gos3){
+      var M=lrMat(), mat='';
+      Object.keys(LR_MAT_KEYS).forEach(function(k){
+        mat+='<label>'+LR_MAT_KEYS[k]+'<input type="text" data-mat="'+k+'" '+
           'value="'+esc(M[k])+'" '+
           'oninput="LAB.lrSetMat(this.dataset.mat,this.value)"></label>';
-      }).join("")+'</div></details>';
+      });
+      sols.push('<div class="lr-solrow"><b>低聚半乳糖对照品</b>'+mat+'</div>');
+    }
+    return '<div class="lr-solgrid">'+sols.join("")+'</div>';
   }
   function lrSolPanelHtml(){
     var v=lrSolView();
@@ -1233,7 +1230,6 @@
         total+' 份记录 · 本机已保存，刷新不丢</div></div>';
     /* 标准溶液：默认 Word 原值，只在过期重配时改一次；
        ★ 按检测项目过滤，默认只出当前项目的，点「全部」才出全部 */
-    h+=lrMatPanelHtml();
     h+=lrSolPanelHtml();
     h+='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
       '<h3>选择检测项目</h3><span class="muted">当前 '+gp.length+' 个 · 选 1 个 / 几个 / 全部都行</span><div class="sp"></div>'+
