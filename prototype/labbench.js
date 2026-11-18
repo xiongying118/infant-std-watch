@@ -44,6 +44,8 @@
   var LRSOL   = null;         // 标准溶液覆盖表 {名称:{code,expiry}}
   var LRSOLVIEW = null;       // 标准溶液维护查看范围：null=跟随项目 / "all" / 项目 key
   var LRSOLVIEW_READ = false; // 本机范围只读一次，null 本身也是有效状态
+  var LR_MAT_KEYS = {matbatch:"批号",matdry:"干物质重量",matgos:"GOS干含量"};
+  var LR_MAT_DEF = {matbatch:"GOA5282001",matdry:"75",matgos:"57"};
   var LRGROUP = null;         // ★ 分类：phys 理化组 / chrom 色谱组 / all 全部
   var LRGROUP_READ = false;
   var LRNOTES = true;         // 兼容旧调用（方法说明已在原表内）
@@ -848,6 +850,24 @@
     return all.filter(function(r){ return r.pick!==false&&!lrDoneNote(r.note); });
   }
   /* 只保存用户改过的标准溶液；没改过的一律用 Word 原值 */
+  /* 低聚半乳糖原表正文里三处下划线示例值：默认 Word 原值，改一次本机记住 */
+  function lrMat(){
+    var O=global.Store?global.Store.get("lab.record.mat.v1",null):null;
+    var out={};
+    Object.keys(LR_MAT_DEF).forEach(function(k){
+      out[k]=(O&&O[k]!=null&&O[k]!=="")?String(O[k]):LR_MAT_DEF[k];
+    });
+    return out;
+  }
+  function lrSetMat(k,v){
+    if(!LR_MAT_KEYS[k]) return;
+    var O=lrMat(); O[k]=String(v==null?"":v);
+    if(global.Store) global.Store.set("lab.record.mat.v1",O);
+    [].forEach.call(document.querySelectorAll('.lr-dyn[data-lr="'+k+'"]'),
+      function(el){ lrUpdateText(el,O[k]); });
+    var st=document.getElementById("lrStat");
+    if(st) st.textContent="低聚半乳糖「"+LR_MAT_KEYS[k]+"」已改成本机值，打印时会带上";
+  }
   function lrSol(){
     if(!LRSOL){
       LRSOL=global.Store?global.Store.get("lab.record.sol.v1",null):null;
@@ -942,6 +962,22 @@
           'oninput="LAB.lrSetSol(this.dataset.name,\'expiry\',this.value)"></label>'+batch+'</div>';
     }).join("")+'</div>';
   }
+  /* 低聚半乳糖原表正文里的三处下划线是原料批号/干物质重量/GOS干含量：
+     默认 Word 原值，用户可在这里改一次，本机记住，打印时自动带到原页 */
+  function lrMatPanelHtml(){
+    if(!(global.LABPAGES||{}).gos3) return '';
+    var M=lrMat();
+    return '<details class="lr-solbar" style="margin-bottom:12px">'+
+      '<summary>原料信息（低聚半乳糖对照品，可填）</summary>'+
+      '<div class="muted" style="font-size:11.5px;line-height:1.6;margin:8px 0 4px">'+
+      '批号、干物质重量、GOS 干含量默认就是 Word 原表里的值，不填也能直接打印；'+
+      '换了原料再在这里改一次，本机记住。</div>'+
+      '<div class="lr-matgrid">'+Object.keys(LR_MAT_KEYS).map(function(k){
+        return '<label>'+LR_MAT_KEYS[k]+'<input type="text" data-mat="'+k+'" '+
+          'value="'+esc(M[k])+'" '+
+          'oninput="LAB.lrSetMat(this.dataset.mat,this.value)"></label>';
+      }).join("")+'</div></details>';
+  }
   function lrSolPanelHtml(){
     var v=lrSolView();
     var nm=(v==="all")?"全部":((lrProject(v)||{name:v}).name);
@@ -1000,13 +1036,14 @@
   }
   /* 把 Word 原表里的动态占位填上；其余 HTML 原样返回 */
   function lrFill(html,I){
-    I=I||lrInfo(); var O=lrSol();
+    I=I||lrInfo(); var O=lrSol(), M=lrMat();
     return (html||"").replace(/<span class="lr-dyn"([^>]*)>([\s\S]*?)<\/span>/g,
       function(all,attrs,inner){
         var k=(attrs.match(/data-lr="([^"]+)"/)||[])[1];
         var nm=(attrs.match(/data-std="([^"]+)"/)||[])[1];
         var v=inner;
         if(k==="sample"||k==="maker"||k==="batch"||k==="date") v=I[k]||"";
+        else if(LR_MAT_KEYS[k]) v=M[k]!=null?M[k]:inner;
         else if((k==="stdcode"||k==="stdexp"||k==="stdbatch")&&nm&&O[nm]){
           if(k==="stdcode") v=O[nm].code!=null?O[nm].code:inner;
           else if(k==="stdexp") v=O[nm].expiry!=null?O[nm].expiry:inner;
@@ -1022,8 +1059,9 @@
     try{ return new URL(u, location.href).href; }catch(e){ return u; }
   }
   function lrFieldVal(f,I){
-    I=I||lrInfo(); var O=lrSol();
+    I=I||lrInfo(); var O=lrSol(), M=lrMat();
     if(f.k==="sample"||f.k==="maker"||f.k==="batch"||f.k==="date") return I[f.k]||"";
+    if(LR_MAT_KEYS[f.k]) return M[f.k]!=null?M[f.k]:(f.v||"");
     if(f.std && O[f.std]){
       if(f.k==="stdcode") return O[f.std].code!=null?O[f.std].code:(f.v||"");
       if(f.k==="stdexp") return O[f.std].expiry!=null?O[f.std].expiry:(f.v||"");
@@ -1183,7 +1221,8 @@
       '<div class="notice" style="margin:10px 0"><span>📋</span><div>'+
       '<b>Word 原页 100% 复刻</b>：每页直接用 Word 导出的原页，标题位置、字体字号、列宽行高、'+
       '框线、公式图、页码、哪一页放什么内容全部原样，打印不带浏览器页眉页脚。'+
-      '只有<b>样品名称、生产商、批号/生产日期、检测日期</b>是动态位；'+
+      '只有<b>样品名称、生产商、批号/生产日期、检测日期</b>是动态位'+
+      '（低聚半乳糖原表另有批号、干物质重量、GOS干含量三项可填）；'+
       '下面清单可以从 Excel 导入多行，<b>点每行左边方框选样品</b>（单选/多选/全选/反选都行），'+
       '再勾检测项目，<b>一次打印选中的样品 × 项目</b>。'+
       '检测日期留空即可打印后手写。</div></div>'+
@@ -1194,6 +1233,7 @@
         total+' 份记录 · 本机已保存，刷新不丢</div></div>';
     /* 标准溶液：默认 Word 原值，只在过期重配时改一次；
        ★ 按检测项目过滤，默认只出当前项目的，点「全部」才出全部 */
+    h+=lrMatPanelHtml();
     h+=lrSolPanelHtml();
     h+='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
       '<h3>选择检测项目</h3><span class="muted">当前 '+gp.length+' 个 · 选 1 个 / 几个 / 全部都行</span><div class="sp"></div>'+
@@ -2079,6 +2119,8 @@
     lrDelRow: lrDelRow,
     lrClearRows: lrClearRows,
     lrPreviewRow: lrPreviewRow,
+    lrMat: lrMat,
+    lrSetMat: lrSetMat,
     lrPickCount: lrPickCount,
     lrPickRow: lrPickRow,
     lrPickAll: lrPickAll,

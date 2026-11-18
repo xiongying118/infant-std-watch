@@ -1170,6 +1170,14 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   accent-color:var(--brand);cursor:pointer;vertical-align:middle}
 .lr-rows input.lr-pick:disabled{cursor:not-allowed;opacity:.45}
 
+/* 2026-11-18 低聚半乳糖原料信息（原表正文三处下划线） */
+.lr-matgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.lr-matgrid label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--ink2)}
+.lr-matgrid input{width:100%;box-sizing:border-box;padding:6px 8px;
+  border:1px solid var(--line);border-radius:5px;
+  background:var(--panel);color:var(--ink);font-family:inherit;font-size:12px}
+.lr-matgrid input:focus{outline:2px solid var(--brand-3);border-color:var(--brand-3)}
+
 /* ===== 2026-11-16 分组：理化组 / 色谱组 ===== */
 .lr-grouptabs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 2px}
 .lr-grouptab{padding:6px 14px;border:1px solid var(--line);border-radius:999px;
@@ -1183,4 +1191,5 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   .lr-rows{min-width:790px}
   .lr-pickbar{width:100%}
   .lr-pickbar .lr-count{flex-basis:100%;text-align:center}
+  .lr-matgrid{grid-template-columns:1fr}
 }
