@@ -1009,10 +1009,12 @@
     var O=lrSol(); if(!O[name]) O[name]={};
     O[name].pdate=v;
     O[name].code=op.prefix+"-"+v+"-"+op.suffix;
-    if(O[name].dur&&O[name].unit) O[name].expiry=date8Add(v,+O[name].dur,O[name].unit);
+    var soNow=solOrig(name), nowUse=!!(soNow&&/现配|即用/.test(soNow.expiry||""));
+    if(!nowUse&&O[name].dur&&O[name].unit) O[name].expiry=date8Add(v,+O[name].dur,O[name].unit);
     lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
     lrStatMsg("【"+name+"】已生成编码 "+O[name].code+
-      (O[name].expiry?"，有效期至 "+O[name].expiry:"；填右边有效期可自动算有效期至"));
+      (nowUse?"（现配现用，有效期至按 Word 原表）":
+       (O[name].expiry?"，有效期至 "+O[name].expiry:"；填右边有效期可自动算有效期至")));
   }
   function lrSetDur(el){
     var name=el.dataset.name, n=parseInt(el.value,10);
@@ -1160,9 +1162,22 @@
           '<label>有效期至（厂商标注）<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.expiry)+'" '+
             'oninput="LAB.lrSetSol(this.dataset.name,\'expiry\',this.value)"></label>'+batch+'</div>';
       }
-      /* 需配制：配制日期（手输/日历）→ 编码；有效期数值+单位 → 有效期至 */
+      /* 需配制：配制日期（手输/日历）→ 编码；有效期数值+单位 → 有效期至。
+         ★ 现配现用的（VC/混合中间液/CMP/酪蛋白磷酸肽）：只生成编码，
+           有效期至固定为原表的「现配现用」，不出现有效期数值框、不算日期。 */
       var pdate=o.pdate||(op&&op.date)||"", gd=guessDur(pdate,x.expiry);
       var dur=(o.dur!=null?o.dur:gd.n), unit=o.unit||gd.u;
+      var so=solOrig(x.name), nowUse=!!(so&&/现配|即用/.test(so.expiry||""));
+      var valHtml = nowUse
+        ? '<label>有效期至<input type="text" value="现配现用（Word 原表固定）" readonly></label>'
+        : '<label>有效期<span class="lr-durow">'+
+            '<input type="number" min="1" max="999" value="'+esc(dur)+'" data-name="'+esc(x.name)+'" '+
+              'placeholder="N" onchange="LAB.lrSetDur(this)">'+
+            '<select data-name="'+esc(x.name)+'" onchange="LAB.lrSetUnit(this)">'+
+              '<option value="d"'+(unit==="d"?" selected":"")+'>天</option>'+
+              '<option value="m"'+(unit==="m"?" selected":"")+'>月</option></select></span></label>'+
+          '<label>有效期至（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="expiry" '+
+            'value="'+esc(x.expiry)+'" readonly></label>';
       return head+
         '<label>配制日期<span class="lr-datein">'+
           '<input class="lr-pdate" type="text" inputmode="numeric" maxlength="8" '+
@@ -1173,15 +1188,7 @@
           '</span></label>'+
         '<label>编码（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="code" '+
           'value="'+esc(x.code)+'" readonly></label>'+
-        '<label>有效期<span class="lr-durow">'+
-          '<input type="number" min="1" max="999" value="'+esc(dur)+'" data-name="'+esc(x.name)+'" '+
-            'placeholder="N" onchange="LAB.lrSetDur(this)">'+
-          '<select data-name="'+esc(x.name)+'" onchange="LAB.lrSetUnit(this)">'+
-            '<option value="d"'+(unit==="d"?" selected":"")+'>天</option>'+
-            '<option value="m"'+(unit==="m"?" selected":"")+'>月</option></select></span></label>'+
-        '<label>有效期至（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="expiry" '+
-          'value="'+esc(x.expiry)+'" readonly></label>'+
-        batch+'</div>';
+        valHtml+batch+'</div>';
     });
     /* ★ 低聚半乳糖对照品的三项（原表正文下划线）本来就是标准品，
        直接作为标准溶液维护里和其他溶液并列的一行，不另起面板。
