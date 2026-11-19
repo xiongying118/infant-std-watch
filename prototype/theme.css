@@ -1185,9 +1185,20 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .lr-grouptab i{font-style:normal;font-size:10.5px;opacity:.75;margin-left:3px}
 .lr-grouptab:hover{border-color:var(--brand)}
 .lr-grouptab.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+/* 2026-11-19 色谱组二级子组：GJ/MYZ/FLM/WFX/PGY/SHS */
+.lr-subgroups{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px 2px;padding-left:10px;
+  border-left:2px solid var(--brand-3,#c9d7ea)}
+.lr-subgroup{padding:4px 11px;border:1px solid var(--line);border-radius:6px;
+  background:var(--panel);color:var(--ink2);font-size:11.5px;cursor:pointer;line-height:1.5}
+.lr-subgroup i{font-style:normal;font-size:10px;opacity:.7;margin-left:3px}
+.lr-subgroup:hover{border-color:var(--brand)}
+.lr-subgroup.on{background:var(--brand-3,#e8f0fa);border-color:var(--brand);
+  color:var(--brand);font-weight:600}
 /* ★ 移动端规则必须留在文件最末尾 */
 @media(max-width:720px){
   .lr-grouptab{padding:5px 10px;font-size:11.5px}
+  .lr-subgroups{margin-left:0;padding-left:6px;gap:5px}
+  .lr-subgroup{padding:4px 9px;font-size:11px}
   .lr-rows{min-width:790px}
   .lr-pickbar{width:100%}
   .lr-pickbar .lr-count{flex-basis:100%;text-align:center}

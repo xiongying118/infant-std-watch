@@ -48,6 +48,8 @@
   var LR_MAT_DEF = {matbatch:"GOA5282001",matdry:"75",matgos:"57"};
   var LRGROUP = null;         // ★ 分类：phys 理化组 / chrom 色谱组 / all 全部
   var LRGROUP_READ = false;
+  var LRSUB   = "all";        // ★ 色谱组二级子组：GJ/MYZ/FLM/WFX/PGY/SHS，all=全部
+  var LRSUB_READ = false;
   var LRNOTES = true;         // 兼容旧调用（方法说明已在原表内）
 
   function esc(s){
@@ -774,25 +776,67 @@
     }
     return LRGROUP||"phys";
   }
+  /* ★ 色谱组二级子组（2026-11-19）：GJ/MYZ/FLM/WFX/PGY/SHS，定义读 LABREC.groups[chrom].subs */
+  function lrSubs(){
+    var G=(global.LABREC&&global.LABREC.groups)||[];
+    for(var i=0;i<G.length;i++) if(G[i].key==="chrom"&&G[i].subs) return G[i].subs;
+    return [];
+  }
+  function lrSub(){
+    if(!LRSUB_READ){
+      LRSUB_READ=true;
+      var v=global.Store?global.Store.get("lab.record.subgroup.v1",null):null;
+      var valid=v==="all"||lrSubs().some(function(x){ return x.key===v; });
+      LRSUB=valid?v:"all";
+    }
+    return LRSUB;
+  }
+  function lrSetSub(s){
+    var ok=(s==="all")||lrSubs().some(function(x){ return x.key===s; });
+    LRSUB=ok?s:"all";
+    /* 切子组只影响「看哪些项目」，不擅自改已勾项目；全选/清空按当前子组来 */
+    lrSave(); render();
+  }
   function lrGroupProjects(){
     var g=lrGroup();
-    return g==="all"?lrProjects():lrProjects().filter(function(p){
+    var ps=g==="all"?lrProjects():lrProjects().filter(function(p){
       return (p.group||"phys")===g; });
+    /* 色谱组再按二级子组过滤；all=显示全部 35 项 */
+    if(g==="chrom"&&lrSub()!=="all"){
+      var sub=lrSub();
+      ps=ps.filter(function(p){ return p.sub===sub; });
+    }
+    return ps;
   }
   function lrSetGroup(g){
     var ok=false; lrGroups().forEach(function(x){ if(x.key===g) ok=true; });
     LRGROUP=ok?g:"phys";
+    /* 离开色谱组时不重置子组：再切回来还停在用户上次选的子组 */
     /* 切组只影响「看哪些项目」，不擅自改已勾项目；全选/清空按当前组来 */
     lrSave(); render();
   }
   function lrGroupTabsHtml(){
     var g=lrGroup();
-    return '<div class="lr-sub">项目分类</div><div class="lr-grouptabs" id="lrGroupTabs">'+lrGroups().map(function(x){
+    var h='<div class="lr-sub">项目分类</div><div class="lr-grouptabs" id="lrGroupTabs">'+lrGroups().map(function(x){
       var n=x.key==="all"?lrProjects().length:
         lrProjects().filter(function(p){ return (p.group||"phys")===x.key; }).length;
       return '<button type="button" class="lr-grouptab '+(g===x.key?"on":"")+'" '+
         'onclick="LAB.lrSetGroup(\''+esc(x.key)+'\')">'+esc(x.name)+' <i>'+n+'</i></button>';
     }).join("")+'</div>';
+    /* 仅在色谱组下显示二级子组 tab */
+    if(g==="chrom"){
+      var sub=lrSub();
+      var allChrom=lrProjects().filter(function(p){ return (p.group||"phys")==="chrom"; });
+      h+='<div class="lr-subgroups" id="lrSubGroups">'+
+        '<button type="button" class="lr-subgroup '+(sub==="all"?"on":"")+'" '+
+          'onclick="LAB.lrSetSub(\'all\')">全部 <i>'+allChrom.length+'</i></button>'+
+        lrSubs().map(function(x){
+          var n=allChrom.filter(function(p){ return p.sub===x.key; }).length;
+          return '<button type="button" class="lr-subgroup '+(sub===x.key?"on":"")+'" '+
+            'onclick="LAB.lrSetSub(\''+esc(x.key)+'\')">'+esc(x.name)+' <i>'+n+'</i></button>';
+        }).join("")+'</div>';
+    }
+    return h;
   }
   var LR_KEYS=["sample","batch","maker","date"];
   /* ★ 备注写「已出」= 这行不导入/不打印；点清单左侧方框才勾选参与 */
@@ -971,7 +1015,8 @@
           'value="'+esc(M[k])+'" '+
           'oninput="LAB.lrSetMat(this.dataset.mat,this.value)"></label>';
       });
-      sols.push('<div class="lr-solrow"><b>低聚半乳糖对照品</b>'+mat+'</div>');
+      sols.push('<div class="lr-solrow"><b>低聚半乳糖对照品</b>'+
+        '<div class="lr-matgrid">'+mat+'</div></div>');
     }
     return '<div class="lr-solgrid">'+sols.join("")+'</div>';
   }
@@ -1028,6 +1073,7 @@
     lrSolView();
     global.Store.set("lab.record.solview.v1", LRSOLVIEW);
     global.Store.set("lab.record.group.v1", lrGroup());
+    global.Store.set("lab.record.subgroup.v1", lrSub());
     global.Store.set("lab.record.sel.v1",
       lrProjects().filter(function(p){ return s[p.key]; }).map(function(p){ return p.key; }));
   }
@@ -2140,6 +2186,9 @@
     lrGroup: lrGroup,
     lrGroupProjects: lrGroupProjects,
     lrSetGroup: lrSetGroup,
+    lrSubs: lrSubs,
+    lrSub: lrSub,
+    lrSetSub: lrSetSub,
     lrInfo: lrInfo,
     lrSelected: lrSelected,
     lrSol: lrSol,
