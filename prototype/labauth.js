@@ -211,8 +211,9 @@
     var a=ops();
     return '<div class="la-bar"><span class="la-dot on"></span>'+
       '<b>标准溶液维护：改哪项要输该负责人的口令</b>'+
+      '<span class="la-ver" title="看到此版本即口令功能已加载">v20261119e</span>'+
       '<span class="la-desc">勾选、预览、打印、样品清单大家都可用；只有改标准溶液的配制日期/编码/有效期要口令。'+
-      '口令初始=各自姓名，可自己改。</span>'+
+      '口令初始=各自姓名，可自己改。若看不到版本号请 Ctrl+F5 刷新。</span>'+
       '<span class="la-sp"></span>'+
       '<button type="button" class="btn sm pri" onclick="LABAUTH.showOwners()">看谁负责什么</button>'+
       '<button type="button" class="btn sm" onclick="LABAUTH.changePwd()">改我的口令</button>'+

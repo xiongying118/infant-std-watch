@@ -1070,7 +1070,7 @@
     }
     window.__labauthLoading=[run];
     var s=document.createElement("script");
-    s.src="labauth.js?v=20261119c";
+    s.src="labauth.js?v=20261119e";
     s.onload=function(){
       var q=window.__labauthLoading||[]; window.__labauthLoading=null;
       q.forEach(function(f){ f(!!(global.LABAUTH && global.LABAUTH.editGuard)); });

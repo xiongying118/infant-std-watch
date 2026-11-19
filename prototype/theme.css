@@ -1237,6 +1237,8 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .la-dot.on{background:#15803d;box-shadow:0 0 0 3px rgba(21,128,61,.14)}
 .la-bar b{color:var(--ink);font-weight:700}
 .la-desc{color:var(--ink3);font-size:11.5px}
+.la-ver{font-size:10px;font-weight:700;color:#fff;background:#15803d;border-radius:4px;
+  padding:2px 6px;letter-spacing:.3px;flex:0 0 auto}
 .la-sp{flex:1}
 .la-tip{font-size:12px;color:var(--ink2);line-height:1.6;margin-bottom:10px}
 .la-addbar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);
