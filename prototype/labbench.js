@@ -50,7 +50,7 @@
      维护界面只显示主项一行，改一处按各自前缀生成全部成员的编码/有效期。
       minerals（钠钾铜镁铁锌锰钙 042~049）是同时配制的混合元素标液。 */
   var SOL_LINK_GROUPS = [
-    {master:"钠", label:"矿物质混合标准溶液（钠·钾·铜·镁·铁·锌·锰·钙）",
+    {master:"钠", label:"钠标准溶液",
      names:["钠","钾","铜","镁","铁","锌","锰","钙"]}
   ];
   function solLinkOf(name){
@@ -1060,6 +1060,27 @@
   /* ★★ 标准溶液编辑闸门（2026-11-19 最终口径）：
      所有项目/勾选/打印都开放；只有改标准溶液要输该项负责人的口令。
      el = 触发编辑的输入框（用于失败时恢复原值），core = 真正执行写入的逻辑。 */
+  /* ★ 口令文件兜底加载：旧缓存的 index.html 没引用 labauth.js 时，
+     这里主动补上（带版本号破缓存），保证「改标准溶液必输口令」不会因缓存失效。 */
+  function ensureLabAuth(run){
+    if(global.LABAUTH && global.LABAUTH.editGuard){ run(true); return; }
+    if(typeof document==="undefined"){ run(false); return; }
+    if(window.__labauthLoading){
+      window.__labauthLoading.push(run); return;
+    }
+    window.__labauthLoading=[run];
+    var s=document.createElement("script");
+    s.src="labauth.js?v=20261119c";
+    s.onload=function(){
+      var q=window.__labauthLoading||[]; window.__labauthLoading=null;
+      q.forEach(function(f){ f(!!(global.LABAUTH && global.LABAUTH.editGuard)); });
+    };
+    s.onerror=function(){
+      var q=window.__labauthLoading||[]; window.__labauthLoading=null;
+      q.forEach(function(f){ f(false); });
+    };
+    (document.head||document.body).appendChild(s);
+  }
   function solEdit(el, core, nameOverride){
     var name=nameOverride || (el && el.dataset ? el.dataset.name : "");
     var old=el?el.value:null;
@@ -1080,9 +1101,11 @@
       }
       el.value=old;
     };
-    if(global.LABAUTH && global.LABAUTH.editGuard){
-      global.LABAUTH.editGuard(name, core, restore);
-    } else core();
+    ensureLabAuth(function(ok){
+      /* 缺口令文件（且补加载也失败）时绝不放行，避免缓存导致口令失效 */
+      if(ok) global.LABAUTH.editGuard(name, core, restore);
+      else { restore(); lrAlert("口令校验未能加载，修改已取消。请按 Ctrl+F5 强制刷新后重试。"); }
+    });
   }
   /* batch 只改批号，但也是标准溶液维护的一部分，同样要口令 */
   function lrSetSolBatch(el){
@@ -1364,8 +1387,8 @@
         esc(x.link?x.link.label:x.name)+'</b>'+
         '<span class="lr-solkind '+(bought?"ext":"prep")+'">'+(bought?"外购·手填":"需配制·自动")+'</span>'+
         linkNote+'</div>'+
-        (x.link?'<div class="lr-linktip">这 '+x.members.length+
-          ' 种标液同时配制，只填这一处，改配制日期或有效期时全部一起更新（各自编码前缀自动保留）。</div>':'');
+        (x.link?'<div class="lr-linktip">'+esc(x.members.join('·'))+
+          ' 同时配制，只填这一处，改配制日期或有效期时全部一起更新（各自编码前缀自动保留）。</div>':'');
       if(bought){
         /* 外购标准品：编码/有效期至手填（生产商标注），前缀校验、日期校验 */
         return head+
@@ -1381,15 +1404,18 @@
       var pdate=o.pdate||(op&&op.date)||"", gd=guessDur(pdate,x.expiry);
       var dur=(o.dur!=null?o.dur:gd.n), unit=o.unit||gd.u;
       var so=solOrig(x.name), nowUse=!!(so&&/现配|即用/.test(so.expiry||""));
-      var valHtml = nowUse
-        ? '<label>有效期至<input type="text" value="现配现用（Word 原表固定）" readonly></label>'
-        : '<label>有效期<span class="lr-durow">'+
+      /* ★ 顺序（2026-11-19 晚）：配制日期 → 有效期(数值+单位) → 编码(自动) → 有效期至(自动)。
+         原来「编码」夹在配制日期和有效期中间，用户看着像被分隔开，故把有效期提前。 */
+      var durHtml = nowUse ? '' :
+          '<label>有效期<span class="lr-durow">'+
             '<input type="number" min="1" max="999" value="'+esc(dur)+'" data-name="'+esc(x.name)+'" '+
               'placeholder="N" onchange="LAB.lrSetDur(this)">'+
             '<select data-name="'+esc(x.name)+'" onchange="LAB.lrSetUnit(this)">'+
               '<option value="d"'+(unit==="d"?" selected":"")+'>天</option>'+
-              '<option value="m"'+(unit==="m"?" selected":"")+'>月</option></select></span></label>'+
-          '<label>有效期至（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="expiry" '+
+              '<option value="m"'+(unit==="m"?" selected":"")+'>月</option></select></span></label>';
+      var expiryHtml = nowUse
+        ? '<label>有效期至<input type="text" value="现配现用（Word 原表固定）" readonly></label>'
+        : '<label>有效期至（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="expiry" '+
             'value="'+esc(x.expiry)+'" readonly></label>';
       return head+
         '<label>配制日期<span class="lr-datein">'+
@@ -1400,9 +1426,10 @@
           '<input class="lr-calhidden" type="date" data-name="'+esc(x.name)+'" '+
             'onchange="LAB.lrCalPick(this)">'+
           '</span></label>'+
+        durHtml+
         '<label>编码（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="code" '+
           'value="'+esc(x.code)+'" readonly></label>'+
-        valHtml+batch+'</div>';
+        expiryHtml+batch+'</div>';
     });
     /* ★ 低聚半乳糖对照品的三项（原表正文下划线）本来就是标准品，
        直接作为标准溶液维护里和其他溶液并列的一行，不另起面板。
