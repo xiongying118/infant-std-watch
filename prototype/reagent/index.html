@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>分析检测中心 · 试剂有效期管理系统</title>
+<!-- SheetJS（xlsx 解析） -->
+<script src="xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: "Microsoft YaHei", "微软雅黑", "Segoe UI", "PingFang SC", sans-serif;
+    background: #d9e5f0;
+    color: #333;
+    font-size: 14px;
+  }
+
+  /* ===== 顶部 ===== */
+  .top-bar {
+    background: linear-gradient(180deg, #244e7a 0%, #1d4068 100%);
+    color: #fff;
+    padding: 14px 24px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .top-bar .title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+  .top-bar   .top-bar .sync-badge {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .sync-badge.online  { background: rgba(46,204,113,.22); color: #7ef0b0; border: 1px solid rgba(46,204,113,.5); }
+  .sync-badge.syncing { background: rgba(243,156,18,.2); color: #ffd28a; border: 1px solid rgba(243,156,18,.5); }
+  .sync-badge.offline { background: rgba(231,76,60,.2); color: #ffa39a; border: 1px solid rgba(231,76,60,.5); }
+
+  /* ===== 工具栏 ===== */
+  .toolbar {
+    background: #e9eef5;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: 1px solid #c8d3df;
+  }
+  .toolbar .btn {
+    border: 1px solid #b8c4d2;
+    background: #f6f9fc;
+    padding: 6px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #2c3e50;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .15s;
+    user-select: none;
+  }
+  .toolbar .btn:hover { background: #e1ecf7; border-color: #8aa6c4; }
+  .toolbar .btn .icon { font-size: 14px; line-height: 1; }
+  .toolbar .btn.danger { color: #b03434; }
+  .toolbar .btn.danger:hover { background: #fbe6e6; border-color: #d99090; }
+  .toolbar .btn.primary {
+    background: #4a7ab0;
+    border-color: #3a6694;
+    color: #fff;
+  }
+  .toolbar .btn.primary:hover { background: #3e6c9d; }
+  .toolbar .btn.warn {
+    background: #e08a3c;
+    border-color: #c97428;
+    color: #fff;
+  }
+  .toolbar .btn.warn:hover { background: #cc7a30; }
+  .toolbar .spacer { flex: 1; }
+  .toolbar .search {
+    border: 1px solid #b8c4d2;
+    border-radius: 3px;
+    padding: 6px 10px;
+    width: 240px;
+    background: #fff;
+    font-size: 13px;
+    outline: none;
+  }
+  .toolbar .search:focus { border-color: #4a7ab0; }
+
+  /* ===== 类型图例 ===== */
+  .legend {
+    background: #e9eef5;
+    padding: 6px 16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #c8d3df;
+  }
+  .legend .label { color: #2c3e50; font-weight: 600; margin-right: 4px; }
+  .legend .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1px solid #b8c4d2;
+    padding: 4px 12px;
+    border-radius: 14px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    transition: all .15s;
+  }
+  .legend .chip:hover { background: #f0f5fb; }
+  .legend .chip.active {
+    background: #d4e2f3;
+    border-color: #4a7ab0;
+    box-shadow: inset 0 0 0 1px #4a7ab0;
+  }
+  .legend .chip .dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .legend .chip.t-标准溶液 .dot { background: #5fa8d3; }
+  .legend .chip.t-配制试剂 .dot { background: #f4b860; }
+  .legend .chip.t-开封试剂 .dot { background: #6db04f; }
+  .legend .chip.t-开封标准品 .dot { background: #b07a4a; }
+
+  /* ===== 表格区 ===== */
+  .table-wrap {
+    margin: 14px 16px 40px;
+    background: #fff;
+    border: 1px solid #c8d3df;
+    border-radius: 4px;
+    overflow: auto;
+    max-height: calc(100vh - 240px);
+  }
+  table.reagent {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+  table.reagent thead th {
+    position: sticky;
+    top: 0;
+    background: #cfe1f1;
+    color: #1f3a5e;
+    font-weight: 700;
+    padding: 10px 12px;
+    border-bottom: 1px solid #a9bccd;
+    border-right: 1px solid #e0e7f0;
+    text-align: center;
+    white-space: nowrap;
+  }
+  table.reagent thead th:last-child { border-right: 0; }
+  table.reagent tbody td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e6ecf3;
+    border-right: 1px solid #e6ecf3;
+    text-align: center;
+    white-space: nowrap;
+  }
+  table.reagent tbody td:last-child { border-right: 0; }
+  table.reagent tbody tr:nth-child(odd) { background: #fbfdff; }
+  table.reagent tbody tr:nth-child(even) { background: #f4f8fc; }
+  table.reagent tbody tr:hover { background: #e8f1fa !important; cursor: pointer; }
+  table.reagent tbody tr.selected { background: #c5dcef !important; }
+  table.reagent tbody tr.checked { background: #dbeaf7 !important; }
+  table.reagent th.col-check,
+  table.reagent td.col-check {
+    width: 42px;
+    text-align: center;
+    padding: 8px 4px;
+  }
+  table.reagent td.col-check input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px; height: 16px;
+  }
+  table.reagent tbody tr.expired td.col-status { color: #c0392b; font-weight: 600; }
+  table.reagent tbody tr.expiring-soon td.col-status { color: #e67e22; font-weight: 600; }
+  table.reagent tbody tr.valid-far td.col-status { color: #27a86b; font-weight: 600; }
+
+  /* 类型列底色条纹 */
+  td.t-标准溶液 { color: #2c5a8a; }
+  td.t-配制试剂 { color: #9b6a1f; }
+  td.t-开封试剂 { color: #4e7d2c; }
+  td.t-开封标准品 { color: #7a4f25; }
+
+  .empty-row td {
+    padding: 60px 12px;
+    color: #94a3b8;
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* ===== 点击列头分组 ===== */
+  table.reagent thead th.groupable {
+    cursor: pointer;
+    user-select: none;
+  }
+  table.reagent thead th.groupable:hover { background: #b9d2e8; }
+  table.reagent thead th.grouped {
+    background: #a9c6e2;
+    box-shadow: inset 0 -3px 0 #4a7ab0;
+  }
+  table.reagent thead th.groupable::after {
+    content: ' ⊞';
+    font-size: 11px;
+    opacity: .4;
+  }
+  table.reagent thead th.grouped::after { opacity: 1; }
+  table.reagent thead th.grouped[data-order="asc"]::after  { content: ' ⊞▾'; }
+  table.reagent thead th.grouped[data-order="desc"]::after { content: ' ⊞▴'; }
+  table.reagent tbody tr.group-row td {
+    background: #dbe8f5;
+    color: #1f3a5e;
+    font-weight: 700;
+    text-align: left;
+    padding: 7px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #b8cadb;
+    white-space: nowrap;
+  }
+  table.reagent tbody tr.group-row:hover td { background: #cfe1f2 !important; }
+  table.reagent tbody tr.group-row .g-arrow {
+    display: inline-block;
+    width: 16px;
+    color: #4a7ab0;
+    font-weight: 700;
+  }
+
+  /* ===== Modal ===== */
+  .modal-mask {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 999;
+  }
+  /* 警告弹窗要在最前面，避免被提醒设置等弹窗挡住 */
+  #alertModal { z-index: 2000; }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 6px;
+    width: 640px;
+    max-width: 92vw;
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,.3);
+    animation: pop .15s ease-out;
+  }
+  @keyframes pop {
+    from { transform: scale(.92); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-header {
+    padding: 14px 18px;
+    background: #f0f5fa;
+    border-bottom: 1px solid #d8e1ea;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  .modal-header .close {
+    cursor: pointer;
+    font-size: 20px;
+    color: #777;
+    background: none; border: none;
+  }
+  .modal-header .close:hover { color: #222; }
+  .modal-body { padding: 16px 18px; }
+  .modal-footer {
+    padding: 12px 18px;
+    border-top: 1px solid #d8e1ea;
+    background: #f7f9fc;
+    display: flex; gap: 10px; justify-content: flex-end;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+  .form-item { display: flex; flex-direction: column; gap: 4px; }
+  .form-item label { font-size: 12px; color: #555; font-weight: 600; }
+  .form-item label .req { color: #e74c3c; }
+  .form-item input, .form-item select, .form-item textarea {
+    border: 1px solid #c2cdd9;
+    border-radius: 3px;
+    padding: 7px 9px;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+  }
+  .form-item input:focus, .form-item select:focus, .form-item textarea:focus {
+    border-color: #4a7ab0;
+    box-shadow: 0 0 0 2px rgba(74,122,176,.15);
+  }
+  .form-item textarea { resize: vertical; min-height: 56px; }
+
+  /* ===== 按钮 (modal 用) ===== */
+  .m-btn {
+    border: 1px solid #b8c4d2;
+    background: #f6f9fc;
+    padding: 7px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #2c3e50;
+    transition: all .15s;
+  }
+  .m-btn:hover { background: #e1ecf7; border-color: #8aa6c4; }
+  .m-btn.primary {
+    background: #4a7ab0; border-color: #3a6694; color: #fff;
+  }
+  .m-btn.primary:hover { background: #3e6c9d; }
+  .m-btn.danger {
+    background: #c0392b; border-color: #a8321f; color: #fff;
+  }
+  .m-btn.danger:hover { background: #ad3525; }
+
+  /* ===== 深色警告弹窗（试剂有效期警告） ===== */
+  .alert-modal {
+    background: #3a3f4a;
+    color: #f1c40f;
+    border-radius: 4px;
+    width: 620px;
+    max-width: 92vw;
+    max-height: 86vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 40px rgba(0,0,0,.55);
+  }
+  .alert-header {
+    padding: 22px 24px 16px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .alert-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: #e74c3c;
+    color: #fff;
+    font-size: 20px;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  .alert-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ff4d4f;
+    vertical-align: middle;
+    letter-spacing: 2px;
+  }
+  .alert-body {
+    padding: 18px 26px 22px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .alert-section {
+    margin-bottom: 18px;
+  }
+  .alert-section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f1c40f;
+    margin-bottom: 10px;
+  }
+  .alert-empty {
+    text-align: center;
+    color: #b0b8c8;
+    padding: 30px 0;
+    font-size: 14px;
+  }
+  .alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 8px 0;
+    font-size: 14px;
+    color: #f1c40f;
+    line-height: 1.6;
+  }
+  .alert-bullet {
+    width: 16px; height: 16px;
+    border: 2px solid #f1c40f;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .alert-item .loc {
+    color: #b0b8c8;
+    margin-left: 6px;
+  }
+  .alert-footer {
+    padding: 14px 24px 18px;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,.08);
+  }
+  .alert-btn {
+    background: #6c7485;
+    color: #fff;
+    border: none;
+    padding: 8px 28px;
+    border-radius: 3px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .alert-btn:hover { background: #5a6272; }
+
+  /* ===== 提醒设置弹窗 ===== */
+  .settings-section {
+    border: 1px solid #d8e1ea;
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    background: #fafbfc;
+  }
+  .settings-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e6ecf3;
+    padding-bottom: 8px;
+  }
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+  }
+  .check-row input[type="checkbox"] {
+    width: 16px; height: 16px;
+    cursor: pointer;
+  }
+  .check-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    font-size: 12px;
+    border-radius: 2px;
+  }
+  .check-icon.expired { background: #c0392b; color: #fff; }
+  .check-icon.expiring { background: #e67e22; color: #fff; }
+  .check-icon.startup { background: #4a7ab0; color: #fff; }
+  .days-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #333;
+  }
+  .days-row input {
+    width: 70px;
+    padding: 5px 8px;
+    border: 1px solid #c2cdd9;
+    border-radius: 3px;
+    font-size: 13px;
+  }
+  .settings-desc {
+    margin: 0 0 12px;
+    font-size: 12px;
+    color: #6b7886;
+  }
+  .check-now-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #e67e22;
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 3px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .check-now-btn:hover { background: #d35400; }
+  .system-status {
+    font-size: 12px;
+    color: #6b7886;
+    margin: 0 0 10px;
+  }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed;
+    top: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: #27a86b; color: #fff;
+    padding: 10px 18px;
+    border-radius: 4px;
+    font-size: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.18);
+    opacity: 0;
+    transition: opacity .2s, top .2s;
+    z-index: 9999;
+  }
+  .toast.show { opacity: 1; top: 30px; }
+  .toast.error { background: #c0392b; }
+  .toast.warn { background: #e08a3c; }
+
+  .footer-hint {
+    margin: 0 16px 18px;
+    color: #6b7886;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="title">分析检测中心 · 试剂有效期管理系统</span>
+  <span id="syncBadge" class="sync-badge syncing">⟳ 连接中</span>
+</div>
+
+<div class="toolbar">
+  <button class="btn primary" onclick="openAdd()"><span class="icon">＋</span> 新增</button>
+  <button class="btn" onclick="openEdit()"><span class="icon">✎</span> 编辑</button>
+  <button class="btn danger" onclick="doDelete()"><span class="icon">🗑</span> 删除</button>
+  <button class="btn danger" onclick="doBatchDelete()"><span class="icon">🗑</span> 批量删除</button>
+  <button class="btn" onclick="selectAllVisible()" title="勾选当前显示的全部记录"><span class="icon">☑</span> 全选</button>
+  <button class="btn" onclick="clearSelection()" title="清空所有勾选"><span class="icon">☐</span> 取消选择</button>
+  <button class="btn" onclick="openExcelImport()"><span class="icon">⇧</span> Excel 导入</button>
+  <button class="btn" onclick="exportCSV()"><span class="icon">⇩</span> 导出 CSV</button>
+  <button class="btn" onclick="refreshData()"><span class="icon">⟳</span> 刷新</button>
+  <button class="btn warn" onclick="openAlertModal()"><span class="icon">🔔</span> 过期提醒</button>
+  <button class="btn" onclick="openReminder()"><span class="icon">⏰</span> 提醒设置</button>
+  <span class="spacer"></span>
+  <input class="search" id="searchBox" placeholder="搜索试剂名称..." oninput="renderTable()" />
+</div>
+
+<div class="legend">
+  <span class="label">类型图例：</span>
+  <span class="chip t-标准溶液" data-type="标准溶液" onclick="toggleLegend(this)"><span class="dot"></span>标准溶液</span>
+  <span class="chip t-配制试剂" data-type="配制试剂" onclick="toggleLegend(this)"><span class="dot"></span>配制试剂</span>
+  <span class="chip t-开封试剂" data-type="开封试剂" onclick="toggleLegend(this)"><span class="dot"></span>开封试剂</span>
+  <span class="chip t-开封标准品" data-type="开封标准品" onclick="toggleLegend(this)"><span class="dot"></span>开封标准品</span>
+</div>
+
+<div class="table-wrap">
+  <table class="reagent" id="reagentTable">
+    <thead>
+      <tr>
+        <th class="col-check"><input type="checkbox" id="checkAll" onclick="toggleCheckAll(this.checked)" title="全选 / 取消全选"></th>
+        <th style="width:60px;">序号</th>
+        <th class="groupable" data-col="name" onclick="toggleGroupColumn('name')" title="点击：①按此列分组 → ②反序 → ③取消分组">试剂名称</th>
+        <th class="groupable" data-col="type" onclick="toggleGroupColumn('type')" title="点击：①按此列分组 → ②反序 → ③取消分组">类型</th>
+        <th class="groupable" data-col="concentration" onclick="toggleGroupColumn('concentration')" title="点击：①按此列分组 → ②反序 → ③取消分组">浓度</th>
+        <th class="groupable" data-col="preparedDate" onclick="toggleGroupColumn('preparedDate')" title="点击：①按此列分组 → ②反序 → ③取消分组">配制日期</th>
+        <th class="groupable" data-col="expireDate" onclick="toggleGroupColumn('expireDate')" title="点击：①按此列分组 → ②反序 → ③取消分组">有效期至</th>
+        <th class="groupable" data-col="status" onclick="toggleGroupColumn('status')" title="点击按状态分组，再点取消">状态</th>
+        <th class="groupable" data-col="operator" onclick="toggleGroupColumn('operator')" title="点击：①按此列分组 → ②反序 → ③取消分组">配制人</th>
+        <th class="groupable" data-col="location" onclick="toggleGroupColumn('location')" title="点击：①按此列分组 → ②反序 → ③取消分组">存放位置</th>
+        <th class="groupable" data-col="note" onclick="toggleGroupColumn('note')" title="点击：①按此列分组 → ②反序 → ③取消分组">备注</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<div class="footer-hint">提示：点击列名（试剂名称 / 类型 / 配制人等）可按该列自动分组，再点一次反向排序，第三次点击恢复默认（取消分组）；点击分组行可折叠 / 展开；复选框可多选（Shift 连选 / Ctrl 切换）；双击行可快速编辑；导入 / 新增的记录会自动插到相同配制人已有记录之后；当前共 <span id="rowCount">0</span> 条记录，已选 <span id="selectedCount">0</span> 条。</div>
+
+<!-- 新增/编辑模态框 -->
+<div class="modal-mask" id="editModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="editTitle">新增试剂</span>
+      <button class="close" onclick="closeModal('editModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-item full">
+          <label>试剂名称 <span class="req">*</span></label>
+          <input id="f-name" placeholder="如：VB1标准储备液" />
+        </div>
+        <div class="form-item">
+          <label>类型 <span class="req">*</span></label>
+          <select id="f-type">
+            <option>标准溶液</option>
+            <option>配制试剂</option>
+            <option>开封试剂</option>
+            <option>开封标准品</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label>浓度</label>
+          <input id="f-conc" placeholder="如：512.8ug/ml" />
+        </div>
+        <div class="form-item">
+          <label>配制日期 <span class="req">*</span></label>
+          <input id="f-prepared" type="date" />
+        </div>
+        <div class="form-item">
+          <label>有效期至 <span class="req">*</span></label>
+          <input id="f-expire" type="date" />
+        </div>
+        <div class="form-item">
+          <label>配制人 <span class="req">*</span></label>
+          <input id="f-operator" placeholder="如：范丽颖" />
+        </div>
+        <div class="form-item">
+          <label>存放位置</label>
+          <input id="f-location" placeholder="如：冰柜1 / 试剂柜3 / 通风橱" />
+        </div>
+        <div class="form-item full">
+          <label>备注</label>
+          <textarea id="f-note" placeholder="可选"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="m-btn" onclick="closeModal('editModal')">取消</button>
+      <button class="m-btn primary" onclick="saveItem()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 删除确认 -->
+<div class="modal-mask" id="confirmModal">
+  <div class="modal" style="width:380px;">
+    <div class="modal-header"><span>删除确认</span>
+      <button class="close" onclick="closeModal('confirmModal')">×</button>
+    </div>
+    <div class="modal-body" id="confirmText">确认删除选中记录吗？</div>
+    <input type="hidden" id="confirmMode" value="single" />
+    <div class="modal-footer">
+      <button class="m-btn" onclick="closeModal('confirmModal')">取消</button>
+      <button class="m-btn danger" onclick="doConfirmDelete()">删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 过期提醒弹窗 -->
+<div class="modal-mask" id="alertModal">
+  <div class="modal alert-modal">
+    <div class="alert-header">
+      <span class="alert-icon">!</span>
+      <span class="alert-title">试剂有效期警告</span>
+    </div>
+    <div class="alert-body" id="alertBody">
+      <div class="alert-empty">暂无需要提醒的试剂</div>
+    </div>
+    <div class="alert-footer">
+      <button class="alert-btn" onclick="closeModal('alertModal')">我知道了</button>
+      <button class="alert-btn" onclick="snoozeAlert()">稍后提醒</button>
+    </div>
+  </div>
+</div>
+
+<!-- 提醒设置 -->
+<div class="modal-mask" id="reminderModal">
+  <div class="modal" style="width:520px;">
+    <div class="modal-header"><span>提醒设置</span>
+      <button class="close" onclick="closeModal('reminderModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-section">
+        <div class="settings-title">应用内提醒（软件打开时）</div>
+        <label class="check-row">
+          <input type="checkbox" id="reminder-enable-expired">
+          <span class="check-icon expired">!</span>
+          启用已过期提醒
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="reminder-enable-expiring">
+          <span class="check-icon expiring">!</span>
+          启用即将过期提醒
+        </label>
+        <label class="check-row">
+          <input type="checkbox" id="reminder-auto-check">
+          <span class="check-icon startup">&#9992;</span>
+          启动时自动检查
+        </label>
+        <div class="days-row">
+          <label>提前提醒天数：</label>
+          <input id="reminder-days" type="number" min="1" max="365" />
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">显示排序</div>
+        <div class="days-row">
+          <label>表格排序：</label>
+          <select id="reminder-sort">
+            <option value="importOrder">按 Excel 导入顺序（默认）</option>
+            <option value="expireAsc">按有效期（近 → 远）</option>
+            <option value="expireDesc">按有效期（远 → 近）</option>
+            <option value="nameAsc">按试剂名称（A → Z）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">立即检查</div>
+        <p class="settings-desc">点击下方按钮，立即扫描所有试剂并弹出检查结果</p>
+        <button class="check-now-btn" onclick="checkAlertsNow()">
+          <span>&#128276;</span> 立即检查过期提醒
+        </button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">系统级每日提醒（无需打开软件）</div>
+        <p class="system-status" id="system-reminder-status">
+          网页版暂不支持关闭浏览器后弹窗；可开启浏览器通知作为替代。
+        </p>
+        <button class="m-btn" id="btn-browser-notify" onclick="requestBrowserNotify()">启用浏览器通知</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="m-btn" onclick="closeModal('reminderModal')">取消</button>
+      <button class="m-btn primary" onclick="saveReminder()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Excel 导入预览 -->
+<div class="modal-mask" id="excelModal">
+  <div class="modal" style="width:760px;">
+    <div class="modal-header"><span>Excel 导入预览</span>
+      <button class="close" onclick="closeModal('excelModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:10px;font-size:13px;color:#555;">
+        检测到 <span id="excelRowCount">0</span> 条记录。系统已自动识别表头（试剂名称 / 类型 / 浓度 / 配制日期 / 有效期至 / 配制人 / 存放位置 / 备注）。
+        <div style="margin-top:6px;color:#8a6d3b;background:#fcf8e3;border:1px solid #f0e0b0;border-radius:3px;padding:6px 10px;">
+          导入规则：重复记录自动跳过；<b>过期超过 15 天</b>或<b>备注含「已清理」</b>的记录将被自动过滤，不会上传系统。
+        </div>
+      </div>
+      <div style="max-height: 320px; overflow:auto; border:1px solid #d8e1ea; border-radius:3px;">
+        <table class="reagent">
+          <thead>
+            <tr>
+              <th>试剂名称</th><th>类型</th><th>浓度</th>
+              <th>配制日期</th><th>有效期至</th><th>配制人</th><th>存放位置</th><th>备注</th><th>识别</th>
+            </tr>
+          </thead>
+          <tbody id="excelPreview"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="m-btn" onclick="closeModal('excelModal')">取消</button>
+      <button class="m-btn primary" onclick="importExcel()">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none;" />
+
+<script src="app.js"></script>
+</body>
+</html>

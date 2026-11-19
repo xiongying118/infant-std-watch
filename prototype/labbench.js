@@ -1070,7 +1070,7 @@
     }
     window.__labauthLoading=[run];
     var s=document.createElement("script");
-    s.src="labauth.js?v=20261119h";
+    s.src="labauth.js?v=20261119i";
     s.onload=function(){
       var q=window.__labauthLoading||[]; window.__labauthLoading=null;
       q.forEach(function(f){ f(!!(global.LABAUTH && global.LABAUTH.editGuard)); });
@@ -1505,6 +1505,152 @@
     });
     return out;
   }
+  /* ★★ 从「试剂有效期管理系统」把配制日期/有效期拉进来（2026-11-19 晚，用户要的方向）
+     流程：试剂系统「导出 CSV」→ 这里选中文件 → 按溶液名自动匹配 → 写入 pdate/expiry。
+     导入后仍然可以手动改（改还是要口令）。 */
+  function lrTo8(v){
+    if(v==null) return "";
+    if(v instanceof Date){
+      var y=v.getFullYear(), m=("0"+(v.getMonth()+1)).slice(-2), d=("0"+v.getDate()).slice(-2);
+      return ""+y+m+d;
+    }
+    var s=String(v).trim();
+    if(/^\d{8}$/.test(s)) return s;
+    var m2=s.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+    if(m2) return m2[1]+("0"+m2[2]).slice(-2)+("0"+m2[3]).slice(-2);
+    if(/^\d{5}$/.test(s)){ // Excel 日期序列
+      var d0=new Date(Date.UTC(1899,11,30)+parseInt(s,10)*86400000);
+      return d0.getUTCFullYear()+("0"+(d0.getUTCMonth()+1)).slice(-2)+("0"+d0.getUTCDate()).slice(-2);
+    }
+    return "";
+  }
+  function lrNormName(s){
+    return String(s||"").replace(/\s/g,"")
+      .replace(/(标准储备液|标准溶液|储备液|标准品|标准物质|工作液|滴定溶液|溶液)$/,"");
+  }
+  function lrMatchName(nm, names, idx){
+    var n=String(nm||"").replace(/\s/g,"");
+    if(!n) return null;
+    if(names.indexOf(n)>=0) return n;
+    var nn=lrNormName(n);
+    if(nn && idx[nn]) return idx[nn];
+    var best=null, bl=0;
+    names.forEach(function(k){
+      var kk=lrNormName(k);
+      if(!kk) return;
+      if(nn && (nn.indexOf(kk)>=0 || kk.indexOf(nn)>=0) && kk.length>bl){ best=k; bl=kk.length; }
+    });
+    return best;
+  }
+  function lrApplyReagentRows(rows){
+    var O=lrSol(), names=lrAllSolutions().map(function(x){ return x.name; });
+    var idx={}; names.forEach(function(n){ var k=lrNormName(n); if(k&&!idx[k]) idx[k]=n; });
+    var hit=0, miss=0, fields=0, list=[];
+    rows.forEach(function(r){
+      var nm=r["试剂名称"]||r["名称"]||"";
+      var pd=r["配制日期"]||r["配置日期"]||"";
+      var ex=r["有效期至"]||r["有效期"]||r["到期日期"]||"";
+      var tp=r["类型"]||"";
+      if(!nm) return;
+      if(tp && !/标准溶液|标准品|标准物质/.test(tp)) return;   // 只要标准溶液类
+      var key=lrMatchName(nm, names, idx);
+      if(!key){ miss++; if(list.length<5) list.push(nm); return; }
+      hit++;
+      var p8=lrTo8(pd), e8=lrTo8(ex);
+      if(!O[key]) O[key]={};
+      if(p8 && O[key].pdate!==p8){ O[key].pdate=p8; fields++; }
+      if(e8 && O[key].expiry!==e8){ O[key].expiry=e8; fields++; }
+      if(p8){
+        var op=solParts(key,origCodeOf(key))||{};
+        if(op.prefix && !O[key].code) O[key].code=op.prefix+"-"+p8+"-"+(op.suffix||"01");
+      }
+    });
+    lrSave();
+    if(typeof render==="function") render();
+    lrAlert("从试剂系统导入完成：\n\n匹配到 "+hit+" 条，写入 "+fields+" 个字段"+
+      (miss?("；有 "+miss+" 条在这里找不到对应溶液"+(list.length?("（如 "+list.join("、")+"）"):"")):"")+
+      "。\n\n导入后仍可手动改（改还是要口令）。");
+  }
+  function lrReagentFile(el){
+    var f=el.files&&el.files[0];
+    if(!f){ return; }
+    lrLoadXLSX(function(ok){
+      if(!ok){ lrAlert("表格解析库没加载出来，请刷新页面重试。"); return; }
+      var fr=new FileReader();
+      fr.onload=function(ev){
+        try{
+          var wb=global.XLSX.read(new Uint8Array(ev.target.result),{type:"array",cellDates:true});
+          var ws=wb.Sheets[wb.SheetNames[0]];
+          var rows=global.XLSX.utils.sheet_to_json(ws,{defval:"",raw:false});
+          if(!rows.length){ lrAlert("这个文件里没读到数据，确认是试剂系统「导出 CSV」得到的表。"); return; }
+          lrApplyReagentRows(rows);
+        }catch(e){
+          lrAlert("读不了这个文件："+(e&&e.message?e.message:e));
+        }
+        el.value="";
+      };
+      fr.readAsArrayBuffer(f);
+    });
+  }
+  /* ★★★ 与同站点的「试剂有效期管理系统」（/reagent/）自动同步（2026-11-19 用户最终口径）
+     两页同域，共用 reagentManager.data.v1：
+       · 那边改了配制日期/有效期 → 这边切回页面（或 storage 事件）自动更新，不用手填；
+       · 这边手改仍然可以（要口令），但只要试剂系统那条没变，下次同步不会把手改的值冲掉
+         （靠 _rsync 记住上次从试剂系统取到的值来判断"是对方改了"还是"我本方改的"）。 */
+  function lrReagentRead(){
+    try{
+      var raw=localStorage.getItem("reagentManager.data.v1");
+      if(!raw) return null;
+      var a=JSON.parse(raw);
+      return Array.isArray(a)?a:null;
+    }catch(e){ return null; }
+  }
+  function lrReagentSync(){
+    var arr=lrReagentRead();
+    if(!arr||!arr.length) return false;
+    var O=lrSol(), names=lrAllSolutions().map(function(x){ return x.name; });
+    var idx={}; names.forEach(function(n){ var k=lrNormName(n); if(k&&!idx[k]) idx[k]=n; });
+    var dirty=false, cnt=0;
+    arr.forEach(function(r){
+      var nm=r.name||r["试剂名称"]||"";
+      var tp=r.type||r["类型"]||"";
+      if(!nm) return;
+      if(tp && !/标准溶液|标准品|标准物质/.test(tp)) return;
+      var key=lrMatchName(nm,names,idx);
+      if(!key) return;
+      var p8=lrTo8(r.preparedDate||r["配制日期"]||"");
+      var e8=lrTo8(r.expireDate||r["有效期至"]||"");
+      if(!p8 && !e8) return;
+      if(!O[key]) O[key]={};
+      var prev=O[key]._rsync||{};
+      if(p8 && prev.pdate!==p8){
+        O[key].pdate=p8; dirty=true; cnt++;
+        var op=solParts(key,origCodeOf(key))||{};
+        if(op.prefix) O[key].code=op.prefix+"-"+p8+"-"+(op.suffix||"01");
+        else lrSyncDyn(key,O[key]);
+      }
+      if(e8 && prev.expiry!==e8){ O[key].expiry=e8; dirty=true; cnt++; lrSyncDyn(key,O[key]); }
+      O[key]._rsync={pdate:p8||prev.pdate||"", expiry:e8||prev.expiry||""};
+    });
+    if(dirty){
+      lrSave();
+      var ae=document.activeElement;
+      var typing=ae && ae.closest && ae.closest("#lrSolBody");
+      if(!typing && typeof render==="function") render();
+      try{ lrStatMsg("已从试剂系统自动同步 "+cnt+" 个配制日期/有效期"); }catch(e){}
+    }
+    return dirty;
+  }
+  function lrReagentHook(){
+    if(global.__lrReagentHooked) return;
+    global.__lrReagentHooked=1;
+    window.addEventListener("storage", function(e){
+      if(e && e.key==="reagentManager.data.v1") lrReagentSync();
+    });
+    document.addEventListener("visibilitychange", function(){
+      if(!document.hidden) lrReagentSync();
+    });
+  }
   function lrExportToReagent(){
     var rows=lrReagentRows();
     if(!rows.length){
@@ -1560,8 +1706,15 @@
       '填「有效期」数字选天/月自动生成有效期至（如 20261119 + 3月 → 20270218）。'+
       '<b>外购</b>的：编码和有效期至手填，前缀填错会弹窗拦下。</div>'+
       '<div class="lr-solacts">'+
-        '<button type="button" class="btn sm pri" onclick="LAB.lrExportToReagent()">↗ 导出给试剂系统</button>'+
-        '<span class="muted">一键生成「试剂有效期管理系统」能直接导入的表格（试剂名称/配制日期/有效期/配制人），并自动打开它</span>'+
+        '<a class="btn sm pri" href="reagent/" target="_blank" rel="noopener" '+
+          'style="text-decoration:none;display:inline-flex;align-items:center;gap:4px">🔗 打开试剂效期管理</a>'+
+        '<label class="btn sm" style="cursor:pointer;margin:0;display:inline-flex;align-items:center">'+
+          '↙ 从旧系统导入一次'+
+          '<input type="file" accept=".csv,.xlsx,.xls" style="display:none" '+
+            'onchange="LAB.lrReagentFile(this)"></label>'+
+        '<span class="muted"><b>配制日期、有效期自动取自同站点的试剂效期管理系统</b>：那边一改，这里自动更新，不用手填；'+
+          '本页手改仍可（要口令），只要试剂系统那条没变，下次同步不会冲掉手改的值。'+
+          '第一次用请先在旧系统「导出 CSV」，点左边按钮导一次。</span>'+
       '</div>'+
       lrSolTabsHtml(v)+'<div id="lrSolBody">'+lrSolBodyHtml(v)+'</div></details>';
   }
@@ -1784,6 +1937,8 @@
     return lrActiveRows().length*lrSelected().length;
   }
   function viewRecordByProject(){
+    /* 每次进记录页先挂同步钩子并拉一次试剂系统数据（同域才读得到，读不到就什么都不做） */
+    try{ lrReagentHook(); lrReagentSync(); }catch(e){}
     var ps=lrVisiblePs(), s=lrSel(), n=lrSelected().length, gp=lrGroupProjects();
     var rows=lrActiveRows().length, total=lrPrintCount();
     var h=(global.LABAUTH&&global.LABAUTH.barHtml)?global.LABAUTH.barHtml():'';
@@ -2745,6 +2900,8 @@
     lrSetSolBatch: lrSetSolBatch,
     lrSetMatGuard: lrSetMatGuard,
     lrExportToReagent: lrExportToReagent,
+    lrReagentFile: lrReagentFile,
+    lrReagentSync: lrReagentSync,
     lrSolView: lrSolView,
     lrSolRows: lrSolRows,
     lrSetSolView: lrSetSolView,
