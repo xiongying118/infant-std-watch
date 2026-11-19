@@ -975,6 +975,26 @@
     var lim=new Date(); lim.setHours(0,0,0,0); lim.setDate(lim.getDate()-30);
     return fmt8(lim);
   }
+  /* ★ 有效期逻辑校验：有效期至必须晚于配制日期，且不能早于今天。
+     返回错误文案或 null；只在用户主动改动时调用，避免打开页面就弹窗 */
+  function checkExpiryLogic(name,pdate,expiry){
+    if(!expiry) return null;
+    if(!isValidDate8(expiry)) return "【"+name+"】有效期至不是有效日期（应为 8 位，如 20270218）";
+    if(isValidDate8(pdate)&&expiry<=pdate)
+      return "【"+name+"】有效期至 "+fmtDash(expiry)+" 早于配制日期 "+fmtDash(pdate)+
+        "，不符合逻辑，请检查有效期天数和配制日期";
+    var t=today().replace(/-/g,"");
+    if(expiry<t)
+      return "【"+name+"】有效期至 "+fmtDash(expiry)+" 早于今天（今天 "+today()+
+        "），该溶液已过期，不能用于检测";
+    return null;
+  }
+  function fmtDash(s){ return /^\d{8}$/.test(s)?s.slice(0,4)+"-"+s.slice(4,6)+"-"+s.slice(6,8):s; }
+  /* ★ 统一警示弹窗：走页面自带的居中自绘模态框（⚠ 醒目），不用原生 alert */
+  function lrAlert(msg){
+    try{ if(typeof global.toast==="function"){ global.toast(msg,"warn"); return; } }catch(e){}
+    try{ global.alert(msg); }catch(e){}
+  }
   function lrDateErr(s){
     if(!isValidDate8(s)) return "日期要填 8 位真实数字（如 20261119）";
     var t=today().replace(/-/g,"");
@@ -1002,29 +1022,43 @@
   function lrSetPrepDate(el){
     var name=el.dataset.name, v=String(el.value||"").replace(/\D/g,"");
     var err=lrDateErr(v);
-    if(err){ alert("【"+name+"】"+err+"，已恢复原值。");
+    if(err){ lrAlert("【"+name+"】"+err+"，已恢复原值。");
       el.value=(lrSol()[name]||{}).pdate||""; return; }
     el.value=v;
     var op=solParts(name,origCodeOf(name))||{prefix:"",suffix:"01"};
     var O=lrSol(); if(!O[name]) O[name]={};
     O[name].pdate=v;
     O[name].code=op.prefix+"-"+v+"-"+op.suffix;
+    /* ★ 有效期数值/单位以界面当前框为准：初次打开时"7 天"只是 guessDur 显示值、
+       并未存进 localStorage，若只看存储就会漏算有效期至（用户截图的问题） */
+    var row=el.closest(".lr-solrow");
+    if(row){
+      var dEl=row.querySelector("input[type=number][data-name]");
+      var uEl=row.querySelector("select[data-name]");
+      if(dEl&&dEl.value) O[name].dur=""+parseInt(dEl.value,10);
+      if(uEl&&uEl.value) O[name].unit=uEl.value;
+    }
     var soNow=solOrig(name), nowUse=!!(soNow&&/现配|即用/.test(soNow.expiry||""));
     if(!nowUse&&O[name].dur&&O[name].unit) O[name].expiry=date8Add(v,+O[name].dur,O[name].unit);
     lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
+    if(!nowUse&&O[name].expiry){
+      var warn=checkExpiryLogic(name,v,O[name].expiry);
+      if(warn) lrAlert(warn);
+    }
     lrStatMsg("【"+name+"】已生成编码 "+O[name].code+
       (nowUse?"（现配现用，有效期至按 Word 原表）":
        (O[name].expiry?"，有效期至 "+O[name].expiry:"；填右边有效期可自动算有效期至")));
   }
   function lrSetDur(el){
     var name=el.dataset.name, n=parseInt(el.value,10);
-    if(!(n>0&&n<=999)){ alert("【"+name+"】有效期要填 1~999 的整数，已恢复原值。");
+    if(!(n>0&&n<=999)){ lrAlert("【"+name+"】有效期要填 1~999 的整数，已恢复原值。");
       el.value=(lrSol()[name]||{}).dur||""; return; }
     var O=lrSol(); if(!O[name]) O[name]={};
     O[name].dur=""+n;
     var pd=O[name].pdate||(solParts(name,origCodeOf(name))||{}).date;
     if(isValidDate8(pd)) O[name].expiry=date8Add(pd,n,O[name].unit||"m");
     lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
+    if(O[name].expiry){ var w=checkExpiryLogic(name,pd,O[name].expiry); if(w) lrAlert(w); }
   }
   function lrSetUnit(el){
     var name=el.dataset.name, O=lrSol(); if(!O[name]) O[name]={};
@@ -1032,18 +1066,35 @@
     var pd=O[name].pdate||(solParts(name,origCodeOf(name))||{}).date;
     if(O[name].dur&&isValidDate8(pd)) O[name].expiry=date8Add(pd,+O[name].dur,el.value);
     lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
+    if(O[name].expiry){ var w=checkExpiryLogic(name,pd,O[name].expiry); if(w) lrAlert(w); }
+  }
+  /* 外购标准品有效期至：厂商标注日期，可带 - . / 分隔；校验格式 + 不早于入库日期 */
+  function lrSolExpiryInput(el){
+    var name=el.dataset.name, v=String(el.value||"").trim();
+    var digits=v.replace(/\D/g,"");
+    if(digits && !isValidDate8(digits)){
+      lrAlert("【"+name+"】有效期至日期格式不对（应如 2027-02-18 或 20270218），已恢复原值。");
+      var o=lrSol()[name]||{}; el.value=o.expiry!=null?o.expiry:""; return;
+    }
+    /* 入库日期取编码里的日期段（如 109-20241031-A） */
+    var op=solParts(name,origCodeOf(name)), inDate=op&&op.date;
+    if(isValidDate8(digits)&&isValidDate8(inDate)&&digits<inDate){
+      lrAlert("【"+name+"】有效期至 "+fmtDash(digits)+" 早于入库日期 "+fmtDash(inDate)+"，不符合逻辑，已恢复原值。");
+      var o2=lrSol()[name]||{}; el.value=o2.expiry!=null?o2.expiry:""; return;
+    }
+    lrSetSol(name,"expiry",v);
   }
   /* 外购标准品：编码手填，但前缀/日期必须合法，否则弹窗并恢复 */
   function lrSolCodeInput(el){
     var name=el.dataset.name, v=String(el.value||"");
     var op=solParts(name,origCodeOf(name)), seg=v.split("-");
     if(op&&seg[0]!==op.prefix){
-      alert("【"+name+"】标准溶液代码前缀应为 "+op.prefix+
+      lrAlert("【"+name+"】标准溶液代码前缀应为 "+op.prefix+
         "，不能填 "+(seg[0]||"空")+"，已恢复原值。");
       var o0=lrSol()[name]||{}; el.value=o0.code!=null?o0.code:origCodeOf(name); return;
     }
     if(seg[1]&&!isValidDate8(seg[1])){
-      alert("【"+name+"】编码里的日期不是有效日期（应为 8 位，如 20241031），已恢复原值。");
+      lrAlert("【"+name+"】编码里的日期不是有效日期（应为 8 位，如 20241031），已恢复原值。");
       var o1=lrSol()[name]||{}; el.value=o1.code!=null?o1.code:origCodeOf(name); return;
     }
     lrSetSol(name,"code",v);
@@ -1053,13 +1104,21 @@
     if(!cal) return;
     var txt=wrap.querySelector("input.lr-pdate"), v=txt?(txt.value||"").replace(/\D/g,""):"";
     if(isValidDate8(v)) cal.value=v.slice(0,4)+"-"+v.slice(4,6)+"-"+v.slice(6,8);
-    try{ cal.showPicker(); }catch(e){ cal.focus(); cal.click(); }
+    /* ★ 关键：先让控件真正可见（.lr-calshow），隐藏/opacity:0 的 date 控件
+       showPicker() 会被浏览器静默拒绝（不弹也不报错），这就是"点了没反应"的根因 */
+    cal.classList.add("lr-calshow");
+    cal.focus();
+    var opened=false;
+    try{ if(typeof cal.showPicker==="function"){ cal.showPicker(); opened=true; } }catch(e){}
+    if(!opened){ try{ cal.click(); }catch(e){} }
   }
+  function lrCalClose(cal){ if(cal) cal.classList.remove("lr-calshow"); }
   function lrCalPick(cal){
     var wrap=cal.parentNode, txt=wrap.querySelector("input.lr-pdate");
     if(!txt) return;
     txt.value=(cal.value||"").replace(/-/g,"");
     lrSetPrepDate(txt);
+    lrCalClose(cal);
   }
   function lrSol(){
     if(!LRSOL){
@@ -1160,7 +1219,7 @@
             'value="'+esc(x.code)+'" placeholder="'+esc(op.prefix)+'-YYYYMMDD-字母" '+
             'onchange="LAB.lrSolCodeInput(this)"></label>'+
           '<label>有效期至（厂商标注）<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.expiry)+'" '+
-            'oninput="LAB.lrSetSol(this.dataset.name,\'expiry\',this.value)"></label>'+batch+'</div>';
+            'onchange="LAB.lrSolExpiryInput(this)"></label>'+batch+'</div>';
       }
       /* 需配制：配制日期（手输/日历）→ 编码；有效期数值+单位 → 有效期至。
          ★ 现配现用的（VC/混合中间液/CMP/酪蛋白磷酸肽）：只生成编码，
@@ -1184,7 +1243,8 @@
             'data-name="'+esc(x.name)+'" value="'+esc(pdate)+'" placeholder="如 20261119" '+
             'onchange="LAB.lrSetPrepDate(this)">'+
           '<button type="button" class="lr-calbtn" title="日历选择" onclick="LAB.lrOpenCal(this)">📅</button>'+
-          '<input class="lr-calhidden" type="date" data-name="'+esc(x.name)+'" onchange="LAB.lrCalPick(this)">'+
+          '<input class="lr-calhidden" type="date" data-name="'+esc(x.name)+'" '+
+            'onchange="LAB.lrCalPick(this)" onblur="LAB.lrCalClose(this)">'+
           '</span></label>'+
         '<label>编码（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="code" '+
           'value="'+esc(x.code)+'" readonly></label>'+
@@ -2396,8 +2456,11 @@
     lrSetDur: lrSetDur,
     lrSetUnit: lrSetUnit,
     lrSolCodeInput: lrSolCodeInput,
+    lrSolExpiryInput: lrSolExpiryInput,
+    checkExpiryLogic: checkExpiryLogic,
     lrOpenCal: lrOpenCal,
-    lrCalPick: lrCalPick
+    lrCalPick: lrCalPick,
+    lrCalClose: lrCalClose
   };
 
 })(window);

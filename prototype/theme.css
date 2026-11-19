@@ -1201,12 +1201,17 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   white-space:nowrap}
 .lr-solkind.prep{background:#e7f4ea;color:#15803d}
 .lr-solkind.ext{background:#fff3e0;color:#a16207}
-.lr-datein{display:flex;align-items:stretch;gap:4px;margin-top:3px}
+.lr-datein{position:relative;display:flex;align-items:stretch;gap:4px;margin-top:3px}
 .lr-datein .lr-pdate{flex:1;min-width:0;margin-top:0}
 .lr-calbtn{flex:0 0 auto;padding:0 8px;border:1px solid var(--line);border-radius:5px;
   background:var(--panel);cursor:pointer;font-size:13px;line-height:1}
 .lr-calbtn:hover{border-color:var(--brand)}
-.lr-calhidden{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px}
+/* 日历控件平时隐藏；点 📅 时用 .lr-calshow 临时显形盖在按钮上，
+   保证浏览器一定弹出原生日历（对 display/opacity 隐藏的元素 showPicker 会静默失败） */
+.lr-calhidden{position:absolute;right:0;top:0;width:1px;height:1px;
+  opacity:0;pointer-events:none;border:0;padding:0;font-size:16px}
+.lr-calhidden.lr-calshow{width:30px;min-height:28px;height:100%;opacity:1;
+  pointer-events:auto;z-index:5;background:var(--panel);color:var(--ink)}
 .lr-durow{display:flex;align-items:stretch;gap:5px;margin-top:3px}
 .lr-durow input{flex:1;min-width:0;margin-top:0}
 .lr-durow select{flex:0 0 58px;padding:5px 4px;border:1px solid var(--line);border-radius:5px;
