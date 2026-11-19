@@ -912,6 +912,153 @@
     var st=document.getElementById("lrStat");
     if(st) st.textContent="低聚半乳糖「"+LR_MAT_KEYS[k]+"」已改成本机值，打印时会带上";
   }
+  /* ===== 标准溶液编码 / 有效期自动生成（2026-11-19）=====
+     编码 = 固定前缀(唯一代码) - 配制日期 - 固定顺序号，前后缀锁定只换中间日期。
+       · 后缀纯数字 = 需配制（自动生成），如 139-20260304-01 / 123-20261029-01-01
+       · 后缀纯字母 = 外购标准品（手动输入），如 109-20241031-A，中间为入库日期
+     有效期至 = 配制日期 + N(天/月) − 1 天（配制当天算第 1 天，已用 8 条原表数据验证）。
+     防输错：配制日期只收今天起往前 30 天内的真实日期，未来/更早弹窗并恢复；
+             外购编码前缀必须与唯一代码一致，填错弹窗并恢复。 */
+  var SOL_PREFIX_FIX = {"酪蛋白磷酸肽":"131"}; // 原表该格为空，用户补充的唯一代码前缀
+  function solOrig(name){
+    var ps=(global.LABREC&&global.LABREC.projects)||[];
+    for(var i=0;i<ps.length;i++){
+      var ss=ps[i].solutions||[];
+      for(var j=0;j<ss.length;j++) if(ss[j].name===name) return ss[j];
+    }
+    return null;
+  }
+  function origCodeOf(name){ var s=solOrig(name); return s?(s.code||""):""; }
+  function solParts(name, code){
+    var m=/^(\d{3})-(\d{8})-(.+)$/.exec(String(code||""));
+    if(m) return {prefix:m[1],date:m[2],suffix:m[3],bought:/^[A-Za-z]+$/.test(m[3])};
+    var fix=SOL_PREFIX_FIX[name];
+    if(fix) return {prefix:fix,date:"",suffix:"01",bought:false,empty:true};
+    return null;
+  }
+  function isValidDate8(s){
+    if(!/^\d{8}$/.test(String(s))) return false;
+    var y=+s.slice(0,4),mo=+s.slice(4,6),d=+s.slice(6,8);
+    var dt=new Date(y,mo-1,d);
+    return dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d;
+  }
+  function fmt8(dt){
+    return ""+dt.getFullYear()+String(dt.getMonth()+1).padStart(2,"0")+
+      String(dt.getDate()).padStart(2,"0");
+  }
+  /* 起算日 + N(天/月) − 1 天 = 有效期至；月末按目标月最后一天钳制 */
+  function date8Add(s,n,unit){
+    if(!isValidDate8(s)||!(n>0)) return "";
+    var y=+s.slice(0,4),mo=+s.slice(4,6)-1,d=+s.slice(6,8);
+    var dt;
+    if(unit==="m"){
+      var t=new Date(y,mo+n,1);
+      var last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();
+      dt=new Date(t.getFullYear(),t.getMonth(),Math.min(d,last));
+    }else{
+      dt=new Date(y,mo,d); dt.setDate(dt.getDate()+n);
+    }
+    dt.setDate(dt.getDate()-1);
+    return fmt8(dt);
+  }
+  /* 从原表「配制日期 + 有效期至」反推一个默认的数值/单位，方便直接改 */
+  function guessDur(s,expiry){
+    var e=String(expiry||"").replace(/\D/g,"");
+    if(!isValidDate8(s)||!/^\d{8}$/.test(e)) return {n:"",u:"m"};
+    for(var k=1;k<=60;k++) if(date8Add(s,k,"m")===e) return {n:""+k,u:"m"};
+    var a=new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8));
+    var b=new Date(+e.slice(0,4),+e.slice(4,6)-1,+e.slice(6,8));
+    var days=Math.round((b-a)/86400000)+1;
+    return days>0?{n:""+days,u:"d"}:{n:"",u:"m"};
+  }
+  function date8Limit(){
+    var lim=new Date(); lim.setHours(0,0,0,0); lim.setDate(lim.getDate()-30);
+    return fmt8(lim);
+  }
+  function lrDateErr(s){
+    if(!isValidDate8(s)) return "日期要填 8 位真实数字（如 20261119）";
+    var t=today().replace(/-/g,"");
+    if(s>t) return "配制日期不能晚于今天（今天是 "+today()+"）";
+    if(s<date8Limit()) return "配制日期不能早于 30 天前（最早 "+date8Limit().replace(/(\d{4})(\d{2})(\d{2})/,"$1-$2-$3")+"）";
+    return null;
+  }
+  function lrSyncDyn(name,d){
+    [].forEach.call(document.querySelectorAll('.lr-dyn[data-lr^="std"]'),function(el){
+      if(el.getAttribute("data-std")!==name) return;
+      var key=el.getAttribute("data-lr");
+      if(key==="stdcode"&&d.code!=null) lrUpdateText(el,d.code);
+      if(key==="stdexp"&&d.expiry!=null) lrUpdateText(el,d.expiry);
+      if(key==="stdbatch"&&d.batch!=null) lrUpdateText(el,d.batch);
+    });
+  }
+  function lrSyncSolRow(name){
+    var o=lrSol()[name]||{};
+    [].forEach.call(document.querySelectorAll('.lr-solrow input[data-out]'),function(el){
+      if(el.dataset.name!==name) return;
+      if(el.dataset.out==="code"&&o.code!=null) el.value=o.code;
+      if(el.dataset.out==="expiry"&&o.expiry!=null) el.value=o.expiry;
+    });
+  }
+  function lrSetPrepDate(el){
+    var name=el.dataset.name, v=String(el.value||"").replace(/\D/g,"");
+    var err=lrDateErr(v);
+    if(err){ alert("【"+name+"】"+err+"，已恢复原值。");
+      el.value=(lrSol()[name]||{}).pdate||""; return; }
+    el.value=v;
+    var op=solParts(name,origCodeOf(name))||{prefix:"",suffix:"01"};
+    var O=lrSol(); if(!O[name]) O[name]={};
+    O[name].pdate=v;
+    O[name].code=op.prefix+"-"+v+"-"+op.suffix;
+    if(O[name].dur&&O[name].unit) O[name].expiry=date8Add(v,+O[name].dur,O[name].unit);
+    lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
+    lrStatMsg("【"+name+"】已生成编码 "+O[name].code+
+      (O[name].expiry?"，有效期至 "+O[name].expiry:"；填右边有效期可自动算有效期至"));
+  }
+  function lrSetDur(el){
+    var name=el.dataset.name, n=parseInt(el.value,10);
+    if(!(n>0&&n<=999)){ alert("【"+name+"】有效期要填 1~999 的整数，已恢复原值。");
+      el.value=(lrSol()[name]||{}).dur||""; return; }
+    var O=lrSol(); if(!O[name]) O[name]={};
+    O[name].dur=""+n;
+    var pd=O[name].pdate||(solParts(name,origCodeOf(name))||{}).date;
+    if(isValidDate8(pd)) O[name].expiry=date8Add(pd,n,O[name].unit||"m");
+    lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
+  }
+  function lrSetUnit(el){
+    var name=el.dataset.name, O=lrSol(); if(!O[name]) O[name]={};
+    O[name].unit=el.value;
+    var pd=O[name].pdate||(solParts(name,origCodeOf(name))||{}).date;
+    if(O[name].dur&&isValidDate8(pd)) O[name].expiry=date8Add(pd,+O[name].dur,el.value);
+    lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
+  }
+  /* 外购标准品：编码手填，但前缀/日期必须合法，否则弹窗并恢复 */
+  function lrSolCodeInput(el){
+    var name=el.dataset.name, v=String(el.value||"");
+    var op=solParts(name,origCodeOf(name)), seg=v.split("-");
+    if(op&&seg[0]!==op.prefix){
+      alert("【"+name+"】标准溶液代码前缀应为 "+op.prefix+
+        "，不能填 "+(seg[0]||"空")+"，已恢复原值。");
+      var o0=lrSol()[name]||{}; el.value=o0.code!=null?o0.code:origCodeOf(name); return;
+    }
+    if(seg[1]&&!isValidDate8(seg[1])){
+      alert("【"+name+"】编码里的日期不是有效日期（应为 8 位，如 20241031），已恢复原值。");
+      var o1=lrSol()[name]||{}; el.value=o1.code!=null?o1.code:origCodeOf(name); return;
+    }
+    lrSetSol(name,"code",v);
+  }
+  function lrOpenCal(btn){
+    var wrap=btn.parentNode, cal=wrap.querySelector(".lr-calhidden");
+    if(!cal) return;
+    var txt=wrap.querySelector("input.lr-pdate"), v=txt?(txt.value||"").replace(/\D/g,""):"";
+    if(isValidDate8(v)) cal.value=v.slice(0,4)+"-"+v.slice(4,6)+"-"+v.slice(6,8);
+    try{ cal.showPicker(); }catch(e){ cal.focus(); cal.click(); }
+  }
+  function lrCalPick(cal){
+    var wrap=cal.parentNode, txt=wrap.querySelector("input.lr-pdate");
+    if(!txt) return;
+    txt.value=(cal.value||"").replace(/-/g,"");
+    lrSetPrepDate(txt);
+  }
   function lrSol(){
     if(!LRSOL){
       LRSOL=global.Store?global.Store.get("lab.record.sol.v1",null):null;
@@ -995,15 +1142,46 @@
       return '<div class="lr-solempty">'+esc(p?p.name:"当前范围")+
         '的 Word 原表里没有标准溶液，不用维护。点上面的项目或「全部」查看其他项目。</div>';
     }
+    var O=lrSol();
     var sols=rows.map(function(x){
+      var o=O[x.name]||{}, op=solParts(x.name,origCodeOf(x.name));
+      var bought=!!(op&&op.bought);
       var batch = (x.batch!=null && x.batch!=="")
         ? '<label>批号<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.batch)+'" '+
             'oninput="LAB.lrSetSol(this.dataset.name,\'batch\',this.value)"></label>' : '';
-      return '<div class="lr-solrow"><b>'+esc(x.name)+'</b>'+
-        '<label>编码<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.code)+'" '+
-          'oninput="LAB.lrSetSol(this.dataset.name,\'code\',this.value)"></label>'+
-        '<label>有效期至<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.expiry)+'" '+
-          'oninput="LAB.lrSetSol(this.dataset.name,\'expiry\',this.value)"></label>'+batch+'</div>';
+      var head='<div class="lr-solrow"><div class="lr-soltitle"><b>'+esc(x.name)+'</b>'+
+        '<span class="lr-solkind '+(bought?"ext":"prep")+'">'+(bought?"外购·手填":"需配制·自动")+'</span></div>';
+      if(bought){
+        /* 外购标准品：编码/有效期至手填（生产商标注），前缀校验、日期校验 */
+        return head+
+          '<label>编码（前缀固定 '+esc(op.prefix)+'）<input type="text" data-name="'+esc(x.name)+'" '+
+            'value="'+esc(x.code)+'" placeholder="'+esc(op.prefix)+'-YYYYMMDD-字母" '+
+            'onchange="LAB.lrSolCodeInput(this)"></label>'+
+          '<label>有效期至（厂商标注）<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.expiry)+'" '+
+            'oninput="LAB.lrSetSol(this.dataset.name,\'expiry\',this.value)"></label>'+batch+'</div>';
+      }
+      /* 需配制：配制日期（手输/日历）→ 编码；有效期数值+单位 → 有效期至 */
+      var pdate=o.pdate||(op&&op.date)||"", gd=guessDur(pdate,x.expiry);
+      var dur=(o.dur!=null?o.dur:gd.n), unit=o.unit||gd.u;
+      return head+
+        '<label>配制日期<span class="lr-datein">'+
+          '<input class="lr-pdate" type="text" inputmode="numeric" maxlength="8" '+
+            'data-name="'+esc(x.name)+'" value="'+esc(pdate)+'" placeholder="如 20261119" '+
+            'onchange="LAB.lrSetPrepDate(this)">'+
+          '<button type="button" class="lr-calbtn" title="日历选择" onclick="LAB.lrOpenCal(this)">📅</button>'+
+          '<input class="lr-calhidden" type="date" data-name="'+esc(x.name)+'" onchange="LAB.lrCalPick(this)">'+
+          '</span></label>'+
+        '<label>编码（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="code" '+
+          'value="'+esc(x.code)+'" readonly></label>'+
+        '<label>有效期<span class="lr-durow">'+
+          '<input type="number" min="1" max="999" value="'+esc(dur)+'" data-name="'+esc(x.name)+'" '+
+            'placeholder="N" onchange="LAB.lrSetDur(this)">'+
+          '<select data-name="'+esc(x.name)+'" onchange="LAB.lrSetUnit(this)">'+
+            '<option value="d"'+(unit==="d"?" selected":"")+'>天</option>'+
+            '<option value="m"'+(unit==="m"?" selected":"")+'>月</option></select></span></label>'+
+        '<label>有效期至（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="expiry" '+
+          'value="'+esc(x.expiry)+'" readonly></label>'+
+        batch+'</div>';
     });
     /* ★ 低聚半乳糖对照品的三项（原表正文下划线）本来就是标准品，
        直接作为标准溶液维护里和其他溶液并列的一行，不另起面板。
@@ -1030,7 +1208,10 @@
       lrProjects().length+' 份原表里只有 '+lrSolProjects().length+
       ' 个项目有标准溶液，这里默认只列其中一个项目；'+
       '点上面的项目名切换，点「全部」才一次看全。'+
-      '哪种溶液过期重新配制了，改一次本机记住，不用每次打印都改。</div>'+
+      '哪种溶液过期重新配制了，改一次本机记住，不用每次打印都改。'+
+      '<br><b>需配制</b>的：填「配制日期」（可手写或点 📅 选，只收今天起 30 天内）自动生成编码，'+
+      '填「有效期」数字选天/月自动生成有效期至（如 20261119 + 3月 → 20270218）。'+
+      '<b>外购</b>的：编码和有效期至手填，前缀填错会弹窗拦下。</div>'+
       lrSolTabsHtml(v)+'<div id="lrSolBody">'+lrSolBodyHtml(v)+'</div></details>';
   }
   function lrSolRender(){
@@ -2196,7 +2377,20 @@
     lrSetSol: lrSetSol,
     lrSolView: lrSolView,
     lrSolRows: lrSolRows,
-    lrSetSolView: lrSetSolView
+    lrSetSolView: lrSetSolView,
+    /* 标准溶液编码/有效期自动生成 */
+    solParts: solParts,
+    solOrig: solOrig,
+    isValidDate8: isValidDate8,
+    date8Add: date8Add,
+    guessDur: guessDur,
+    lrDateErr: lrDateErr,
+    lrSetPrepDate: lrSetPrepDate,
+    lrSetDur: lrSetDur,
+    lrSetUnit: lrSetUnit,
+    lrSolCodeInput: lrSolCodeInput,
+    lrOpenCal: lrOpenCal,
+    lrCalPick: lrCalPick
   };
 
 })(window);
