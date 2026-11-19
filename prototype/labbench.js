@@ -1070,7 +1070,7 @@
     }
     window.__labauthLoading=[run];
     var s=document.createElement("script");
-    s.src="labauth.js?v=20261119f";
+    s.src="labauth.js?v=20261119g";
     s.onload=function(){
       var q=window.__labauthLoading||[]; window.__labauthLoading=null;
       q.forEach(function(f){ f(!!(global.LABAUTH && global.LABAUTH.editGuard)); });
@@ -1134,8 +1134,12 @@
   function _lrSetPrepDate(el){
     var name=el.dataset.name, v=String(el.value||"").replace(/\D/g,"");
     var err=lrDateErr(v);
-    if(err){ lrAlert("【"+name+"】"+err+"，已恢复原值。");
-      el.value=(lrSol()[name]||{}).pdate||""; return; }
+    if(err){
+      /* 恢复优先级：已存的 pdate → Word 原表日期 → 空。绝不把框清空。 */
+      var d0=lrSol()[name]||{}, op0=solParts(name,origCodeOf(name))||{};
+      el.value=d0.pdate||op0.date||"";
+      lrAlert("【"+name+"】"+err+"，已恢复原值。"); return;
+    }
     el.value=v;
     var op=solParts(name,origCodeOf(name))||{prefix:"",suffix:"01"};
     var O=lrSol(); if(!O[name]) O[name]={};
