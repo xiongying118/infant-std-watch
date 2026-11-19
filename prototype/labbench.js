@@ -62,8 +62,8 @@
   }
   var LRGROUP = null;         // ★ 分类：phys 理化组 / chrom 色谱组 / all 全部
   var LRGROUP_READ = false;
-  var LRSUB   = "all";        // ★ 色谱组二级子组：GJ/MYZ/FLM/WFX/PGY/SHS，all=全部
-  var LRSUB_READ = false;
+  var LRSUBMAP = {};          // ★ 三组二级子组选择 {chrom,phys,atom}，每组各一个
+  var LRSUBREAD = false;
   var LRNOTES = true;         // 兼容旧调用（方法说明已在原表内）
 
   function esc(s){
@@ -769,6 +769,13 @@
        过期重配才在「标准溶液维护」改一次，改完全站按溶液名称记住。
      ================================================================ */
   function lrProjects(){ return (global.LABREC && global.LABREC.projects) || []; }
+  /* ★ 2026-11-19 最终口径：操作人只管「标准溶液维护的填写密码」，不锁项目。
+     所有项目、勾选、打印对所有人开放；只有改标准溶液要输该项目负责人的口令。
+     下面三个函数保留给内部调用，恒放行——这样原来的展示/勾选/打印逻辑一行都不用改。 */
+  function lrAuthOn(){ return false; }
+  function lrCan(k){ return true; }
+  function lrVisiblePs(){ return lrProjects(); }
+  function authChanged(){ render(); }
   function lrProject(k){
     var ps=lrProjects();
     for(var i=0;i<ps.length;i++) if(ps[i].key===k) return ps[i];
@@ -790,34 +797,48 @@
     }
     return LRGROUP||"phys";
   }
-  /* ★ 色谱组二级子组（2026-11-19）：GJ/MYZ/FLM/WFX/PGY/SHS，定义读 LABREC.groups[chrom].subs */
-  function lrSubs(){
+  /* ★ 二级子组（2026-11-19，11-19 晚泛化到三组）：
+     色谱 GJ/MYZ/FLM/WFX/PGY/SHS、理化 HYF/PQQ/ZSY、原子 ZY/DLJ。
+     定义读 LABREC.groups[组].subs，每组各记一个子组选择，互不串。 */
+  function lrSubs(g){
+    g=g||lrGroup();
     var G=(global.LABREC&&global.LABREC.groups)||[];
-    for(var i=0;i<G.length;i++) if(G[i].key==="chrom"&&G[i].subs) return G[i].subs;
+    for(var i=0;i<G.length;i++) if(G[i].key===g&&G[i].subs) return G[i].subs;
     return [];
   }
-  function lrSub(){
-    if(!LRSUB_READ){
-      LRSUB_READ=true;
+  function lrSubMap(){
+    if(!LRSUBREAD){
+      LRSUBREAD=true;
       var v=global.Store?global.Store.get("lab.record.subgroup.v1",null):null;
-      var valid=v==="all"||lrSubs().some(function(x){ return x.key===v; });
-      LRSUB=valid?v:"all";
+      LRSUBMAP={};
+      /* 兼容老版：单字符串（色谱子组）→ 归到 chrom */
+      if(typeof v==="string"){ LRSUBMAP.chrom=v; }
+      else if(v&&typeof v==="object"){
+        Object.keys(v).forEach(function(k){ LRSUBMAP[k]=v[k]; });
+      }
     }
-    return LRSUB;
+    return LRSUBMAP;
+  }
+  function lrSub(g){
+    g=g||lrGroup();
+    var m=lrSubMap(), v=m[g], S=lrSubs(g);
+    var valid=v==="all"||S.some(function(x){ return x.key===v; });
+    return valid?v:"all";
   }
   function lrSetSub(s){
-    var ok=(s==="all")||lrSubs().some(function(x){ return x.key===s; });
-    LRSUB=ok?s:"all";
+    var g=lrGroup(), S=lrSubs(g);
+    var ok=(s==="all")||S.some(function(x){ return x.key===s; });
+    lrSubMap()[g]=ok?s:"all";
     /* 切子组只影响「看哪些项目」，不擅自改已勾项目；全选/清空按当前子组来 */
     lrSave(); render();
   }
   function lrGroupProjects(){
-    var g=lrGroup();
-    var ps=g==="all"?lrProjects():lrProjects().filter(function(p){
+    var g=lrGroup(), base=lrVisiblePs();
+    var ps=g==="all"?base:base.filter(function(p){
       return (p.group||"phys")===g; });
-    /* 色谱组再按二级子组过滤；all=显示全部 35 项 */
-    if(g==="chrom"&&lrSub()!=="all"){
-      var sub=lrSub();
+    /* 三组都再按二级子组过滤；all=显示整组 */
+    if(g!=="all"&&lrSub(g)!=="all"){
+      var sub=lrSub(g);
       ps=ps.filter(function(p){ return p.sub===sub; });
     }
     return ps;
@@ -831,22 +852,23 @@
   }
   function lrGroupTabsHtml(){
     var g=lrGroup();
+    var vis=lrVisiblePs();
     var h='<div class="lr-sub">项目分类</div><div class="lr-grouptabs" id="lrGroupTabs">'+lrGroups().map(function(x){
-      var n=x.key==="all"?lrProjects().length:
-        lrProjects().filter(function(p){ return (p.group||"phys")===x.key; }).length;
-      return '<button type="button" class="lr-grouptab '+(g===x.key?"on":"")+'" '+
+      var n=x.key==="all"?vis.length:
+        vis.filter(function(p){ return (p.group||"phys")===x.key; }).length;
+      return '<button type="button" class="lr-grouptab '+(g===x.key?"on":"")+'"'+(n?"":" disabled")+' '+
         'onclick="LAB.lrSetGroup(\''+esc(x.key)+'\')">'+esc(x.name)+' <i>'+n+'</i></button>';
     }).join("")+'</div>';
-    /* 仅在色谱组下显示二级子组 tab */
-    if(g==="chrom"){
-      var sub=lrSub();
-      var allChrom=lrProjects().filter(function(p){ return (p.group||"phys")==="chrom"; });
+    /* ★ 三组（chrom/phys/atom）各有子组时都显示二级子组 tab */
+    if(g!=="all" && lrSubs(g).length){
+      var sub=lrSub(g);
+      var allG=vis.filter(function(p){ return (p.group||"phys")===g; });
       h+='<div class="lr-subgroups" id="lrSubGroups">'+
         '<button type="button" class="lr-subgroup '+(sub==="all"?"on":"")+'" '+
-          'onclick="LAB.lrSetSub(\'all\')">全部 <i>'+allChrom.length+'</i></button>'+
-        lrSubs().map(function(x){
-          var n=allChrom.filter(function(p){ return p.sub===x.key; }).length;
-          return '<button type="button" class="lr-subgroup '+(sub===x.key?"on":"")+'" '+
+          'onclick="LAB.lrSetSub(\'all\')">全部 <i>'+allG.length+'</i></button>'+
+        lrSubs(g).map(function(x){
+          var n=allG.filter(function(p){ return p.sub===x.key; }).length;
+          return '<button type="button" class="lr-subgroup '+(sub===x.key?"on":"")+'"'+(n?"":" disabled")+' '+
             'onclick="LAB.lrSetSub(\''+esc(x.key)+'\')">'+esc(x.name)+' <i>'+n+'</i></button>';
         }).join("")+'</div>';
     }
@@ -1029,11 +1051,51 @@
     var o=lrSol()[name]||{};
     [].forEach.call(document.querySelectorAll('.lr-solrow input[data-out]'),function(el){
       if(el.dataset.name!==name) return;
+      /* ★ 只读跟随卡：配制日期/编码/有效期至三处都跟着主项刷新 */
+      if(el.dataset.out==="pdate"&&o.pdate!=null) el.value=o.pdate;
       if(el.dataset.out==="code"&&o.code!=null) el.value=o.code;
       if(el.dataset.out==="expiry"&&o.expiry!=null) el.value=o.expiry;
     });
   }
-  function lrSetPrepDate(el){
+  /* ★★ 标准溶液编辑闸门（2026-11-19 最终口径）：
+     所有项目/勾选/打印都开放；只有改标准溶液要输该项负责人的口令。
+     el = 触发编辑的输入框（用于失败时恢复原值），core = 真正执行写入的逻辑。 */
+  function solEdit(el, core, nameOverride){
+    var name=nameOverride || (el && el.dataset ? el.dataset.name : "");
+    var old=el?el.value:null;
+    /* 取消/输错口令时恢复：优先读本机已存的值（onchange 时 el 已是新值，
+       old 不可靠），没存过就留空或原表值。字段按 input 类型映射。 */
+    var restore=function(){
+      if(!el) return;
+      var O=(global.LAB.lrSol&&global.LAB.lrSol())||{};
+      var d=O[name]||{}, key=null;
+      if(el.classList && el.classList.contains("lr-pdate")) key="pdate";
+      else if(el.dataset && el.dataset.out==="code") key="code";
+      else if(el.dataset && el.dataset.out==="expiry") key="expiry";
+      else if(el.type==="number") key="dur";
+      if(key && d[key]!=null){ el.value=d[key]; return; }
+      if(nameOverride==="gos3" && el.dataset && el.dataset.mat){
+        var M=global.LAB.lrMat?global.LAB.lrMat():{}; el.value=M[el.dataset.mat]!=null?M[el.dataset.mat]:old;
+        return;
+      }
+      el.value=old;
+    };
+    if(global.LABAUTH && global.LABAUTH.editGuard){
+      global.LABAUTH.editGuard(name, core, restore);
+    } else core();
+  }
+  /* batch 只改批号，但也是标准溶液维护的一部分，同样要口令 */
+  function lrSetSolBatch(el){
+    var name=el.dataset.name, v=el.value;
+    solEdit(el, function(){ lrSetSol(name,"batch",v); });
+  }
+  /* 低聚半乳糖对照品三项（gos3 项目，归 SHS）也是标准溶液，改它要口令 */
+  function lrSetMatGuard(el){
+    var k=el.dataset.mat, v=el.value;
+    solEdit(el, function(){ lrSetMat(k,v); }, "gos3");
+  }
+  function lrSetPrepDate(el){ solEdit(el, function(){ _lrSetPrepDate(el); }); }
+  function _lrSetPrepDate(el){
     var name=el.dataset.name, v=String(el.value||"").replace(/\D/g,"");
     var err=lrDateErr(v);
     if(err){ lrAlert("【"+name+"】"+err+"，已恢复原值。");
@@ -1070,7 +1132,8 @@
       (nowUse?"（现配现用，有效期至按 Word 原表）":
        (O[name].expiry?"，有效期至 "+O[name].expiry:"；填右边有效期可自动算有效期至")));
   }
-  function lrSetDur(el){
+  function lrSetDur(el){ solEdit(el, function(){ _lrSetDur(el); }); }
+  function _lrSetDur(el){
     var name=el.dataset.name, n=parseInt(el.value,10);
     if(!(n>0&&n<=999)){ lrAlert("【"+name+"】有效期要填 1~999 的整数，已恢复原值。");
       el.value=(lrSol()[name]||{}).dur||""; return; }
@@ -1089,7 +1152,8 @@
     lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
     if(O[name].expiry){ var w=checkExpiryLogic(name,pd,O[name].expiry); if(w) lrAlert(w); }
   }
-  function lrSetUnit(el){
+  function lrSetUnit(el){ solEdit(el, function(){ _lrSetUnit(el); }); }
+  function _lrSetUnit(el){
     var name=el.dataset.name, O=lrSol(); if(!O[name]) O[name]={};
     O[name].unit=el.value;
     var pd=O[name].pdate||(solParts(name,origCodeOf(name))||{}).date;
@@ -1124,7 +1188,8 @@
     return n;
   }
   /* 外购标准品有效期至：厂商标注日期，可带 - . / 分隔；校验格式 + 不早于入库日期 */
-  function lrSolExpiryInput(el){
+  function lrSolExpiryInput(el){ solEdit(el, function(){ _lrSolExpiryInput(el); }); }
+  function _lrSolExpiryInput(el){
     var name=el.dataset.name, v=String(el.value||"").trim();
     var digits=v.replace(/\D/g,"");
     if(digits && !isValidDate8(digits)){
@@ -1140,7 +1205,8 @@
     lrSetSol(name,"expiry",v);
   }
   /* 外购标准品：编码手填，但前缀/日期必须合法，否则弹窗并恢复 */
-  function lrSolCodeInput(el){
+  function lrSolCodeInput(el){ solEdit(el, function(){ _lrSolCodeInput(el); }); }
+  function _lrSolCodeInput(el){
     var name=el.dataset.name, v=String(el.value||"");
     var op=solParts(name,origCodeOf(name)), seg=v.split("-");
     if(op&&seg[0]!==op.prefix){
@@ -1170,9 +1236,10 @@
   function lrCalPick(cal){
     var wrap=cal.parentNode, txt=wrap.querySelector("input.lr-pdate");
     if(!txt) return;
-    txt.value=(cal.value||"").replace(/-/g,"");
-    lrSetPrepDate(txt);
-    lrCalClose(cal);
+    var old=txt.value, picked=(cal.value||"").replace(/-/g,"");
+    solEdit(txt, function(){
+      txt.value=picked; _lrSetPrepDate(txt); lrCalClose(cal);
+    }, function(){ txt.value=old; cal.value=old.slice(0,4)+"-"+old.slice(4,6)+"-"+old.slice(6,8); });
   }
   function lrSol(){
     if(!LRSOL){
@@ -1183,7 +1250,7 @@
   }
   function lrAllSolutions(){
     var seen={},out=[],O=lrSol();
-    lrProjects().forEach(function(p){
+    lrVisiblePs().forEach(function(p){
       (p.solutions||[]).forEach(function(s){
         if(seen[s.name]) return;
         seen[s.name]=1;
@@ -1201,13 +1268,13 @@
      默认只看当前项目自己的溶液，只有点「全部」才把 9 个项目的都列出来。
      9 份 Word 原表里只有 4 个项目含标准溶液表，其余项目不显示空卡片。 */
   function lrSolProjects(){
-    return lrProjects().filter(function(p){ return (p.solutions||[]).length; });
+    return lrVisiblePs().filter(function(p){ return (p.solutions||[]).length; });
   }
   function lrSolView(){
     if(!LRSOLVIEW_READ){
       LRSOLVIEW_READ=true;
       var v=global.Store?global.Store.get("lab.record.solview.v1",null):null;
-      LRSOLVIEW=(v==="all"||lrProject(v))?v:null;
+      LRSOLVIEW=(v==="all"||(lrProject(v)&&lrCan(v)))?v:null;
     }
     if(LRSOLVIEW) return LRSOLVIEW;
     var sel=lrSelected();
@@ -1224,30 +1291,28 @@
   function lrSolRows(v){
     var O=lrSol(), seen={}, out=[], src=[];
     if(v==="all"){
-      lrProjects().forEach(function(p){ src=src.concat(p.solutions||[]); });
+      lrVisiblePs().forEach(function(p){ src=src.concat(p.solutions||[]); });
     } else {
-      var p=lrProject(v); src=(p&&p.solutions)||[];
+      var p=lrProject(v);
+      /* ★ 越权拦截：查看范围不是本人项目时退回可见的第一个，绝不显示别人的溶液 */
+      if(p && !lrCan(v)) p=null;
+      src=(p&&p.solutions)||[];
     }
-    /* ★ 同批配制联动组：组内只保留主项一行作为统一配置入口，
-       其余成员的值由 lrApplyLink 一起写入、打印时各自从 lrSol() 取。 */
-    var linkedDone={};
+    /* ★ 同批配制联动（2026-11-19 按用户要求改）：8 种全部列出来，各自显示自己的
+       编码/有效期至；只在主项（钠）保留一处可填的配制日期+有效期入口。
+       改主项时 lrApplyLink 把 8 种各自前缀的编码/有效期都写好，
+       其余 7 行靠 lrSyncSolRow 按各自 data-name 跟着刷新。 */
     src.forEach(function(s){
       if(seen[s.name]) return;
-      var link=solLinkOf(s.name);
-      if(link){
-        if(linkedDone[link.master]) return;   // 组内已有主项，跳过其余成员
-        // 若当前遍历到的不是主项、但主项也在列表里，等主项出现再收（保证用主项做入口）
-        if(s.name!==link.master && src.some(function(q){return q.name===link.master;})) return;
-        linkedDone[link.master]=1;
-      }
       seen[s.name]=1;
-      var dispName=link?link.master:s.name;
-      var src0=link?(function(){for(var i=0;i<src.length;i++)if(src[i].name===link.master)return src[i];return s;})():s;
-      var o=O[dispName]||{};
-      out.push({name:dispName, link:link, members:link?link.names:[s.name],
-                code:o.code!=null?o.code:src0.code,
-                expiry:o.expiry!=null?o.expiry:src0.expiry,
-                batch:o.batch!=null?o.batch:src0.batch});
+      var link=solLinkOf(s.name);
+      var o=O[s.name]||{};
+      out.push({name:s.name, link:link, isMaster:link?(s.name===link.master):true,
+                members:link?link.names:[s.name],
+                pdate:o.pdate||"",
+                code:o.code!=null?o.code:s.code,
+                expiry:o.expiry!=null?o.expiry:s.expiry,
+                batch:o.batch!=null?o.batch:s.batch});
     });
     return out;
   }
@@ -1275,10 +1340,27 @@
       var bought=!!(op&&op.bought);
       var batch = (x.batch!=null && x.batch!=="")
         ? '<label>批号<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.batch)+'" '+
-            'oninput="LAB.lrSetSol(this.dataset.name,\'batch\',this.value)"></label>' : '';
+            'oninput="LAB.lrSetSolBatch(this)"></label>' : '';
+      /* ★ 同批配制的 8 种：每种都单独一张卡列出来（各自的编码/有效期至），
+         但只有主项（钠）给可填的配制日期+有效期；其余 7 种这里是只读展示，
+         改主项时由 lrApplyLink+lrSyncSolRow 各自刷新，绝不出现第二个可填入口。 */
+      if(x.link && !x.isMaster){
+        var mo=o, mop=solParts(x.name,origCodeOf(x.name));
+        var mpdate=mo.pdate||(mop&&mop.date)||"";
+        return '<div class="lr-solrow lr-solfollow"><div class="lr-soltitle"><b>'+
+          esc(x.name)+' 标准溶液</b>'+
+          '<span class="lr-solkind link">跟随主项</span></div>'+
+          '<label>配制日期<input type="text" data-name="'+esc(x.name)+'" data-out="pdate" '+
+            'value="'+esc(mpdate)+'" readonly></label>'+
+          '<label>编码（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="code" '+
+            'value="'+esc(x.code)+'" readonly></label>'+
+          '<label>有效期至（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="expiry" '+
+            'value="'+esc(x.expiry)+'" readonly></label>'+
+          '<div class="lr-followtip">与主项一起配制，改上面那一处，这里自动跟着更新。</div></div>';
+      }
       var linkNote = x.link
-        ? '<span class="lr-solkind link">同批配制·'+x.members.length+' 种联动</span>' : '';
-      var head='<div class="lr-solrow"><div class="lr-soltitle"><b>'+
+        ? '<span class="lr-solkind link">'+x.members.length+' 种同批</span>' : '';
+      var head='<div class="lr-solrow'+(x.link?' lr-solmaster':'')+'"><div class="lr-soltitle"><b>'+
         esc(x.link?x.link.label:x.name)+'</b>'+
         '<span class="lr-solkind '+(bought?"ext":"prep")+'">'+(bought?"外购·手填":"需配制·自动")+'</span>'+
         linkNote+'</div>'+
@@ -1330,7 +1412,7 @@
       Object.keys(LR_MAT_KEYS).forEach(function(k){
         mat+='<label>'+LR_MAT_KEYS[k]+'<input type="text" data-mat="'+k+'" '+
           'value="'+esc(M[k])+'" '+
-          'oninput="LAB.lrSetMat(this.dataset.mat,this.value)"></label>';
+          'oninput="LAB.lrSetMatGuard(this)"></label>';
       });
       sols.push('<div class="lr-solrow"><b>低聚半乳糖对照品</b>'+
         '<div class="lr-matgrid">'+mat+'</div></div>');
@@ -1344,7 +1426,7 @@
       '<summary id="lrSolSummary">标准溶液维护（当前：'+esc(nm)+'）· 只列这个项目的，点「全部」才出全部</summary>'+
       '<div class="muted" style="font-size:11.5px;line-height:1.6;margin:8px 0 2px">'+
       '编码、批号和有效期至<b>打印时不用填</b>，默认就是 Word 原表里的值。'+
-      lrProjects().length+' 份原表里只有 '+lrSolProjects().length+
+      lrVisiblePs().length+' 份原表里只有 '+lrSolProjects().length+
       ' 个项目有标准溶液，这里默认只列其中一个项目；'+
       '点上面的项目名切换，点「全部」才一次看全。'+
       '哪种溶液过期重新配制了，改一次本机记住，不用每次打印都改。'+
@@ -1366,7 +1448,7 @@
     if(body) body.innerHTML=lrSolBodyHtml(v);
   }
   function lrSetSolView(v){
-    LRSOLVIEW=(v==="all"||lrProject(v))?v:null;
+    LRSOLVIEW=(v==="all"||(lrProject(v)&&lrCan(v)))?v:null;
     lrSave(); lrSolRender();
   }
   function lrSel(){
@@ -1380,7 +1462,8 @@
   }
   function lrSelected(){
     var s=lrSel();
-    return lrProjects().filter(function(p){ return s[p.key]; });
+    /* ★ 只返回当前操作人负责、且已勾选的项目，打印/统计绝不越权 */
+    return lrVisiblePs().filter(function(p){ return s[p.key] && lrCan(p.key); });
   }
   function lrSave(){
     if(!global.Store) return;
@@ -1393,7 +1476,7 @@
     lrSolView();
     global.Store.set("lab.record.solview.v1", LRSOLVIEW);
     global.Store.set("lab.record.group.v1", lrGroup());
-    global.Store.set("lab.record.subgroup.v1", lrSub());
+    global.Store.set("lab.record.subgroup.v1", lrSubMap());
     global.Store.set("lab.record.sel.v1",
       lrProjects().filter(function(p){ return s[p.key]; }).map(function(p){ return p.key; }));
   }
@@ -1571,11 +1654,12 @@
     return lrActiveRows().length*lrSelected().length;
   }
   function viewRecordByProject(){
-    var ps=lrProjects(), s=lrSel(), n=lrSelected().length, gp=lrGroupProjects();
+    var ps=lrVisiblePs(), s=lrSel(), n=lrSelected().length, gp=lrGroupProjects();
     var rows=lrActiveRows().length, total=lrPrintCount();
-    var h='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
+    var h=(global.LABAUTH&&global.LABAUTH.barHtml)?global.LABAUTH.barHtml():'';
+    h+='<div class="card" style="margin-bottom:12px"><div class="card-h">'+
       '<h3>原始记录 · 按检测项目出模板</h3>'+
-      '<span class="muted">共 '+ps.length+' 个检测项目 · 当前分类 '+
+      '<span class="muted">共 '+ps.length+' 个检测项目'+(lrAuthOn()?'（本人负责）':'')+' · 当前分类 '+
         (lrGroup()==="all"?"全部":((lrGroups().filter(function(x){
           return x.key===lrGroup(); })[0]||{}).name||"理化组"))+
         ' '+gp.length+' 个</span><div class="sp"></div>'+
@@ -1866,6 +1950,7 @@
     lrSolRender();
   }
   function lrToggle(k){
+    if(!lrCan(k)){ lrAlert("【"+((lrProject(k)||{}).name||k)+"】不是当前操作人负责的项目，已锁定不能改。切到对应的操作人才能用。"); return; }
     var s=lrSel();
     if(s[k]){
       delete s[k];
@@ -1881,7 +1966,14 @@
     LRSOLVIEW="all";                          // ★ 只有点「全部/全选」才显示全部
     lrSave(); lrRedraw();
   }
-  function lrNone(){ LRSEL={}; LRSOLVIEW=null; lrSave(); lrRedraw(); }
+  function lrNone(){
+    /* ★ 清空只清本人负责的项目，别把同事已勾的从公共数据里删掉 */
+    if(lrAuthOn()){
+      var s=lrSel();
+      lrVisiblePs().forEach(function(p){ delete s[p.key]; });
+    } else LRSEL={};
+    LRSOLVIEW=null; lrSave(); lrRedraw();
+  }
   function lrNotes(){ return false; }   /* 兼容旧调用，方法说明已在原表内 */
   function lrMode(m){ LRMODE=m; render(); }
 
@@ -1900,7 +1992,13 @@
   ].join("");
 
   function lrPrint(only){
-    var picked=only?[lrProject(only)].filter(Boolean):lrSelected();
+    var p0=only?lrProject(only):null;
+    if(only && p0 && !lrCan(only)){
+      var st0=document.getElementById("lrStat");
+      if(st0) st0.textContent="【"+p0.name+"】不是当前操作人负责的项目，已锁定不能打印。";
+      return;
+    }
+    var picked=only?[p0].filter(Boolean):lrSelected();
     var st=document.getElementById("lrStat");
     if(!picked.length){ if(st) st.textContent="先勾一个检测项目再打印。"; return; }
     /* ★ 批量：样品清单每一行 × 勾选的每个项目，一次全部送打印 */
@@ -2514,6 +2612,8 @@
     lrSol: lrSol,
     lrAllSolutions: lrAllSolutions,
     lrSetSol: lrSetSol,
+    lrSetSolBatch: lrSetSolBatch,
+    lrSetMatGuard: lrSetMatGuard,
     lrSolView: lrSolView,
     lrSolRows: lrSolRows,
     lrSetSolView: lrSetSolView,
@@ -2535,7 +2635,12 @@
     lrApplyLink: lrApplyLink,
     lrOpenCal: lrOpenCal,
     lrCalPick: lrCalPick,
-    lrCalClose: lrCalClose
+    lrCalClose: lrCalClose,
+    /* 按操作人锁项目（共用电脑） */
+    lrAuthChanged: authChanged,
+    lrAuthOn: lrAuthOn,
+    lrCan: lrCan,
+    lrVisiblePs: lrVisiblePs
   };
 
 })(window);

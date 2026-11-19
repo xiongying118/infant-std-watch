@@ -1202,6 +1202,13 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .lr-solkind.prep{background:#e7f4ea;color:#15803d}
 .lr-solkind.ext{background:#fff3e0;color:#a16207}
 .lr-solkind.link{background:#e8f0fa;color:#1d4ed8;margin-left:6px}
+/* ★ 同批配制主项卡：字段单列自上而下，配制日期/编码/有效期/有效期至按序排，
+   不左右分栏（用户要求「别放右边」）；8 种全部列出来，其余 7 种只读跟随 */
+.lr-solmaster{grid-template-columns:1fr}
+.lr-solmaster .lr-linktip,.lr-solfollow .lr-followtip{grid-column:1/-1}
+.lr-solfollow{background:var(--bg-sub,#f8fafc)}
+.lr-solfollow .lr-soltitle b{color:var(--ink2)}
+.lr-followtip{font-size:10.5px;line-height:1.5;color:#64748b;margin-top:2px}
 .lr-linktip{font-size:11px;line-height:1.5;color:#1d4ed8;background:#f0f6ff;
   border-left:3px solid #3b82f6;padding:5px 9px;margin:4px 0 2px;border-radius:0 4px 4px 0}
 .lr-datein{position:relative;display:flex;align-items:stretch;gap:4px;margin-top:3px}
@@ -1221,6 +1228,39 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .lr-durow select{flex:0 0 58px;padding:5px 4px;border:1px solid var(--line);border-radius:5px;
   background:var(--panel);color:var(--ink);font-family:inherit;font-size:12px;cursor:pointer}
 .lr-solrow input[readonly]{background:var(--bg-sub,#f4f6f9);color:var(--ink2);font-variant-numeric:tabular-nums}
+/* ★★ 按操作人锁项目：顶部身份条（共用电脑，切人需口令） */
+.la-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:12px;padding:9px 13px;
+  border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:7px;
+  background:var(--panel);font-size:12.5px}
+.la-bar.la-off{border-left-color:#94a3b8;background:var(--bg-sub,#f8fafc)}
+.la-dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;flex:0 0 auto}
+.la-dot.on{background:#15803d;box-shadow:0 0 0 3px rgba(21,128,61,.14)}
+.la-bar b{color:var(--ink);font-weight:700}
+.la-desc{color:var(--ink3);font-size:11.5px}
+.la-sp{flex:1}
+.la-tip{font-size:12px;color:var(--ink2);line-height:1.6;margin-bottom:10px}
+.la-addbar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);
+  padding:9px 0;border-top:1px dashed var(--line)}
+.la-oplist{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.la-opcard{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 14px;
+  border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer;
+  font-family:inherit;color:var(--ink);text-align:left}
+.la-opcard:hover{border-color:var(--brand)}
+.la-opcard.on{border-color:var(--brand);background:rgba(37,99,235,.07)}
+.la-opcard b{font-size:13px}
+.la-opcard span{font-size:11px;color:var(--ink3)}
+.la-projhead{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:14px 0 6px;font-size:13px;color:var(--ink)}
+.la-projwrap{max-height:42vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:10px}
+.la-group{margin-bottom:10px}
+.la-gname{font-size:11.5px;color:var(--ink3);margin-bottom:5px;font-weight:600}
+.la-chips{display:flex;flex-wrap:wrap;gap:6px}
+.la-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;font-size:11.5px;
+  border:1px solid var(--line);border-radius:999px;cursor:pointer;color:var(--ink2)}
+.la-chip.on{border-color:var(--brand);background:rgba(37,99,235,.08);color:var(--brand)}
+.la-chip input{margin:0}
+.la-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px}
+.lr-grouptab[disabled],.lr-subgroup[disabled]{opacity:.4;cursor:not-allowed}
 /* ★ 移动端规则必须留在文件最末尾 */
 @media(max-width:720px){
   .lr-grouptab{padding:5px 10px;font-size:11.5px}
