@@ -46,6 +46,20 @@
   var LRSOLVIEW_READ = false; // 本机范围只读一次，null 本身也是有效状态
   var LR_MAT_KEYS = {matbatch:"批号",matdry:"干物质重量",matgos:"GOS干含量"};
   var LR_MAT_DEF = {matbatch:"GOA5282001",matdry:"75",matgos:"57"};
+  /* ★ 同批配制的标准溶液联动组：组内共用一套「配制日期+有效期」，
+     维护界面只显示主项一行，改一处按各自前缀生成全部成员的编码/有效期。
+      minerals（钠钾铜镁铁锌锰钙 042~049）是同时配制的混合元素标液。 */
+  var SOL_LINK_GROUPS = [
+    {master:"钠", label:"矿物质混合标准溶液（钠·钾·铜·镁·铁·锌·锰·钙）",
+     names:["钠","钾","铜","镁","铁","锌","锰","钙"]}
+  ];
+  function solLinkOf(name){
+    for(var i=0;i<SOL_LINK_GROUPS.length;i++){
+      var g=SOL_LINK_GROUPS[i];
+      if(g.names.indexOf(name)>=0) return g;
+    }
+    return null;
+  }
   var LRGROUP = null;         // ★ 分类：phys 理化组 / chrom 色谱组 / all 全部
   var LRGROUP_READ = false;
   var LRSUB   = "all";        // ★ 色谱组二级子组：GJ/MYZ/FLM/WFX/PGY/SHS，all=全部
@@ -1040,6 +1054,13 @@
     }
     var soNow=solOrig(name), nowUse=!!(soNow&&/现配|即用/.test(soNow.expiry||""));
     if(!nowUse&&O[name].dur&&O[name].unit) O[name].expiry=date8Add(v,+O[name].dur,O[name].unit);
+    var link=solLinkOf(name);
+    if(link&&O[name].dur&&O[name].unit){
+      var synced=lrApplyLink(link,v,O[name].dur,O[name].unit);
+      lrStatMsg("【"+link.label+"】已按配制日期 "+fmtDash(v)+" 同步生成全部 "+synced+" 种标液的编码和有效期");
+      var lw=checkExpiryLogic(name,v,O[name].expiry); if(lw) lrAlert(lw);
+      return;
+    }
     lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
     if(!nowUse&&O[name].expiry){
       var warn=checkExpiryLogic(name,v,O[name].expiry);
@@ -1057,6 +1078,14 @@
     O[name].dur=""+n;
     var pd=O[name].pdate||(solParts(name,origCodeOf(name))||{}).date;
     if(isValidDate8(pd)) O[name].expiry=date8Add(pd,n,O[name].unit||"m");
+    var link=solLinkOf(name);
+    if(link&&isValidDate8(pd)){
+      var synced=lrApplyLink(link,pd,""+n,O[name].unit||"m");
+      lrStatMsg("【"+link.label+"】有效期改为 "+n+(O[name].unit==="d"?" 天":" 月")+
+        "，已同步全部 "+synced+" 种标液，有效期至 "+O[name].expiry);
+      var lw=checkExpiryLogic(name,pd,O[name].expiry); if(lw) lrAlert(lw);
+      return;
+    }
     lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
     if(O[name].expiry){ var w=checkExpiryLogic(name,pd,O[name].expiry); if(w) lrAlert(w); }
   }
@@ -1065,8 +1094,34 @@
     O[name].unit=el.value;
     var pd=O[name].pdate||(solParts(name,origCodeOf(name))||{}).date;
     if(O[name].dur&&isValidDate8(pd)) O[name].expiry=date8Add(pd,+O[name].dur,el.value);
+    var link=solLinkOf(name);
+    if(link&&O[name].dur&&isValidDate8(pd)){
+      var synced=lrApplyLink(link,pd,O[name].dur,el.value);
+      lrStatMsg("【"+link.label+"】单位改为 "+(el.value==="d"?"天":"月")+
+        "，已同步全部 "+synced+" 种标液，有效期至 "+O[name].expiry);
+      var lw=checkExpiryLogic(name,pd,O[name].expiry); if(lw) lrAlert(lw);
+      return;
+    }
     lrSave(); lrSyncDyn(name,O[name]); lrSyncSolRow(name);
     if(O[name].expiry){ var w=checkExpiryLogic(name,pd,O[name].expiry); if(w) lrAlert(w); }
+  }
+  /* ★ 同批配制联动：以 pdate/dur/unit 为准，按组内每个成员自己的前缀生成编码、
+     算有效期至，写入全部成员；同步打印动态字段和维护界面只读框。 */
+  function lrApplyLink(g, pdate, dur, unit){
+    var O=lrSol(), n=0;
+    g.names.forEach(function(nm){
+      var op=solParts(nm,origCodeOf(nm))||{prefix:"",suffix:"01"};
+      if(!O[nm]) O[nm]={};
+      O[nm].pdate=pdate;
+      O[nm].dur=dur; O[nm].unit=unit;
+      O[nm].code=op.prefix+"-"+pdate+"-"+op.suffix;
+      O[nm].expiry=(!/(现配|即用)/.test((solOrig(nm)||{}).expiry||""))
+        ? date8Add(pdate,+dur,unit) : O[nm].expiry;
+      lrSyncDyn(nm,O[nm]); lrSyncSolRow(nm);
+      n++;
+    });
+    lrSave();
+    return n;
   }
   /* 外购标准品有效期至：厂商标注日期，可带 - . / 分隔；校验格式 + 不早于入库日期 */
   function lrSolExpiryInput(el){
@@ -1174,14 +1229,26 @@
     } else {
       var p=lrProject(v); src=(p&&p.solutions)||[];
     }
+    /* ★ 同批配制联动组：组内只保留主项一行作为统一配置入口，
+       其余成员的值由 lrApplyLink 一起写入、打印时各自从 lrSol() 取。 */
+    var linkedDone={};
     src.forEach(function(s){
       if(seen[s.name]) return;
+      var link=solLinkOf(s.name);
+      if(link){
+        if(linkedDone[link.master]) return;   // 组内已有主项，跳过其余成员
+        // 若当前遍历到的不是主项、但主项也在列表里，等主项出现再收（保证用主项做入口）
+        if(s.name!==link.master && src.some(function(q){return q.name===link.master;})) return;
+        linkedDone[link.master]=1;
+      }
       seen[s.name]=1;
-      var o=O[s.name]||{};
-      out.push({name:s.name,
-                code:o.code!=null?o.code:s.code,
-                expiry:o.expiry!=null?o.expiry:s.expiry,
-                batch:o.batch!=null?o.batch:s.batch});
+      var dispName=link?link.master:s.name;
+      var src0=link?(function(){for(var i=0;i<src.length;i++)if(src[i].name===link.master)return src[i];return s;})():s;
+      var o=O[dispName]||{};
+      out.push({name:dispName, link:link, members:link?link.names:[s.name],
+                code:o.code!=null?o.code:src0.code,
+                expiry:o.expiry!=null?o.expiry:src0.expiry,
+                batch:o.batch!=null?o.batch:src0.batch});
     });
     return out;
   }
@@ -1210,8 +1277,14 @@
       var batch = (x.batch!=null && x.batch!=="")
         ? '<label>批号<input type="text" data-name="'+esc(x.name)+'" value="'+esc(x.batch)+'" '+
             'oninput="LAB.lrSetSol(this.dataset.name,\'batch\',this.value)"></label>' : '';
-      var head='<div class="lr-solrow"><div class="lr-soltitle"><b>'+esc(x.name)+'</b>'+
-        '<span class="lr-solkind '+(bought?"ext":"prep")+'">'+(bought?"外购·手填":"需配制·自动")+'</span></div>';
+      var linkNote = x.link
+        ? '<span class="lr-solkind link">同批配制·'+x.members.length+' 种联动</span>' : '';
+      var head='<div class="lr-solrow"><div class="lr-soltitle"><b>'+
+        esc(x.link?x.link.label:x.name)+'</b>'+
+        '<span class="lr-solkind '+(bought?"ext":"prep")+'">'+(bought?"外购·手填":"需配制·自动")+'</span>'+
+        linkNote+'</div>'+
+        (x.link?'<div class="lr-linktip">这 '+x.members.length+
+          ' 种标液同时配制，只填这一处，改配制日期或有效期时全部一起更新（各自编码前缀自动保留）。</div>':'');
       if(bought){
         /* 外购标准品：编码/有效期至手填（生产商标注），前缀校验、日期校验 */
         return head+
@@ -2458,6 +2531,9 @@
     lrSolCodeInput: lrSolCodeInput,
     lrSolExpiryInput: lrSolExpiryInput,
     checkExpiryLogic: checkExpiryLogic,
+    solLinkOf: solLinkOf,
+    SOL_LINK_GROUPS: SOL_LINK_GROUPS,
+    lrApplyLink: lrApplyLink,
     lrOpenCal: lrOpenCal,
     lrCalPick: lrCalPick,
     lrCalClose: lrCalClose

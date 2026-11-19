@@ -1201,6 +1201,9 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   white-space:nowrap}
 .lr-solkind.prep{background:#e7f4ea;color:#15803d}
 .lr-solkind.ext{background:#fff3e0;color:#a16207}
+.lr-solkind.link{background:#e8f0fa;color:#1d4ed8;margin-left:6px}
+.lr-linktip{font-size:11px;line-height:1.5;color:#1d4ed8;background:#f0f6ff;
+  border-left:3px solid #3b82f6;padding:5px 9px;margin:4px 0 2px;border-radius:0 4px 4px 0}
 .lr-datein{position:relative;display:flex;align-items:stretch;gap:4px;margin-top:3px}
 .lr-datein .lr-pdate{flex:1;min-width:0;margin-top:0}
 .lr-calbtn{flex:0 0 auto;padding:0 8px;border:1px solid var(--line);border-radius:5px;
