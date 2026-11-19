@@ -1159,15 +1159,14 @@
     if(!cal) return;
     var txt=wrap.querySelector("input.lr-pdate"), v=txt?(txt.value||"").replace(/\D/g,""):"";
     if(isValidDate8(v)) cal.value=v.slice(0,4)+"-"+v.slice(4,6)+"-"+v.slice(6,8);
-    /* ★ 关键：先让控件真正可见（.lr-calshow），隐藏/opacity:0 的 date 控件
-       showPicker() 会被浏览器静默拒绝（不弹也不报错），这就是"点了没反应"的根因 */
-    cal.classList.add("lr-calshow");
-    cal.focus();
+    /* ★★ 不调用 cal.focus()！focus 会让浏览器把控件滚动进视口，
+       控件相对视口的 y 突变 → 原生日历锚点跟着跳（这就是"一会左一会右"真因）。
+       控件几何 CSS 恒定（固定铺满 opacity:0.02），直接 showPicker 锚点唯一。 */
     var opened=false;
     try{ if(typeof cal.showPicker==="function"){ cal.showPicker(); opened=true; } }catch(e){}
     if(!opened){ try{ cal.click(); }catch(e){} }
   }
-  function lrCalClose(cal){ if(cal) cal.classList.remove("lr-calshow"); }
+  function lrCalClose(cal){ /* 几何恒定，无需收起；保留供调用兼容 */ }
   function lrCalPick(cal){
     var wrap=cal.parentNode, txt=wrap.querySelector("input.lr-pdate");
     if(!txt) return;
@@ -1317,7 +1316,7 @@
             'onchange="LAB.lrSetPrepDate(this)">'+
           '<button type="button" class="lr-calbtn" title="日历选择" onclick="LAB.lrOpenCal(this)">📅</button>'+
           '<input class="lr-calhidden" type="date" data-name="'+esc(x.name)+'" '+
-            'onchange="LAB.lrCalPick(this)" onblur="LAB.lrCalClose(this)">'+
+            'onchange="LAB.lrCalPick(this)">'+
           '</span></label>'+
         '<label>编码（自动）<input type="text" data-name="'+esc(x.name)+'" data-out="code" '+
           'value="'+esc(x.code)+'" readonly></label>'+

@@ -1209,12 +1209,13 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .lr-calbtn{flex:0 0 auto;padding:0 8px;border:1px solid var(--line);border-radius:5px;
   background:var(--panel);cursor:pointer;font-size:13px;line-height:1}
 .lr-calbtn:hover{border-color:var(--brand)}
-/* 日历控件平时隐藏；点 📅 时用 .lr-calshow 临时显形盖在按钮上，
-   保证浏览器一定弹出原生日历（对 display/opacity 隐藏的元素 showPicker 会静默失败） */
-.lr-calhidden{position:absolute;right:0;top:0;width:1px;height:1px;
-  opacity:0;pointer-events:none;border:0;padding:0;font-size:16px}
-.lr-calhidden.lr-calshow{width:30px;min-height:28px;height:100%;opacity:1;
-  pointer-events:auto;z-index:5;background:var(--panel);color:var(--ink)}
+/* ★ 日历控件几何必须永远恒定：固定铺满 .lr-datein、固定尺寸、固定位置，
+   只靠透明度隐藏。绝不能 1px↔30px 突变或弹出后被 onblur 缩回——
+   浏览器按控件矩形定位原生日历，几何一变弹窗就左右跳动。
+   保留极小的 0.02 透明度确保 showPicker 认为控件可见、稳定弹出。 */
+.lr-calhidden{position:absolute;left:0;bottom:0;width:100%;height:100%;
+  opacity:0.02;pointer-events:none;border:0;padding:0;font-size:16px;z-index:1}
+.lr-calhidden.lr-calshow{z-index:2}
 .lr-durow{display:flex;align-items:stretch;gap:5px;margin-top:3px}
 .lr-durow input{flex:1;min-width:0;margin-top:0}
 .lr-durow select{flex:0 0 58px;padding:5px 4px;border:1px solid var(--line);border-radius:5px;
