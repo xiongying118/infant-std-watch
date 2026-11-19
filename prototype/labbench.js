@@ -1070,7 +1070,7 @@
     }
     window.__labauthLoading=[run];
     var s=document.createElement("script");
-    s.src="labauth.js?v=20261119g";
+    s.src="labauth.js?v=20261119h";
     s.onload=function(){
       var q=window.__labauthLoading||[]; window.__labauthLoading=null;
       q.forEach(function(f){ f(!!(global.LABAUTH && global.LABAUTH.editGuard)); });
@@ -1468,6 +1468,83 @@
     }
     return '<div class="lr-solgrid">'+sols.join("")+'</div>';
   }
+  /* ★★ 标准溶液 → 试剂有效期管理系统（2026-11-19）
+     两个系统在不同域名，浏览器不允许直接写对方的 localStorage，
+     所以做成「一键生成对方导入格式的表」：自动下载 + 复制到剪贴板 + 打开试剂系统。
+     对方导入按表头中文名匹配：试剂名称/类型/浓度/配制日期/有效期至/配制人/存放位置/备注。 */
+  function lrD8Slash(v){
+    var s=String(v||"").replace(/\D/g,"");
+    if(s.length!==8) return "";
+    return s.slice(0,4)+"/"+(+s.slice(4,6))+"/"+(+s.slice(6,8));
+  }
+  function lrReagentRows(){
+    var O=lrSol(), seen={}, out=[];
+    lrAllSolutions().forEach(function(x){
+      if(seen[x.name]) return;
+      seen[x.name]=1;
+      var o=O[x.name]||{};
+      var pd=o.pdate||"", ex=o.expiry||x.expiry||"";
+      /* 没手填过配制日期的，从编码里反推：编码形如 042-20261119-01，中间 8 位就是配制日期。
+         对方导入按「名称+类型+浓度+配制日期+有效期至」判重，配制日期空会被当成新记录重复插入，
+         所以推不出来就不要导出这一行。 */
+      if(!pd){
+        var m=String(o.code||x.code||"").match(/(20\d{6})/);
+        if(m) pd=m[1];
+      }
+      if(!pd || !ex) return;
+      out.push({
+        "试剂名称":x.name,
+        "类型":"标准溶液",
+        "浓度":"",
+        "配制日期":lrD8Slash(pd),
+        "有效期至":lrD8Slash(ex),
+        "配制人":(global.LABAUTH&&global.LABAUTH.solOwner)?(global.LABAUTH.solOwner(x.name)||""):"",
+        "存放位置":"",
+        "备注":(o.code||x.code||"")
+      });
+    });
+    return out;
+  }
+  function lrExportToReagent(){
+    var rows=lrReagentRows();
+    if(!rows.length){
+      lrAlert("还没有填过配制日期或有效期的标准溶液，没有可导出的内容。先在上面填好再导出。");
+      return;
+    }
+    var HEADS=["试剂名称","类型","浓度","配制日期","有效期至","配制人","存放位置","备注"];
+    var tsv=HEADS.join("\t")+"\n"+rows.map(function(r){
+      return HEADS.map(function(h){ return r[h]||""; }).join("\t");
+    }).join("\n");
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(tsv);
+    }catch(e){}
+    var base="标准溶液_"+today().replace(/-/g,"");
+    /* 必须先同步打开（用户手势内），否则会被弹窗拦截 */
+    try{
+      var w=window.open("https://reagent-expiry-95771.app.workbuddy.host/?sharecode=L5HTJSEPAI","_blank");
+      if(w) try{ w.opener=null; }catch(e){}
+    }catch(e){}
+    lrLoadXLSX(function(ok){
+      if(ok&&global.XLSX){
+        var ws=global.XLSX.utils.json_to_sheet(rows,{header:HEADS});
+        var wb=global.XLSX.utils.book_new();
+        global.XLSX.utils.book_append_sheet(wb,ws,"标准溶液");
+        global.XLSX.writeFile(wb,base+".xlsx");
+      }else{
+        var blob=new Blob(["\ufeff"+tsv],{type:"text/csv;charset=utf-8"});
+        var a=document.createElement("a");
+        a.href=URL.createObjectURL(blob);
+        a.download=base+".csv";
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); },1500);
+      }
+      lrStatMsg("已导出 "+rows.length+" 条标准溶液：表格已下载、内容已复制。到试剂系统点「Excel 导入」选这个文件即可。");
+    });
+    lrAlert("已生成 "+rows.length+" 条标准溶液。\n\n"+
+      "1. 表格已下载（"+base+"）\n"+
+      "2. 试剂系统的「Excel 导入」里选中它，确认即可\n\n"+
+      "（两个系统不在同一个域，浏览器不允许直接写对方数据，只能这样一次导入。）");
+  }
   function lrSolPanelHtml(){
     var v=lrSolView();
     var nm=(v==="all")?"全部":((lrProject(v)||{name:v}).name);
@@ -1482,6 +1559,10 @@
       '<br><b>需配制</b>的：填「配制日期」（可手写或点 📅 选，只收今天起 30 天内）自动生成编码，'+
       '填「有效期」数字选天/月自动生成有效期至（如 20261119 + 3月 → 20270218）。'+
       '<b>外购</b>的：编码和有效期至手填，前缀填错会弹窗拦下。</div>'+
+      '<div class="lr-solacts">'+
+        '<button type="button" class="btn sm pri" onclick="LAB.lrExportToReagent()">↗ 导出给试剂系统</button>'+
+        '<span class="muted">一键生成「试剂有效期管理系统」能直接导入的表格（试剂名称/配制日期/有效期/配制人），并自动打开它</span>'+
+      '</div>'+
       lrSolTabsHtml(v)+'<div id="lrSolBody">'+lrSolBodyHtml(v)+'</div></details>';
   }
   function lrSolRender(){
@@ -2663,6 +2744,7 @@
     lrSetSol: lrSetSol,
     lrSetSolBatch: lrSetSolBatch,
     lrSetMatGuard: lrSetMatGuard,
+    lrExportToReagent: lrExportToReagent,
     lrSolView: lrSolView,
     lrSolRows: lrSolRows,
     lrSetSolView: lrSetSolView,
