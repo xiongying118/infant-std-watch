@@ -1070,7 +1070,7 @@
     }
     window.__labauthLoading=[run];
     var s=document.createElement("script");
-    s.src="labauth.js?v=20261119e";
+    s.src="labauth.js?v=20261119f";
     s.onload=function(){
       var q=window.__labauthLoading||[]; window.__labauthLoading=null;
       q.forEach(function(f){ f(!!(global.LABAUTH && global.LABAUTH.editGuard)); });
@@ -1081,8 +1081,13 @@
     };
     (document.head||document.body).appendChild(s);
   }
-  function solEdit(el, core, nameOverride){
-    var name=nameOverride || (el && el.dataset ? el.dataset.name : "");
+  /* ★ 参数：el=触发元素 core=写入逻辑 nameOverride=显式溶液名 onCancel=额外取消回调
+     坑（2026-11-19 21:05）：lrCalPick 曾把「取消回调」当第 3 个参数传进来，
+     结果 nameOverride 变成函数对象 → 溶液名取不到 → 没有负责人 → 直接放行（日历能改的真因）。 */
+  function solEdit(el, core, nameOverride, onCancel){
+    var name=(typeof nameOverride==="string" ? nameOverride : "")
+             || (el && el.dataset ? el.dataset.name : "");
+    if(!name) name="";
     var old=el?el.value:null;
     /* 取消/输错口令时恢复：优先读本机已存的值（onchange 时 el 已是新值，
        old 不可靠），没存过就留空或原表值。字段按 input 类型映射。 */
@@ -1101,10 +1106,18 @@
       }
       el.value=old;
     };
+    var cancel=function(){
+      restore();
+      if(typeof onCancel==="function") onCancel();
+    };
     ensureLabAuth(function(ok){
       /* 缺口令文件（且补加载也失败）时绝不放行，避免缓存导致口令失效 */
-      if(ok) global.LABAUTH.editGuard(name, core, restore);
-      else { restore(); lrAlert("口令校验未能加载，修改已取消。请按 Ctrl+F5 强制刷新后重试。"); }
+      if(ok){
+        /* ★ 没有溶液名 → 无法判定负责人 → 绝不放行（早期 bug 就是这里静默写了库） */
+        if(!name){ cancel(); lrAlert("无法识别该标准溶液，修改已取消。请刷新页面后重试。"); return; }
+        global.LABAUTH.editGuard(name, core, cancel);
+      }
+      else { cancel(); lrAlert("口令校验未能加载，修改已取消。请按 Ctrl+F5 强制刷新后重试。"); }
     });
   }
   /* batch 只改批号，但也是标准溶液维护的一部分，同样要口令 */
@@ -1260,9 +1273,14 @@
     var wrap=cal.parentNode, txt=wrap.querySelector("input.lr-pdate");
     if(!txt) return;
     var old=txt.value, picked=(cal.value||"").replace(/-/g,"");
+    if(!picked) return;
+    /* 日历只把值交给 txt（此时尚未落库），真正写入在口令通过后的 core 里。
+       取消时把日历控件也退回原日期，避免下次打开显示错日期。 */
     solEdit(txt, function(){
       txt.value=picked; _lrSetPrepDate(txt); lrCalClose(cal);
-    }, function(){ txt.value=old; cal.value=old.slice(0,4)+"-"+old.slice(4,6)+"-"+old.slice(6,8); });
+    }, null, function(){
+      cal.value=isValidDate8(old)?(old.slice(0,4)+"-"+old.slice(4,6)+"-"+old.slice(6,8)):"";
+    });
   }
   function lrSol(){
     if(!LRSOL){
