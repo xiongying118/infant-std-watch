@@ -216,8 +216,26 @@ function saveCache() {
     localStorage.setItem(LS_SET, JSON.stringify(settings));
   } catch (e) { /* 存储满等情况忽略 */ }
 }
+/** 字段归一化：兼容两代数据。老数据用 prep/exp/conc/op/loc，新数据用 preparedDate/expireDate/...；
+    统一补齐新字段并把日期转成完整 YYYY-MM-DD（杜绝 8/10/26），在加载时一次性迁移。 */
+function normalizeItems(arr) {
+  if (!Array.isArray(arr)) return arr;
+  arr.forEach(it => {
+    if (!it || typeof it !== 'object') return;
+    if (!it.preparedDate && it.prep) it.preparedDate = it.prep;
+    if (!it.expireDate && it.exp) it.expireDate = it.exp;
+    if (!it.concentration && it.conc) it.concentration = it.conc;
+    if (!it.operator && it.op) it.operator = it.op;
+    if (!it.location && it.loc) it.location = it.loc;
+    // 日期统一转完整格式（8/10/26 → 2026-08-10；20261120 保持）
+    if (it.preparedDate) it.preparedDate = normDate(it.preparedDate);
+    if (it.expireDate) it.expireDate = normDate(it.expireDate);
+  });
+  return arr;
+}
 function loadCache() {
   try { items = JSON.parse(localStorage.getItem(LS_DATA) || '[]'); } catch { items = []; }
+  normalizeItems(items);
   try {
     const s = JSON.parse(localStorage.getItem(LS_SET) || '{}');
     settings = Object.assign({
@@ -236,7 +254,7 @@ function loadCache() {
 
 /** 用服务器数据覆盖本地 */
 function applyRemote(s) {
-  items = Array.isArray(s.data.items) ? s.data.items : [];
+  items = normalizeItems(Array.isArray(s.data.items) ? s.data.items : []);
   settings = Object.assign({
     reminderDays: 30, sortBy: 'importOrder',
     enableExpiredAlert: true, enableExpiringAlert: true,
@@ -330,10 +348,10 @@ function seedSample() {
     { name: 'VC 标准品（开封）', type: '开封标准品', conc: '99.5%',  prep: offset(-200), exp: offset(160), op: '范丽颖', loc: '干燥器', note: '' },
   ];
 
-  items = sample.map(s => ({
+  items = normalizeItems(sample.map(s => ({
     id: uid(),
     ...s,
-  }));
+  })));
 }
 
 /* ===== 状态计算 ===== */
