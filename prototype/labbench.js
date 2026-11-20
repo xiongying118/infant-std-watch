@@ -1524,16 +1524,41 @@
     }
     return "";
   }
+  /* ★ 别名表：试剂台账里的叫法 → 原始记录里的标准溶液名。
+     试剂系统从老台账导进来，名字跟 Word 原表不一致（VB1 vs 维生素B1），
+     靠别名 + 归一 + 包含三层匹配，尽量都能对上。 */
+  var LR_REAGENT_ALIAS={
+    "vb1":"维生素B1","b1":"维生素B1","维生素b1":"维生素B1",
+    "vb2":"维生素B2","b2":"维生素B2","维生素b2":"维生素B2",
+    "vb6":"盐酸吡哆醇","b6":"盐酸吡哆醇","维生素b6":"盐酸吡哆醇",
+    "vd2":"维生素D2","d2":"维生素D2","维生素d2":"维生素D2",
+    "vd3":"维生素D3","d3":"维生素D3","维生素d3":"维生素D3",
+    "vk1":"维生素K1","k1":"维生素K1","维生素k1":"维生素K1",
+    "vk2":"维生素K2（MK-7）","k2":"维生素K2（MK-7）","维生素k2":"维生素K2（MK-7）",
+    "vc":"L-抗坏血酸标准溶液","维生素c":"L-抗坏血酸标准溶液",
+    "生物素d4":"生物素-d4","biotind4":"生物素-d4",
+    "乳铁蛋白":"乳铁蛋白","牛磺酸":"牛磺酸","磷酸二氢钾":"磷酸二氢钾",
+    "β-胡萝卜素":"叶黄素","左旋肉碱":"左旋肉碱","l-肉碱":"左旋肉碱",
+    "氯化胆碱":"胆碱","胆碱氯化物":"胆碱"
+  };
   function lrNormName(s){
-    return String(s||"").replace(/\s/g,"")
+    var x=String(s||"").replace(/\s/g,"")
       .replace(/(标准储备液|标准溶液|储备液|标准品|标准物质|工作液|滴定溶液|溶液)$/,"");
+    var a=LR_REAGENT_ALIAS[x.toLowerCase()];
+    return a||x;
   }
   function lrMatchName(nm, names, idx){
     var n=String(nm||"").replace(/\s/g,"");
     if(!n) return null;
     if(names.indexOf(n)>=0) return n;
     var nn=lrNormName(n);
-    if(nn && idx[nn]) return idx[nn];
+    if(nn){
+      if(names.indexOf(nn)>=0) return nn;
+      if(idx[nn]) return idx[nn];
+    }
+    /* 别名直查：试剂名归一化前后都试（含 VB1/生物素d4 这类） */
+    var alias=LR_REAGENT_ALIAS[n.toLowerCase()];
+    if(alias && names.indexOf(alias)>=0) return alias;
     var best=null, bl=0;
     names.forEach(function(k){
       var kk=lrNormName(k);
@@ -1605,21 +1630,33 @@
       return Array.isArray(a)?a:null;
     }catch(e){ return null; }
   }
+  /* 取一条试剂记录里的名字/类型/配制日/有效期，兼容两套字段名：
+     同站点副本存量数据用 prep/exp/conc；Excel 新导入用 preparedDate/expireDate/concentration。 */
+  function lrReagentFields(r){
+    return {
+      name: r.name||r["试剂名称"]||r["品名"]||r["名称"]||"",
+      type: r.type||r["类型"]||r["类别"]||"",
+      p:   r.preparedDate||r.prep||r["配制日期"]||r["配置日期"]||r["配置时间"]||"",
+      e:   r.expireDate||r.exp||r["有效期至"]||r["有效期"]||r["到期日期"]||""
+    };
+  }
+  var LR_SYNC_RESULT=null;   // 最近一次同步的诊断结果，供面板显示
   function lrReagentSync(){
     var arr=lrReagentRead();
-    if(!arr||!arr.length) return false;
+    if(!arr||!arr.length){ LR_SYNC_RESULT={total:0,hit:0,miss:0,fields:0,list:[]}; return false; }
     var O=lrSol(), names=lrAllSolutions().map(function(x){ return x.name; });
     var idx={}; names.forEach(function(n){ var k=lrNormName(n); if(k&&!idx[k]) idx[k]=n; });
-    var dirty=false, cnt=0;
+    var dirty=false, cnt=0, hit=0, miss=0, mlist=[];
     arr.forEach(function(r){
-      var nm=r.name||r["试剂名称"]||"";
-      var tp=r.type||r["类型"]||"";
-      if(!nm) return;
-      if(tp && !/标准溶液|标准品|标准物质/.test(tp)) return;
-      var key=lrMatchName(nm,names,idx);
-      if(!key) return;
-      var p8=lrTo8(r.preparedDate||r["配制日期"]||"");
-      var e8=lrTo8(r.expireDate||r["有效期至"]||"");
+      var f=lrReagentFields(r);
+      if(!f.name) return;
+      /* 类型：只要不是明确排除的「配制试剂/开封试剂/流动相」就参与；
+         老台账有的没类型，或写成「标准储备液」，都放行，靠名称匹配兜底。 */
+      if(f.type && /配制试剂|开封试剂|流动相/.test(f.type)) return;
+      var key=lrMatchName(f.name,names,idx);
+      if(!key){ miss++; if(mlist.length<6) mlist.push(f.name); return; }
+      hit++;
+      var p8=lrTo8(f.p), e8=lrTo8(f.e);
       if(!p8 && !e8) return;
       if(!O[key]) O[key]={};
       var prev=O[key]._rsync||{};
@@ -1632,6 +1669,7 @@
       if(e8 && prev.expiry!==e8){ O[key].expiry=e8; dirty=true; cnt++; lrSyncDyn(key,O[key]); }
       O[key]._rsync={pdate:p8||prev.pdate||"", expiry:e8||prev.expiry||""};
     });
+    LR_SYNC_RESULT={total:arr.length,hit:hit,miss:miss,fields:cnt,list:mlist};
     if(dirty){
       lrSave();
       var ae=document.activeElement;
@@ -1691,6 +1729,29 @@
       "2. 试剂系统的「Excel 导入」里选中它，确认即可\n\n"+
       "（两个系统不在同一个域，浏览器不允许直接写对方数据，只能这样一次导入。）");
   }
+  /* 同步诊断条：让用户直接看到试剂系统读到几条、匹配上几条 */
+  function lrReagentDiagHtml(){
+    var r=LR_SYNC_RESULT;
+    if(!r) return "";
+    var msg, color;
+    if(!r.total){ msg="试剂系统里读到 0 条数据 —— 请先在「试剂效期管理」导入台账"; color="#a16207"; }
+    else if(!r.hit){ msg="试剂系统读到 "+r.total+" 条，但没有一条能对上原始记录的溶液名"+
+      (r.list.length?("（如 "+r.list.join("、")+"）"):""); color="#b91c1c"; }
+    else { msg="试剂系统读到 "+r.total+" 条，已匹配 "+r.hit+" 条、写入 "+r.fields+
+      " 个日期"+(r.miss?("；"+r.miss+" 条名称对不上"+(r.list.length?("（如 "+r.list.join("、")+"）"):"")):""); color="#15803d"; }
+    return '<div style="flex-basis:100%;font-size:11.5px;line-height:1.6;color:'+color+
+      ';background:#fff;border:1px solid '+color+';border-radius:6px;padding:6px 10px;margin:4px 0">'+
+      '<b>同步状态：</b>'+esc(msg)+'</div>';
+  }
+  function lrReagentSyncNow(){
+    lrReagentSync();
+    lrSolRender();
+    var r=LR_SYNC_RESULT||{};
+    lrAlert("试剂系统同步结果：\n\n读到 "+(r.total||0)+" 条，匹配 "+(r.hit||0)+
+      " 条，更新 "+(r.fields||0)+" 个日期"+(r.miss?("；"+r.miss+" 条名称对不上"):"")+"。"+
+      (!r.total?"\n\n请先在「打开试剂效期管理」里导入台账，再回来点同步。":
+       (!r.hit?"\n\n名称对不上——请在试剂系统里把溶液名改成和这里一致（如 VB1→维生素B1）。":"")));
+  }
   function lrSolPanelHtml(){
     var v=lrSolView();
     var nm=(v==="all")?"全部":((lrProject(v)||{name:v}).name);
@@ -1708,10 +1769,12 @@
       '<div class="lr-solacts">'+
         '<a class="btn sm pri" href="reagent/" target="_blank" rel="noopener" '+
           'style="text-decoration:none;display:inline-flex;align-items:center;gap:4px">🔗 打开试剂效期管理</a>'+
+        '<button type="button" class="btn sm" onclick="LAB.lrReagentSyncNow()">🔄 立即从试剂系统同步</button>'+
         '<label class="btn sm" style="cursor:pointer;margin:0;display:inline-flex;align-items:center">'+
           '↙ 从旧系统导入一次'+
           '<input type="file" accept=".csv,.xlsx,.xls" style="display:none" '+
             'onchange="LAB.lrReagentFile(this)"></label>'+
+        lrReagentDiagHtml()+
         '<span class="muted"><b>配制日期、有效期自动取自同站点的试剂效期管理系统</b>：那边一改，这里自动更新，不用手填；'+
           '本页手改仍可（要口令），只要试剂系统那条没变，下次同步不会冲掉手改的值。'+
           '第一次用请先在旧系统「导出 CSV」，点左边按钮导一次。</span>'+
@@ -2902,6 +2965,8 @@
     lrExportToReagent: lrExportToReagent,
     lrReagentFile: lrReagentFile,
     lrReagentSync: lrReagentSync,
+    lrReagentSyncNow: lrReagentSyncNow,
+    lrReagentDiag: function(){ return LR_SYNC_RESULT; },
     lrSolView: lrSolView,
     lrSolRows: lrSolRows,
     lrSetSolView: lrSetSolView,
