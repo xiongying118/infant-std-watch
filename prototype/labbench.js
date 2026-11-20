@@ -1547,9 +1547,27 @@
     var a=LR_REAGENT_ALIAS[x.toLowerCase()];
     return a||x;
   }
-  function lrMatchName(nm, names, idx){
+  /* ★ 代码索引：每个标准溶液的编码前缀(062-… 的前3位) → 溶液名。
+     用户在试剂台账的名称前写这个代码（如「062磷酸二氢钾」），
+     这里优先按代码精确匹配，不再靠名称猜测。 */
+  function lrCodeIndex(){
+    var m={};
+    lrAllSolutions().forEach(function(x){
+      var code=x.origCode||x.code||"";
+      var pre=String(code).match(/^(\d{3})-/);
+      if(pre && !m[pre[1]]) m[pre[1]]=x.name;   // 前缀唯一；重复取第一个
+    });
+    return m;
+  }
+  function lrMatchName(nm, names, idx, cidx){
     var n=String(nm||"").replace(/\s/g,"");
     if(!n) return null;
+    /* ★★ 第一优先：名称开头的3位数字 = 唯一代码，直接精确匹配 */
+    var pre=n.match(/^(\d{3})/);
+    if(pre){
+      cidx=cidx||lrCodeIndex();
+      if(cidx[pre[1]]) return cidx[pre[1]];
+    }
     if(names.indexOf(n)>=0) return n;
     var nn=lrNormName(n);
     if(nn){
@@ -1570,6 +1588,7 @@
   function lrApplyReagentRows(rows){
     var O=lrSol(), names=lrAllSolutions().map(function(x){ return x.name; });
     var idx={}; names.forEach(function(n){ var k=lrNormName(n); if(k&&!idx[k]) idx[k]=n; });
+    var cidx=lrCodeIndex();
     var hit=0, miss=0, fields=0, list=[];
     rows.forEach(function(r){
       var nm=r["试剂名称"]||r["名称"]||"";
@@ -1578,7 +1597,7 @@
       var tp=r["类型"]||"";
       if(!nm) return;
       if(tp && !/标准溶液|标准品|标准物质/.test(tp)) return;   // 只要标准溶液类
-      var key=lrMatchName(nm, names, idx);
+      var key=lrMatchName(nm, names, idx, cidx);
       if(!key){ miss++; if(list.length<5) list.push(nm); return; }
       hit++;
       var p8=lrTo8(pd), e8=lrTo8(ex);
@@ -1646,6 +1665,7 @@
     if(!arr||!arr.length){ LR_SYNC_RESULT={total:0,hit:0,miss:0,fields:0,list:[]}; return false; }
     var O=lrSol(), names=lrAllSolutions().map(function(x){ return x.name; });
     var idx={}; names.forEach(function(n){ var k=lrNormName(n); if(k&&!idx[k]) idx[k]=n; });
+    var cidx=lrCodeIndex();
     var dirty=false, cnt=0, hit=0, miss=0, mlist=[];
     arr.forEach(function(r){
       var f=lrReagentFields(r);
@@ -1653,7 +1673,7 @@
       /* 类型：只要不是明确排除的「配制试剂/开封试剂/流动相」就参与；
          老台账有的没类型，或写成「标准储备液」，都放行，靠名称匹配兜底。 */
       if(f.type && /配制试剂|开封试剂|流动相/.test(f.type)) return;
-      var key=lrMatchName(f.name,names,idx);
+      var key=lrMatchName(f.name,names,idx,cidx);
       if(!key){ miss++; if(mlist.length<6) mlist.push(f.name); return; }
       hit++;
       var p8=lrTo8(f.p), e8=lrTo8(f.e);
