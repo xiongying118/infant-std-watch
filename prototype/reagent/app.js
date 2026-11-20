@@ -105,16 +105,49 @@ const fmtDate = (d) => {
 };
 const isoToDate = (s) => {
   if (!s) return null;
-  if (s instanceof Date) return s;
-  // 兼容 "2026-08-31" / "2026/08/31" / Excel 序列号等
+  if (s instanceof Date) return isNaN(s.getTime()) ? null : s;
+  // Excel 序列号 -> 日期（1900 系统）
   if (typeof s === 'number') {
-    // Excel 序列号 -> 日期（1900 系统）
     const epoch = new Date(Date.UTC(1899, 11, 30));
     return new Date(epoch.getTime() + s * 86400000);
   }
-  const str = String(s).trim().replace(/\./g, '-').replace(/\//g, '-');
+  const str = String(s).trim();
+  if (!str) return null;
+  // 纯 8 位：20260810
+  let m = str.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  // 中文：2026年8月10日
+  m = str.match(/(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  // 四位年在最前：2026-8-10 / 2026/8/10 / 2026.8.10
+  m = str.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  // 美式短日期：8/10/26 → 2026-08-10；8/10/2026 → 2026-08-10（Excel 常见）
+  m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (m) {
+    let y = +m[3];
+    if (m[3].length === 2) y = y < 50 ? 2000 + y : 1900 + y;
+    return new Date(y, +m[1] - 1, +m[2]);
+  }
+  // 兜底（ISO 等）；不要把 / 替换成 -，否则会破坏美式解析
   const d = new Date(str);
   return isNaN(d.getTime()) ? null : d;
+};
+/** 统一存储为 ISO YYYY-MM-DD（杜绝 8/10/26 这种两位年份） */
+const normDate = (s) => {
+  if (s == null || s === '') return '';
+  const d = isoToDate(s);
+  return d ? fmtDate(d) : String(s);
+};
+/** 系统显示格式：YYYY/MM/DD（如 2026/11/20，四位年份） */
+const dispDate = (s) => {
+  const n = normDate(s);
+  return n ? n.replace(/-/g, '/') : '';
+};
+/** Excel 单元格写入格式：YYYYMMDD 纯数字（如 20261120） */
+const excelDate = (s) => {
+  const n = normDate(s);
+  return n ? n.replace(/-/g, '') : '';
 };
 const uid = () => 'r-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
 
@@ -382,8 +415,8 @@ function renderRow(it, idx) {
       <td>${escapeHtml(it.name)}</td>
       <td class="${tdTypeCls}">${it.type}</td>
       <td>${escapeHtml(it.concentration || '/')}</td>
-      <td>${escapeHtml(it.preparedDate)}</td>
-      <td>${escapeHtml(it.expireDate)}</td>
+      <td>${escapeHtml(dispDate(it.preparedDate))}</td>
+      <td>${escapeHtml(dispDate(it.expireDate))}</td>
       <td class="col-status">${showStatus}</td>
       <td>${escapeHtml(it.operator)}</td>
       <td>${escapeHtml(it.location)}</td>
@@ -648,10 +681,10 @@ function openEdit() {
   $('f-name').value = cur.name || '';
   $('f-type').value = cur.type || '标准溶液';
   $('f-conc').value = cur.concentration || '';
-  $('f-prepared').value = cur.preparedDate || '';
+  $('f-prepared').value = normDate(cur.preparedDate);
   $('f-dur').value = cur.dur || '';
   $('f-unit').value = normUnit(cur.unit) || '月';
-  $('f-expire').value = cur.expireDate || '';
+  $('f-expire').value = normDate(cur.expireDate);
   $('f-operator').value = cur.operator || '';
   $('f-location').value = cur.location || '';
   $('f-note').value = cur.note || '';
@@ -953,7 +986,7 @@ window.addEventListener('click', (e) => {
 function exportCSV() {
   const headers = ['试剂名称', '类型', '浓度', '配制日期', '有效期', '有效期单位', '有效期至', '配制人', '存放位置', '备注'];
   const rows = filteredSorted().map(it =>
-    [it.name, it.type, it.concentration || '', it.preparedDate, it.dur || '', it.unit || '', it.expireDate,
+    [it.name, it.type, it.concentration || '', excelDate(it.preparedDate), it.dur || '', it.unit || '', excelDate(it.expireDate),
      it.operator, it.location || '', it.note || ''].map(s => csvEscape(s))
   );
   const csv = '\ufeff' + [headers, ...rows].map(r => r.join(',')).join('\r\n');
@@ -1025,11 +1058,9 @@ $('fileInput').addEventListener('change', (e) => {
         }
         if (durIsNumber) dur = durRaw;
         else dur = '';
-        // 处理日期对象 / Excel 序列
-        if (preparedDate instanceof Date) preparedDate = fmtDate(preparedDate);
-        else if (typeof preparedDate === 'number') preparedDate = fmtDate(isoToDate(preparedDate));
-        if (expireDate instanceof Date) expireDate = fmtDate(expireDate);
-        else if (typeof expireDate === 'number') expireDate = fmtDate(isoToDate(expireDate));
+        // 统一日期：Excel 填 20261120 / 2026/11/20 / 8/10/26 都认，内部存 ISO YYYY-MM-DD
+        preparedDate = normDate(preparedDate);
+        expireDate = normDate(expireDate);
         return {
           name: get('试剂名称', '品名', '名称'), // 兼容旧表头「品名」
           type: get('类型', '类别'),
@@ -1108,10 +1139,10 @@ $('fileInput').addEventListener('change', (e) => {
           <td>${escapeHtml(r.name)}</td>
           <td>${escapeHtml(r.type || '')}</td>
           <td>${escapeHtml(r.concentration || '/')}</td>
-          <td>${escapeHtml(r.preparedDate)}</td>
+          <td>${escapeHtml(dispDate(r.preparedDate))}</td>
           <td>${escapeHtml(r.dur || '')}</td>
           <td>${escapeHtml(r.unit || '')}</td>
-          <td>${escapeHtml(r.expireDate)}</td>
+          <td>${escapeHtml(dispDate(r.expireDate))}</td>
           <td>${escapeHtml(r.operator)}</td>
           <td>${escapeHtml(r.location)}</td>
           <td>${escapeHtml(r.note)}</td>
