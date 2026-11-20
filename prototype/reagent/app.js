@@ -133,6 +133,37 @@ function daysBetween(a, b) {
   return Math.round(ms / 86400000);
 }
 
+/** 有效期至自动计算：配制日期 + 有效期(N) + 单位(月/天) - 1天，带月末钳制。
+    与原始记录 labbench.js 的 date8Add 完全一致。
+    例：2026-11-20 + 3月 → 2027-02-20 → 减1天 = 2027-02-19 */
+function calcExpiry(prepStr, dur, unit) {
+  const prep = isoToDate(prepStr);
+  const n = parseInt(dur, 10);
+  if (!prep || !(n > 0)) return '';
+  let dt;
+  if (unit === '月' || unit === 'm' || unit === 'month') {
+    const t = new Date(prep.getFullYear(), prep.getMonth() + n, 1);
+    const last = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
+    dt = new Date(t.getFullYear(), t.getMonth(), Math.min(prep.getDate(), last));
+  } else {
+    dt = new Date(prep.getFullYear(), prep.getMonth(), prep.getDate());
+    dt.setDate(dt.getDate() + n);
+  }
+  dt.setDate(dt.getDate() - 1);
+  return fmtDate(dt);
+}
+/** 该类型是否自动算有效期至：标准溶液 / 配制试剂 才算；开封试剂/开封标准品用厂商标注 */
+function autoExpiryType(type) {
+  return type === '标准溶液' || type === '配制试剂';
+}
+/** 单位归一化：月/M/月(s) → 月；天/d/日 → 天 */
+function normUnit(u) {
+  const s = String(u || '').trim().toLowerCase();
+  if (/^(月|m|mo|month|个月)$/.test(s)) return '月';
+  if (/^(天|日|d|day)$/.test(s)) return '天';
+  return '';
+}
+
 function toast(msg, kind) {
   const t = document.createElement('div');
   t.className = 'toast' + (kind ? ' ' + kind : '');
@@ -573,6 +604,24 @@ function getCurrent() {
   return items.find(i => i.id === selectedId) || null;
 }
 
+/** 类型切换：开封类不自动算（用厂商标注），隐藏「有效期」输入 */
+function onTypeChange() {
+  const t = $('f-type').value;
+  const wrap = $('f-durWrap');
+  if (wrap) wrap.style.display = autoExpiryType(t) ? '' : 'none';
+  recalcExpiry();
+}
+/** 配制日期 / 有效期 / 单位 变化 → 自动算「有效期至」（仅标准溶液/配制试剂） */
+function recalcExpiry() {
+  const t = $('f-type').value;
+  if (!autoExpiryType(t)) return; // 开封类不自动算
+  const prep = $('f-prepared').value;
+  const dur = $('f-dur').value;
+  const unit = $('f-unit').value;
+  const calc = calcExpiry(prep, dur, unit);
+  if (calc) $('f-expire').value = calc;
+}
+
 function openAdd() {
   // 清除单选状态：否则 saveItem 会误把「新增」当作对当前选中行的「编辑」
   selectedId = null;
@@ -581,13 +630,13 @@ function openAdd() {
   $('f-type').value = '标准溶液';
   $('f-conc').value = '';
   $('f-prepared').value = fmtDate(today());
-  // 默认有效期 = 配制日 + 90 天
-  const exp = new Date(today());
-  exp.setDate(exp.getDate() + 90);
-  $('f-expire').value = fmtDate(exp);
+  $('f-dur').value = '3';
+  $('f-unit').value = '月';
+  $('f-expire').value = calcExpiry($('f-prepared').value, '3', '月');
   $('f-operator').value = '';
   $('f-location').value = '';
   $('f-note').value = '';
+  onTypeChange();
   $('editModal').classList.add('show');
   setTimeout(() => $('f-name').focus(), 50);
 }
@@ -600,10 +649,13 @@ function openEdit() {
   $('f-type').value = cur.type || '标准溶液';
   $('f-conc').value = cur.concentration || '';
   $('f-prepared').value = cur.preparedDate || '';
+  $('f-dur').value = cur.dur || '';
+  $('f-unit').value = normUnit(cur.unit) || '月';
   $('f-expire').value = cur.expireDate || '';
   $('f-operator').value = cur.operator || '';
   $('f-location').value = cur.location || '';
   $('f-note').value = cur.note || '';
+  onTypeChange();
   $('editModal').classList.add('show');
 }
 
@@ -612,14 +664,21 @@ function saveItem() {
   const type = $('f-type').value;
   const conc = ($('f-conc').value || '').trim();
   const prep = $('f-prepared').value;
-  const exp  = $('f-expire').value;
+  const dur  = ($('f-dur').value || '').trim();
+  const unit = normUnit($('f-unit').value);
+  let   exp  = $('f-expire').value;
   const op   = ($('f-operator').value || '').trim();
   const loc  = ($('f-location').value || '').trim();
   const note = ($('f-note').value || '').trim();
 
   if (!name)  { toast('请填写试剂名称', 'error'); $('f-name').focus(); return; }
   if (!prep)  { toast('请选择配制日期', 'error'); $('f-prepared').focus(); return; }
-  if (!exp)   { toast('请选择有效期至', 'error'); $('f-expire').focus(); return; }
+  // 标准溶液/配制试剂：只要填了有效期就自动算，覆盖手动填的「有效期至」
+  if (autoExpiryType(type) && dur && unit) {
+    const calc = calcExpiry(prep, dur, unit);
+    if (calc) exp = calc;
+  }
+  if (!exp)   { toast('请填有效期（或有效期至）', 'error'); return; }
   if (isoToDate(prep) >= isoToDate(exp)) { toast('有效期需晚于配制日期', 'error'); $('f-expire').focus(); return; }
   if (!op)    { toast('请填写配制人', 'error'); $('f-operator').focus(); return; }
 
@@ -627,7 +686,7 @@ function saveItem() {
   if (cur) {
     Object.assign(cur, {
       name, type, concentration: conc, preparedDate: prep,
-      expireDate: exp, operator: op, location: loc, note
+      expireDate: exp, dur, unit, operator: op, location: loc, note
     });
     toast('已更新');
   } else {
@@ -635,7 +694,7 @@ function saveItem() {
     const newItem = {
       id: newId,
       name, type, concentration: conc,
-      preparedDate: prep, expireDate: exp,
+      preparedDate: prep, expireDate: exp, dur, unit,
       operator: op, location: loc, note
     };
     // 与 Excel 导入一致：优先插到「相同试剂名称 + 相同配制人」最后一条之后，
@@ -892,9 +951,9 @@ window.addEventListener('click', (e) => {
 
 /* ===== CSV 导出 ===== */
 function exportCSV() {
-  const headers = ['试剂名称', '类型', '浓度', '配制日期', '有效期至', '配制人', '存放位置', '备注'];
+  const headers = ['试剂名称', '类型', '浓度', '配制日期', '有效期', '有效期单位', '有效期至', '配制人', '存放位置', '备注'];
   const rows = filteredSorted().map(it =>
-    [it.name, it.type, it.concentration || '', it.preparedDate, it.expireDate,
+    [it.name, it.type, it.concentration || '', it.preparedDate, it.dur || '', it.unit || '', it.expireDate,
      it.operator, it.location || '', it.note || ''].map(s => csvEscape(s))
   );
   const csv = '\ufeff' + [headers, ...rows].map(r => r.join(',')).join('\r\n');
@@ -951,7 +1010,21 @@ $('fileInput').addEventListener('change', (e) => {
           return '';
         };
         let preparedDate = get('配制日期', '配置日期', '配置时间'); // 兼容旧表头「配置日期」
-        let expireDate = get('有效期至', '有效期', '到期日期');
+        let expireDate = get('有效期至', '到期日期');
+        // ★ 新增两列「有效期」(数字) +「有效期单位」(月/天)。
+        //   「有效期」旧表头也用作"有效期至"的别名，这里按值区分：
+        //   纯数字(如 3) → 当成有效期时长；能解析成日期 → 当成有效期至。
+        let dur = get('有效期', '有效期限');
+        let unit = normUnit(get('有效期单位', '单位'));
+        const durRaw = String(dur == null ? '' : dur).trim();
+        const durIsNumber = /^\d+(\.\d+)?$/.test(durRaw) ||
+          (typeof dur === 'number' && isFinite(dur));
+        if (!expireDate && get('有效期') && !durIsNumber) {
+          // 旧表：「有效期」是日期
+          expireDate = get('有效期');
+        }
+        if (durIsNumber) dur = durRaw;
+        else dur = '';
         // 处理日期对象 / Excel 序列
         if (preparedDate instanceof Date) preparedDate = fmtDate(preparedDate);
         else if (typeof preparedDate === 'number') preparedDate = fmtDate(isoToDate(preparedDate));
@@ -963,6 +1036,8 @@ $('fileInput').addEventListener('change', (e) => {
           concentration: get('浓度'),
           preparedDate: String(preparedDate || ''),
           expireDate: String(expireDate || ''),
+          dur: String(dur || ''),
+          unit: unit,
           operator: get('配制人', '配置人', '操作人'), // 兼容旧表头「配置人」
           location: get('存放位置', '位置'),
           note: get('备注')
@@ -972,13 +1047,23 @@ $('fileInput').addEventListener('change', (e) => {
         toast('未能识别到有效数据，请确认表头', 'error');
         return;
       }
+      // ★ 先按「有效期+单位」把有效期至算出来（标准溶液/配制试剂），
+      //   让预览、去重、过期过滤都看到算好的日期，和真正导入保持一致。
+      excelBuffer.forEach(r => {
+        const type = TYPE_LIST.includes(r.type) ? r.type : '配制试剂';
+        r._type = type;
+        if (autoExpiryType(type) && r.dur && r.unit && r.preparedDate) {
+          const calc = calcExpiry(r.preparedDate, r.dur, r.unit);
+          if (calc) r.expireDate = calc;
+        }
+      });
       // 重复检测：与现有台账比对 + 文件内部自身比对
       const seen = new Set(items.map(i =>
         dedupKey(i.name, i.type, i.concentration, i.preparedDate, i.expireDate)
       ));
       let dupCount = 0, expiredFiltered = 0, cleanedFiltered = 0;
       excelBuffer.forEach(r => {
-        const type = TYPE_LIST.includes(r.type) ? r.type : '配制试剂';
+        const type = r._type || (TYPE_LIST.includes(r.type) ? r.type : '配制试剂');
         const key = dedupKey(r.name, type, r.concentration, r.preparedDate, r.expireDate);
         r._type = type;
         r._dup = false;
@@ -1024,6 +1109,8 @@ $('fileInput').addEventListener('change', (e) => {
           <td>${escapeHtml(r.type || '')}</td>
           <td>${escapeHtml(r.concentration || '/')}</td>
           <td>${escapeHtml(r.preparedDate)}</td>
+          <td>${escapeHtml(r.dur || '')}</td>
+          <td>${escapeHtml(r.unit || '')}</td>
           <td>${escapeHtml(r.expireDate)}</td>
           <td>${escapeHtml(r.operator)}</td>
           <td>${escapeHtml(r.location)}</td>
@@ -1074,15 +1161,26 @@ function importExcel() {
       else skippedExpired++;
       return;
     }
-    if (!r.name || !r.expireDate || !r.operator) { skippedInvalid++; return; }
-    if (r._dup) { skippedDup++; return; } // 重复记录自动跳过
+    if (!r.name || !r.operator) { skippedInvalid++; return; }
+    const type = r._type || (TYPE_LIST.includes(r.type) ? r.type : '配制试剂');
+    // ★ 有效期至：标准溶液/配制试剂按「配制日期 + 有效期 + 单位 - 1天」自动算；
+    //   开封试剂/开封标准品用表里原有的（厂商标注）有效期至。
+    let expireDate = r.expireDate || '';
+    let dur = r.dur || '', unit = r.unit || '';
+    if (autoExpiryType(type) && dur && unit && r.preparedDate) {
+      const calc = calcExpiry(r.preparedDate, dur, unit);
+      if (calc) expireDate = calc;
+    }
+    if (!expireDate) { skippedInvalid++; return; }
     const newItem = {
       id: uid(),
       name: r.name,
-      type: r._type || (TYPE_LIST.includes(r.type) ? r.type : '配制试剂'),
+      type: type,
       concentration: r.concentration || '',
       preparedDate: r.preparedDate,
-      expireDate: r.expireDate,
+      expireDate: expireDate,
+      dur: dur,
+      unit: unit,
       operator: r.operator,
       location: r.location || '',
       note: r.note || ''
