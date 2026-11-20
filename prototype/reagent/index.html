@@ -764,6 +764,7 @@
       <div style="margin-bottom:10px;font-size:13px;color:#555;">
         检测到 <span id="excelRowCount">0</span> 条记录。系统已自动识别表头（试剂名称 / 类型 / 浓度 / 配制日期 / 有效期 / 有效期单位 / 有效期至 / 配制人 / 存放位置 / 备注）。
         <div style="margin-top:6px;color:#8a6d3b;background:#fcf8e3;border:1px solid #f0e0b0;border-radius:3px;padding:6px 10px;">
+          <b>日期填写格式：20261120（年月日连写8位）</b>，系统里显示为 2026/11/20；其他写法如 2026/11/20 也认。<br>
           <b>标准溶液/配制试剂</b>：填「有效期」数字＋「有效期单位」(月/天)，有效期至自动按「配制日期＋有效期－1天」算出；<b>开封试剂/开封标准品</b>用表里填的「有效期至」(厂商标注)，不自动算。<br>
           导入规则：重复记录自动跳过；<b>过期超过 15 天</b>或<b>备注含「已清理」</b>的记录将被自动过滤，不会上传系统。
         </div>
@@ -789,6 +790,6 @@
 
 <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none;" />
 
-<script src="app.js?v=20261120b"></script>
+<script src="app.js?v=20261120c"></script>
 </body>
 </html>
