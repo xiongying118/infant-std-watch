@@ -1657,6 +1657,32 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 #v-rdtools .qwt-tbl select:hover{border-color:#93c5fd}
 #v-rdtools .qwt-tbl input::placeholder{color:#94a3b8}
 
+/* ★ 居中自绘警示/确认弹窗（深墨蓝标题栏 + 金线 + ⚠），替掉原生 alert/confirm */
+.lr-mask{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:rgba(9,23,45,.56);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.lr-dlg{width:min(560px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:16px;
+  box-shadow:0 30px 90px rgba(4,16,38,.42);border:1px solid #E3E9F2;animation:lrDlgIn .18s ease-out}
+@keyframes lrDlgIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.lr-dlg-h{display:flex;align-items:center;gap:12px;padding:18px 24px;
+  background:linear-gradient(118deg,#0C2140,#1B3A6B);color:#fff;border-radius:16px 16px 0 0;border-bottom:3px solid var(--gold)}
+.lr-dlg-ic{width:38px;height:38px;flex:0 0 38px;display:flex;align-items:center;justify-content:center;
+  background:rgba(201,162,39,.18);border:1px solid rgba(201,162,39,.55);border-radius:50%;font-size:21px}
+.lr-dlg-h h3{margin:0;font-size:17px;font-weight:750;letter-spacing:.3px}
+.lr-dlg-h .lr-dlg-sub{font-size:12px;color:#B9CBE4;margin-top:2px}
+.lr-dlg-b{padding:22px 26px 8px;font-size:15px;line-height:1.85;color:#233247}
+.lr-dlg-lead{margin:0 0 14px;font-weight:650;color:#B45309}
+.lr-dlg-list{margin:0 0 16px;padding:12px 16px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px}
+.lr-dlg-list ul{margin:0;padding-left:20px}.lr-dlg-list li{margin:3px 0;color:#78350F}
+.lr-dlg-note{margin:0 0 10px;color:#475467}
+.lr-dlg-q{margin:6px 0 0;font-weight:700;color:#0E2748}
+.lr-dlg-f{display:flex;justify-content:flex-end;gap:12px;padding:16px 26px 22px}
+.lr-dlg-btn{padding:10px 24px;border-radius:9px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:.15s}
+.lr-dlg-btn.ok{background:linear-gradient(145deg,#1B3A6B,#0E2748);color:#fff;box-shadow:0 4px 12px rgba(14,39,72,.28)}
+.lr-dlg-btn.ok:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.lr-dlg-btn.no{background:#EEF2F7;color:#344054;border-color:#D6DEE9}
+.lr-dlg-btn.no:hover{background:#E3E9F2}
+@media(max-width:480px){.lr-dlg-b{padding:18px 18px 6px;font-size:14px}.lr-dlg-f{padding:14px 18px 18px}}
+
 </style>
 </head>
 <body>
@@ -2304,7 +2330,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 <!-- ★ 实验室管理台账工具（2026-11-01）★ 设备/试剂/留样/QC/PT/原始记录 -->
 <!-- ★ 按操作人锁项目（共用电脑）：必须在 labbench.js 之前 -->
 <script src="labauth.js?v=20261120b"></script>
-<script src="labbench.js?v=20261120b"></script>
+<script src="labbench.js?v=20261122e"></script>
 <!-- ★ 工具工作台引擎（2026-10-22）★ 34 个可交互工具的实现 -->
 <script src="workbench.js"></script>
 <!-- ★ 工具工作台的导入/导出/复制图（2026-11-04）★ 必须排在 workbench.js 之后 -->
