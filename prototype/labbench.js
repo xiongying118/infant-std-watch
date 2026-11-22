@@ -1026,10 +1026,43 @@
     return null;
   }
   function fmtDash(s){ return /^\d{8}$/.test(s)?s.slice(0,4)+"-"+s.slice(4,6)+"-"+s.slice(6,8):s; }
-  /* ★ 统一警示弹窗：走页面自带的居中自绘模态框（⚠ 醒目），不用原生 alert */
+  /* ★★★ 统一警示弹窗（2026-11-22）：深墨蓝标题栏 + 金线 + ⚠ + 居中卡片，替掉原生 alert */
   function lrAlert(msg){
-    try{ if(typeof global.toast==="function"){ global.toast(msg,"warn"); return; } }catch(e){}
-    try{ global.alert(msg); }catch(e){}
+    var text=String(msg==null?"":msg);
+    var lines=text.split(/\n+/).filter(function(s){ return s.trim(); });
+    var m=text.match(/^【([^】]+)】/);
+    var name=m?m[1]:"";
+    var first=(lines[0]||text).replace(/^【[^】]+】/,"").trim();
+    var restored=/已恢复原值/.test(text);
+    var body=first.replace(/[，,]?\s*已恢复原值。?\s*$/,"").replace(/。$/,"");
+    var items=lines.slice(1).filter(function(s){ return !/^已恢复原值/.test(s); });
+    [].forEach.call(document.querySelectorAll(".lr-mask.lr-alertmask"),function(e){
+      if(e.parentNode) e.parentNode.removeChild(e);
+    });
+    var mask=document.createElement("div"); mask.className="lr-mask lr-alertmask";
+    var itemHtml=items.map(function(s){ return "<li>"+esc(s)+"</li>"; }).join("");
+    mask.innerHTML='<div class="lr-dlg" role="alertdialog" aria-modal="true">'+
+      '<div class="lr-dlg-h"><div class="lr-dlg-ic">⚠</div><div>'+
+        '<h3>'+esc(name?(name+" · 填写提示"):"填写提示")+'</h3>'+
+        '<div class="lr-dlg-sub">分析检测中心 · 原始记录系统</div>'+
+      '</div></div>'+
+      '<div class="lr-dlg-b">'+
+        (body?'<p class="lr-dlg-lead" style="font-size:15px">'+esc(body)+'</p>':'')+
+        (itemHtml?'<div class="lr-dlg-list"><ul>'+itemHtml+'</ul></div>':'')+
+        (restored?'<p class="lr-dlg-note">已恢复原来的值，改好后重试即可。</p>':'')+
+      '</div>'+
+      '<div class="lr-dlg-f"><button type="button" class="lr-dlg-btn ok lr-alert-ok">知道了</button></div>'+
+    '</div>';
+    function done(){
+      if(mask.parentNode) mask.parentNode.removeChild(mask);
+      document.removeEventListener("keydown",onKey);
+    }
+    function onKey(e){ if(e.key==="Escape"||e.key==="Enter") done(); }
+    mask.querySelector(".lr-alert-ok").onclick=done;
+    mask.addEventListener("click",function(e){ if(e.target===mask) done(); });
+    document.addEventListener("keydown",onKey);
+    document.body.appendChild(mask);
+    try{ mask.querySelector(".lr-alert-ok").focus(); }catch(e){}
   }
   function lrDateErr(s){
     if(!isValidDate8(s)) return "日期要填 8 位真实数字（如 20261119）";
