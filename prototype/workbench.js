@@ -127,6 +127,19 @@ function QW_table(key, cfg){
   const st = QWD[key] || (QWD[key] = {
     rows: (cfg.seed||[]).map(r=>Object.assign({}, r))
   });
+  /* ★ 2026-11-24：HACCP 旧演示数据是湿法工艺（原料奶/巴氏杀菌/喷雾干燥），
+     已落盘的旧表不会自动用新 seed —— 检测到湿法工序就整表换成干法。 */
+  if(key === "haccp" && Array.isArray(st.rows)){
+    const wet = st.rows.some(r => /原料奶|巴氏杀菌|喷雾干燥|72℃\/15s/.test(
+      String(r.step||"") + String(r.limit||"") + String(r.mon||"")));
+    if(wet){ st.rows = (cfg.seed||[]).map(r=>Object.assign({}, r)); QW_persist(); }
+  }
+  /* 小试旧演示行（均质压力/喷雾干燥进风温度）一并清掉 */
+  if(key === "lab_trial" && Array.isArray(st.rows)){
+    const n0 = st.rows.length;
+    st.rows = st.rows.filter(r => !(Number(r.tin) === 185 && Number(r.tout) === 88));
+    if(st.rows.length !== n0) QW_persist();
+  }
   const cols = cfg.cols || [];
   const computed = cfg.computed || {};
   QW_applyAuto(st, cfg);
