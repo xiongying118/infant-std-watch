@@ -181,6 +181,7 @@
       else location.hash = "#" + wantView;
     }
 
+    var retried = false;
     function openTarget() {
       var head = wantRd
         ? document.querySelector('.rdcard-h[data-key="' + toolKey + '"]')
@@ -188,6 +189,18 @@
       if (!head) {
         /* 兜底：两个视图都找一遍，兼容老链接 */
         head = document.querySelector('.qmcard-h[data-key="' + toolKey + '"], .rdcard-h[data-key="' + toolKey + '"]');
+      }
+      if (!head && !retried) {
+        /* 目标工具可能被当前分组标签过滤掉了：切到「全部」重渲染再找一次 */
+        retried = true;
+        try {
+          if (wantRd) { curRdGroup = "全部"; if (typeof renderRdTools === "function") renderRdTools(); }
+          else { curQmCat = "全部"; if (typeof renderQmTools === "function") renderQmTools(); }
+        } catch (e) {}
+        head = wantRd
+          ? document.querySelector('.rdcard-h[data-key="' + toolKey + '"]')
+          : document.querySelector('.qmcard-h[data-key="' + toolKey + '"]');
+        if (!head) head = document.querySelector('.qmcard-h[data-key="' + toolKey + '"], .rdcard-h[data-key="' + toolKey + '"]');
       }
       if (!head) {
         if (global.toast) global.toast("没有找到「" + toolKey + "」这个工具", "warn");
