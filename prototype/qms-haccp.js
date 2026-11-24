@@ -104,30 +104,19 @@
   /* ---------- 图表：SVG 手绘，不依赖外部库 ---------- */
   function ccpChart(S) {
     var ccs = S.ccp.filter(function (c) { return c.kind === "CCP"; });
-    var w = 720, h = 250, pl = 108, pt = 18, bw = 46;
-    var ih = h - pt - 46;
-    var s = '<svg class="qwsvg qms-svg" viewBox="0 0 ' + w + ' ' + h + '">';
-    s += '<text x="8" y="12" class="fbt">CCP 关键控制点监控状态</text>';
-    s += '<line x1="' + pl + '" y1="' + (pt + ih) + '" x2="' + (w - 12) + '" y2="' + (pt + ih) + '" stroke="#cbd5e1"/>';
-    [0, 50, 100].forEach(function (p) {
-      var y = pt + ih - ih * p / 100;
-      s += '<line x1="' + pl + '" y1="' + y + '" x2="' + (w - 12) + '" y2="' + y + '" stroke="#eef1f5"/>';
-    });
+    var h = '<div class="qms-chart-h"><b>CCP 关键控制点监控状态</b>' +
+      '<span class="qms-tag">点一行定位到下方控制计划</span></div>';
+    h += '<div class="qms-ccplist">';
     ccs.forEach(function (c, i) {
-      var x = pl + 14 + bw * i;
-      var ok = c.status !== "失控";
-      var bh = ok ? ih * 0.86 : ih * 0.34;
-      var col = ok ? "#0f9d76" : "#dc2626";
-      s += '<rect x="' + x.toFixed(1) + '" y="' + (pt + ih - bh).toFixed(1) + '" width="' + (bw * 0.62).toFixed(1) +
-           '" height="' + bh.toFixed(1) + '" rx="4" fill="' + col + '" opacity="0.88"/>';
-      s += '<text x="' + (x + bw * 0.31).toFixed(1) + '" y="' + (pt + ih + 15) + '" class="ax" text-anchor="middle">' + (i + 1) + '</text>';
-      s += '<title>' + esc(c.step + '｜' + c.limit + '｜' + c.status) + '</title>';
+      var idx = S.ccp.indexOf(c);
+      h += '<button type="button" class="qms-ccprow ' + (c.status === "失控" ? "bad" : "ok") + '" data-ccp-jump="' + idx + '" title="' + esc(c.limit) + '">' +
+        '<span class="qms-ccpn">' + (i + 1) + '</span>' +
+        '<span class="qms-ccps">' + esc(c.step) + '</span>' +
+        '<span class="qms-ccpst">' + esc(c.status) + '</span>' +
+        '<span class="qms-ccpl">' + esc(c.limit) + '</span></button>';
     });
-    s += '</svg>';
-    s += '<div class="qms-chartlegend">' + ccs.map(function (c, i) {
-      return '<span class="lg"><i style="background:' + (c.status !== "失控" ? "#0f9d76" : "#dc2626") + '"></i>' + (i + 1) + ' ' + esc(c.step) + '</span>';
-    }).join("") + '</div>';
-    return s;
+    h += '</div>';
+    return h;
   }
 
   function envChart(S) {
@@ -143,7 +132,10 @@
       s += '<text x="' + (pl - 6) + '" y="' + (y + 3) + '" class="ax" text-anchor="end">' + p + '</text>';
     });
     if (!rows.length) {
-      s += '<text x="' + (w / 2) + '" y="' + (pt + ih / 2) + '" class="fbb" text-anchor="middle">暂无环境记录，在下方「环境监测」录入后显示趋势</text>';
+      return '<div class="qms-chart-h"><b>清洁作业区环境趋势（温度 / 湿度）</b></div>' +
+        '<div class="qms-chartempty"><div class="qms-ce-t">还没有环境监测记录</div>' +
+        '<div class="qms-ce-d">录入第一行后，这里自动画温度 / 湿度趋势，并标出 16~25℃、&lt;65% 的限值线。</div>' +
+        '<button class="btn sm pri" data-goto-form="env">＋ 录入第一行</button></div>';
     } else {
       var step = iw / Math.max(rows.length - 1, 1);
       function pts(key, max) {
@@ -190,7 +182,10 @@
       s += '<text x="' + (pl - 6) + '" y="' + (y + 3) + '" class="ax" text-anchor="end">' + v + '</text>';
     });
     if (!rows.length) {
-      s += '<text x="' + (w / 2) + '" y="' + (pt + ih / 2) + '" class="fbb" text-anchor="middle">暂无金检记录，在下方「金检 / 异物验证」录入后显示趋势</text>';
+      return '<div class="qms-chart-h"><b>金属探测器灵敏度验证（实测 φmm vs 限值）</b></div>' +
+        '<div class="qms-chartempty"><div class="qms-ce-t">还没有金检记录</div>' +
+        '<div class="qms-ce-d">录入每班试块实测值，这里自动对比 Fe≤0.6 / NonFe≤0.8 / SUS≤1.2，超限标红。</div>' +
+        '<button class="btn sm pri" data-goto-form="metal">＋ 录入第一行</button></div>';
     } else {
       var gw = iw / rows.length;
       types.forEach(function (t, ti) {
@@ -402,8 +397,10 @@
       var occ = x.status === "失控" ? 5 : (i % 3 === 0 ? 3 : (i % 2 === 0 ? 2 : 1));
       var cx = pl + (occ - 1) * cell + cell / 2 - 1;
       var cy = pt + (5 - sev) * cell + cell / 2 - 1;
+      s += '<g class="qms-riskdot" data-ccp-jump="' + S.ccp.indexOf(x) + '">';
       s += '<circle cx="' + cx.toFixed(1) + '" cy="' + cy.toFixed(1) + '" r="8" fill="#1B3A6B" opacity="0.85"/>';
       s += '<text x="' + cx.toFixed(1) + '" y="' + (cy + 3.5).toFixed(1) + '" fill="#fff" font-size="10" text-anchor="middle">' + (i + 1) + '</text>';
+      s += '<title>' + esc(x.step + '｜S×O 推演：' + x.status) + '</title></g>';
     });
     s += '<text x="' + (pl + 5 * cell / 2) + '" y="' + (pt + 5 * cell + 18) + '" class="ax" text-anchor="middle">发生度 O →</text>';
     s += '<text x="' + (pl - 8) + '" y="' + (pt + 5 * cell / 2) + '" class="ax" text-anchor="end" transform="rotate(-90 ' + (pl - 8) + ' ' + (pt + 5 * cell / 2) + ')">严重度 S →</text>';
@@ -419,7 +416,7 @@
       '<th>#</th><th>工序</th><th>类别</th><th>主要危害</th><th>关键限 / 控制要求</th>' +
       '<th>监控</th><th>验证</th><th>纠偏</th><th>依据</th><th>状态</th></tr></thead><tbody>';
     S.ccp.forEach(function (c, i) {
-      h += '<tr><td>' + (i + 1) + '</td><td><b>' + esc(c.step) + '</b></td>' +
+      h += '<tr data-ccp-row="' + i + '"><td>' + (i + 1) + '</td><td><b>' + esc(c.step) + '</b></td>' +
         '<td><span class="qms-kind k-' + c.kind + '">' + c.kind + '</span></td>' +
         '<td>' + esc(c.hazard) + '</td><td>' + esc(c.limit) + '</td>' +
         '<td>' + esc(c.monitor) + '</td><td>' + esc(c.verify) + '</td><td>' + esc(c.corr) + '</td>' +
@@ -550,6 +547,35 @@
 
   function bind(root, S) {
     bindFlowInfo(root, S);
+    /* 图 → 表 / 图 → 表单：点一下就能到能改的地方，不是摆设 */
+    function jumpToCcp(i) {
+      var tr = root.querySelector('.qms-ccptab tr[data-ccp-row="' + i + '"]');
+      if (!tr) return;
+      tr.scrollIntoView({ behavior: "smooth", block: "center" });
+      tr.classList.add("hi");
+      setTimeout(function () { tr.classList.remove("hi"); }, 2400);
+    }
+    function openForm(key) {
+      var tab = root.querySelector('.qms-formtabs button[data-tab="' + key + '"]');
+      if (tab) tab.click();
+      var pane = root.querySelector('.qms-formpane[data-pane="' + key + '"]');
+      if (!pane) return;
+      pane.scrollIntoView({ behavior: "smooth", block: "center" });
+      var add = pane.querySelector('button[data-act="add"]');
+      if (add && pane.querySelector('.qms-empty')) add.click();
+      setTimeout(function () {
+        /* 点「新增」会整块重渲染，必须重新查一次节点，不能用旧 pane */
+        var p2 = root.querySelector('.qms-formpane[data-pane="' + key + '"]');
+        var inp = p2 && (p2.querySelector('input[data-k="date"]') || p2.querySelector('input'));
+        if (inp) { try { inp.focus(); } catch (e) {} }
+      }, 320);
+    }
+    root.querySelectorAll("[data-ccp-jump]").forEach(function (el) {
+      el.onclick = function () { jumpToCcp(+el.dataset.ccpJump); };
+    });
+    root.querySelectorAll("[data-goto-form]").forEach(function (el) {
+      el.onclick = function () { openForm(el.dataset.gotoForm); };
+    });
     /* tab 切换 */
     root.querySelectorAll(".qms-formtabs button").forEach(function (b) {
       b.onclick = function () {
