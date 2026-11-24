@@ -543,9 +543,12 @@ function QW_pareto(key, cfg){
     cum += r.pct; r.cum = cum;
     r.tier = r.cum <= 80 ? "A" : (r.cum <= 95 ? "B" : "C");
   });
-  const W = 640, H = 220, PL = 40, PB = 76, PT = 14;
-  const iw = W - PL - 12, ih = H - PT - PB;
+  const W = 640, H = 226, PL = 46, PR = 34, PT = 14, PB = 78;
+  const iw = W - PL - PR, ih = H - PT - PB;
   const maxN = Math.max.apply(null, rows.map(r=>r.n||0).concat([1]));
+  const stepN = maxN <= 10 ? 2 : (maxN <= 50 ? 10 : (maxN <= 100 ? 20 : 50));
+  const niceMax = Math.max(stepN, Math.ceil(maxN/stepN)*stepN);
+  const yTicks = [0,1,2,3,4,5].map(i=>Math.round(niceMax*i/5));
   const bw = iw / Math.max(1, rows.length);
   const cumPts = rows.map((r,i)=>
     `${(PL + bw*i + bw/2).toFixed(1)},${(PT + ih - ih*r.cum/100).toFixed(1)}`).join(" ");
@@ -599,25 +602,32 @@ function QW_pareto(key, cfg){
       </div>
       <div>
         <svg class="qwsvg" id="${svgId}" viewBox="0 0 ${W} ${H}">
+          ${yTicks.map(v=>{
+            const y = PT + ih - ih*v/niceMax;
+            return `<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W-PR}" y2="${y.toFixed(1)}" stroke="#eef1f5"/>
+                    <text x="${PL-6}" y="${(y+3).toFixed(1)}" class="ax" text-anchor="end">${v}</text>`;
+          }).join("")}
           ${[0,25,50,75,100].map(p=>{
             const y = PT + ih - ih*p/100;
-            return `<line x1="${PL}" y1="${y}" x2="${W-12}" y2="${y}" stroke="#eef1f5"/>
-                    <text x="${PL-6}" y="${y+3}" class="ax" text-anchor="end">${p}</text>`;
+            return `<text x="${W-PR+5}" y="${(y+3).toFixed(1)}" class="ax" text-anchor="start" fill="#64748b">${p}%</text>`;
           }).join("")}
           ${rows.map((r,i)=>{
-            const bh = ih*(r.n||0)/maxN;
+            const bh = ih*(r.n||0)/niceMax;
             const x = PL + bw*i;
             return `<rect x="${(x+bw*0.15).toFixed(1)}" y="${(PT+ih-bh).toFixed(1)}"
               width="${(bw*0.7).toFixed(1)}" height="${bh.toFixed(1)}" rx="2"
-              fill="${r.tier==="A"?"#ef4444":(r.tier==="B"?"#f59e0b":"#94a3b8")}"/>
+              fill="${r.tier==="A"?"#ef4444":(r.tier==="B"?"#f59e0b":"#94a3b8")}">
+              <title>${escHtml(r.cat)}：${r.n} 次（${r.pct.toFixed(1)}%）</title></rect>
               <text x="${(x+bw/2).toFixed(1)}" y="${(PT+ih+13).toFixed(1)}" class="ax" text-anchor="middle">${i+1}</text>`;
           }).join("")}
           <polyline points="${cumPts}" fill="none" stroke="#2563eb" stroke-width="2"/>
           ${rows.map((r,i)=>`<circle cx="${(PL+bw*i+bw/2).toFixed(1)}" cy="${(PT+ih-ih*r.cum/100).toFixed(1)}" r="3" fill="#2563eb"/>`).join("")}
-          <line x1="${PL}" y1="${PT+ih-ih*0.8}" x2="${W-12}" y2="${PT+ih-ih*0.8}" stroke="#dc2626" stroke-dasharray="4 3"/>
-          <text x="${W-14}" y="${(PT+ih-ih*0.8-4).toFixed(1)}" class="ax red" text-anchor="end">80%</text>
+          <line x1="${PL}" y1="${(PT+ih-ih*0.8).toFixed(1)}" x2="${W-PR}" y2="${(PT+ih-ih*0.8).toFixed(1)}" stroke="#dc2626" stroke-dasharray="4 3"/>
+          <text x="${W-PR+5}" y="${(PT+ih-ih*0.8+3).toFixed(1)}" class="ax red" text-anchor="start">80%</text>
           <line x1="${PL}" y1="${PT}" x2="${PL}" y2="${PT+ih}" stroke="#cbd5e1"/>
-          <line x1="${PL}" y1="${PT+ih}" x2="${W-12}" y2="${PT+ih}" stroke="#cbd5e1"/>
+          <line x1="${PL}" y1="${PT+ih}" x2="${W-PR}" y2="${PT+ih}" stroke="#cbd5e1"/>
+          <text x="${PL}" y="${(PT+ih+29).toFixed(1)}" class="ax" text-anchor="start" fill="#64748b">柱=次数（左轴）</text>
+          <text x="${W-PR}" y="${(PT+ih+29).toFixed(1)}" class="ax" text-anchor="end" fill="#64748b">折线=累计占比（右轴）</text>
         </svg>
         <div class="qwlegend">
           ${rows.map((r,i)=>`<span class="lg"><i style="background:${r.tier==="A"?"#ef4444":(r.tier==="B"?"#f59e0b":"#94a3b8")}"></i>${i+1}. ${escHtml(r.cat)} <b>${r.n}</b>（${r.pct.toFixed(1)}%）</span>`).join("")}
