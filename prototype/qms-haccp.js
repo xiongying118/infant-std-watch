@@ -275,7 +275,8 @@
 
     /* 工艺流程图 */
     h += '<div class="qms-card"><div class="qms-card-h"><b>干法工艺质量地图</b>' +
-      '<span class="qms-tag">点击工序查看控制要求</span></div>' + flowHtml(S) + '</div>';
+      '<span class="qms-tag">点击工序查看控制要求</span></div>' + flowHtml(S) +
+      '<div id="qmsFlowInfo" class="qms-flowinfo">' + flowInfoHtml(null) + '</div></div>';
 
     /* 图表区 */
     h += '<div class="qms-charts"><div class="qms-card">' + ccpChart(S) + '</div>' +
@@ -310,7 +311,13 @@
       '<div class="qms-ks ' + (ok ? "ok" : "bad") + '">' + esc(sub) + '</div></div>';
   }
 
-  /* 工艺流程图：SVG 横向节点 + 危害标注 */
+  /* 工艺流程图：SVG 横向节点 + 危害标注；节点可点，点开看完整控制要求 */
+  function shortRef(r) {
+    var m = /(\d+(?:\.\d+)+)/.exec(String(r || ""));
+    if (m) return m[1];
+    var t = String(r || "");
+    return t.length > 9 ? t.slice(0, 9) : t;
+  }
   function flowHtml(S) {
     var steps = S.ccp;
     var n = steps.length, w = 1160, nodeW = 104, gap = 12;
@@ -323,22 +330,55 @@
       var x = i * (nodeW + gap);
       var kindColor = c.kind === "CCP" ? "#1B3A6B" : (c.kind === "OPRP" ? "#a16207" : "#64748b");
       var y = 34, bw = nodeW, bh = 62;
+      s += '<g class="qms-fnode" data-i="' + i + '" role="button" tabindex="0">';
       s += '<rect x="' + x.toFixed(1) + '" y="' + y + '" width="' + (bw - 8).toFixed(1) + '" height="' + bh +
            '" rx="8" fill="' + (c.status === "失控" ? "#fef2f2" : "#f8fafc") + '" stroke="' + kindColor + '" stroke-width="1.5"/>';
       s += '<text x="' + (x + bw / 2 - 4).toFixed(1) + '" y="' + (y + 24) + '" class="fbt" text-anchor="middle">' + esc(c.step.length > 6 ? c.step.slice(0, 6) : c.step) + '</text>';
       s += '<rect x="' + (x + bw / 2 - 26).toFixed(1) + '" y="' + (y + 32) + '" width="46" height="16" rx="8" fill="' + kindColor + '"/>';
       s += '<text x="' + (x + bw / 2 - 3).toFixed(1) + '" y="' + (y + 44) + '" fill="#fff" font-size="9.5" text-anchor="middle">' + c.kind + '</text>';
-      s += '<text x="' + (x + bw / 2 - 4).toFixed(1) + '" y="' + (y + 78) + '" class="ax" text-anchor="middle">' + esc(c.ref) + '</text>';
+      s += '<text x="' + (x + bw / 2 - 4).toFixed(1) + '" y="' + (y + 78) + '" class="ax" text-anchor="middle">' + esc(shortRef(c.ref)) + '</text>';
       if (i < n - 1) {
         s += '<path d="M' + (x + bw - 6).toFixed(1) + ',' + (y + bh / 2) + ' L' + (x + bw + gap - 4).toFixed(1) + ',' + (y + bh / 2) +
              '" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#qmsArrow)"/>';
       }
-      s += '<title>' + esc(c.step + '｜' + c.hazard + '｜关键限：' + c.limit) + '</title>';
+      s += '<title>' + esc(c.step + '｜' + c.hazard + '｜关键限：' + c.limit) + '</title></g>';
     });
     s += '<defs><marker id="qmsArrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">' +
          '<path d="M0,0 L7,3.5 L0,7 Z" fill="#94a3b8"/></marker></defs>';
     s += '</svg></div>';
     return s;
+  }
+
+  /* 工序详情：点流程图节点后显示 */
+  function flowInfoHtml(c) {
+    if (!c) return '<div class="qms-fi-empty">点上面任一工序，这里显示它的关键限、监控、验证、纠偏和依据。</div>';
+    return '<div class="qms-fi-h"><b>' + esc(c.step) + '</b>' +
+      '<span class="qms-fi-kind ' + (c.kind === "CCP" ? "" : "oprp") + '">' + esc(c.kind) + '</span>' +
+      '<span class="qms-tag">' + esc(c.status) + '</span></div>' +
+      '<div class="qms-fi-grid">' +
+      [["主要危害", c.hazard], ["关键限 / 控制要求", c.limit], ["监控", c.monitor],
+       ["验证", c.verify], ["纠偏", c.corr], ["依据", c.ref]].map(function (kv) {
+        return '<div class="qms-fi"><div class="qms-fi-k">' + esc(kv[0]) + '</div><div class="qms-fi-v">' + esc(kv[1] || "—") + '</div></div>';
+      }).join("") +
+      '</div>';
+  }
+  function bindFlowInfo(root, S) {
+    var host = root.querySelector("#qmsFlowInfo");
+    if (!host) return;
+    function pick(i) {
+      var c = S.ccp[i];
+      if (!c) return;
+      root.querySelectorAll(".qms-fnode").forEach(function (g) {
+        g.classList.toggle("on", +g.dataset.i === i);
+      });
+      host.innerHTML = flowInfoHtml(c);
+    }
+    root.querySelectorAll(".qms-fnode").forEach(function (g) {
+      g.addEventListener("click", function () { pick(+g.dataset.i); });
+      g.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(+g.dataset.i); }
+      });
+    });
   }
 
   function riskChart(S) {
@@ -509,6 +549,7 @@
   }
 
   function bind(root, S) {
+    bindFlowInfo(root, S);
     /* tab 切换 */
     root.querySelectorAll(".qms-formtabs button").forEach(function (b) {
       b.onclick = function () {
