@@ -2070,6 +2070,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 
     <!-- ===== 质量管理工具 ===== -->
     <div class="view hide" id="v-qmtools">
+      <div id="qmsDash"></div>
       <div class="notice">
         <span>🧰</span>
         <div>
@@ -2341,6 +2342,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 <!-- ★ 工具之间的关联性（2026-11-04 晚）★ -->
 <script src="qwlink.data.js"></script>
 <script src="qwlink.js"></script>
+<script src="qms-haccp.js?v=20261124a"></script>
 <!-- data.js 缺失时给出明确提示，不能静默空白 -->
 <script>
 if(!window.STDWATCH_DATA){
@@ -6668,6 +6670,7 @@ function route(){
   if(v==="lab") renderLab();
   if(v==="jsa") renderJsa();
   if(v==="qmtools") renderQmTools();
+  if(v==="qmtools" && window.QMS_HACCP) QMS_HACCP.render();
   if(v==="rdtools") renderRdTools();
   if(v==="refs") renderRefs();
   if(v==="detail") renderDetail();
