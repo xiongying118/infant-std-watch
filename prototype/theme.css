@@ -1279,3 +1279,68 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   .lr-calbtn{padding:0 10px}
   .lr-durow select{flex-basis:52px}
 }
+
+/* ================================================================
+   ★ 干法工艺质量驾驶舱（qms-haccp.js）
+   ================================================================ */
+#qmsDash{margin-bottom:18px}
+.qms-hero{position:relative;overflow:hidden;border-radius:14px;padding:20px 24px;margin-bottom:14px;
+  background:linear-gradient(120deg,#0E2748 0%,#1B3A6B 52%,#244E8C 100%);color:#fff;
+  box-shadow:0 10px 30px rgba(14,39,72,.22)}
+.qms-hero:after{content:"";position:absolute;right:-30px;top:-70px;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,162,39,.35),rgba(201,162,39,0) 68%)}
+.qms-eyebrow{font-size:10px;letter-spacing:2px;color:#E3C766;font-weight:700;margin-bottom:7px}
+.qms-title{font-size:23px;font-weight:800;letter-spacing:.5px}
+.qms-sub{font-size:12.5px;color:#C7D7EC;margin-top:7px;line-height:1.6}
+.qms-refs{margin-top:12px;font-size:11px;color:#9FB6D4;position:relative;z-index:1}
+.qms-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.qms-kpi{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:14px 16px;
+  box-shadow:0 2px 10px rgba(16,24,40,.04)}
+.qms-kl{font-size:11.5px;color:var(--ink3);font-weight:600}
+.qms-kv{font-size:25px;font-weight:800;color:var(--brand-ink);margin:5px 0 3px;letter-spacing:.5px}
+.qms-ks{font-size:11.5px;font-weight:600}
+.qms-ks.ok{color:#0f9d76}.qms-ks.bad{color:#dc2626}
+.qms-card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:14px;
+  box-shadow:0 2px 10px rgba(16,24,40,.04)}
+.qms-card-h{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
+.qms-card-h b{font-size:14px;color:var(--brand-ink)}
+.qms-tag{font-size:11px;color:var(--ink3);margin-left:auto}
+.qms-charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.qms-svg{width:100%;height:auto;display:block}
+.qms-chartlegend{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;font-size:10.5px;color:var(--ink2)}
+.qms-chartlegend .lg{display:inline-flex;align-items:center;gap:4px}
+.qms-chartlegend .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.qms-flowwrap{overflow-x:auto}
+.qms-flowwrap svg{min-width:1040px}
+.qms-kind{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;color:#fff}
+.qms-kind.k-CCP{background:#1B3A6B}.qms-kind.k-OPRP{background:#a16207}.qms-kind.k-PRP{background:#64748b}
+.qms-tablewrap,.qms-gridwrap{overflow-x:auto}
+.qms-ccptab,.qms-grid{border-collapse:collapse;width:100%;font-size:11.5px;min-width:960px}
+.qms-ccptab th,.qms-grid th{background:#F1F5FA;color:var(--brand-ink);font-weight:700;text-align:left;
+  padding:8px 9px;border:1px solid var(--line);white-space:nowrap}
+.qms-ccptab td,.qms-grid td{padding:6px 9px;border:1px solid var(--line);vertical-align:top;line-height:1.5}
+.qms-ccptab tr:hover td,.qms-grid tr:hover td{background:#FAFCFE}
+.qms-ccptab select,.qms-grid select,.qms-grid input{width:100%;box-sizing:border-box;border:1px solid var(--line);
+  border-radius:5px;padding:5px 7px;font-size:11.5px;background:#fff;color:var(--ink);font-family:inherit}
+.qms-grid input{min-width:80px}
+.qms-grid .qms-empty{text-align:center;color:var(--ink3);padding:18px}
+.qms-x{border:none;background:#FEE2E2;color:#b91c1c;border-radius:5px;width:22px;height:22px;cursor:pointer;font-weight:700}
+.qms-acts{display:flex;align-items:center;gap:9px;margin-top:10px;flex-wrap:wrap}
+.qms-acts .muted{font-size:11px;color:var(--ink3);line-height:1.5;flex:1 1 300px}
+.qms-ref{color:var(--brand-3);text-decoration:underline;cursor:pointer}
+.qms-formtabs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
+.qms-formtabs button{border:1px solid var(--line);border-radius:999px;padding:6px 14px;background:#fff;
+  color:var(--ink2);font-size:12px;cursor:pointer;font-family:inherit}
+.qms-formtabs button.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+.qms-formpane{display:none}.qms-formpane.on{display:block}
+.qms-calchelp{font-size:11.5px;line-height:1.7;color:var(--ink2);background:#F6F9FE;border:1px dashed #bfd3f0;
+  border-radius:7px;padding:9px 12px;margin-top:10px}
+.qms-calc{display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap}
+.qms-calc input{flex:1 1 320px;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit}
+.qms-calc .muted{font-size:11.5px;color:var(--brand-ink);font-weight:600}
+@media(max-width:900px){
+  .qms-kpis{grid-template-columns:1fr 1fr}
+  .qms-charts{grid-template-columns:1fr}
+  .qms-title{font-size:19px}
+  .qms-refs{font-size:10px}
+}
