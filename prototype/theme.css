@@ -1344,3 +1344,20 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
   .qms-title{font-size:19px}
   .qms-refs{font-size:10px}
 }
+
+/* ===== 质量地图：工序可点 + 详情（2026-11-24） ===== */
+.qms-flowwrap svg g.qms-fnode{cursor:pointer;outline:none}
+.qms-flowwrap svg g.qms-fnode:hover>rect:first-of-type{stroke-width:2.6;fill:#eef4ff}
+.qms-flowwrap svg g.qms-fnode.on>rect:first-of-type{stroke-width:3;fill:#e8f0fe}
+.qms-flowwrap svg g.qms-fnode:focus-visible>rect:first-of-type{stroke-width:3;stroke-dasharray:4 2}
+.qms-flowinfo{margin:8px 2px 2px;border:1px solid #dbe3ef;border-radius:10px;background:#f8fafc;padding:11px 13px}
+.qms-fi-empty{font-size:12.5px;color:#64748b;line-height:1.6}
+.qms-fi-h{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.qms-fi-h b{font-size:14.5px;color:#0f2747}
+.qms-fi-kind{font-size:11px;padding:1px 8px;border-radius:20px;background:#1B3A6B;color:#fff}
+.qms-fi-kind.oprp{background:#a16207}
+.qms-fi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px 16px}
+.qms-fi-k{font-size:11.5px;color:#64748b;margin-bottom:2px}
+.qms-fi-v{font-size:12.5px;color:#1f2d3d;line-height:1.55;word-break:break-word}
+@media(max-width:900px){.qms-fi-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.qms-fi-grid{grid-template-columns:1fr}.qms-flowinfo{padding:10px}}
