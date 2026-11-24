@@ -5,7 +5,7 @@
    --------------------------------
    原来 16 个质量管理工具是「通用质量管理」模板：5S、鱼骨图、帕累托……
    哪个行业都能用，但没有一处告诉使用者「婴配粉干法工艺到底该盯什么」。
-   本模块把 GB 23790-2010、生产许可审查细则（2022 版）表 7、以及
+   本模块把 GB 23790-2023、生产许可审查细则（2022 版）表 7、以及
    市场监管总局《蜡样芽胞杆菌/克罗诺杆菌风险防控指南》落实到
    「工序 → 危害 → 关键限 → 监控 → 纠偏 → 记录」的可填表单 + 图表。
 
@@ -49,6 +49,14 @@
     if (!S.clean || !S.clean.length) S.clean = [];
     if (!S.allergen || !S.allergen.length) S.allergen = [];
     if (!S.blend || !S.blend.length) S.blend = [];
+    /* 旧版国标本地数据迁移到 2023 版条款 */
+    var REF_FIX = { c3: "GB23790-2023 8.2.5.5", c6: "GB23790-2023 8.2.5.3",
+      c7: "GB23790-2023 8.2.5.1", c8: "GB23790-2023 8.2.6.3",
+      c9: "GB23790-2023 8.2.5.5 / 清洁消毒程序" };
+    (S.ccp || []).forEach(function (c) {
+      if (REF_FIX[c.id]) c.ref = REF_FIX[c.id];
+      if (c.id === "c7") c.limit = "温度16℃~25℃、相对湿度<65%；克罗诺杆菌不得检出";
+    });
     return S;
   }
   function save(S) {
@@ -57,7 +65,7 @@
   }
   function flush() { /* 同步写：每次改动即写，避免关页丢数据 */ }
 
-  /* ---------- 干法工艺 CCP 基线（生产许可审查细则 2022 表 7 + GB23790） ---------- */
+  /* ---------- 干法工艺 CCP 基线（生产许可审查细则 2022 表 7 + GB23790-2023） ---------- */
   function seedCCP() {
     return [
       { id: "c1", step: "备料", hazard: "原辅料名称/规格/合格证明不符，外包装污染", kind: "PRP",
@@ -68,7 +76,7 @@
         verify: "清洁记录 + 目视", corr: "退料并清洁消毒拆包区", ref: "细则表7·进料", status: "受控" },
       { id: "c3", step: "杀菌隧道", hazard: "物料带入微生物（克罗诺杆菌/蜡样芽胞杆菌/沙门氏菌）", kind: "CCP",
         limit: "经杀菌隧道/杀菌设施后方可进入清洁作业区（按验证参数）", monitor: "连续 / 设备",
-        verify: "温度·时间记录 + 微生物抽检", corr: "停机隔离，评估已进区物料", ref: "GB23790 9.6.5.6", status: "受控" },
+        verify: "温度·时间记录 + 微生物抽检", corr: "停机隔离，评估已进区物料", ref: "GB23790-2023 8.2.5.5", status: "受控" },
       { id: "c4", step: "配料（预混）", hazard: "称量错误、营养素/强化剂超范围，交叉污染", kind: "CCP",
         limit: "称量与配方一致，双人复核；添加剂按 GB 2760/GB 14880", monitor: "每批 / 配料员+复核员",
         verify: "配料记录 + 复核签字", corr: "停线，整批隔离重算", ref: "细则表7·配料", status: "受控" },
@@ -77,16 +85,16 @@
         verify: "筛网检查记录", corr: "停线，隔离该时段产品排查", ref: "细则表7·投料", status: "受控" },
       { id: "c6", step: "混合", hazard: "混合不均导致营养素剂量偏差（维A/D/微量元素）", kind: "CCP",
         limit: "混合时间等参数经验证；混合均匀性确认（RSD≤内控限）", monitor: "每批 / 中控",
-        verify: "混合参数记录 + 均匀度检测", corr: "延长混合/返工评估，不合格不放行", ref: "GB23790 9.6.5.3", status: "受控" },
+        verify: "混合参数记录 + 均匀度检测", corr: "延长混合/返工评估，不合格不放行", ref: "GB23790-2023 8.2.5.3", status: "受控" },
       { id: "c7", step: "清洁作业区环境", hazard: "裸粉工序环境温湿度失控、致病菌污染", kind: "CCP",
-        limit: "温度≤25℃、相对湿度<65%；克罗诺杆菌不得检出", monitor: "每班 / 环境监测",
-        verify: "温湿度记录 + 环境监控（EM）", corr: "停止暴露作业，消毒复测合格再恢复", ref: "GB23790 9.6.5.1", status: "受控" },
+        limit: "温度16℃~25℃、相对湿度<65%；克罗诺杆菌不得检出", monitor: "每班 / 环境监测",
+        verify: "温湿度记录 + 环境监控（EM）", corr: "停止暴露作业，消毒复测合格再恢复", ref: "GB23790-2023 8.2.5.1", status: "受控" },
       { id: "c8", step: "内包装 / 金检", hazard: "金属异物、封口不良、包装材料污染", kind: "CCP",
         limit: "金检灵敏度 Fe≤φ0.6mm / NonFe≤φ0.8mm / SUS≤φ1.2mm（按验证）；封口密封性合格", monitor: "连续 / 金检员",
-        verify: "每班试块验证 + 封口抽检", corr: "停线，隔离上次合格点后全部产品", ref: "GB23790 9.6.6.4", status: "受控" },
+        verify: "每班试块验证 + 封口抽检", corr: "停线，隔离上次合格点后全部产品", ref: "GB23790-2023 8.2.6.3", status: "受控" },
       { id: "c9", step: "品种切换清场", hazard: "不同配方残留导致过敏原/营养素交叉污染", kind: "OPRP",
         limit: "有效清洁并保存清场记录，QA 确认无残留", monitor: "每次切换 / QA",
-        verify: "清场记录 + 残留目视/擦拭", corr: "重新清场，必要时评估相邻批次", ref: "GB23790 9.6.6.5", status: "受控" },
+        verify: "清场记录 + 残留目视/擦拭", corr: "重新清场，必要时评估相邻批次", ref: "GB23790-2023 8.2.5.5 / 清洁消毒程序", status: "受控" },
       { id: "c10", step: "成品放行", hazard: "微生物/营养素/标签不合规出厂", kind: "CCP",
         limit: "每批检验合格（营养素、微生物、金检、感官、标签）方可放行", monitor: "每批 / QA",
         verify: "COA + 放行单", corr: "不合格批隔离、评审、召回评估", ref: "细则·成品检验", status: "受控" }
@@ -153,7 +161,7 @@
       /* 温度限值 25℃ 在 0-30 刻度 = 83.3%；湿度 65% 在 0-80 = 81.25% */
       var tLimit = pt + ih - ih * (25 / 30);
       s += '<line x1="' + pl + '" y1="' + tLimit.toFixed(1) + '" x2="' + (w - pr) + '" y2="' + tLimit.toFixed(1) + '" stroke="#dc2626" stroke-dasharray="5 4"/>';
-      s += '<text x="' + (w - pr - 2) + '" y="' + (tLimit - 4).toFixed(1) + '" class="ax red" text-anchor="end">温度限 25℃</text>';
+      s += '<text x="' + (w - pr - 2) + '" y="' + (tLimit - 4).toFixed(1) + '" class="ax red" text-anchor="end">温度限 16~25℃</text>';
       s += line(pts("temp", 30), "#1d4ed8");
       s += line(pts("rh", 80), "#0f9d76");
       rows.forEach(function (r, i) {
@@ -164,7 +172,7 @@
     s += '</svg>';
     s += '<div class="qms-chartlegend"><span class="lg"><i style="background:#1d4ed8"></i>温度℃</span>' +
          '<span class="lg"><i style="background:#0f9d76"></i>湿度%</span>' +
-         '<span class="lg"><i style="background:#dc2626"></i>温度限≤25℃ · 湿度&lt;65%</span></div>';
+         '<span class="lg"><i style="background:#dc2626"></i>温度限16~25℃ · 湿度&lt;65%</span></div>';
     return s;
   }
 
@@ -250,7 +258,7 @@
       '<div><div class="qms-eyebrow">GOOD MANUFACTURING PRACTICE · DRY BLEND PROCESS</div>' +
       '<div class="qms-title">婴幼儿配方乳粉 · 干法工艺质量驾驶舱</div>' +
       '<div class="qms-sub">从原辅料到成品放行，10 个关键控制点一屏掌控 · 数据本机保存，刷新不丢</div></div>' +
-      '<div class="qms-refs">依据 GB 23790-2010 · 生产许可审查细则（2022版）表 7 · 克罗诺杆菌/蜡样芽胞杆菌风险防控指南</div>' +
+      '<div class="qms-refs">依据 GB 23790-2023 · 生产许可审查细则（2022版）表 7 · 克罗诺杆菌/蜡样芽胞杆菌风险防控指南</div>' +
       '</div>';
 
     /* KPI */
@@ -390,12 +398,12 @@
         { k: "date", t: "日期", ph: "2026-11-24" },
         { k: "shift", t: "班次", type: "select", opts: ["早班", "中班", "夜班"] },
         { k: "area", t: "区域", type: "select", opts: ["预混间", "配料间", "投料间", "混合间", "内包装间"] },
-        { k: "temp", t: "温度℃", type: "number", ph: "≤25" },
+        { k: "temp", t: "温度℃", type: "number", ph: "16~25" },
         { k: "rh", t: "湿度%", type: "number", ph: "<65" },
         { k: "micro", t: "micro 结果", type: "select", opts: ["未检出", "检出", "待报"] },
         { k: "judge", t: "判定", type: "select", opts: ["合格", "超限", "待报"] }
       ],
-      hint: "GB23790 9.6.5.1：温度≤25℃、相对湿度<65%；克罗诺杆菌不得检出。判定按此自动提示。"
+      hint: "GB23790-2023 8.2.5.1：温度16℃~25℃、相对湿度<65%；克罗诺杆菌不得检出。判定按此自动提示。"
     },
     metal: {
       key: "metal",
@@ -421,7 +429,7 @@
         { k: "by", t: "执行人", ph: "签名" },
         { k: "qa", t: "QA确认", type: "select", opts: ["已确认", "待确认"] }
       ],
-      hint: "GB23790：干区以干式清洁为主；湿式清洁须为受控验证事件并确认干燥，残留水分是干法工艺的典型失效路径。"
+      hint: "GB23790-2023：干区以干式清洁为主；湿式清洁须为受控验证事件并确认干燥，残留水分是干法工艺的典型失效路径。"
     },
     allergen: {
       key: "allergen",
@@ -434,7 +442,7 @@
         { k: "residue", t: "残留检查", type: "select", opts: ["无残留", "有残留-重清", "待检"] },
         { k: "qa", t: "QA签字", ph: "签名" }
       ],
-      hint: "GB23790 9.6.6.5：不同品种同线生产必须有效清洁并保存清场记录，确保切换不影响下一批。"
+      hint: "GB23790-2023 8.2.5.5 / 清洁消毒程序：不同品种同线生产必须有效清洁并保存清场记录，确保切换不影响下一批。"
     },
     blend: {
       key: "blend",
@@ -449,7 +457,7 @@
         { k: "limit", t: "内控限%", type: "number", ph: "5" },
         { k: "judge", t: "判定", type: "select", opts: ["合格", "不合格", "待报"] }
       ],
-      hint: "GB23790 9.6.5.3：混合均匀性须确认。取样点数据录入后自动算均值/SD/RSD（RSD=SD/均值×100%），超内控限判不合格。"
+      hint: "GB23790-2023 8.2.5.3：混合均匀性须确认。取样点数据录入后自动算均值/SD/RSD（RSD=SD/均值×100%），超内控限判不合格。"
     }
   };
 
@@ -469,7 +477,7 @@
   function envJudge(r) {
     var t = num(r.temp), rh = num(r.rh);
     var bad = [];
-    if (t != null && t > 25) bad.push("温度超限");
+    if (t != null && (t > 25 || t < 16)) bad.push("温度超限");
     if (rh != null && rh >= 65) bad.push("湿度超限");
     if (r.micro === "检出") bad.push("检出致病菌");
     return bad.length ? bad.join("/") : "合格";
@@ -522,7 +530,7 @@
     /* 依据链接 */
     root.querySelectorAll(".qms-ref").forEach(function (a) {
       a.onclick = function () {
-        if (global.toast) global.toast("依据：" + a.dataset.ref + "（详见 GB 23790-2010 与生产许可审查细则 2022 版）");
+        if (global.toast) global.toast("依据：" + a.dataset.ref + "（详见 GB 23790-2023 与生产许可审查细则 2022 版）");
       };
     });
     /* 每个表单 */
