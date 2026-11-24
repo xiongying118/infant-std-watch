@@ -151,38 +151,67 @@
      ---------------------------------------------------------------- */
   function jump(toolKey) {
     if (!toolKey) return;
-    /* 目标可能在 QM 也可能在 RD，先找卡片头 */
-    var head = document.querySelector('.qmcard-h[data-key="' + toolKey + '"]');
-    var isRd = false;
-    if (!head) {
-      head = document.querySelector('.rdcard-h[data-key="' + toolKey + '"]');
-      isRd = true;
+
+    /* ★ 2026-11-24：跨视图跳转修复 ★
+       关联链接里既有质量管理工具（QM）也有研发管理工具（RD），但两个视图
+       各自只渲染自己那批卡片。以前只按当前 DOM 找卡片，从 RD 点 five_s
+       （属于 QM）就找不到 → 报「没有找到」。改为：先在数据集里确认目标
+       属于哪个视图，切到那个视图（改 hash 触发 route 重渲染）后再展开。 */
+    function inKeys(obj, key) {
+      if (!obj) return false;
+      var list = obj.tools && obj.tools.length ? obj.tools : (obj.modules || []);
+      return list.some(function (t) {
+        return t.toolKey === key || t.moduleKey === key;
+      });
     }
-    if (!head) {
-      if (global.toast) global.toast("没有找到「" + toolKey + "」这个工具", "warn");
-      return;
+    /* 注意：index.html 里 QM/RD 是顶层 const，不是 window 属性，
+       在 IIFE 里要用标识符直接取，不能用 global.QM。 */
+    var qmData = (typeof QM !== "undefined") ? QM : null;
+    var rdData = (typeof RD !== "undefined") ? RD : null;
+    var inQm = inKeys(qmData, toolKey), inRd = inKeys(rdData, toolKey);
+    var wantRd = inRd && !inQm;
+    var wantView = wantRd ? "rdtools" : "qmtools";
+    var curView = (location.hash || "").replace("#", "");
+    var needSwitch = curView !== wantView;
+
+    if (needSwitch) {
+      /* 点侧栏导航 = 改 hash + 触发 route() 重渲染，比直接改 hash 可靠 */
+      var nav = document.querySelector('.nav a[data-v="' + wantView + '"]');
+      if (nav && typeof nav.click === "function") nav.click();
+      else location.hash = "#" + wantView;
     }
 
-    /* 展开对应卡片 */
-    var card = head.parentElement;
-    var collapsed = card && /展开/.test(card.innerText);
-    if (isRd) {
-      /* RD 卡片头同时带 .qmcard-h 和 .rdcard-h 两个类，
-         点击会命中 QM 的绑定 → 直接调 toggleRd 更稳 */
-      if (typeof global.toggleRd === "function" &&
-          (collapsed || global.curRdKey !== toolKey)) global.toggleRd(toolKey);
-    } else {
-      if (collapsed) head.click();
-    }
-
-    /* 渲染工具内容 */
-    setTimeout(function () {
-      if (!isRd && typeof global.QW_open === "function") {
-        try { global.QW_open(toolKey); } catch (e) {}
+    function openTarget() {
+      var head = wantRd
+        ? document.querySelector('.rdcard-h[data-key="' + toolKey + '"]')
+        : document.querySelector('.qmcard-h[data-key="' + toolKey + '"]');
+      if (!head) {
+        /* 兜底：两个视图都找一遍，兼容老链接 */
+        head = document.querySelector('.qmcard-h[data-key="' + toolKey + '"], .rdcard-h[data-key="' + toolKey + '"]');
       }
-      var h2 = document.querySelector('.qmcard-h[data-key="' + toolKey + '"], .rdcard-h[data-key="' + toolKey + '"]');
-      if (h2 && h2.scrollIntoView) h2.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 260);
+      if (!head) {
+        if (global.toast) global.toast("没有找到「" + toolKey + "」这个工具", "warn");
+        return;
+      }
+      var card = head.parentElement;
+      var collapsed = card && /展开/.test(card.innerText);
+      if (wantRd || head.classList.contains("rdcard-h")) {
+        if (typeof global.toggleRd === "function" &&
+            (collapsed || global.curRdKey !== toolKey)) global.toggleRd(toolKey);
+      } else {
+        if (collapsed) head.click();
+      }
+      setTimeout(function () {
+        if (!wantRd && typeof global.QW_open === "function") {
+          try { global.QW_open(toolKey); } catch (e) {}
+        }
+        var h2 = document.querySelector('.qmcard-h[data-key="' + toolKey + '"], .rdcard-h[data-key="' + toolKey + '"]');
+        if (h2 && h2.scrollIntoView) h2.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 280);
+    }
+
+    if (needSwitch) setTimeout(openTarget, 60);
+    else openTarget();
   }
 
   global.QWLink = {
