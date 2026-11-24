@@ -753,6 +753,16 @@ function QW_spc(key, cfg){
     if(w.every((x,j)=>j===0||x>w[j-1])) rules.push({i:i+1, t:"连续 6 点递增", v:w[5]});
     if(w.every((x,j)=>j===0||x<w[j-1])) rules.push({i:i+1, t:"连续 6 点递减", v:w[5]});
   }
+  /* 规则④：连续 14 点上下交替（说明过程被两个来源轮流影响） */
+  for(let i=13;i<n;i++){
+    const w = d.slice(i-13,i+1);
+    let alt = true;
+    for(let j=2;j<w.length;j++){
+      const up = w[j]-w[j-1], prev = w[j-1]-w[j-2];
+      if(up===0 || prev===0 || (up>0)===(prev>0)){ alt=false; break; }
+    }
+    if(alt) rules.push({i:i+1, t:"连续 14 点上下交替", v:w[13]});
+  }
   const uniq = [];
   rules.forEach(r=>{ const k=r.i+"|"+r.t; if(!uniq.some(x=>x.i===r.i&&x.t===r.t)) uniq.push(r); });
 
@@ -917,13 +927,17 @@ function QW_histogram(key, cfg){
   const half = Math.floor(gN/2);
   const leftSum = bins.slice(0,half).reduce((s,b)=>s+b.n,0);
   const rightSum = bins.slice(half).reduce((s,b)=>s+b.n,0);
-  if(nz>=4){
-    const zeros = bins.map(b=>b.n);
-    let dips = 0;
-    for(let i=1;i<gN-1;i++) if(zeros[i] < zeros[i-1] && zeros[i] < zeros[i+1] && zeros[i]<maxN*0.5) dips++;
-    if(dips>=1 && nonZero.length>=2){
-      shape = "出现双峰 —— 很可能是两批混合/两个来源"; shapeCls = "bad";
-    } else if(leftSum>0 && rightSum>0 && Math.abs(leftSum-rightSum)/Math.max(1,leftSum+rightSum)>0.45){
+  /* ★ 2026-11-24 修正：双峰判定以前要求非零组 ≥4，两峰各挤在 1~2 组时会漏判；
+     改成「首尾非零组之间有连续空档」即判双峰，再交给偏峰/截尾。 */
+  const cnts = bins.map(b=>b.n);
+  const firstNz = cnts.findIndex(v=>v>0);
+  let lastNz = -1;
+  for(let i=cnts.length-1;i>=0;i--){ if(cnts[i]>0){ lastNz=i; break; } }
+  const gapZero = firstNz>=0 && lastNz>firstNz && cnts.slice(firstNz,lastNz+1).some(v=>v===0);
+  if(nz>=2 && gapZero){
+    shape = "出现双峰 —— 很可能是两批混合/两个来源"; shapeCls = "bad";
+  } else if(nz>=4){
+    if(leftSum>0 && rightSum>0 && Math.abs(leftSum-rightSum)/Math.max(1,leftSum+rightSum)>0.45){
       shape = leftSum>rightSum ? "偏峰（数据集中在低侧，过程可能偏移）" : "偏峰（数据集中在高侧，过程可能偏移）";
       shapeCls = "warn";
     } else if(c0===0 || cN===0){
@@ -1554,15 +1568,17 @@ function QW_sub(key, cfg){
   const restAmt = amt - subAmt;
   const F = ["p","f","c","ca","phos"];
   const FN = {p:"蛋白质",f:"脂肪",c:"碳水",ca:"钙",phos:"磷"};
-  const mix = (m,kg)=>({p:(m.p||0)*kg, f:(m.f||0)*kg, c:(m.c||0)*kg,
-                        ca:(m.ca||0)*kg, phos:(m.phos||0)*kg});
-  const curC = mix(cur, restAmt);
+  /* ★ 2026-11-24 修正：g/100g × kg 要 ×10 才是 g；Δ 只能拿「被替代的那部分」比，
+     以前用 restAmt 当基准，把保留部分的营养素也算成负值，Δ 被放大好几倍。 */
+  const mix = (m,kg)=>({p:(m.p||0)*10*kg, f:(m.f||0)*10*kg, c:(m.c||0)*10*kg,
+                        ca:(m.ca||0)*10*kg, phos:(m.phos||0)*10*kg});
+  const curSub = mix(cur, subAmt);
   const costCur = cur.price*amt;
   const rows = (st.cand||[]).map(cand=>{
     const candC = mix(cand, subAmt);
     const costNew = cur.price*restAmt + cand.price*subAmt;
     const d = {};
-    F.forEach(f=>{ d[f] = (candC[f]-curC[f]); });
+    F.forEach(f=>{ d[f] = (candC[f]-curSub[f]); });
     return {cand:cand, d:d, costNew:costNew,
             dCost: costNew-costCur,
             costPct: costCur? (costNew-costCur)/costCur*100 : 0};
@@ -1624,8 +1640,8 @@ function QW_sub(key, cfg){
         <th style="width:120px">结论</th></tr></thead>
       <tbody>
       ${rows.map(r=>{
-        const protBad = r.d.p < -3;      // 蛋白掉太多要警觉
-        const fatBad  = Math.abs(r.d.f) > 20;
+        const protBad = r.d.p < -500;    // 蛋白降幅 >500g/1000kg 要警觉
+        const fatBad  = Math.abs(r.d.f) > 500;
         const caBad   = Math.abs(r.d.ca) > 500;
         const bad = protBad||fatBad||caBad;
         return `<tr class="${bad?"warn":""}">
@@ -1642,7 +1658,7 @@ function QW_sub(key, cfg){
     </table>
     </div>
     <div class="qwflag">Δ 为「替代后 − 现状」，正数表示该营养素增加。
-      蛋白掉超过 3g/100kg、钙变化超 500mg/100kg 都要重新算配方并验稳定性。</div>
+      蛋白降幅超过 500g/1000kg、钙变化超 500mg/1000kg 都要重新算配方并验稳定性。</div>
     <div class="qwfoot">只算「营养+成本」不够 —— 还要看干法工艺影响（混合均匀性、粉体流动性）与货架期（易氧化成分）。</div>
     ${window.QWForm?window.QWForm.box({title:"原料替代测算的计算公式与术语",formulas:subFormulas,terms:["sub.delta","sub.deltaPct","sub.per100kg","sub.stability"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
@@ -1689,21 +1705,22 @@ function QW_shelf(key, cfg){
   const hasAcc = acc && acc.badAt != null && acc.temp > ref.temp;
 
   let accel = null, indicativeWeeks = null;
+  /* ★ 2026-11-24 修正折算方向：温度越高劣变越快 → 高温组时间要「乘」Q10 才是常温时间，
+     以前写成除以 Q10，加速组反而算出比实测更短，方向完全反了。 */
   if(hasAcc){
     accel = Math.pow(2, (acc.temp-ref.temp)/10);
     if(ref.badAt!=null){
-      indicativeWeeks = acc.badAt / accel;        // 折算到参考温度
+      indicativeWeeks = ref.badAt;                // 参考组已有实测，直接用
     } else {
-      // 参考组还没劣变 → 用加速组折算过去
-      indicativeWeeks = acc.badAt / accel;
+      indicativeWeeks = acc.badAt * accel;        // 加速组时间 × Q10 → 参考温度
     }
   }
-  // 再从参考温度折算到 25℃
+  // 再从参考温度折算到 25℃（温度更低 → 时间更长，乘因子）
   let shelf25 = null;
   if(hasRoom){
     shelf25 = ref.badAt;                          // 常温实测 = 依据
   } else if(indicativeWeeks!=null && ref.temp > 25){
-    shelf25 = indicativeWeeks / Math.pow(2, (ref.temp-25)/10);
+    shelf25 = indicativeWeeks * Math.pow(2, (ref.temp-25)/10);
   } else if(indicativeWeeks!=null){
     shelf25 = indicativeWeeks;
   }
@@ -1958,8 +1975,8 @@ function QW_sensory(key, cfg){
     { name:"均值（该样品的综合分）", expr:"x̄ = Σxᵢ / n",
       note:"一个样品在各维度上的打分平均。",
       vars:[{k:"xᵢ",v:"第 i 个维度的打分"},{k:"n",v:"维度个数"}] },
-    { name:"标准差（评价员一致吗）", expr:"s = √[ Σ(xᵢ − x̄)² / (n − 1) ]",
-      note:"s 小 = 大家意见一致；s 大 = 有人吃出了别人没吃出的东西，要看是谁。",
+    { name:"标准差（各维度打分差异）", expr:"s = √[ Σ(xᵢ − x̄)² / (n − 1) ]",
+      note:"s 小 = 各维度得分接近；s 大 = 某一维度明显拉低（如苦味/腥味），要看是哪一项。",
       vars:[{k:"s",v:"标准差"}] },
     { name:"极差（样品差多少）", expr:"极差 = 最大样品均值 − 最小样品均值",
       note:"极差大 = 不同样品确实不一样；极差小 = 要么真差不多，要么<b>评价员分辨不出来</b>（用描述性分析补）。" }
@@ -1978,7 +1995,7 @@ function QW_sensory(key, cfg){
     </div>
     <div class="qwt-stats">
       <span class="qws"><b>${st.samples.length}</b><i>样品数</i></span>
-      <span class="qws ${spread>1.2?"bad":"ok"}"><b>${spread.toFixed(2)}</b><i>样品间极差</i></span>
+      <span class="qws ${spread>1.0?"bad":"ok"}"><b>${spread.toFixed(2)}</b><i>样品间极差</i></span>
     </div>
     <div class="qwt-wrap">
     <table class="qwt-tbl">
@@ -1999,7 +2016,7 @@ function QW_sensory(key, cfg){
     </table>
     </div>
     <div class="qwlegend">${(cfg.scale||[]).map((s,i)=>`<span class="lg">${i+1} ${escHtml(s)}</span>`).join("")}</div>
-    ${spread>1.2 ? `<div class="qwflag">⚠ 样品间极差 ${spread.toFixed(2)} 分，超出评价员一致性通常能接受的范围（≤1.0）。
+    ${spread>1.0 ? `<div class="qwflag">⚠ 样品间极差 ${spread.toFixed(2)} 分，超出评价员一致性通常能接受的范围（≤1.0）。
       补做描述性分析，找出差异到底在哪个维度 —— 「差不多」不等于「没差别」。</div>`
       : `<div class="qwflag ok">✓ 样品间差异在可接受范围，评价员一致性良好。</div>`}
     <div class="qwfoot">感官结论要与理化结果并列看，<b>不单独下结论</b>。用标样 + 竞品做锚定，避免绝对评价漂移。</div>
