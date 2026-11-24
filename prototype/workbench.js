@@ -1620,7 +1620,7 @@ function QW_sub(key, cfg){
     </div>
     <div class="qwflag">Δ 为「替代后 − 现状」，正数表示该营养素增加。
       蛋白掉超过 3g/100kg、钙变化超 500mg/100kg 都要重新算配方并验稳定性。</div>
-    <div class="qwfoot">只算「营养+成本」不够 —— 还要看工艺影响（溶解性、喷雾干燥条件）与货架期（易氧化成分）。</div>
+    <div class="qwfoot">只算「营养+成本」不够 —— 还要看干法工艺影响（混合均匀性、粉体流动性）与货架期（易氧化成分）。</div>
     ${window.QWForm?window.QWForm.box({title:"原料替代测算的计算公式与术语",formulas:subFormulas,terms:["sub.delta","sub.deltaPct","sub.per100kg","sub.stability"].map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean).map(t=>window.QWForm?window.QWForm.DICT[t]:null).filter(Boolean)}):""}
   </div>`;
 }
