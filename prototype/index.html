@@ -2338,9 +2338,9 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 <script src="qwio.js"></script>
 <!-- ★ 小白引导 + 公式术语（2026-11-04 晚）★ -->
 <script src="qwform.js"></script>
-<script src="qwguide.js"></script>
+<script src="qwguide.js?v=20261124f"></script>
 <!-- ★ 工具之间的关联性（2026-11-04 晚）★ -->
-<script src="qwlink.data.js"></script>
+<script src="qwlink.data.js?v=20261124f"></script>
 <script src="qwlink.js?v=20261124c"></script>
 <script src="qms-haccp.js?v=20261124d"></script>
 <!-- data.js 缺失时给出明确提示，不能静默空白 -->
@@ -3370,8 +3370,8 @@ function gbCompute44(){
     protein:"蛋白质偏低：提高乳粉/乳蛋白原料占比；乳粉下限随脂肪、水分变化，先核这两个数。",
     fat:"脂肪偏低：提高全脂乳粉或油脂用量（脂肪限值仅适用于全脂乳粉）。",
     water:"水分超限：检查干燥工艺与包装防潮，复测 GB 5009.3。",
-    impurity:"杂质度超限：核查原料净乳与过滤、环境粉尘，复测 GB 5413.30。",
-    acidity:"复原乳酸度越界：核查原料乳新鲜度与中和工序，复测 GB 5009.239。"
+    impurity:"杂质度超限：核查原料粉筛分与过滤、环境粉尘，复测 GB 5413.30。",
+    acidity:"复原乳酸度越界：核查原料乳粉新鲜度与复溶工序，复测 GB 5009.239。"
   };
   const rows = G44.items.map(it=>{
     const L = limOf(it.key);
