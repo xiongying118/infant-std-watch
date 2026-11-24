@@ -843,8 +843,25 @@ function QW_spcCalc(key){
 /* ------------------------------------------------------------
    直方图
    ------------------------------------------------------------ */
+/* ★ 2026-11-24 用户要求：直方图的演示例子要能看出差别。
+   原 seed 是 36 个均匀分布点 → 6 组每组都是 6，柱子一样高，形态判读永远「分布居中」。
+   换成双峰数据（两批粉体混料）：低峰 ~320μm、高峰 ~450μm、中间空一档。 */
+const HIST_DEMO_SEED = [
+  302,306,309,312,315,318,321,324,326,328,
+  331,334,337,340,343,347,350,354,
+  388,393,398,404,410,
+  415,420,425,430,435,440,
+  446,452,456,458,462,464,470
+];
+function histOldSeed(d){
+  return Array.isArray(d) && d.length===36 && d[0]===372 && d[1]===385 && d[2]===391;
+}
 function QW_histogram(key, cfg){
   const st = QWD[key] || (QWD[key] = { data: (cfg.seed||[]).slice(), edit:false });
+  /* 老用户 localStorage 里存着旧演示数据 → 一次性换成双峰示例，不动用户自己改的数据 */
+  if(!st.histSeedV2 && (histOldSeed(st.data) || histOldSeed(cfg.seed))){
+    st.data = HIST_DEMO_SEED.slice(); st.histSeedV2 = true;
+  }
   if(!Array.isArray(st.data)) st.data = QW_parseNums(st.data);
   const d = st.data.map(Number).filter(x=>!isNaN(x));
   if(!d.length) return `<div class="qwt"><div class="qwt-h">
