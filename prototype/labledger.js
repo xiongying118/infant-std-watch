@@ -80,7 +80,7 @@
       {k:"model",label:"型号", w:66,   ph:"如 8890A"},
       {k:"sn",   label:"出厂序列号", w:104, ph:"如 GC-8890A-0271"},
       {k:"type", label:"类型", w:58,   type:"select", opts:["强制检定","内部校准","非计量设备"]},
-      {k:"verify",label:"校准/检定方式", w:60, type:"select", opts:["检定","校准","自校"]},
+      {k:"verify",label:"校准/检定方式", w:86, type:"select", opts:["检定","校准","自校"]},
       {k:"cycle",label:"周期(月)", w:56, type:"number"},
       {k:"lastCal",label:"上次校准", w:104, type:"date"},
       {k:"nextCal",label:"下次校准", w:104, type:"date"},
