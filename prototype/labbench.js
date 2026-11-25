@@ -127,7 +127,7 @@
       ["pt",        "能力验证"],
       ["capa",      "不符合与 CAPA"],
       ["audit",     "内审与合规"],
-      ["schedule",  "排班与工作量"],
+      ["workload",  "工作量统计"],
       ["env",       "环境监控"],
       ["record",    "原始记录生成"],
     ];
@@ -149,14 +149,135 @@
        顺序很重要：先让 Ledger 渲染台账，再把联动看板插到最前面。
        反过来会被 Ledger 的 innerHTML 赋值冲掉。 */
     var LEDGER_TABS = ["equip","reagent","prep","sample","flows","orders",
-                       "capa","audit","schedule","env","qcplan","qcrec","pt"];
+                       "capa","audit","env","qcplan","qcrec","pt"];
     if(TAB==="board"){ host.innerHTML = boardView(); return; }
     if(LEDGER_TABS.indexOf(TAB) >= 0){
       global.Ledger.render(TAB);
       return;
     }
+    if(TAB==="workload"){ host.innerHTML = viewWorkload(); return; }
     if(TAB==="capability"){ host.innerHTML = viewCapability(); }
     else host.innerHTML = viewRecord();
+  }
+
+
+  /* ================================================================
+     工作量统计（2026-11-25 用户要求）
+     ================================================================
+     双休、朝八晚五，不排班 —— 只看「样品流转到每个人手上的量」。
+     统计口径：
+       · 接收 / 分样：取「样品流转」里的 receiver / handler
+       · 检测任务 / 项次：取「检验任务单」的 tester 与 items（按项目拆分）
+     每个人的项目不同，所以项次比样品数更能反映真实负荷。
+     ================================================================ */
+  function viewWorkload(){
+    var L = global.Ledger;
+    var orders = L.rows("orders") || [];
+    var flows  = L.rows("flows") || [];
+    var staff  = (global.LABDATA && global.LABDATA.STAFF) || [];
+    var dept = {};
+    staff.forEach(function(x){ dept[x.name] = x.dept || "—"; });
+    var m = {};
+    function get(n){
+      if(!m[n]) m[n] = { name:n, dept:dept[n]||"—", recv:0, hand:0, task:0, items:0, done:0, doing:0, urgent:0 };
+      return m[n];
+    }
+    orders.forEach(function(o){
+      if(!o.tester) return;
+      var x = get(o.tester);
+      x.task++;
+      x.items += String(o.items||"").split(/[、,，;；]/).filter(function(v){ return v.trim(); }).length;
+      if(o.status==="已出报告") x.done++;
+      else if(o.status!=="已取消") x.doing++;
+      if(o.urgent==="是" || o.urgent===true) x.urgent++;
+    });
+    flows.forEach(function(f){
+      if(f.receiver && dept[f.receiver]) get(f.receiver).recv++;
+      if(f.handler && dept[f.handler] && f.handler!==f.receiver) get(f.handler).hand++;
+    });
+    var list = Object.keys(m).map(function(k){ return m[k]; })
+      .sort(function(a,b){ return b.items - a.items || b.task - a.task; });
+    var totItems = list.reduce(function(a,x){ return a+x.items; },0);
+    var totTask  = list.reduce(function(a,x){ return a+x.task; },0);
+    var doing    = list.reduce(function(a,x){ return a+x.doing; },0);
+    var urgent   = list.reduce(function(a,x){ return a+x.urgent; },0);
+    var maxItems = Math.max.apply(null, list.map(function(x){ return x.items; }).concat([1]));
+    var COL = ["#1d4ed8","#0f9d76","#a16207","#7c3aed","#c2410c"];
+    var byG = {}, orderG = [];
+    list.forEach(function(x){ if(x.items>0) byG[x.dept] = (byG[x.dept]||0) + x.items; });
+    Object.keys(byG).forEach(function(g){ orderG.push(g); });
+    orderG.sort(function(a,b){ return byG[b]-byG[a]; });
+    var acc = 0;
+    var conic = orderG.map(function(g,i){
+      var p0 = acc / (totItems||1) * 360; acc += byG[g];
+      var p1 = acc / (totItems||1) * 360;
+      return COL[i%COL.length] + " " + p0.toFixed(1) + "deg " + p1.toFixed(1) + "deg";
+    }).join(",");
+    var maxLoad = Math.max.apply(null, list.map(function(x){ return x.recv + x.hand + x.task; }).concat([1]));
+    /* 条形图按「组」着色，和右侧环形图例一一对应 */
+    var gc = function(d){ var k = orderG.indexOf(d); return COL[(k<0?0:k) % COL.length]; };
+
+    var h = '<div class="grid g4" style="margin-bottom:14px">'
+      + '<div class="kpi"><div class="k">检测项次</div><div class="v">'+totItems+'</div><div class="d">按任务单项目拆分累计</div></div>'
+      + '<div class="kpi"><div class="k">检测任务</div><div class="v">'+totTask+'</div><div class="d">任务单条数</div></div>'
+      + '<div class="kpi'+(doing?" hi":"")+'"><div class="k">在检</div><div class="v">'+doing+'</div><div class="d">未出报告'+(urgent?" · 加急 "+urgent:"")+'</div></div>'
+      + '<div class="kpi"><div class="k">参与人员</div><div class="v">'+list.length+'</div><div class="d">有检测任务或流转记录的人</div></div>'
+      + '</div>';
+
+    if(!list.length){
+      return h + '<div class="card empty">还没有工作量数据 —— 先在「检验任务单」里填检验人，或在「样品流转」里填接收人。</div>';
+    }
+
+    h += '<div class="wl-grid">';
+    h += '<div class="card"><div class="card-h"><h3>每人检测项次</h3>'
+       + '<span class="muted">项目不同，项次比样品数更能反映负荷</span></div><div class="wl-bars">';
+    list.forEach(function(x){
+      var w = Math.max(2, x.items / maxItems * 100);
+      h += '<div class="wl-row"><span class="nm">'+esc(x.name)+'</span>'
+         + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:'+gc(x.dept)+'"></i></div>'
+         + '<b>'+x.items+'</b></div>';
+    });
+    h += '</div></div>';
+
+    h += '<div class="card"><div class="card-h"><h3>按组占比</h3><span class="muted">检测项次</span></div>'
+       + '<div class="wl-donut" style="background:conic-gradient('+conic+')">'
+       + '<div class="wl-donut-c"><b>'+totItems+'</b><span>项次</span></div></div>'
+       + '<div class="wl-legend2">';
+    orderG.forEach(function(g,i){
+      h += '<span><i style="background:'+COL[i%COL.length]+'"></i>'+esc(g)+' '+byG[g]+'</span>';
+    });
+    h += '</div></div></div>';
+
+    h += '<div class="card" style="margin-top:14px"><div class="card-h"><h3>样品流转负荷</h3>'
+       + '<span class="muted">接收 · 分样 · 检测任务（同一人三段）</span></div><div class="wl-stack">';
+    list.forEach(function(x){
+      var tot = x.recv + x.hand + x.task;
+      var w = function(v){ return (v / maxLoad * 100).toFixed(1); };
+      h += '<div class="wl-st"><span class="nm">'+esc(x.name)+'</span><div class="bar">'
+         + '<i style="width:'+w(x.recv)+'%;background:#1d4ed8"></i>'
+         + '<i style="width:'+w(x.hand)+'%;background:#0f9d76"></i>'
+         + '<i style="width:'+w(x.task)+'%;background:#a16207"></i>'
+         + '</div><span class="wl-num">收 '+x.recv+' · 分 '+x.hand+' · 检 '+x.task+'</span></div>';
+    });
+    h += '</div><div class="wl-legend2" style="margin-top:10px">'
+       + '<span><i style="background:#1d4ed8"></i>接收</span>'
+       + '<span><i style="background:#0f9d76"></i>分样/领用</span>'
+       + '<span><i style="background:#a16207"></i>检测任务</span></div></div>';
+
+    h += '<div class="card" style="margin-top:14px;padding:0;overflow:hidden"><div class="twrap">'
+       + '<table class="ledger-tbl"><thead><tr><th>人员</th><th>组</th><th>接收样品</th><th>分样/领用</th>'
+       + '<th>检测任务</th><th>检测项次</th><th>已完成</th><th>在检</th><th>加急</th><th>日均项次</th></tr></thead><tbody>';
+    list.forEach(function(x){
+      h += '<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.dept)+'</td>'
+         + '<td class="num">'+x.recv+'</td><td class="num">'+x.hand+'</td>'
+         + '<td class="num">'+x.task+'</td><td class="num"><b>'+x.items+'</b></td>'
+         + '<td class="num">'+x.done+'</td><td class="num'+(x.doing?" hi":"")+'">'+x.doing+'</td>'
+         + '<td class="num">'+x.urgent+'</td>'
+         + '<td class="num">'+(x.items/5).toFixed(1)+'</td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+    h += '<div class="muted" style="font-size:12px;margin-top:8px">统计口径：接收/分样取「样品流转」的接收人与经手人；检测任务与项次取「检验任务单」的检验人与检验项目（按、拆分）。双休，日均按 5 个工作日计。</div>';
+    return h;
   }
 
   /* 「需要处理」独立页 —— 不再在每个台账页重复出现 */
