@@ -1458,3 +1458,10 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 /* 表头保持一行完整显示，不换行（2026-11-25） */
 .twrap table.ledger-tbl th{white-space:nowrap}
 .twrap table.ledger-tbl select{font-size:10.5px;min-width:56px;padding:1px 2px}
+
+/* 类别环形（可点）2026-11-25 */
+.wl-donut2{width:168px;height:168px;display:block;margin:4px auto 8px}
+.wl-legend2 span{transition:opacity .15s}
+.wl-legend2 span.on{font-weight:700;color:#0f2747}
+.wl-legend2 span.on i{box-shadow:0 0 0 2px #fff,0 0 0 3.5px currentColor}
+.wl-pick{font-size:12px;color:#2563eb;text-align:center;margin-top:4px}
