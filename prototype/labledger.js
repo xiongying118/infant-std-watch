@@ -73,7 +73,6 @@
     hint:"改「上次校准」或「周期」→ 下次校准自动重算",
     notice:"<b>超期的设备出的数据不能用于出报告</b> —— 用之前要有偏离处理，或用有效设备复测。"
          + "「关键设备」需在两次校准之间做期间核查（天平日核查、标样核查），记录要留。",
-    cardMode:true,
     columns:[
       {k:"id",   label:"编号",   ro:true, ph:"如 EQ-049"},
       {k:"name", label:"设备名称", ph:"如 气相色谱仪"},
@@ -174,7 +173,6 @@
      ================================================================ */
   L.register({
     key:"reagent",
-    cardMode:true,
     title:"试剂、耗材与标准物质台账",
     subtitle:"按 GB 30000.1 分类；标准物质看证书有效期",
     exportName:"试剂与危化品台账",
@@ -227,7 +225,6 @@
      ================================================================ */
   L.register({
     key:"sample",
-    cardMode:true,
     title:"样品与留样台账",
     subtitle:"留样是复检、投诉调查唯一的物证 —— 找不到就等于没有证据",
     exportName:"样品与留样台账",
@@ -280,7 +277,6 @@
      ================================================================ */
   L.register({
     key:"prep",
-    cardMode:true,
     title:"试剂配制记录",
     subtitle:"配制的试剂有自己的配制日、效期、浓度确认与标定人",
     exportName:"试剂配制记录",
@@ -289,23 +285,27 @@
     notice:"实验室最常见的争议是「这瓶标液谁配的、准不准」—— "
          + "配制记录要能追溯到人、到浓度确认、到所用的标准物质证书。",
     columns:[
-      {k:"no",   label:"记录号", w:100, ro:true},
-      {k:"name", label:"试剂名称", w:230},
-      {k:"spec", label:"规格浓度", w:130},
-      {k:"form", label:"依据方法", w:130, ph:"如 GB/T 6026"},
-      {k:"mat",  label:"原料", w:180},
-      {k:"calc", label:"配制计算式", w:260, type:"textarea"},
-      {k:"vol",  label:"配制体积", w:90},
+      {k:"no",   label:"记录号", w:104, ro:true},
+      {k:"name", label:"试剂名称", w:250},
+      {k:"type", label:"类型", w:104, render:function(r){
+        var n=r.name||"";
+        var t=/开封/.test(n) ? "开封试剂" : (/标准溶液|标准品/.test(n) ? "标准溶液" : "配制试剂");
+        return '<span class="tag '+(t==="标准溶液"?"t-low":(t==="开封试剂"?"t-mid":"t-low"))+'">'+t+'</span>';
+      }},
+      {k:"spec", label:"浓度 / 规格", w:150},
       {k:"date", label:"配制日期", w:104, type:"date"},
       {k:"exp",  label:"有效期至", w:104, type:"date"},
-      {k:"store",label:"存放位置", w:150},
-      {k:"base", label:"配制方法要点", w:220, type:"textarea"},
-      {k:"conc", label:"标定浓度", w:110, ph:"如 0.04987 mol/L"},
-      {k:"std",  label:"标定结果", w:200, type:"textarea"},
+      {k:"status",label:"状态", w:120, render:function(r){
+        var d=daysTo(r.exp);
+        if(d===null) return '<span class="muted">'+(r.status||"—")+'</span>';
+        if(d<0) return '<span class="tag t-high">已过期('+Math.abs(d)+'天)</span>';
+        if(d<=14) return '<span class="tag t-mid">临期('+d+'天)</span>';
+        return '<span class="tag t-low">有效('+d+'天)</span>';
+      }},
       {k:"maker",label:"配制人", w:80},
       {k:"checker",label:"复核人", w:80},
-      {k:"status",label:"状态", w:96, type:"select", opts:["在用","即将到期","已过期","已废弃"]},
-      {k:"use",  label:"用途", w:170}
+      {k:"store",label:"存放位置", w:170},
+      {k:"std",  label:"标定结果", w:190, type:"textarea"}
     ],
     rowClass:function(r){
       var d = daysTo(r.exp);
@@ -332,7 +332,6 @@
      ================================================================ */
   L.register({
     key:"orders",
-    cardMode:true,
     title:"检验任务单台账",
     subtitle:"报检 → 收样 → 在检 → 待复核 → 报告归档，每一步都有交接人",
     exportName:"检验任务单台账",
@@ -385,7 +384,6 @@
      ================================================================ */
   L.register({
     key:"capa",
-    cardMode:true,
     title:"不符合工作与 CAPA",
     subtitle:"CNAS 要求：不符合要做原因分析、纠正措施、有效性验证",
     exportName:"不符合工作与 CAPA台账",
@@ -480,7 +478,6 @@
      ================================================================ */
   L.register({
     key:"flows",
-    cardMode:true,
     title:"样品流转与交接",
     subtitle:"样品从进门到出门，每一步都要有人签字",
     exportName:"样品流转记录",
@@ -524,7 +521,6 @@
      ================================================================ */
   L.register({
     key:"audit",
-    cardMode:true,
     title:"内部审核检查表",
     subtitle:"按 CNAS-CL01 条款逐条自查 —— 条款 × 证据 的对照",
     exportName:"内审与合规检查表",
@@ -643,7 +639,6 @@
      ================================================================ */
   L.register({
     key:"qcplan",
-    cardMode:true,
     title:"质量控制方案",
     subtitle:"每个检测项目该做哪些 QC：空白查本底 · 平行样查精密度 · 加标查准确度 · 标准物质查准确度",
     exportName:"质量控制方案",
@@ -682,7 +677,6 @@
      ================================================================ */
   L.register({
     key:"qcrec",
-    cardMode:true,
     title:"质量控制执行记录",
     subtitle:"每次 QC 的实际数据 —— 超限必须有处置与闭环",
     exportName:"质量控制记录",
@@ -728,7 +722,6 @@
      ================================================================ */
   L.register({
     key:"pt",
-    cardMode:true,
     title:"能力验证与实验室间比对",
     subtitle:"CNAS 要求参加能力验证；这是二方审核与监管检查必查项",
     exportName:"能力验证记录",
