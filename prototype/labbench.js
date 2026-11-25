@@ -170,113 +170,186 @@
        · 检测任务 / 项次：取「检验任务单」的 tester 与 items（按项目拆分）
      每个人的项目不同，所以项次比样品数更能反映真实负荷。
      ================================================================ */
+  var WL_PERIOD = "month";
   function viewWorkload(){
     var L = global.Ledger;
     var orders = L.rows("orders") || [];
-    var flows  = L.rows("flows") || [];
     var staff  = (global.LABDATA && global.LABDATA.STAFF) || [];
     var dept = {};
     staff.forEach(function(x){ dept[x.name] = x.dept || "—"; });
-    var m = {};
-    function get(n){
-      if(!m[n]) m[n] = { name:n, dept:dept[n]||"—", recv:0, hand:0, task:0, items:0, done:0, doing:0, urgent:0 };
-      return m[n];
+    var NOW = new Date(2026, 10, 25);
+    function inRange(d){
+      if(WL_PERIOD==="all") return true;
+      if(d.getFullYear()!==NOW.getFullYear()) return false;
+      if(WL_PERIOD==="month") return d.getMonth()===NOW.getMonth();
+      if(WL_PERIOD==="quarter") return Math.floor(d.getMonth()/3)===Math.floor(NOW.getMonth()/3);
+      return true;
     }
+    function catOf(o){
+      var c=o.client||"", sm=o.sample||"";
+      if(/留样|稳定性/.test(c+sm)) return "稳定性";
+      if(/研发|小样/.test(c+sm)) return "小样";
+      if(/原料库/.test(c)) return "原料";
+      if(/生产一部|过程样|半成品/.test(c+sm)) return "半成品";
+      if(/成品库|婴配成品/.test(c+sm)) return "成品";
+      return "其他";
+    }
+    var M={}, itemTot={}, catTot={}, monthTot={}, ordersN=0;
     orders.forEach(function(o){
-      if(!o.tester) return;
-      var x = get(o.tester);
-      x.task++;
-      x.items += String(o.items||"").split(/[、,，;；]/).filter(function(v){ return v.trim(); }).length;
-      if(o.status==="已出报告") x.done++;
-      else if(o.status!=="已取消") x.doing++;
-      if(o.urgent==="是" || o.urgent===true) x.urgent++;
+      if(!o.tester || !o.recv) return;
+      var d = new Date(String(o.recv)+"T00:00:00");
+      if(isNaN(d) || !inRange(d)) return;
+      var cat = catOf(o);
+      var its = String(o.items||"").split(/[、,，;；]/).map(function(v){ return v.trim(); }).filter(Boolean);
+      if(!its.length) its = ["(未填项目)"];
+      var p = M[o.tester] || (M[o.tester] = {name:o.tester, dept:dept[o.tester]||"—", cat:{}, item:{}, samples:0, items:0});
+      p.samples++; p.cat[cat]=(p.cat[cat]||0)+1; catTot[cat]=(catTot[cat]||0)+1; ordersN++;
+      var mk = String(o.recv).slice(0,7); monthTot[mk]=(monthTot[mk]||0)+its.length;
+      its.forEach(function(it){ p.item[it]=(p.item[it]||0)+1; p.items++; itemTot[it]=(itemTot[it]||0)+1; });
     });
-    flows.forEach(function(f){
-      if(f.receiver && dept[f.receiver]) get(f.receiver).recv++;
-      if(f.handler && dept[f.handler] && f.handler!==f.receiver) get(f.handler).hand++;
-    });
-    var list = Object.keys(m).map(function(k){ return m[k]; })
-      .sort(function(a,b){ return b.items - a.items || b.task - a.task; });
+    var list = Object.keys(M).map(function(k){ return M[k]; }).sort(function(a,b){ return b.items-a.items; });
+    var items = Object.keys(itemTot).sort(function(a,b){ return itemTot[b]-itemTot[a]; });
+    var CATS = ["原料","半成品","成品","稳定性","小样","其他"];
     var totItems = list.reduce(function(a,x){ return a+x.items; },0);
-    var totTask  = list.reduce(function(a,x){ return a+x.task; },0);
-    var doing    = list.reduce(function(a,x){ return a+x.doing; },0);
-    var urgent   = list.reduce(function(a,x){ return a+x.urgent; },0);
     var maxItems = Math.max.apply(null, list.map(function(x){ return x.items; }).concat([1]));
-    var COL = ["#1d4ed8","#0f9d76","#a16207","#7c3aed","#c2410c"];
-    var byG = {}, orderG = [];
-    list.forEach(function(x){ if(x.items>0) byG[x.dept] = (byG[x.dept]||0) + x.items; });
-    Object.keys(byG).forEach(function(g){ orderG.push(g); });
-    orderG.sort(function(a,b){ return byG[b]-byG[a]; });
-    var acc = 0;
-    var conic = orderG.map(function(g,i){
-      var p0 = acc / (totItems||1) * 360; acc += byG[g];
-      var p1 = acc / (totItems||1) * 360;
-      return COL[i%COL.length] + " " + p0.toFixed(1) + "deg " + p1.toFixed(1) + "deg";
-    }).join(",");
-    var maxLoad = Math.max.apply(null, list.map(function(x){ return x.recv + x.hand + x.task; }).concat([1]));
-    /* 条形图按「组」着色，和右侧环形图例一一对应 */
-    var gc = function(d){ var k = orderG.indexOf(d); return COL[(k<0?0:k) % COL.length]; };
+    var COL = ["#1d4ed8","#0f9d76","#a16207","#7c3aed","#c2410c","#64748b"];
+    var CATCOL = {"原料":"#1d4ed8","半成品":"#0f9d76","成品":"#a16207","稳定性":"#7c3aed","小样":"#c2410c","其他":"#64748b"};
+    var GCOL = {"理化组":"#1d4ed8","色谱组":"#0f9d76","原子组":"#a16207","微生物组":"#7c3aed","样品室":"#64748b","质量部":"#94a3b8"};
 
-    var h = '<div class="grid g4" style="margin-bottom:14px">'
-      + '<div class="kpi"><div class="k">检测项次</div><div class="v">'+totItems+'</div><div class="d">按任务单项目拆分累计</div></div>'
-      + '<div class="kpi"><div class="k">检测任务</div><div class="v">'+totTask+'</div><div class="d">任务单条数</div></div>'
-      + '<div class="kpi'+(doing?" hi":"")+'"><div class="k">在检</div><div class="v">'+doing+'</div><div class="d">未出报告'+(urgent?" · 加急 "+urgent:"")+'</div></div>'
-      + '<div class="kpi"><div class="k">参与人员</div><div class="v">'+list.length+'</div><div class="d">有检测任务或流转记录的人</div></div>'
+    var h = '<div class="wl-filter"><div class="wl-seg">'
+      + [["month","本月"],["quarter","本季"],["year","本年"],["all","全部"]].map(function(x){
+          return '<button class="'+(WL_PERIOD===x[0]?"on":"")+'" onclick="LAB.setWlPeriod(\''+x[0]+'\')">'+x[1]+'</button>';
+        }).join("")
+      + '</div><span class="muted">统计范围：'+(WL_PERIOD==="month"?"2026 年 11 月":(WL_PERIOD==="quarter"?"2026 年 Q4":(WL_PERIOD==="year"?"2026 全年":"全部记录")))+'</span>'
+      + '<span class="sp" style="flex:1"></span><span class="muted">按样品流转与检验任务单的检验人统计</span></div>';
+
+    h += '<div class="grid g4" style="margin-bottom:14px">'
+      + '<div class="kpi"><div class="k">样品批次</div><div class="v">'+ordersN+'</div><div class="d">有检验人的任务单</div></div>'
+      + '<div class="kpi"><div class="k">检测项次</div><div class="v">'+totItems+'</div><div class="d">按每单项目拆分</div></div>'
+      + '<div class="kpi"><div class="k">参与人员</div><div class="v">'+list.length+'</div><div class="d">承担检测的人</div></div>'
+      + '<div class="kpi"><div class="k">人均项次</div><div class="v">'+(list.length?(totItems/list.length).toFixed(1):"0")+'</div><div class="d">项次 ÷ 人数</div></div>'
       + '</div>';
 
     if(!list.length){
-      return h + '<div class="card empty">还没有工作量数据 —— 先在「检验任务单」里填检验人，或在「样品流转」里填接收人。</div>';
+      return h + '<div class="card empty">这个范围内没有带检验人的任务单 —— 换「本年/全部」看看，或先在检验任务单里填检验人。</div>';
     }
 
-    h += '<div class="wl-grid">';
-    h += '<div class="card"><div class="card-h"><h3>每人检测项次</h3>'
-       + '<span class="muted">项目不同，项次比样品数更能反映负荷</span></div><div class="wl-bars">';
-    list.forEach(function(x){
-      var w = Math.max(2, x.items / maxItems * 100);
-      h += '<div class="wl-row"><span class="nm">'+esc(x.name)+'</span>'
-         + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:'+gc(x.dept)+'"></i></div>'
-         + '<b>'+x.items+'</b></div>';
+    /* ⓪ 按组统计 */
+    var G={};
+    list.forEach(function(p){
+      var g = G[p.dept] || (G[p.dept] = {name:p.dept, cat:{}, item:{}, samples:0, items:0});
+      g.samples += p.samples; g.items += p.items;
+      Object.keys(p.cat).forEach(function(c){ g.cat[c]=(g.cat[c]||0)+p.cat[c]; });
+      Object.keys(p.item).forEach(function(it){ g.item[it]=(g.item[it]||0)+p.item[it]; });
+    });
+    var glist = Object.keys(G).map(function(k){ return G[k]; }).sort(function(a,b){ return b.items-a.items; });
+    h += '<div class="card" style="padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
+       + '<h3>按组统计</h3><span class="muted">理化组 · 色谱组 · 原子组 · 微生物组</span></div>'
+       + '<div class="twrap"><table class="ledger-tbl wl-matrix"><thead><tr><th>组别</th><th>样品数</th><th>项次</th>';
+    items.forEach(function(it){ h += '<th>'+esc(it)+'</th>'; });
+    h += '</tr></thead><tbody>';
+    glist.forEach(function(g){
+      h += '<tr><td><b><i class="wl-dot" style="background:'+(GCOL[g.name]||"#94a3b8")+'"></i>'+esc(g.name)+'</b></td>'
+         + '<td class="num">'+g.samples+'</td><td class="num"><b>'+g.items+'</b></td>';
+      items.forEach(function(it){
+        var v=g.item[it]||0;
+        h += '<td class="num'+(v?"":" zero")+'">'+(v||"·")+'</td>';
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+    h += '<div class="twrap" style="border-top:1px solid #eef2f7"><table class="ledger-tbl wl-matrix"><thead><tr><th>组别</th>';
+    CATS.forEach(function(c){ h += '<th>'+c+'</th>'; });
+    h += '<th>样品合计</th></tr></thead><tbody>';
+    glist.forEach(function(g){
+      h += '<tr><td><b>'+esc(g.name)+'</b></td>';
+      CATS.forEach(function(c){ var v=g.cat[c]||0; h += '<td class="num'+(v?"":" zero")+'">'+(v||"·")+'</td>'; });
+      h += '<td class="num"><b>'+g.samples+'</b></td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+
+    var gmax = Math.max.apply(null, glist.map(function(g){ return g.items; }).concat([1]));
+    var gall = glist.reduce(function(a,g){ return a+g.items; },0)||1;
+    h += '<div class="card" style="margin-top:14px"><div class="card-h"><h3>各组检测项次</h3><span class="muted">条长按项次，数字为占比</span></div><div class="wl-bars">';
+    glist.forEach(function(g){
+      var w=Math.max(2, g.items/gmax*100);
+      h += '<div class="wl-row"><span class="nm">'+esc(g.name)+'</span>'
+         + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:'+(GCOL[g.name]||"#94a3b8")+'"></i></div>'
+         + '<b>'+(g.items/gall*100).toFixed(0)+'%</b></div>';
     });
     h += '</div></div>';
 
-    h += '<div class="card"><div class="card-h"><h3>按组占比</h3><span class="muted">检测项次</span></div>'
-       + '<div class="wl-donut" style="background:conic-gradient('+conic+')">'
-       + '<div class="wl-donut-c"><b>'+totItems+'</b><span>项次</span></div></div>'
-       + '<div class="wl-legend2">';
-    orderG.forEach(function(g,i){
-      h += '<span><i style="background:'+COL[i%COL.length]+'"></i>'+esc(g)+' '+byG[g]+'</span>';
-    });
-    h += '</div></div></div>';
-
-    h += '<div class="card" style="margin-top:14px"><div class="card-h"><h3>样品流转负荷</h3>'
-       + '<span class="muted">接收 · 分样 · 检测任务（同一人三段）</span></div><div class="wl-stack">';
-    list.forEach(function(x){
-      var tot = x.recv + x.hand + x.task;
-      var w = function(v){ return (v / maxLoad * 100).toFixed(1); };
-      h += '<div class="wl-st"><span class="nm">'+esc(x.name)+'</span><div class="bar">'
-         + '<i style="width:'+w(x.recv)+'%;background:#1d4ed8"></i>'
-         + '<i style="width:'+w(x.hand)+'%;background:#0f9d76"></i>'
-         + '<i style="width:'+w(x.task)+'%;background:#a16207"></i>'
-         + '</div><span class="wl-num">收 '+x.recv+' · 分 '+x.hand+' · 检 '+x.task+'</span></div>';
-    });
-    h += '</div><div class="wl-legend2" style="margin-top:10px">'
-       + '<span><i style="background:#1d4ed8"></i>接收</span>'
-       + '<span><i style="background:#0f9d76"></i>分样/领用</span>'
-       + '<span><i style="background:#a16207"></i>检测任务</span></div></div>';
-
-    h += '<div class="card" style="margin-top:14px;padding:0;overflow:hidden"><div class="twrap">'
-       + '<table class="ledger-tbl"><thead><tr><th>人员</th><th>组</th><th>接收样品</th><th>分样/领用</th>'
-       + '<th>检测任务</th><th>检测项次</th><th>已完成</th><th>在检</th><th>加急</th><th>日均项次</th></tr></thead><tbody>';
-    list.forEach(function(x){
-      h += '<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.dept)+'</td>'
-         + '<td class="num">'+x.recv+'</td><td class="num">'+x.hand+'</td>'
-         + '<td class="num">'+x.task+'</td><td class="num"><b>'+x.items+'</b></td>'
-         + '<td class="num">'+x.done+'</td><td class="num'+(x.doing?" hi":"")+'">'+x.doing+'</td>'
-         + '<td class="num">'+x.urgent+'</td>'
-         + '<td class="num">'+(x.items/5).toFixed(1)+'</td></tr>';
+    /* ① 人员 × 项目矩阵 */
+    h += '<div class="card" style="padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
+       + '<h3>人员 × 检测项目（样品数）</h3><span class="muted">只统计此人实际承担的项目</span></div>'
+       + '<div class="twrap"><table class="ledger-tbl wl-matrix"><thead><tr><th>人员</th><th>组</th>';
+    items.forEach(function(it){ h += '<th>'+esc(it)+'</th>'; });
+    h += '<th>项次合计</th></tr></thead><tbody>';
+    list.forEach(function(p){
+      h += '<tr><td><b>'+esc(p.name)+'</b></td><td>'+esc(p.dept)+'</td>';
+      items.forEach(function(it){
+        var v = p.item[it]||0;
+        h += '<td class="num'+(v?"":" zero")+'">'+(v||"·")+'</td>';
+      });
+      h += '<td class="num"><b>'+p.items+'</b></td></tr>';
     });
     h += '</tbody></table></div></div>';
-    h += '<div class="muted" style="font-size:12px;margin-top:8px">统计口径：接收/分样取「样品流转」的接收人与经手人；检测任务与项次取「检验任务单」的检验人与检验项目（按、拆分）。双休，日均按 5 个工作日计。</div>';
+
+    /* ② 人员 × 样品类别 */
+    h += '<div class="card" style="margin-top:14px;padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
+       + '<h3>人员 × 样品类别（样品数）</h3><span class="muted">原料 / 半成品 / 成品 / 稳定性 / 小样</span></div>'
+       + '<div class="twrap"><table class="ledger-tbl wl-matrix"><thead><tr><th>人员</th>';
+    CATS.forEach(function(c){ h += '<th>'+c+'</th>'; });
+    h += '<th>样品合计</th></tr></thead><tbody>';
+    list.forEach(function(p){
+      h += '<tr><td><b>'+esc(p.name)+'</b></td>';
+      CATS.forEach(function(c){
+        var v=p.cat[c]||0;
+        h += '<td class="num'+(v?"":" zero")+'">'+(v||"·")+'</td>';
+      });
+      h += '<td class="num"><b>'+p.samples+'</b></td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+
+    /* ③ 图：每人项次 + 类别构成 */
+    h += '<div class="wl-grid" style="margin-top:14px">';
+    h += '<div class="card"><div class="card-h"><h3>每人检测项次</h3><span class="muted">项目不同，项次比样品数更能反映负荷</span></div><div class="wl-bars">';
+    list.forEach(function(p){
+      var w=Math.max(2,p.items/maxItems*100);
+      var k=Object.keys(CATCOL).indexOf(p.dept); 
+      h += '<div class="wl-row"><span class="nm">'+esc(p.name)+'</span>'
+         + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:#1d4ed8"></i></div>'
+         + '<b>'+p.items+'</b></div>';
+    });
+    h += '</div></div>';
+    h += '<div class="card"><div class="card-h"><h3>各人样品类别构成</h3><span class="muted">每人样品合计 100%</span></div><div class="wl-stack">';
+    list.forEach(function(p){
+      var tot=p.samples||1;
+      h += '<div class="wl-st"><span class="nm">'+esc(p.name)+'</span><div class="bar">';
+      CATS.forEach(function(c){
+        var v=p.cat[c]||0; if(!v) return;
+        h += '<i style="width:'+(v/tot*100).toFixed(1)+'%;background:'+CATCOL[c]+'"></i>';
+      });
+      h += '</div><span class="wl-num">'+p.samples+' 份</span></div>';
+    });
+    h += '</div><div class="wl-legend2" style="margin-top:10px">';
+    CATS.forEach(function(c){ h += '<span><i style="background:'+CATCOL[c]+'"></i>'+c+'</span>'; });
+    h += '</div></div></div>';
+
+    /* ④ 月度趋势（本年/全部时显示） */
+    if(WL_PERIOD==="year" || WL_PERIOD==="all"){
+      var mks=Object.keys(monthTot).sort();
+      var mx=Math.max.apply(null,mks.map(function(k){return monthTot[k];}).concat([1]));
+      h += '<div class="card" style="margin-top:14px"><div class="card-h"><h3>月度检测项次趋势</h3><span class="muted">按收样月份</span></div><div class="wl-trend">';
+      mks.forEach(function(k){
+        var v=monthTot[k]||0, hh=Math.max(2, v/mx*100);
+        h += '<div class="b"><i style="height:'+hh.toFixed(1)+'%"></i><span>'+k.slice(5)+'月</span><b style="font-size:11px">'+v+'</b></div>';
+      });
+      h += '</div></div>';
+    }
+
+    h += '<div class="muted" style="font-size:12px;margin-top:8px">统计口径：一批样品按任务单的「检验项目」逐项计入承担人；'
+       + '类别按报检来源判定（原料库→原料、生产一部→半成品、成品库→成品、留样室→稳定性、研发部→小样）。</div>';
     return h;
   }
 
@@ -3068,6 +3141,7 @@
      导出 API
      ================================================================ */
   global.LAB = {
+    setWlPeriod: function(p){ WL_PERIOD = p; render(); },
     render: render,
     go: go,
     setCap: setCap,
