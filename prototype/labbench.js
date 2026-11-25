@@ -168,7 +168,7 @@
     var head = `<div class="grid g4" style="margin-bottom:14px">
       <div class="kpi hi"><div class="k">高优</div><div class="v">${hi}</div><div class="d">设备超期、环境超限这类必须马上处理</div></div>
       <div class="kpi"><div class="k">中</div><div class="v">${mid}</div><div class="d">内审不符合未转 NC、QC 超限未闭环</div></div>
-      <div class="kpi"><div class="k">低</div><div class="v">${lo}</div><div class="d">留样到期、委托单积压</div></div>
+      <div class="kpi"><div class="k">低</div><div class="v">${lo}</div><div class="d">留样到期、任务单积压</div></div>
       <div class="kpi"><div class="k">合计</div><div class="v">${board.length}</div><div class="d">台账之间互相牵动出来的</div></div>
     </div>`;
     if(!board.length){
@@ -222,7 +222,7 @@
        内审不符合 → 有没有转成 NC
        环境超限 → 有没有开 NC
        留样到期 → 有没有处置
-       委托单   → 待复核的有几单、压着几天了
+       任务单   → 待复核的有几单、压着几天了
      ================================================================ */
   function linkBoard(){
     var out = [];
@@ -329,14 +329,14 @@
       }
     }catch(e){}
 
-    /* ⑥ 委托单待复核 / 加急 */
+    /* ⑥ 任务单待复核 / 加急 */
     try{
       var od = L.rows("orders");
       var wait = od.filter(function(o){ return o.status==="待复核"; });
       var urg = od.filter(function(o){ return o.urgent && o.status!=="已出报告"; });
       if(wait.length){
         out.push({
-          lvl:"中", tab:"委托",
+          lvl:"中", tab:"任务单",
           t:wait.length+" 单待复核"+(urg.length?"（其中 "+urg.length+" 单加急）":""),
           d:wait.map(function(o){return o.no+" "+o.client;}).join("；")
             +"。数据已出，等质量负责人签字 —— 这一步卡住，报告就发不出去。",
@@ -584,7 +584,7 @@
       <div class="twrap"><table>
         <thead><tr><th style="width:120px">样品编号</th><th style="width:210px">样品名称</th>
           <th style="width:76px">类别</th><th style="width:110px">批号</th>
-          <th style="width:130px">委托单位</th><th style="width:96px">生产日期</th>
+          <th style="width:130px">来源 / 生产线</th><th style="width:96px">生产日期</th>
           <th style="width:80px">状态</th><th style="width:130px">留样位置</th>
           <th style="width:96px">留样到期</th><th style="width:70px">剩余</th><th>备注</th></tr></thead>
         <tbody>
@@ -2849,7 +2849,7 @@
   }
   function exportSample(){
     var sm=data("SAMPLES");
-    var rows=[["样品编号","样品名称","类别","生产批号","委托单位","生产日期","收样日期",
+    var rows=[["样品编号","样品名称","类别","生产批号","来源/生产线","生产日期","收样日期",
                "检验状态","检验报告号","结论","留样位置","留样量","留样到期","剩余天数","备注"]];
     sm.forEach(function(s){
       var d=daysTo(s.retainUntil);
