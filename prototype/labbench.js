@@ -217,7 +217,7 @@
     var totItems = list.reduce(function(a,x){ return a+x.items; },0);
     var maxItems = Math.max.apply(null, list.map(function(x){ return x.items; }).concat([1]));
     var COL = ["#1d4ed8","#0f9d76","#a16207","#7c3aed","#c2410c","#64748b"];
-    var CATCOL = {"原料":"#2563eb","半成品":"#10b981","成品":"#06b6d4","稳定性":"#8b5cf6","小样":"#f97316","其他":"#e11d48"};
+    var CATCOL = {"原料":"#3B82F6","半成品":"#22C55E","成品":"#F59E0B","稳定性":"#A855F7","小样":"#EF4444","其他":"#06B6D4"};
     var MONTHS = [];
     for(var mi=1; mi<=12; mi++) MONTHS.push("2026-"+(mi<10?"0":"")+mi);
     var GCOL = {"理化组":"#1d4ed8","色谱组":"#0f9d76","原子组":"#a16207","微生物组":"#7c3aed","样品室":"#64748b","质量部":"#94a3b8"};
@@ -291,10 +291,15 @@
     var RD=62, CXX=80, CYY=80, SW=26, CIRC=2*Math.PI*RD, acc2=0, slices="";
     catKeys.forEach(function(c){
       var len = catTot[c]/cTotal*CIRC;
-      var op = (!WL_PICK || WL_PICK===c) ? 1 : 0.22;
-      slices += '<circle cx="'+CXX+'" cy="'+CYY+'" r="'+RD+'" fill="none" stroke="'+CATCOL[c]+'" stroke-width="'+SW+'" '
+      var on = (WL_PICK===c);
+      if(on){
+        slices += '<circle cx="'+CXX+'" cy="'+CYY+'" r="'+RD+'" fill="none" stroke="'+CATCOL[c]+'" stroke-width="'+(SW+10)+'" '
+          + 'stroke-dasharray="'+len.toFixed(2)+' '+(CIRC-len).toFixed(2)+'" stroke-dashoffset="'+(-acc2).toFixed(2)+'" '
+          + 'transform="rotate(-90 '+CXX+' '+CYY+')" opacity="0.18"/>';
+      }
+      slices += '<circle cx="'+CXX+'" cy="'+CYY+'" r="'+RD+'" fill="none" stroke="'+CATCOL[c]+'" stroke-width="'+(on?SW+4:SW)+'" '
         + 'stroke-dasharray="'+len.toFixed(2)+' '+(CIRC-len).toFixed(2)+'" stroke-dashoffset="'+(-acc2).toFixed(2)+'" '
-        + 'transform="rotate(-90 '+CXX+' '+CYY+')" opacity="'+op+'" style="cursor:pointer" '
+        + 'transform="rotate(-90 '+CXX+' '+CYY+')" style="cursor:pointer" '
         + 'onclick="LAB.wlPick(\''+(WL_PICK===c?"":c)+'\')"><title>'+c+' '+catTot[c]+' 份</title></circle>';
       acc2 += len;
     });
