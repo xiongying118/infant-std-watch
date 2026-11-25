@@ -647,10 +647,10 @@
         <span class="muted">点「方法」看原理与试剂 →</span>
       </div>
       <div class="twrap-tip">← 左右拖动查看全部列 →</div>
-      <div class="twrap"><table class="ledger-tbl">
-        <thead><tr><th style="width:120px">检测项目</th><th style="width:220px">检验方法</th>
-          <th style="width:76px">类别</th><th style="width:100px">周期</th><th style="width:110px">检测方式</th>
-          <th style="width:110px">强制性</th><th style="width:90px">主检人</th><th>依赖资源</th><th style="width:40px"></th></tr></thead>
+      <div class="twrap"><table class="ledger-tbl cap-tbl">
+        <thead><tr><th style="width:130px">检测项目</th><th style="width:260px">检验方法</th>
+          <th style="width:76px">类别</th><th style="width:84px">周期</th><th style="width:110px">检测方式</th>
+          <th style="width:120px">强制性</th><th style="width:90px">主检人</th><th>依赖资源</th><th style="width:40px"></th></tr></thead>
         <tbody>
         ${cap.map(function(c, ci){
           var q = (global.LAB_Q||"").trim().toLowerCase();
@@ -661,15 +661,14 @@
           var over = eqs.filter(function(e){ var d=daysTo(e.nextCal); return d!==null && d<0; });
           var soon = eqs.filter(function(e){ var d=daysTo(e.nextCal); return d!==null && d>=0 && d<=60; });
           return `<tr class="${over.length?"bad":""}">
-            <td><input type="text" value="${esc(c.item)}" oninput="LAB.setCap(${ci},'item',this.value)"></td>
-            <td><input type="text" value="${esc(c.method)}" oninput="LAB.setCap(${ci},'method',this.value)"></td>
-            <td><input type="text" value="${esc(c.cat)}" oninput="LAB.setCap(${ci},'cat',this.value)"></td>
+            <td><textarea rows="2" oninput="LAB.setCap(${ci},'item',this.value)">${esc(c.item)}</textarea></td>
+            <td><textarea rows="2" oninput="LAB.setCap(${ci},'method',this.value)">${esc(c.method)}</textarea></td>
+            <td><textarea rows="2" oninput="LAB.setCap(${ci},'cat',this.value)">${esc(c.cat)}</textarea></td>
             <td class="num"><input type="number" value="${c.days}" style="width:58px;text-align:center"
               oninput="LAB.setCap(${ci},'days',this.value)"> 天</td>
             <td class="num"><input type="text" value="${esc(c.price)}" style="width:92px;text-align:right"
               oninput="LAB.setCap(${ci},'price',this.value)"></td>
-            <td><input type="text" value="${esc(c.acc)}" style="width:100%"
-              oninput="LAB.setCap(${ci},'acc',this.value)"></td>
+            <td><textarea rows="2" oninput="LAB.setCap(${ci},'acc',this.value)">${esc(c.acc)}</textarea></td>
             <td><input type="text" value="${s?s.name:""}" style="width:76px"
               oninput="LAB.setCap(${ci},'staffName',this.value)"
               title="主检人姓名（改这里）"></td>
