@@ -74,22 +74,22 @@
     notice:"<b>超期的设备出的数据不能用于出报告</b> —— 用之前要有偏离处理，或用有效设备复测。"
          + "「关键设备」需在两次校准之间做期间核查（天平日核查、标样核查），记录要留。",
     columns:[
-      {k:"id",   label:"编号",   ro:true, ph:"如 EQ-049"},
-      {k:"name", label:"设备名称", w:104, ph:"如 气相色谱仪"},
-      {k:"brand",label:"品牌",   ph:"如 安捷伦"},
-      {k:"model",label:"型号",   ph:"如 8890A"},
-      {k:"sn",   label:"出厂序列号", ph:"如 GC-8890A-0271"},
-      {k:"type", label:"类型",   type:"select", opts:["强制检定","内部校准","非计量设备"]},
-      {k:"verify",label:"校准/检定方式", type:"select", opts:["检定","校准","自校"]},
-      {k:"cycle",label:"周期(月)", type:"number"},
-      {k:"lastCal",label:"上次校准", type:"date"},
-      {k:"nextCal",label:"下次校准", type:"date"},
-      {k:"cert", label:"溯源证书号", ph:"如 JN2026-0420-118"},
-      {k:"status",label:"状态",  type:"select", opts:["在用","维修中","停用","报废"]},
-      {k:"location",label:"安装位置", ph:"如 天平室 A"},
-      {k:"inCharge",label:"责任人", ph:"如 周敏"},
-      {k:"use",  label:"用途",   ph:"用于什么检测"},
-      {k:"critical",label:"关键设备", type:"check", def:false}
+      {k:"id",   label:"编号", w:62, ro:true, ph:"如 EQ-049"},
+      {k:"name", label:"设备名称", w:140, ph:"如 气相色谱仪"},
+      {k:"brand",label:"品牌", w:70,   ph:"如 安捷伦"},
+      {k:"model",label:"型号", w:66,   ph:"如 8890A"},
+      {k:"sn",   label:"出厂序列号", w:86, ph:"如 GC-8890A-0271"},
+      {k:"type", label:"类型", w:58,   type:"select", opts:["强制检定","内部校准","非计量设备"]},
+      {k:"verify",label:"校准/检定方式", w:60, type:"select", opts:["检定","校准","自校"]},
+      {k:"cycle",label:"周期(月)", w:50, type:"number"},
+      {k:"lastCal",label:"上次校准", w:104, type:"date"},
+      {k:"nextCal",label:"下次校准", w:104, type:"date"},
+      {k:"cert", label:"溯源证书号", w:84, ph:"如 JN2026-0420-118"},
+      {k:"status",label:"状态", w:56,  type:"select", opts:["在用","维修中","停用","报废"]},
+      {k:"location",label:"安装位置", w:76, ph:"如 天平室 A"},
+      {k:"inCharge",label:"责任人", w:56, ph:"如 周敏"},
+      {k:"use",  label:"用途", w:130, ph:"用于什么检测"},
+      {k:"critical",label:"关键设备", w:50, type:"check", def:false}
     ],
     /* 卡片式：左身份 + 右校准信息 */
     cardHead:function(r, i){
@@ -285,27 +285,27 @@
     notice:"实验室最常见的争议是「这瓶标液谁配的、准不准」—— "
          + "配制记录要能追溯到人、到浓度确认、到所用的标准物质证书。",
     columns:[
-      {k:"_seq", label:"序号", w:52, render:function(r,i){ return '<span class="muted">'+(i+1)+'</span>'; }},
-      {k:"name", label:"试剂名称", w:190, type:"textarea"},
-      {k:"type", label:"类型", w:104, render:function(r){
+      {k:"_seq", label:"序号", w:30, render:function(r,i){ return '<span class="muted">'+(i+1)+'</span>'; }},
+      {k:"name", label:"试剂名称", w:100, type:"textarea"},
+      {k:"type", label:"类型", w:58, render:function(r){
         var n=r.name||"";
         var t=/开封/.test(n) ? "开封试剂" : (/标准溶液|标准品/.test(n) ? "标准溶液" : "配制试剂");
         return '<span class="tag '+(t==="标准溶液"?"t-low":(t==="开封试剂"?"t-mid":"t-low"))+'">'+t+'</span>';
       }},
-      {k:"spec", label:"浓度 / 规格", w:150},
-      {k:"date", label:"配制日期", w:104, type:"date"},
-      {k:"exp",  label:"有效期至", w:104, type:"date"},
-      {k:"status",label:"状态", w:120, render:function(r){
+      {k:"spec", label:"浓度 / 规格", w:100},
+      {k:"date", label:"配制日期", w:110, type:"date"},
+      {k:"exp",  label:"有效期至", w:110, type:"date"},
+      {k:"status",label:"状态", w:82, render:function(r){
         var d=daysTo(r.exp);
         if(d===null) return '<span class="muted">'+(r.status||"—")+'</span>';
         if(d<0) return '<span class="tag t-high">已过期('+Math.abs(d)+'天)</span>';
         if(d<=14) return '<span class="tag t-mid">临期('+d+'天)</span>';
         return '<span class="tag t-low">有效('+d+'天)</span>';
       }},
-      {k:"maker",label:"配制人", w:80},
-      {k:"checker",label:"复核人", w:80},
+      {k:"maker",label:"配制人", w:60},
+      {k:"checker",label:"复核人", w:60},
       {k:"store",label:"存放位置", w:170},
-      {k:"std",  label:"标定结果", w:190, type:"textarea"}
+      {k:"std",  label:"标定结果", w:82, type:"textarea"}
     ],
     rowClass:function(r){
       var d = daysTo(r.exp);
