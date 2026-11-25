@@ -15,7 +15,7 @@
      ② reagent   试剂与危化品
      ③ sample    样品与留样
      ④ prep      试剂配制记录
-     ⑤ orders    检验委托单
+     ⑤ orders    检验任务单
      ⑥ capa      不符合工作与 CAPA
      ⑦ schedule  人员排班与工作量
      ⑧ flows     样品出入库与物流
@@ -241,7 +241,7 @@
       {k:"cat",  label:"类别", w:88, type:"select",
        opts:["婴配成品","全脂乳粉","乳清粉","调制乳粉","包材","液态乳","其他"]},
       {k:"batch",label:"生产批号", w:116},
-      {k:"maker",label:"委托单位", w:130},
+      {k:"maker",label:"来源 / 生产线", w:130},
       {k:"prodDate",label:"生产日期", w:104, type:"date"},
       {k:"recvDate",label:"收样日期", w:104, type:"date"},
       {k:"qty",  label:"来样数量", w:80},
@@ -340,7 +340,7 @@
     hint:"改「状态」→ 统计与待复核清单自动变",
     notice:"样品丢了要能查谁经手过 —— 交接人和时间必须记。<b>加急件</b>要提前排产，别等到报告日才发现来不及。",
     columns:[
-      {k:"no",   label:"委托单号", w:112, ro:true},
+      {k:"no",   label:"任务单号", w:112, ro:true},
       {k:"recv", label:"收样日期", w:104, type:"date"},
       {k:"client",label:"报检部门/来源", w:130},
       {k:"sample",label:"样品名称", w:210},
@@ -371,7 +371,7 @@
       var urg   = rs.filter(function(o){ return o.urgent && o.status!=="已出报告"; });
       var rev   = rs.filter(function(o){ return o.status==="已出报告"; });
       return [
-        {k:"在办委托", v:doing.length, d:"受理 + 在检"},
+        {k:"在办任务", v:doing.length, d:"受理 + 在检"},
         {k:"待复核", v:wait.length, d:"数据已出等签字", cls:wait.length?"hi":""},
         {k:"加急件", v:urg.length, d:urg.length?"要优先排产":"无", cls:urg.length?"hi":""},
         {k:"报告归档", v:rev.length, d:"已出报告并归档"}
