@@ -317,10 +317,10 @@
     h.push('<div class="card" style="padding:0;overflow:hidden">');
     h.push('<div class="twrap-tip">← 左右拖动查看全部 '+(d.columns||[]).length+' 列（首列与操作列固定）→</div>');
     h.push('<div class="twrap">');
-    h.push('<table class="ledger-tbl" data-ledger="'+key+'"><thead><tr>');
+    h.push('<table class="ledger-tbl lt-'+key+'" data-ledger="'+key+'"><thead><tr>');
     (d.columns||[]).forEach(function(c){
       var sk = (f.sort===c.k);
-      h.push('<th style="width:'+(c.w||"auto")+'"'
+      h.push('<th style="width:'+(c.w?(c.w+"px"):"auto")+'"'
         +(c.sort===false?"":" class=\""+(sk?"sorted":"")+"\" onclick=\"Ledger.setSort('"+key+"','"+c.k+"')\"")
         +' title="'+(c.sort===false?"":'点击排序')+'">'
         +esc(c.label)+(sk?(f.dir>0?" ▲":" ▼"):"")+'</th>');
@@ -334,7 +334,7 @@
       (d.columns||[]).forEach(function(c){
         var v = r[c.k];
         if(c.render){
-          h.push('<td'+(c.w?' style="width:'+c.w+'"':'')+'>'+c.render(r, i, c)+'</td>');
+          h.push('<td'+(c.w?' style="width:'+c.w+'px"':'')+'>'+c.render(r, i, c)+'</td>');
         } else if(c.type==="check"){
           h.push('<td style="text-align:center"><input type="checkbox"'
             +((v?" checked":"")+(c.ro?" disabled":""))
