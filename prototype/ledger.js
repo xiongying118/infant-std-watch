@@ -314,7 +314,9 @@
       return;
     }
 
-    h.push('<div class="card" style="padding:0;overflow:hidden"><div class="twrap">');
+    h.push('<div class="card" style="padding:0;overflow:hidden">');
+    h.push('<div class="twrap-tip">← 左右拖动查看全部 '+(d.columns||[]).length+' 列（首列与操作列固定）→</div>');
+    h.push('<div class="twrap">');
     h.push('<table class="ledger-tbl" data-ledger="'+key+'"><thead><tr>');
     (d.columns||[]).forEach(function(c){
       var sk = (f.sort===c.k);
