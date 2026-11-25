@@ -1438,13 +1438,19 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 
 .wl-matrix th:last-child,.wl-matrix td:last-child,.wl-heat th:last-child,.wl-heat td:last-child{position:static}
 
-.twrap table.lt-prep,.twrap table.lt-equip{table-layout:fixed;width:100%;min-width:0}
+.twrap table.lt-prep,.twrap table.lt-equip{table-layout:fixed;width:max-content;min-width:100%}
 .lt-prep th,.lt-prep td,.lt-equip th,.lt-equip td{overflow:hidden}
 
 .lt-prep th,.lt-prep td{padding-left:3px;padding-right:3px}
 
 /* 台账列表：紧凑单元格 + 文本换行（2026-11-25） */
 .ledger-tbl td,.ledger-tbl th{padding:3px 4px}
-.ledger-tbl input,.ledger-tbl select,.ledger-tbl textarea{font-size:11.5px;padding:2px 4px;line-height:1.35}
-.twrap table.ledger-tbl textarea{min-height:36px;resize:none!important}
+.ledger-tbl input,.ledger-tbl select,.ledger-tbl textarea{font-size:11px;padding:1px 3px;line-height:1.3}
+.twrap table.ledger-tbl textarea{min-height:28px;resize:none!important;field-sizing:content}
 .ledger-tbl .tag{font-size:10.5px;padding:1px 5px;white-space:nowrap}
+
+/* 能力矩阵：固定列宽 + 文本换行（2026-11-25） */
+.twrap table.cap-tbl{table-layout:fixed;width:100%}
+.cap-tbl textarea{min-height:36px;resize:none!important}
+.cap-tbl td{padding:3px 4px}
+.cap-tbl td textarea{font-size:11.5px;padding:2px 4px;line-height:1.35}
