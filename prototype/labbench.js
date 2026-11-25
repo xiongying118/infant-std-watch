@@ -216,7 +216,7 @@
     var totItems = list.reduce(function(a,x){ return a+x.items; },0);
     var maxItems = Math.max.apply(null, list.map(function(x){ return x.items; }).concat([1]));
     var COL = ["#1d4ed8","#0f9d76","#a16207","#7c3aed","#c2410c","#64748b"];
-    var CATCOL = {"原料":"#1d4ed8","半成品":"#0f9d76","成品":"#a16207","稳定性":"#7c3aed","小样":"#c2410c","其他":"#64748b"};
+    var CATCOL = {"原料":"#1d4ed8","半成品":"#0f9d76","成品":"#a16207","稳定性":"#7c3aed","小样":"#c2410c","其他":"#e11d48"};
     var MONTHS = [];
     for(var mi=1; mi<=12; mi++) MONTHS.push("2026-"+(mi<10?"0":"")+mi);
     var GCOL = {"理化组":"#1d4ed8","色谱组":"#0f9d76","原子组":"#a16207","微生物组":"#7c3aed","样品室":"#64748b","质量部":"#94a3b8"};
