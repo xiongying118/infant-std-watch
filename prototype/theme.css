@@ -1403,8 +1403,11 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 @media(max-width:900px){.wl-grid{grid-template-columns:1fr}.wl-num{display:none}}
 
 /* 台账列表：列宽按内容展开，窄屏横向滚动，不压扁列（2026-11-25） */
-.twrap table.ledger-tbl{width:max-content;min-width:100%;table-layout:auto}
-.twrap table.ledger-tbl th,.twrap table.ledger-tbl td{white-space:nowrap}
+.twrap table.ledger-tbl{width:100%;table-layout:auto}
+.twrap table.ledger-tbl th,.twrap table.ledger-tbl td{white-space:normal;word-break:break-word;overflow-wrap:anywhere}
+.twrap table.ledger-tbl th{max-width:150px}
+.twrap table.ledger-tbl td{max-width:190px}
+.twrap table.ledger-tbl input,.twrap table.ledger-tbl select,.twrap table.ledger-tbl textarea{width:100%!important;min-width:0;box-sizing:border-box}
 .twrap table.ledger-tbl th:nth-child(1),.twrap table.ledger-tbl td:nth-child(1){position:sticky;left:0;z-index:2;background:#fff}
 .twrap table.ledger-tbl th:nth-child(1){background:#f8fafc}
 .twrap table.ledger-tbl th:last-child,.twrap table.ledger-tbl td:last-child{position:sticky;right:0;z-index:2;background:#fff}
