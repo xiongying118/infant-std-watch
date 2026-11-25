@@ -345,8 +345,13 @@
             +'</select></td>');
         } else if(c.type==="textarea"){
           h.push('<td><textarea rows="2"'+(c.ro?" readonly":"")+' oninput="Ledger.setCell(\''+key+'\','+i+',\''+c.k+'\',this.value)">'+esc(v)+'</textarea></td>');
+        } else if(!c.type || c.type==="text"){
+          /* ★ 2026-11-25：纯文本列一律用 textarea，内容自动换行，避免窄列截字 ★ */
+          h.push('<td><textarea rows="1"'+(c.ro?" readonly":"")
+            +(c.ph?' placeholder="'+esc(c.ph)+'"':'')
+            +' oninput="Ledger.setCell(\''+key+'\','+i+',\''+c.k+'\',this.value)">'+esc(v)+'</textarea></td>');
         } else {
-          h.push('<td><input type="'+(c.type||"text")+'" value="'+esc(v)+'"'
+          h.push('<td><input type="'+c.type+'" value="'+esc(v)+'"'
             +(c.type==="number"?' step="any"':'')
             +(c.ro?" readonly":"")
             +(c.ph?' placeholder="'+esc(c.ph)+'"':'')
