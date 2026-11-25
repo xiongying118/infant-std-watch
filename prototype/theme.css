@@ -1379,3 +1379,29 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .qms-ccptab tr.hi{background:#fff7d6!important;box-shadow:inset 0 0 0 2px #f2c94c}
 .qms-svg g.qms-riskdot{cursor:pointer}
 .qms-svg g.qms-riskdot:hover circle{opacity:1}
+
+/* ===== 工作量统计图表（2026-11-25） ===== */
+.wl-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+.wl-bars{display:flex;flex-direction:column;gap:8px}
+.wl-row{display:flex;align-items:center;gap:9px}
+.wl-row .nm{flex:0 0 66px;font-size:12.5px;color:#1f2d3d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wl-track{flex:1;height:16px;background:#eef2f7;border-radius:8px;overflow:hidden}
+.wl-track i{display:block;height:100%;border-radius:8px;transition:width .3s}
+.wl-row b{flex:0 0 44px;text-align:right;font-size:12px;color:#0f2747}
+.wl-donut{width:156px;height:156px;border-radius:50%;margin:8px auto 12px;position:relative;display:flex;align-items:center;justify-content:center}
+.wl-donut-c{width:96px;height:96px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(15,39,71,.08)}
+.wl-donut-c b{font-size:20px;color:#0f2747;line-height:1.1}
+.wl-donut-c span{font-size:11px;color:#64748b}
+.wl-legend2{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:#334155}
+.wl-legend2 i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.wl-stack{display:flex;flex-direction:column;gap:8px}
+.wl-st{display:flex;align-items:center;gap:9px}
+.wl-st .nm{flex:0 0 66px;font-size:12.5px;color:#1f2d3d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wl-st .bar{flex:1;display:flex;height:16px;border-radius:8px;overflow:hidden;background:#eef2f7}
+.wl-st .bar i{display:block;height:100%}
+.wl-num{flex:0 0 132px;text-align:right;font-size:11.5px;color:#64748b}
+@media(max-width:900px){.wl-grid{grid-template-columns:1fr}.wl-num{display:none}}
+
+/* 台账列表：列宽按内容展开，窄屏横向滚动，不压扁列（2026-11-25） */
+.twrap table.ledger-tbl{width:max-content;min-width:100%;table-layout:auto}
+.twrap table.ledger-tbl th{white-space:nowrap}
