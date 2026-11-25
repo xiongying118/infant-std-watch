@@ -1404,6 +1404,13 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 
 /* 台账列表：列宽按内容展开，窄屏横向滚动，不压扁列（2026-11-25） */
 .twrap table.ledger-tbl{width:max-content;min-width:100%;table-layout:auto}
+.twrap table.ledger-tbl th,.twrap table.ledger-tbl td{white-space:nowrap}
+.twrap table.ledger-tbl th:nth-child(1),.twrap table.ledger-tbl td:nth-child(1){position:sticky;left:0;z-index:2;background:#fff}
+.twrap table.ledger-tbl th:nth-child(1){background:#f8fafc}
+.twrap table.ledger-tbl th:last-child,.twrap table.ledger-tbl td:last-child{position:sticky;right:0;z-index:2;background:#fff}
+.twrap table.ledger-tbl th:last-child{background:#f8fafc}
+.twrap::-webkit-scrollbar{height:10px}
+.twrap-tip{font-size:11.5px;color:#94a3b8;padding:5px 12px 0}
 .twrap table.ledger-tbl th{white-space:nowrap}
 
 /* ===== 工作量：筛选 / 矩阵 / 趋势（2026-11-25） ===== */
@@ -1422,3 +1429,8 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .wl-trend .b b{font-size:10.5px;color:#0f2747}
 
 .wl-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+.wl-heat th,.wl-heat td{text-align:center;padding:5px 3px;font-size:11.5px}
+.wl-heat td:first-child,.wl-heat th:first-child{text-align:left;width:84px}
+
+.wl-matrix th:last-child,.wl-matrix td:last-child,.wl-heat th:last-child,.wl-heat td:last-child{position:static}
