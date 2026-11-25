@@ -328,21 +328,21 @@
   });
 
   /* ================================================================
-     ⑤ 检验委托单台账
+     ⑤ 检验任务单台账
      ================================================================ */
   L.register({
     key:"orders",
     cardMode:true,
-    title:"检验委托单台账",
-    subtitle:"受理 → 在检 → 待复核 → 已出报告，每一步都要有交接人",
-    exportName:"检验委托单台账",
+    title:"检验任务单台账",
+    subtitle:"报检 → 收样 → 在检 → 待复核 → 报告归档，每一步都有交接人",
+    exportName:"检验任务单台账",
     seed: seedOf("orders"),
     hint:"改「状态」→ 统计与待复核清单自动变",
     notice:"样品丢了要能查谁经手过 —— 交接人和时间必须记。<b>加急件</b>要提前排产，别等到报告日才发现来不及。",
     columns:[
       {k:"no",   label:"委托单号", w:112, ro:true},
       {k:"recv", label:"收样日期", w:104, type:"date"},
-      {k:"client",label:"委托单位", w:130},
+      {k:"client",label:"报检部门/来源", w:130},
       {k:"sample",label:"样品名称", w:210},
       {k:"batch",label:"批号", w:110},
       {k:"qty",  label:"数量", w:70},
@@ -357,7 +357,7 @@
       {k:"testStart",label:"开检时间", w:140},
       {k:"reportDate",label:"报告日期", w:104, type:"date"},
       {k:"reportNo",label:"报告编号", w:116},
-      {k:"price",label:"收费(元)", w:92, type:"number"},
+      {k:"price",label:"内部核算", w:92},
       {k:"remark",label:"备注", w:180, type:"textarea"}
     ],
     rowClass:function(r){
@@ -374,10 +374,10 @@
         {k:"在办委托", v:doing.length, d:"受理 + 在检"},
         {k:"待复核", v:wait.length, d:"数据已出等签字", cls:wait.length?"hi":""},
         {k:"加急件", v:urg.length, d:urg.length?"要优先排产":"无", cls:urg.length?"hi":""},
-        {k:"已出报告", v:rev.length, d:"累计收费 "+(rev.reduce(function(s,o){return s+(+o.price||0);},0)/10000).toFixed(1)+" 万元"}
+        {k:"报告归档", v:rev.length, d:"已出报告并归档"}
       ];
     },
-    exportNote:"状态流转：受理 → 在检 → 待复核 → 已出报告。报告编号与检验委托单号一一对应。"
+    exportNote:"状态流转：报检受理 → 收样 → 在检 → 待复核 → 报告归档。报告编号与任务单号一一对应，随批存档。"
   });
 
   /* ================================================================
@@ -397,7 +397,7 @@
       {k:"no",   label:"编号", w:108, ro:true},
       {k:"date", label:"发现日期", w:104, type:"date"},
       {k:"src",  label:"来源", w:100, type:"select",
-       opts:["QC 超限","客户投诉","设备","记录","留样","环境","方法","其他"]},
+       opts:["QC 超限","市场反馈","设备","记录","留样","环境","方法","其他"]},
       {k:"item", label:"不符合描述", w:280, type:"textarea"},
       {k:"level",label:"严重程度", w:88, type:"select", opts:["低","中","高"]},
       {k:"impact",label:"影响范围", w:220, type:"textarea"},
@@ -476,14 +476,14 @@
   });
 
   /* ================================================================
-     ⑧ 样品出入库与物流
+     ⑧ 样品流转与交接
      ================================================================ */
   L.register({
     key:"flows",
     cardMode:true,
-    title:"样品出入库与物流",
+    title:"样品流转与交接",
     subtitle:"样品从进门到出门，每一步都要有人签字",
-    exportName:"样品出入库记录",
+    exportName:"样品流转记录",
     seed: seedOf("flows"),
     hint:"改「类型」或「状态」→ 统计自动变",
     notice:"<b>销毁要审批</b>：留样销毁必须双人确认并留存记录 —— 这是评审必查项。",
@@ -520,14 +520,14 @@
   });
 
   /* ================================================================
-     ⑨ 内审检查表
+     ⑨ 内审与合规
      ================================================================ */
   L.register({
     key:"audit",
     cardMode:true,
     title:"内部审核检查表",
     subtitle:"按 CNAS-CL01 条款逐条自查 —— 条款 × 证据 的对照",
-    exportName:"内审检查表",
+    exportName:"内审与合规检查表",
     seed: seedOf("audit"),
     hint:"改「结论」→ 符合率与不符合项清单自动变",
     notice:"<b>不符合项必须转成 NC</b> —— 内审发现的问题不进不符合工作台账，等于没发现。",
@@ -614,7 +614,7 @@
   L.register({
     key:"capability",
     title:"检测能力矩阵",
-    subtitle:"能测什么 · 什么方法 · 多久 · 多少钱 · 谁做",
+    subtitle:"自检什么 · 什么方法 · 多久 · 谁授权 · 自检或分包",
     exportName:"检测能力矩阵",
     seed: seedOf("capability"),
     word:true,
@@ -623,7 +623,7 @@
       {k:"method",label:"检验方法", w:240},
       {k:"cat",  label:"类别", w:90},
       {k:"days", label:"周期(天)", w:80, type:"number"},
-      {k:"price",label:"参考报价", w:110},
+      {k:"price",label:"检测方式", w:110},
       {k:"acc",  label:"强制性", w:120},
       {k:"staffName",label:"主检人", w:90}
     ],
@@ -635,7 +635,7 @@
         {k:"最快出报告", v:Math.min.apply(null,rs.map(function(c){return +c.days||99;})), unit:"天", d:"计算项等"}
       ];
     },
-    exportNote:"报价与周期为行业常见区间，仅供报价参考；强制性依据对应国标。"
+    exportNote:"检测方式标注「自检 / 分包」；分包项目须在报告中注明承包方资质，周期含前处理与复核。"
   });
 
   /* ================================================================
@@ -730,11 +730,11 @@
     key:"pt",
     cardMode:true,
     title:"能力验证与实验室间比对",
-    subtitle:"CNAS 要求参加能力验证；这是客户审厂必查项",
+    subtitle:"CNAS 要求参加能力验证；这是二方审核与监管检查必查项",
     exportName:"能力验证记录",
     seed: seedOf("pt"),
     hint:"改「结果」→ 满意率统计自动变",
-    notice:"<b>可疑值不等于失败</b>，但必须做原因分析并留档 —— 客户审厂会问"
+    notice:"<b>可疑值不等于失败</b>，但必须做原因分析并留档 —— 二方审核与监管检查会查"
          + "「可疑值你们查了吗、为什么」。",
     columns:[
       {k:"id",   label:"编号", w:110, ro:true},
