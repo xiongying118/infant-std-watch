@@ -1405,3 +1405,20 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 /* 台账列表：列宽按内容展开，窄屏横向滚动，不压扁列（2026-11-25） */
 .twrap table.ledger-tbl{width:max-content;min-width:100%;table-layout:auto}
 .twrap table.ledger-tbl th{white-space:nowrap}
+
+/* ===== 工作量：筛选 / 矩阵 / 趋势（2026-11-25） ===== */
+.wl-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.wl-seg{display:inline-flex;border:1px solid #dbe3ef;border-radius:8px;overflow:hidden;background:#fff}
+.wl-seg button{border:0;background:#fff;padding:6px 13px;font:inherit;font-size:12.5px;cursor:pointer;color:#334155}
+.wl-seg button+button{border-left:1px solid #eef2f7}
+.wl-seg button.on{background:#1B3A6B;color:#fff}
+.wl-matrix th,.wl-matrix td{white-space:nowrap;font-size:12px;padding:6px 9px}
+.wl-matrix td.num{text-align:right;font-variant-numeric:tabular-nums}
+.wl-matrix td.zero{color:#cbd5e1}
+.wl-trend{display:flex;align-items:flex-end;gap:8px;height:150px;padding:6px 2px 0}
+.wl-trend .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:3px}
+.wl-trend .b i{display:block;width:66%;background:linear-gradient(180deg,#3b82f6,#1d4ed8);border-radius:4px 4px 0 0;min-height:2px}
+.wl-trend .b span{font-size:10.5px;color:#64748b}
+.wl-trend .b b{font-size:10.5px;color:#0f2747}
+
+.wl-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
