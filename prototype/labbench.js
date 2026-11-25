@@ -171,6 +171,7 @@
      每个人的项目不同，所以项次比样品数更能反映真实负荷。
      ================================================================ */
   var WL_PERIOD = "month";
+  var WL_PICK = null;
   function viewWorkload(){
     var L = global.Ledger;
     var orders = L.rows("orders") || [];
@@ -216,7 +217,7 @@
     var totItems = list.reduce(function(a,x){ return a+x.items; },0);
     var maxItems = Math.max.apply(null, list.map(function(x){ return x.items; }).concat([1]));
     var COL = ["#1d4ed8","#0f9d76","#a16207","#7c3aed","#c2410c","#64748b"];
-    var CATCOL = {"原料":"#1d4ed8","半成品":"#0f9d76","成品":"#a16207","稳定性":"#7c3aed","小样":"#c2410c","其他":"#e11d48"};
+    var CATCOL = {"原料":"#2563eb","半成品":"#10b981","成品":"#06b6d4","稳定性":"#8b5cf6","小样":"#f97316","其他":"#e11d48"};
     var MONTHS = [];
     for(var mi=1; mi<=12; mi++) MONTHS.push("2026-"+(mi<10?"0":"")+mi);
     var GCOL = {"理化组":"#1d4ed8","色谱组":"#0f9d76","原子组":"#a16207","微生物组":"#7c3aed","样品室":"#64748b","质量部":"#94a3b8"};
@@ -287,17 +288,26 @@
     var g2 = glist.filter(function(g){ return g.items>0; });
     var catKeys = CATS.filter(function(c){ return catTot[c]; });
     var cTotal = catKeys.reduce(function(a,c){ return a+catTot[c]; },0)||1;
-    var acc2=0;
-    var conic2 = catKeys.map(function(c){
-      var p0=acc2/cTotal*360; acc2+=catTot[c]; var p1=acc2/cTotal*360;
-      return CATCOL[c]+" "+p0.toFixed(1)+"deg "+p1.toFixed(1)+"deg";
-    }).join(",");
-    h += '<div class="wl-grid" style="margin-top:14px">';
-    h += '<div class="card"><div class="card-h"><h3>样品类别占比</h3><span class="muted">按样品份数</span></div>'
-       + '<div class="wl-donut" style="background:conic-gradient('+conic2+')"><div class="wl-donut-c"><b>'+ordersN+'</b><span>份</span></div></div>'
-       + '<div class="wl-legend2" style="justify-content:center">';
-    catKeys.forEach(function(c){ h += '<span><i style="background:'+CATCOL[c]+'"></i>'+c+' '+catTot[c]+'</span>'; });
-    h += '</div></div>';
+    var RD=62, CXX=80, CYY=80, SW=26, CIRC=2*Math.PI*RD, acc2=0, slices="";
+    catKeys.forEach(function(c){
+      var len = catTot[c]/cTotal*CIRC;
+      var op = (!WL_PICK || WL_PICK===c) ? 1 : 0.22;
+      slices += '<circle cx="'+CXX+'" cy="'+CYY+'" r="'+RD+'" fill="none" stroke="'+CATCOL[c]+'" stroke-width="'+SW+'" '
+        + 'stroke-dasharray="'+len.toFixed(2)+' '+(CIRC-len).toFixed(2)+'" stroke-dashoffset="'+(-acc2).toFixed(2)+'" '
+        + 'transform="rotate(-90 '+CXX+' '+CYY+')" opacity="'+op+'" style="cursor:pointer" '
+        + 'onclick="LAB.wlPick(\''+(WL_PICK===c?"":c)+'\')"><title>'+c+' '+catTot[c]+' 份</title></circle>';
+      acc2 += len;
+    });
+    h += '<div class="card"><div class="card-h"><h3>样品类别占比</h3><span class="muted">点扇区或图例看该类别</span></div>'
+       + '<svg class="wl-donut2" viewBox="0 0 160 160">'+slices
+       + '<text x="80" y="79" text-anchor="middle" style="font-size:22px;font-weight:700;fill:#0f2747">'+(WL_PICK?catTot[WL_PICK]:ordersN)+'</text>'
+       + '<text x="80" y="96" text-anchor="middle" style="font-size:10px;fill:#64748b">'+(WL_PICK?esc(WL_PICK):'份')+'</text>'
+       + '</svg><div class="wl-legend2" style="justify-content:center">';
+    catKeys.forEach(function(c){
+      h += '<span class="'+(WL_PICK===c?'on':'')+'" style="cursor:pointer" onclick="LAB.wlPick(\''+(WL_PICK===c?"":c)+'\')">'
+         + '<i style="background:'+CATCOL[c]+'"></i>'+c+' '+catTot[c]+'</span>';
+    });
+    h += '</div>'+(WL_PICK?'<div class="wl-pick">已筛选「'+esc(WL_PICK)+'」'+catTot[WL_PICK]+' 份 · 再点一次取消</div>':'')+'</div>';
     var topItems = items.slice(0,10);
     var tmax = Math.max.apply(null, topItems.map(function(it){ return itemTot[it]; }).concat([1]));
     h += '<div class="card"><div class="card-h"><h3>检测项目 Top 10</h3><span class="muted">按项次</span></div><div class="wl-bars">';
@@ -3192,6 +3202,7 @@
      ================================================================ */
   global.LAB = {
     setWlPeriod: function(p){ WL_PERIOD = p; render(); },
+    wlPick: function(c){ WL_PICK = c; render(); },
     render: render,
     go: go,
     setCap: setCap,
