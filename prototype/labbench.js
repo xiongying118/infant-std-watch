@@ -194,7 +194,7 @@
       if(/成品库|婴配成品/.test(c+sm)) return "成品";
       return "其他";
     }
-    var M={}, itemTot={}, catTot={}, monthTot={}, ordersN=0;
+    var M={}, itemTot={}, catTot={}, monthTot={}, GM={}, ordersN=0;
     orders.forEach(function(o){
       if(!o.tester || !o.recv) return;
       var d = new Date(String(o.recv)+"T00:00:00");
@@ -205,6 +205,9 @@
       var p = M[o.tester] || (M[o.tester] = {name:o.tester, dept:dept[o.tester]||"—", cat:{}, item:{}, samples:0, items:0});
       p.samples++; p.cat[cat]=(p.cat[cat]||0)+1; catTot[cat]=(catTot[cat]||0)+1; ordersN++;
       var mk = String(o.recv).slice(0,7); monthTot[mk]=(monthTot[mk]||0)+its.length;
+      var dpt = dept[o.tester] || "—";
+      GM[dpt] = GM[dpt] || {};
+      GM[dpt][mk] = (GM[dpt][mk]||0) + its.length;
       its.forEach(function(it){ p.item[it]=(p.item[it]||0)+1; p.items++; itemTot[it]=(itemTot[it]||0)+1; });
     });
     var list = Object.keys(M).map(function(k){ return M[k]; }).sort(function(a,b){ return b.items-a.items; });
@@ -214,6 +217,8 @@
     var maxItems = Math.max.apply(null, list.map(function(x){ return x.items; }).concat([1]));
     var COL = ["#1d4ed8","#0f9d76","#a16207","#7c3aed","#c2410c","#64748b"];
     var CATCOL = {"原料":"#1d4ed8","半成品":"#0f9d76","成品":"#a16207","稳定性":"#7c3aed","小样":"#c2410c","其他":"#64748b"};
+    var MONTHS = [];
+    for(var mi=1; mi<=12; mi++) MONTHS.push("2026-"+(mi<10?"0":"")+mi);
     var GCOL = {"理化组":"#1d4ed8","色谱组":"#0f9d76","原子组":"#a16207","微生物组":"#7c3aed","样品室":"#64748b","质量部":"#94a3b8"};
 
     var h = '<div class="wl-filter"><div class="wl-seg">'
@@ -279,6 +284,50 @@
     });
     h += '</div></div>';
 
+    var g2 = glist.filter(function(g){ return g.items>0; });
+    var catKeys = CATS.filter(function(c){ return catTot[c]; });
+    var cTotal = catKeys.reduce(function(a,c){ return a+catTot[c]; },0)||1;
+    var acc2=0;
+    var conic2 = catKeys.map(function(c){
+      var p0=acc2/cTotal*360; acc2+=catTot[c]; var p1=acc2/cTotal*360;
+      return CATCOL[c]+" "+p0.toFixed(1)+"deg "+p1.toFixed(1)+"deg";
+    }).join(",");
+    h += '<div class="wl-grid" style="margin-top:14px">';
+    h += '<div class="card"><div class="card-h"><h3>样品类别占比</h3><span class="muted">按样品份数</span></div>'
+       + '<div class="wl-donut" style="background:conic-gradient('+conic2+')"><div class="wl-donut-c"><b>'+ordersN+'</b><span>份</span></div></div>'
+       + '<div class="wl-legend2" style="justify-content:center">';
+    catKeys.forEach(function(c){ h += '<span><i style="background:'+CATCOL[c]+'"></i>'+c+' '+catTot[c]+'</span>'; });
+    h += '</div></div>';
+    var topItems = items.slice(0,10);
+    var tmax = Math.max.apply(null, topItems.map(function(it){ return itemTot[it]; }).concat([1]));
+    h += '<div class="card"><div class="card-h"><h3>检测项目 Top 10</h3><span class="muted">按项次</span></div><div class="wl-bars">';
+    topItems.forEach(function(it){
+      var w=Math.max(2, itemTot[it]/tmax*100);
+      h += '<div class="wl-row"><span class="nm" style="flex-basis:104px">'+esc(it)+'</span>'
+         + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:#0f9d76"></i></div><b>'+itemTot[it]+'</b></div>';
+    });
+    h += '</div></div></div>';
+
+    var gmVals=[];
+    g2.forEach(function(g){ MONTHS.forEach(function(mk){ gmVals.push((GM[g.name]&&GM[g.name][mk])||0); }); });
+    var gmax2 = Math.max.apply(null, gmVals.concat([1]));
+    h += '<div class="card" style="margin-top:14px;padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
+       + '<h3>组 × 月度项次热力</h3><span class="muted">颜色越深项次越多，可看出忙季</span></div>'
+       + '<div class="twrap"><table class="ledger-tbl wl-heat"><thead><tr><th>组别</th>';
+    MONTHS.forEach(function(mk){ h += '<th>'+mk.slice(5)+'月</th>'; });
+    h += '</tr></thead><tbody>';
+    g2.forEach(function(g){
+      h += '<tr><td><b>'+esc(g.name)+'</b></td>';
+      MONTHS.forEach(function(mk){
+        var v=(GM[g.name]&&GM[g.name][mk])||0;
+        var al = v ? (0.12 + v/gmax2*0.75) : 0;
+        var fg = (v/gmax2 > 0.55) ? "#fff" : "#1f2d3d";
+        h += '<td class="num" style="background:rgba(29,78,216,'+al.toFixed(2)+');color:'+fg+'">'+(v||"·")+'</td>';
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table></div></div>';
+
     /* ① 人员 × 项目矩阵 */
     h += '<div class="card" style="padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
        + '<h3>人员 × 检测项目（样品数）</h3><span class="muted">只统计此人实际承担的项目</span></div>'
@@ -338,12 +387,13 @@
 
     /* ④ 月度趋势（本年/全部时显示） */
     if(WL_PERIOD==="year" || WL_PERIOD==="all"){
-      var mks=Object.keys(monthTot).sort();
-      var mx=Math.max.apply(null,mks.map(function(k){return monthTot[k];}).concat([1]));
+      var mks=MONTHS.slice();
+      var mx=Math.max.apply(null,mks.map(function(k){return monthTot[k]||0;}).concat([1]));
       h += '<div class="card" style="margin-top:14px"><div class="card-h"><h3>月度检测项次趋势</h3><span class="muted">按收样月份</span></div><div class="wl-trend">';
       mks.forEach(function(k){
-        var v=monthTot[k]||0, hh=Math.max(2, v/mx*100);
-        h += '<div class="b"><i style="height:'+hh.toFixed(1)+'%"></i><span>'+k.slice(5)+'月</span><b style="font-size:11px">'+v+'</b></div>';
+        var v=monthTot[k]||0, hh=v?Math.max(3, v/mx*100):1.5;
+        h += '<div class="b"><i style="height:'+hh.toFixed(1)+'%;'+(v?'':'background:#e2e8f0')+'"></i>'
+           + '<span>'+k.slice(5)+'月</span><b style="font-size:11px;color:'+(v?'#0f2747':'#94a3b8')+'">'+(v||0)+'</b></div>';
       });
       h += '</div></div>';
     }
@@ -596,7 +646,8 @@
         <div class="sp" style="flex:1"></div>
         <span class="muted">点「方法」看原理与试剂 →</span>
       </div>
-      <div class="twrap"><table>
+      <div class="twrap-tip">← 左右拖动查看全部列 →</div>
+      <div class="twrap"><table class="ledger-tbl">
         <thead><tr><th style="width:120px">检测项目</th><th style="width:220px">检验方法</th>
           <th style="width:76px">类别</th><th style="width:100px">周期</th><th style="width:110px">检测方式</th>
           <th style="width:110px">强制性</th><th style="width:90px">主检人</th><th>依赖资源</th><th style="width:40px"></th></tr></thead>
