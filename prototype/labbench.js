@@ -7,11 +7,11 @@
      · 试剂过期还在用
      · 留样找不到 / 过期没处置
      · QC 超限没闭环
-     · 客户问「你们能测什么」要翻半天才找到
+     · 生产/品控/研发问「能测什么」要翻半天才找到
      · 原始记录每次现编，格式各不相同
 
    这里补齐 7 个工具，都是台账型（能查、能算、能导出）：
-     ① 检测能力矩阵   能测什么 · 什么方法 · 多久 · 多少钱
+     ① 检测能力矩阵   自检什么 · 什么方法 · 多久 · 谁授权 · 自检或分包
      ② 计量设备台账   校准到期预警 · 溯源证书 · 关键设备标记
      ③ 试剂与危化品   效期预警 · 危险品分类 · 配制试剂有效期
      ④ 样品与留样台账 留存期限 · 到期处置 · 双向追溯
@@ -120,13 +120,13 @@
       ["reagent",   "试剂与危化品"],
       ["prep",      "试剂配制记录"],
       ["sample",    "样品与留样"],
-      ["flows",     "样品出入库"],
-      ["orders",    "检验委托单"],
+      ["flows",     "样品流转"],
+      ["orders",    "检验任务单"],
       ["qcplan",    "QC 方案"],
       ["qcrec",     "QC 记录"],
       ["pt",        "能力验证"],
       ["capa",      "不符合与 CAPA"],
-      ["audit",     "内审检查表"],
+      ["audit",     "内审与合规"],
       ["schedule",  "排班与工作量"],
       ["env",       "环境监控"],
       ["record",    "原始记录生成"],
@@ -391,10 +391,10 @@
 
     html += `<div class="card" style="margin-bottom:14px">
       <div class="card-h"><h3>检测能力矩阵</h3>
-        <span class="muted">客户问「能测什么、什么方法、多久、多少钱」，这张表就是答案</span>
+        <span class="muted">生产、品控、研发问「能测什么、什么方法、多久、谁授权」，这张表就是答案</span>
         <div class="sp"></div>
         <button class="btn sm" onclick="LAB.addCapability()">+ 加一个项目</button>
-        <button class="btn sm" onclick="LAB.exportCapability()">⬇ 导出报价表</button></div>
+        <button class="btn sm" onclick="LAB.exportCapability()">⬇ 导出能力表</button></div>
       <div class="flex" style="margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div class="search" style="width:280px"><span class="muted">🔍</span>
           <input id="capQ" placeholder="搜项目、方法、标准号" oninput="LAB.render()"></div>
@@ -404,7 +404,7 @@
       </div>
       <div class="twrap"><table>
         <thead><tr><th style="width:120px">检测项目</th><th style="width:220px">检验方法</th>
-          <th style="width:76px">类别</th><th style="width:100px">周期</th><th style="width:110px">参考报价</th>
+          <th style="width:76px">类别</th><th style="width:100px">周期</th><th style="width:110px">检测方式</th>
           <th style="width:110px">强制性</th><th style="width:90px">主检人</th><th>依赖资源</th><th style="width:40px"></th></tr></thead>
         <tbody>
         ${cap.map(function(c, ci){
@@ -726,12 +726,12 @@
       html += `<div class="notice warn" style="margin-bottom:12px"><span>⚠</span><div>
         <b>${doubtful.length} 项能力验证结果需分析：</b>
         ${doubtful.map(function(p){return esc(p.name+"（"+p.result+"）");}).join("；")}。
-        可疑值不是失败，但<b>必须做原因分析并留档</b> —— 客户审厂会问。</div></div>`;
+        可疑值不是失败，但<b>必须做原因分析并留档</b> —— 二方审核与监管检查会查。</div></div>`;
     }
 
     html += `<div class="card">
       <div class="card-h"><h3>能力验证与实验室间比对</h3>
-        <span class="muted">CNAS 要求参加能力验证；这是客户审厂必查项</span>
+        <span class="muted">CNAS 要求参加能力验证；这是二方审核与监管检查必查项</span>
         <div class="sp"></div>
         <button class="btn sm" onclick="LAB.exportPT()">⬇ 导出</button></div>
       <div class="twrap"><table>
@@ -2812,14 +2812,14 @@
     var eqMap={}, stMap={};
     eq.forEach(function(x){eqMap[x.id]=x;});
     st.forEach(function(x){stMap[x.id]=x;});
-    var rows=[["检测项目","检验方法","类别","出报告周期","参考报价","强制性","主检人","依赖设备","依赖试剂"]];
+    var rows=[["检测项目","检验方法","类别","出报告周期","检测方式","强制性","主检人","依赖设备","依赖试剂"]];
     cap.forEach(function(c){
       var eqs=(c.eq||[]).map(function(id){var e=eqMap[id];return e?e.name+"("+e.id+")":"";}).filter(Boolean).join("；");
       var s=stMap[c.staff];
       rows.push([c.item, c.method, c.cat, c.days+" 天", c.price, c.acc, s?s.name:"", eqs, (c.rg||[]).join("；")]);
     });
     rows.push([]);
-    rows.push(["说明","周期与报价为常见区间，仅供报价参考；强制性依据对应国标。"]);
+    rows.push(["说明","检测方式标注自检/分包；周期含前处理与复核，强制性依据对应国标。"]);
     dl("检测能力矩阵_"+today()+".csv", rows);
     global.toast("已导出检测能力矩阵");
   }
