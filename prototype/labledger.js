@@ -75,7 +75,7 @@
          + "「关键设备」需在两次校准之间做期间核查（天平日核查、标样核查），记录要留。",
     columns:[
       {k:"id",   label:"编号",   ro:true, ph:"如 EQ-049"},
-      {k:"name", label:"设备名称", ph:"如 气相色谱仪"},
+      {k:"name", label:"设备名称", w:104, ph:"如 气相色谱仪"},
       {k:"brand",label:"品牌",   ph:"如 安捷伦"},
       {k:"model",label:"型号",   ph:"如 8890A"},
       {k:"sn",   label:"出厂序列号", ph:"如 GC-8890A-0271"},
@@ -285,8 +285,8 @@
     notice:"实验室最常见的争议是「这瓶标液谁配的、准不准」—— "
          + "配制记录要能追溯到人、到浓度确认、到所用的标准物质证书。",
     columns:[
-      {k:"no",   label:"记录号", w:104, ro:true},
-      {k:"name", label:"试剂名称", w:250},
+      {k:"_seq", label:"序号", w:52, render:function(r,i){ return '<span class="muted">'+(i+1)+'</span>'; }},
+      {k:"name", label:"试剂名称", w:190, type:"textarea"},
       {k:"type", label:"类型", w:104, render:function(r){
         var n=r.name||"";
         var t=/开封/.test(n) ? "开封试剂" : (/标准溶液|标准品/.test(n) ? "标准溶液" : "配制试剂");
