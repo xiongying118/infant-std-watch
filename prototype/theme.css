@@ -1471,3 +1471,8 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .cap-tbl th{vertical-align:middle}
 .cap-days{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .cap-days input{width:42px!important;text-align:center}
+
+/* 能力矩阵：周期输入框固定窄宽（覆盖全局 input 100%）2026-11-26 */
+.twrap table.ledger-tbl .cap-days input{width:40px!important;min-width:0;text-align:center;padding:1px 2px}
+.twrap table.ledger-tbl .cap-days{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.cap-tbl textarea{word-break:normal;overflow-wrap:break-word}
