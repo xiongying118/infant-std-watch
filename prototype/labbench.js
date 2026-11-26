@@ -676,15 +676,15 @@
           var over = eqs.filter(function(e){ var d=daysTo(e.nextCal); return d!==null && d<0; });
           var soon = eqs.filter(function(e){ var d=daysTo(e.nextCal); return d!==null && d>=0 && d<=60; });
           return `<tr class="${over.length?"bad":""}">
-            <td><textarea rows="2" oninput="LAB.setCap(${ci},'item',this.value)">${esc(c.item)}</textarea></td>
-            <td><textarea rows="2" oninput="LAB.setCap(${ci},'method',this.value)">${esc(c.method)}</textarea></td>
-            <td><textarea rows="2" oninput="LAB.setCap(${ci},'cat',this.value)">${esc(c.cat)}</textarea></td>
-            <td class="num"><input type="number" value="${c.days}" style="width:58px;text-align:center"
-              oninput="LAB.setCap(${ci},'days',this.value)"> 天</td>
-            <td class="num"><input type="text" value="${esc(c.price)}" style="width:92px;text-align:right"
+            <td><textarea rows="1" oninput="LAB.setCap(${ci},'item',this.value)">${esc(c.item)}</textarea></td>
+            <td><textarea rows="1" oninput="LAB.setCap(${ci},'method',this.value)">${esc(c.method)}</textarea></td>
+            <td><textarea rows="1" oninput="LAB.setCap(${ci},'cat',this.value)">${esc(c.cat)}</textarea></td>
+            <td style="text-align:center"><span class="cap-days"><input type="number" value="${c.days}"
+              oninput="LAB.setCap(${ci},'days',this.value)">天</span></td>
+            <td style="text-align:center"><input type="text" value="${esc(c.price)}" style="text-align:center"
               oninput="LAB.setCap(${ci},'price',this.value)"></td>
-            <td><textarea rows="2" oninput="LAB.setCap(${ci},'acc',this.value)">${esc(c.acc)}</textarea></td>
-            <td><input type="text" value="${s?s.name:""}" style="width:76px"
+            <td><textarea rows="1" oninput="LAB.setCap(${ci},'acc',this.value)">${esc(c.acc)}</textarea></td>
+            <td style="text-align:center"><input type="text" value="${s?s.name:""}" style="text-align:center"
               oninput="LAB.setCap(${ci},'staffName',this.value)"
               title="主检人姓名（改这里）"></td>
             <td style="font-size:11.5px" class="muted">
