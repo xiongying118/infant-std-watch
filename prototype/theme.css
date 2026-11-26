@@ -1476,3 +1476,14 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .twrap table.ledger-tbl .cap-days input{width:40px!important;min-width:0;text-align:center;padding:1px 2px}
 .twrap table.ledger-tbl .cap-days{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .cap-tbl textarea{word-break:normal;overflow-wrap:break-word}
+
+/* 工作量矩阵：数字居中与表头对齐（2026-11-26） */
+.twrap table.wl-matrix{table-layout:fixed;width:100%}
+.wl-matrix th,.wl-matrix td{text-align:center;vertical-align:middle;padding:5px 6px}
+.wl-matrix th:first-child,.wl-matrix td:first-child{text-align:left;width:108px}
+.wl-matrix td.num{text-align:center}
+.wl-matrix th{white-space:nowrap}
+
+.twrap table.wl-matrix.wl-wide{table-layout:auto;width:max-content;min-width:100%}
+.twrap table.wl-matrix.wl-wide th,.twrap table.wl-matrix.wl-wide td{min-width:58px;white-space:nowrap}
+.twrap table.wl-matrix.wl-wide th:first-child,.twrap table.wl-matrix.wl-wide td:first-child{min-width:96px}
