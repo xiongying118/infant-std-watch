@@ -2246,13 +2246,20 @@
   function lrPreviewHtml(){
     var picked=lrSelected();
     if(!picked.length) return '<div class="card empty">上面勾一个检测项目，对应的 Word 原始记录就出来。</div>';
-    return lrRowSelHtml()+picked.map(function(p){
+    /* ★ 预览只渲染前 2 个项目：每个项目是几百 KB 的矢量底图，
+       勾 10 个项目一次全画会把页面卡死（2026-11-26 用户反馈"点了就卡死"）。
+       打印仍按全部选中项目生成，不受影响。 */
+    var MAXPREV = 2;
+    var head = lrRowSelHtml();
+    var shown = picked.slice(0, MAXPREV);
+    var rest = picked.length - shown.length;
+    return head + shown.map(function(p){
       return '<div class="card lr-card" style="margin-bottom:12px"><div class="card-h">'+
         '<h3>'+esc(p.name)+(p.unit?'（'+esc(p.unit)+'）':'')+'</h3>'+
         '<span class="muted">'+esc(p.file)+' · Word 原页 100% 复刻（共 '+((global.LABPAGES||{})[p.key]||{pages:[]}).pages.length+' 页）</span><div class="sp"></div>'+
         '<button class="btn sm" onclick="LAB.lrPrintOne(\''+esc(p.key)+'\')">🖨 只打此项目（全部样品）</button></div>'+
         '<div class="lr-scroll">'+lrSheetHtml(p)+'</div></div>';
-    }).join("");
+    }).join("") + (rest>0 ? '<div class="card empty">另 '+rest+' 个已选项目未在此预览（每个项目都是整页矢量图，全部画出来会卡）—— <b>不影响打印</b>，点右上「打印全部」会完整生成 '+picked.length+' 个项目 × 样品数。</div>' : "");
   }
   /* ★ 样品清单：Excel / CSV / 粘贴区域一次导入多行，逐行往下排带序号 */
   /* 网页清单不显示备注列；备注只存在数据里供 Excel 模板导出和导入过滤用 */
