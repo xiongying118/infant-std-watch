@@ -25,7 +25,7 @@
 (function (global) {
   "use strict";
 
-  var TAB = "capability";     // capability | equip | reagent | sample | qc | pt | record
+  var TAB = "equip";     // equip | reagent | sample | qc | pt | record
   var ST = {};                // 本机覆盖层
   var REC = null;             // 当前原始记录草稿
 
@@ -115,7 +115,6 @@
 
     var TABS = [
       ["board",     "需要处理"],
-      ["capability","检测能力矩阵"],
       ["equip",     "计量设备台账"],
       ["reagent",   "试剂与危化品"],
       ["prep",      "试剂配制记录"],
@@ -156,7 +155,6 @@
       return;
     }
     if(TAB==="workload"){ host.innerHTML = viewWorkload(); return; }
-    if(TAB==="capability"){ host.innerHTML = viewCapability(); }
     else host.innerHTML = viewRecord();
   }
 
