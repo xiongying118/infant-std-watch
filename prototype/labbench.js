@@ -664,7 +664,7 @@
       <div class="twrap-tip">← 左右拖动查看全部列 →</div>
       <div class="twrap"><table class="ledger-tbl cap-tbl">
         <thead><tr><th style="width:130px">检测项目</th><th style="width:260px">检验方法</th>
-          <th style="width:76px">类别</th><th style="width:84px">周期</th><th style="width:110px">检测方式</th>
+          <th style="width:76px">类别</th><th style="width:80px">周期(天)</th><th style="width:110px">检测方式</th>
           <th style="width:120px">强制性</th><th style="width:90px">主检人</th><th>依赖资源</th><th style="width:40px"></th></tr></thead>
         <tbody>
         ${cap.map(function(c, ci){
@@ -679,8 +679,8 @@
             <td><textarea rows="1" oninput="LAB.setCap(${ci},'item',this.value)">${esc(c.item)}</textarea></td>
             <td><textarea rows="1" oninput="LAB.setCap(${ci},'method',this.value)">${esc(c.method)}</textarea></td>
             <td><textarea rows="1" oninput="LAB.setCap(${ci},'cat',this.value)">${esc(c.cat)}</textarea></td>
-            <td style="text-align:center"><span class="cap-days"><input type="number" value="${c.days}"
-              oninput="LAB.setCap(${ci},'days',this.value)">天</span></td>
+            <td style="text-align:center"><input type="number" value="${c.days}" style="width:46px;text-align:center"
+              oninput="LAB.setCap(${ci},'days',this.value)"></td>
             <td style="text-align:center"><input type="text" value="${esc(c.price)}" style="text-align:center"
               oninput="LAB.setCap(${ci},'price',this.value)"></td>
             <td><textarea rows="1" oninput="LAB.setCap(${ci},'acc',this.value)">${esc(c.acc)}</textarea></td>
