@@ -1500,3 +1500,8 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .cost-times td{background:#fafcff}
 .cost-total td{background:#e8f0fe;font-weight:600}
 .cost-tbl input{text-align:right}
+
+/* 成本表：数字列统一居中，行高一致（2026-11-26） */
+.cost-tbl th{text-align:center}
+.cost-tbl td.num{text-align:center;font-variant-numeric:tabular-nums}
+.cost-tbl td{vertical-align:middle}
