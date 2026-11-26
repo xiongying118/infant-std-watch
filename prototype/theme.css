@@ -1494,3 +1494,9 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .twrap table.cap-tbl td input{text-align:center;height:26px}
 .twrap table.cap-tbl td textarea{text-align:left;word-break:normal;overflow-wrap:anywhere;min-height:26px;height:26px;field-sizing:content}
 .twrap table.cap-tbl td .cap-muted{font-size:11px;line-height:1.4;padding:2px 0}
+
+/* 成本核算（2026-11-26） */
+.cost-grp td{background:#f3f7fd;font-size:12.5px;padding-top:8px}
+.cost-times td{background:#fafcff}
+.cost-total td{background:#e8f0fe;font-weight:600}
+.cost-tbl input{text-align:right}
