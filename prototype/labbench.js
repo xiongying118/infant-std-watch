@@ -177,58 +177,136 @@
   function costSave(d){ if(global.Store) global.Store.set("lab.cost.v1", d); }
   function viewCost(){
     var D = costData(), items = D.items||[], mats = D.mats||{};
-    var sum = {}, total = 0, projCost = [];
+    /* 检测次数直接取「工作量统计」里该项目的检测项次，两边同一口径 */
+    var NOWC = new Date(2026,10,25);
+    function inCP(d){
+      if(COST_PERIOD==="all") return true;
+      if(d.getFullYear()!==NOWC.getFullYear()) return false;
+      if(COST_PERIOD==="month") return d.getMonth()===NOWC.getMonth();
+      if(COST_PERIOD==="quarter") return Math.floor(d.getMonth()/3)===Math.floor(NOWC.getMonth()/3);
+      return true;
+    }
+    function autoTimes(keys){
+      var os=(global.Ledger&&global.Ledger.rows("orders"))||[], n=0;
+      os.forEach(function(o){
+        if(!o.tester||!o.recv) return;
+        var d=new Date(String(o.recv)+"T00:00:00"); if(isNaN(d)||!inCP(d)) return;
+        String(o.items||"").split(/[、,，;；]/).forEach(function(it){
+          if(keys.indexOf(it.trim())>=0) n++;
+        });
+      });
+      return n;
+    }
+    function tOf(it){ return (it.keys&&it.keys.length)? autoTimes(it.keys) : (+it.times||0); }
+
+    var sum={}, total=0, projCost=[], groupCost={};
     items.forEach(function(it){
-      var pc = 0;
+      var t=tOf(it), pc=0;
       (it.rows||[]).forEach(function(r){
-        var m=r[0], per=+r[1]||0, t=+it.times||0;
-        if(!sum[m]) sum[m] = { qty:0, price:+((mats[m]||{}).price)||0, unit:(mats[m]||{}).unit||"" };
+        var m=r[0], per=+r[1]||0;
+        if(!sum[m]) sum[m]={qty:0, price:+((mats[m]||{}).price)||0, unit:(mats[m]||{}).unit||""};
         sum[m].qty += per*t;
         pc += per*t*sum[m].price;
       });
       projCost.push({name:it.item, cost:pc});
+      groupCost[it.bench||"未分组"] = (groupCost[it.bench||"未分组"]||0) + pc;
       total += pc;
     });
     var ml = Object.keys(sum).map(function(k){ return {name:k, qty:sum[k].qty, price:sum[k].price, unit:sum[k].unit, cost:sum[k].qty*sum[k].price}; })
       .sort(function(a,b){ return b.cost-a.cost; });
     projCost.sort(function(a,b){ return b.cost-a.cost; });
+    var gl = Object.keys(groupCost).map(function(k){ return {name:k, cost:groupCost[k]}; }).sort(function(a,b){ return b.cost-a.cost; });
     var maxM = Math.max.apply(null, ml.map(function(x){return x.cost;}).concat([1]));
     var maxP = Math.max.apply(null, projCost.map(function(x){return x.cost;}).concat([1]));
     var COL = ["#3B82F6","#22C55E","#F59E0B","#A855F7","#EF4444","#06B6D4","#EC4899","#14B8A6","#6366F1","#F97316"];
 
-    var h = '<div class="grid g4" style="margin-bottom:14px">'
+    var h = '<div class="wl-filter"><div class="wl-seg">'
+      + [["month","本月"],["quarter","本季"],["year","本年"],["all","全部"]].map(function(x){
+          return '<button class="'+(COST_PERIOD===x[0]?"on":"")+'" onclick="LAB.costPeriod(\''+x[0]+'\')">'+x[1]+'</button>';
+        }).join("")
+      + '</div><span class="muted">检测次数取自「工作量统计」的检测项次，改任务单这里跟着变</span></div>';
+
+    h += '<div class="grid g4" style="margin-bottom:14px">'
       + '<div class="kpi"><div class="k">检测项目</div><div class="v">'+items.length+'</div><div class="d">参与核算的项目数</div></div>'
       + '<div class="kpi"><div class="k">试剂耗材</div><div class="v">'+ml.length+'</div><div class="d">去重后的物料种类</div></div>'
-      + '<div class="kpi"><div class="k">检测次数</div><div class="v">'+items.reduce(function(a,x){return a+(+x.times||0);},0)+'</div><div class="d">本月次数，可逐项改</div></div>'
+      + '<div class="kpi"><div class="k">检测次数</div><div class="v">'+items.reduce(function(a,x){return a+tOf(x);},0)+'</div><div class="d">与工作量统计同口径</div></div>'
       + '<div class="kpi hi"><div class="k">总成本</div><div class="v">'+total.toFixed(0)+'<span style="font-size:14px"> 元</span></div><div class="d">∑ 用量×次数×单价</div></div>'
       + '</div>';
 
-    /* 明细：按项目分组 */
-    h += '<div class="card" style="padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
-       + '<h3>项目 × 试剂耗材明细</h3><span class="muted">改「单次用量」「检测次数」「单价」→ 下面汇总与图表即时变</span></div>'
+    /* 图表区：4 个 */
+    var acc=0, C=2*Math.PI*58, ring="";
+    ml.slice(0,6).forEach(function(x,i){
+      var len=x.cost/(total||1)*C;
+      ring += '<circle cx="76" cy="76" r="58" fill="none" stroke="'+COL[i%COL.length]+'" stroke-width="24" '
+        + 'stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-acc).toFixed(2)+'" '
+        + 'transform="rotate(-90 76 76)" style="cursor:pointer" onclick="LAB.costPick(\''+esc(x.name)+'\')"></circle>';
+      acc += len;
+    });
+    var maxG = Math.max.apply(null, gl.map(function(x){return x.cost;}).concat([1]));
+    h += '<div class="wl-grid">';
+    h += '<div class="card"><div class="card-h"><h3>物料成本 Top 10</h3><span class="muted">元</span></div><div class="wl-bars">';
+    ml.slice(0,10).forEach(function(x,i){
+      var w=Math.max(2, x.cost/maxM*100);
+      h += '<div class="wl-row"><span class="nm" style="flex-basis:118px">'+esc(x.name)+'</span>'
+         + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:'+COL[i%COL.length]+'"></i></div>'
+         + '<b>'+x.cost.toFixed(0)+'</b></div>';
+    });
+    h += '</div></div>';
+    h += '<div class="card"><div class="card-h"><h3>物料成本占比</h3><span class="muted">前 6 项 · 合计 '+total.toFixed(0)+' 元</span></div>'
+       + '<svg class="wl-donut2" viewBox="0 0 152 152">'+ring
+       + '<text x="76" y="75" text-anchor="middle" style="font-size:20px;font-weight:700;fill:#0f2747">'+total.toFixed(0)+'</text>'
+       + '<text x="76" y="92" text-anchor="middle" style="font-size:10px;fill:#64748b">元</text></svg>'
+       + '<div class="wl-legend2" style="justify-content:center">';
+    ml.slice(0,6).forEach(function(x,i){
+      h += '<span><i style="background:'+COL[i%COL.length]+'"></i>'+esc(x.name)+' '+(total?(x.cost/total*100).toFixed(0):0)+'%</span>';
+    });
+    h += '</div></div></div>';
+
+    h += '<div class="wl-grid" style="margin-top:14px">';
+    h += '<div class="card"><div class="card-h"><h3>各检测项目成本</h3><span class="muted">元</span></div><div class="wl-bars">';
+    projCost.forEach(function(x,i){
+      var w=Math.max(2, x.cost/maxP*100);
+      h += '<div class="wl-row"><span class="nm" style="flex-basis:118px">'+esc(x.name)+'</span>'
+         + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:'+COL[i%COL.length]+'"></i></div>'
+         + '<b>'+x.cost.toFixed(0)+'</b></div>';
+    });
+    h += '</div></div>';
+    h += '<div class="card"><div class="card-h"><h3>按组成本</h3><span class="muted">理化 / 色谱 / 原子 / 微生物</span></div><div class="wl-bars">';
+    gl.forEach(function(x,i){
+      var w=Math.max(2, x.cost/maxG*100);
+      h += '<div class="wl-row"><span class="nm" style="flex-basis:96px">'+esc(x.name)+'</span>'
+         + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:'+COL[(i+2)%COL.length]+'"></i></div>'
+         + '<b>'+x.cost.toFixed(0)+'</b></div>';
+    });
+    h += '</div></div></div>';
+
+    /* 明细 */
+    h += '<div class="card" style="margin-top:14px;padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
+       + '<h3>项目 × 试剂耗材明细</h3><span class="muted">改用量或单价 → 汇总与图表即时变；次数按工作量自动</span></div>'
        + '<div class="twrap"><table class="ledger-tbl cost-tbl"><thead><tr>'
        + '<th style="width:180px">检测项目</th><th style="width:160px">试剂 / 耗材</th><th style="width:96px">单次用量</th>'
-       + '<th style="width:60px">单位</th><th style="width:104px">单价(元)</th><th style="width:90px">次数</th><th style="width:104px">小计(元)</th>'
+       + '<th style="width:60px">单位</th><th style="width:104px">单价(元)</th><th style="width:96px">次数</th><th style="width:104px">小计(元)</th>'
        + '</tr></thead><tbody>';
     items.forEach(function(it, i){
-      var pc = 0;
+      var t=tOf(it), pc=0;
       (it.rows||[]).forEach(function(r){
-        var m=r[0], per=+r[1]||0, price=+((mats[m]||{}).price)||0, t=+it.times||0;
+        var m=r[0], per=+r[1]||0, price=+((mats[m]||{}).price)||0;
         pc += per*t*price;
       });
       h += '<tr class="cost-grp"><td colspan="6"><b>'+esc(it.item)+'</b> <span class="muted">'+esc(it.bench||"")+'</span></td>'
          + '<td class="num"><b>'+pc.toFixed(0)+'</b></td></tr>';
       (it.rows||[]).forEach(function(r, j){
-        var m=r[0], per=+r[1]||0, price=+((mats[m]||{}).price)||0, t=+it.times||0;
-        var sub = per*t*price;
+        var m=r[0], per=+r[1]||0, price=+((mats[m]||{}).price)||0;
+        var sub=per*t*price;
         h += '<tr><td></td><td>'+esc(m)+'</td>'
            + '<td class="num"><input type="number" step="any" value="'+per+'" onchange="LAB.costSet('+i+','+j+',this.value)"></td>'
            + '<td style="text-align:center">'+esc((mats[m]||{}).unit||"")+'</td>'
            + '<td class="num"><input type="number" step="any" value="'+price+'" onchange="LAB.costPrice(\''+esc(m)+'\',this.value)"></td>'
-           + '<td class="num">'+t+'</td><td class="num">'+sub.toFixed(2)+'</td></tr>';
+           + '<td class="num">'+(it.keys&&it.keys.length
+               ? '<b>'+t+'</b><div class="muted" style="font-size:10px">按工作量</div>'
+               : '<input type="number" value="'+(+it.times||0)+'" onchange="LAB.costTimes('+i+',this.value)">')+'</td>'
+           + '<td class="num">'+sub.toFixed(2)+'</td></tr>';
       });
-      h += '<tr class="cost-times"><td colspan="5" class="muted" style="text-align:right">检测次数</td>'
-         + '<td class="num"><input type="number" value="'+(+it.times||0)+'" onchange="LAB.costTimes('+i+',this.value)"></td><td></td></tr>';
     });
     h += '</tbody></table></div></div>';
 
@@ -247,26 +325,7 @@
     });
     h += '<tr class="cost-total"><td><b>合计</b></td><td colspan="3"></td><td class="num"><b>'+total.toFixed(2)+'</b></td><td class="num">100%</td></tr>';
     h += '</tbody></table></div></div>';
-
-    /* 图 */
-    h += '<div class="wl-grid" style="margin-top:14px">';
-    h += '<div class="card"><div class="card-h"><h3>物料成本 Top 10</h3><span class="muted">元</span></div><div class="wl-bars">';
-    ml.slice(0,10).forEach(function(x,i){
-      var w = Math.max(2, x.cost/maxM*100);
-      h += '<div class="wl-row"><span class="nm" style="flex-basis:120px">'+esc(x.name)+'</span>'
-         + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:'+COL[i%COL.length]+'"></i></div>'
-         + '<b>'+x.cost.toFixed(0)+'</b></div>';
-    });
-    h += '</div></div>';
-    h += '<div class="card"><div class="card-h"><h3>各检测项目成本</h3><span class="muted">元</span></div><div class="wl-bars">';
-    projCost.forEach(function(x,i){
-      var w = Math.max(2, x.cost/maxP*100);
-      h += '<div class="wl-row"><span class="nm" style="flex-basis:120px">'+esc(x.name)+'</span>'
-         + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:'+COL[i%COL.length]+'"></i></div>'
-         + '<b>'+x.cost.toFixed(0)+'</b></div>';
-    });
-    h += '</div></div></div>';
-    h += '<div class="muted" style="font-size:12px;margin-top:8px">单价按采购合同价改；用量按实际移取/称量改；次数按当月检测批次改。数据只存本机。</div>';
+    h += '<div class="muted" style="font-size:12px;margin-top:8px">单价按采购合同价改，用量按实际移取/称量改；次数来自工作量统计（'+({month:"本月",quarter:"本季",year:"本年",all:"全部"}[COST_PERIOD]||"本年")+'）。数据只存本机。</div>';
     return h;
   }
 
@@ -281,6 +340,7 @@
      ================================================================ */
   var WL_PERIOD = "month";
   var WL_PICK = null;
+  var COST_PERIOD = "year";
   function viewWorkload(){
     var L = global.Ledger;
     var orders = L.rows("orders") || [];
@@ -3332,6 +3392,8 @@
       var d=costData(); if(!d.items[i]) return;
       d.items[i].times=parseInt(v,10)||0; costSave(d); render();
     },
+    costPeriod: function(p){ COST_PERIOD = p; render(); },
+    costPick: function(m){ if(global.toast) global.toast("已选：" + m, "ok"); },
     costPrice: function(m,v){
       var d=costData(); if(!d.mats[m]) d.mats[m]={unit:"",price:0};
       d.mats[m].price=parseFloat(v)||0; costSave(d); render();
