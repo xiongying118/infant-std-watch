@@ -242,6 +242,14 @@
         + 'transform="rotate(-90 76 76)" style="cursor:pointer" onclick="LAB.costPick(\''+esc(x.name)+'\')"></circle>';
       acc += len;
     });
+    var restCost = total - ml.slice(0,6).reduce(function(a,x){ return a+x.cost; },0);
+    if(restCost > 0.01){
+      var rlen = restCost/(total||1)*C;
+      ring += '<circle cx="76" cy="76" r="58" fill="none" stroke="#84CC16" stroke-width="24" '
+        + 'stroke-dasharray="'+rlen.toFixed(2)+' '+(C-rlen).toFixed(2)+'" stroke-dashoffset="'+(-acc).toFixed(2)+'" '
+        + 'transform="rotate(-90 76 76)"><title>其余 '+(ml.length-6)+' 种物料 '+restCost.toFixed(0)+' 元</title></circle>';
+      acc += rlen;
+    }
     var maxG = Math.max.apply(null, gl.map(function(x){return x.cost;}).concat([1]));
     h += '<div class="wl-grid">';
     h += '<div class="card"><div class="card-h"><h3>物料成本 Top 10</h3><span class="muted">元</span></div><div class="wl-bars">';
@@ -260,6 +268,9 @@
     ml.slice(0,6).forEach(function(x,i){
       h += '<span><i style="background:'+COL[i%COL.length]+'"></i>'+esc(x.name)+' '+(total?(x.cost/total*100).toFixed(0):0)+'%</span>';
     });
+    if(restCost > 0.01){
+      h += '<span><i style="background:#84CC16"></i>其余 '+(ml.length-6)+' 种 '+(restCost/(total||1)*100).toFixed(0)+'%</span>';
+    }
     h += '</div></div></div>';
 
     h += '<div class="wl-grid" style="margin-top:14px">';
@@ -293,7 +304,8 @@
         var m=r[0], per=+r[1]||0, price=+((mats[m]||{}).price)||0;
         pc += per*t*price;
       });
-      h += '<tr class="cost-grp"><td colspan="6"><b>'+esc(it.item)+'</b> <span class="muted">'+esc(it.bench||"")+'</span></td>'
+      h += '<tr class="cost-grp"><td colspan="6"><b>'+esc(it.item)+'</b> <span class="muted">'+esc(it.bench||"")+'</span>'
+         + ' <span class="muted">· 检测 '+t+' 次'+(it.keys&&it.keys.length?'（按工作量）':'')+'</span></td>'
          + '<td class="num"><b>'+pc.toFixed(0)+'</b></td></tr>';
       (it.rows||[]).forEach(function(r, j){
         var m=r[0], per=+r[1]||0, price=+((mats[m]||{}).price)||0;
@@ -303,7 +315,7 @@
            + '<td style="text-align:center">'+esc((mats[m]||{}).unit||"")+'</td>'
            + '<td class="num"><input type="number" step="any" value="'+price+'" onchange="LAB.costPrice(\''+esc(m)+'\',this.value)"></td>'
            + '<td class="num">'+(it.keys&&it.keys.length
-               ? '<b>'+t+'</b><div class="muted" style="font-size:10px">按工作量</div>'
+               ? '<b>'+t+'</b>'
                : '<input type="number" value="'+(+it.times||0)+'" onchange="LAB.costTimes('+i+',this.value)">')+'</td>'
            + '<td class="num">'+sub.toFixed(2)+'</td></tr>';
       });
