@@ -2528,7 +2528,8 @@
           return x.key===lrGroup(); })[0]||{}).name||"理化组"))+
         ' '+gp.length+' 个</span><div class="sp"></div>'+
       '<button class="btn sm pri" onclick="LAB.lrMode(\'project\')">按检测项目</button>'+
-      '<button class="btn sm" onclick="LAB.lrMode(\'method\')">按方法标准</button></div>'+
+      '<button class="btn sm" onclick="LAB.lrMode(\'method\')">按方法标准</button>'+
+      '<a class="btn sm" href="https://xiongying118.github.io/infant-record-app/" target="_blank" rel="noopener noreferrer">↗ 独立工作系统</a></div>'+
       '<div class="notice" style="margin:10px 0"><span>📋</span><div>'+
       '<b>Word 原页 100% 复刻</b>：每页直接用 Word 导出的原页，标题位置、字体字号、列宽行高、'+
       '框线、公式图、页码、哪一页放什么内容全部原样，打印不带浏览器页眉页脚。'+
