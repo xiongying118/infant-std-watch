@@ -2095,18 +2095,16 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
           <b>14 个台账：</b>
           ① <b>计量设备与标准物质</b> —— 检定/校准周期、期间核查、溯源证书；
           ② <b>试剂与危化品</b> —— 效期预警、易制毒/易制爆双人双锁、标准品与菌株；
-          ③ <b>样品与留样</b> —— 进厂原料、过程样、成品、包材、环境样，留样至保质期满后 6 个月；
-          ④ <b>样品流转</b> —— 收样 / 分样 / 转存 / 领用 / 销毁，全程交接签字；
-          ⑤ <b>检验任务单</b> —— 报检部门、检验类别、判定依据、报告归档；
-          ⑥ <b>标准溶液配制</b> —— 配制日、效期、标定值、复核人；
-          ⑦ <b>质量控制</b> —— 空白 / 平行 / 加标 / 标准物质，超限必须闭环；
+          ③ <b>试剂配制记录</b> —— 配制日、效期、标定值、复核人；
+          ④ <b>样品与留样</b> —— 进厂原料、过程样、成品、包材、环境样，留样至保质期满后 6 个月；
+          ⑤ <b>样品流转</b> —— 收样 / 分样 / 转存 / 领用 / 销毁，全程交接签字；
+          ⑥ <b>检验任务单</b> —— 报检部门、检验类别、判定依据、报告归档；
+          ⑦ <b>质量控制</b> —— QC 方案与执行记录，空白 / 平行 / 加标 / 标准物质，超限闭环；
           ⑧ <b>能力验证</b> —— PT 与实验室间比对、Z 值评价；
-          ⑨ <b>检测能力矩阵</b> —— 自检或分包、方法版本、授权检验员；
-          ⑩ <b>人员与授权</b> —— 上岗证、项目授权、监督频次；
-          ⑪ <b>CAPA</b> —— 不符合、OOS/OOT、纠正措施有效性验证；
-          ⑫ <b>排班与工作量</b> —— 微生物 / 理化 / 仪器三组；
-          ⑬ <b>内审与合规</b> —— ISO/IEC 17025 + 生产许可审查细则 + GB 23790-2023；
-          ⑭ <b>环境与洁净区</b> —— 温湿度、压差、沉降菌、悬浮粒子。
+          ⑨ <b>不符合与 CAPA</b> —— 不符合、OOS/OOT、纠正措施有效性验证；
+          ⑩ <b>内审与合规</b> —— ISO/IEC 17025 + 生产许可审查细则 + GB 23790-2023；
+          ⑪ <b>工作量统计</b> —— 按组、按人、按项目、按样品类别，月/季/年；
+          ⑫ <b>环境与洁净区</b> —— 温湿度、压差、沉降菌、悬浮粒子。
           <br><br>
           <b>原始记录生成器不在本页改动范围</b> —— 仍按 Word 原页 1:1 输出。
           <b>数据只存在本机</b>，改完刷新不丢；在「管理后台 → 本机数据」可导出备份。
@@ -2315,7 +2313,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
      光标回开头、页面高度变 → 抖动。这个脚本全局兜底。 -->
 <script src="focus.js"></script>
 <!-- ★ 视觉重设计（2026-11-01）★ 深墨蓝 + 翡翠金 · 必须放在最后才能覆盖旧样式 -->
-<link rel="stylesheet" href="theme.css?v=20261126g">
+<link rel="stylesheet" href="theme.css?v=20261126h">
 <!-- ★ 用户状态持久化（2026-11-01）★ 必须排在 workbench.js 之前 -->
 <script src="store.js"></script>
 <!-- ★ 删除权限与二次确认（2026-11-03）★
@@ -2323,13 +2321,13 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
      且在 jsa/ledger/workbench/labbench 之前（那些模块调用 Guard）。 -->
 <script src="guard.js"></script>
 <!-- ★ 实验室台账数据（2026-11-01）★ 设备/试剂/留样/质控/人员/能力矩阵 -->
-<script src="labdata.js?v=20261126g"></script>
+<script src="labdata.js?v=20261126h"></script>
 <!-- ★ 实验室新增 8 个模块的种子数据（2026-11-01）★ 委托单/CAPA/排班/配制/出入库/报告/内审/环境 -->
-<script src="labdata2.js?v=20261126g"></script>
+<script src="labdata2.js?v=20261126h"></script>
 <!-- ★ 通用台账工作台框架（2026-11-01）★ 可编辑 · 可联动 · 可导入导出 -->
 <script src="ledger.js"></script>
 <!-- ★ 实验室台账注册（2026-11-01）★ 10 个台账挂到框架上 -->
-<script src="labledger.js?v=20261126g"></script>
+<script src="labledger.js?v=20261126h"></script>
 <!-- ★ JSA 工作台（2026-11-01）★ 可编辑 · 可联动 · 可交付 -->
 <script src="jsa.js"></script>
 <!-- ★ 原始记录 9 个项目模板（2026-11-15，由 9 份 Word 原表生成）★ 必须在 labbench.js 之前 -->
@@ -2339,7 +2337,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
 <!-- ★ 实验室管理台账工具（2026-11-01）★ 设备/试剂/留样/QC/PT/原始记录 -->
 <!-- ★ 按操作人锁项目（共用电脑）：必须在 labbench.js 之前 -->
 <script src="labauth.js?v=20261120b"></script>
-<script src="labbench.js?v=20261126g"></script>
+<script src="labbench.js?v=20261126h"></script>
 <!-- ★ 工具工作台引擎（2026-10-22）★ 34 个可交互工具的实现 -->
 <script src="workbench.js?v=20261124i"></script>
 <!-- ★ 工具工作台的导入/导出/复制图（2026-11-04）★ 必须排在 workbench.js 之后 -->
@@ -4336,7 +4334,7 @@ function riskName(g){
 /* ================================================================
    实验室管理（2026-11-01 新增）
    ================================================================
-   设备 / 试剂 / 留样 / QC / PT / 原始记录 六类台账 + 能力矩阵。
+   设备 / 试剂 / 配制 / 样品 / 任务单 / QC / PT / CAPA / 内审 / 工作量 / 环境 十一类台账。
    实现在 prototype/labbench.js，这里只做转发。 */
 function renderLab(){
   if(typeof LAB === "undefined"){
