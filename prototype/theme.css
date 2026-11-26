@@ -1465,3 +1465,9 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .wl-legend2 span.on{font-weight:700;color:#0f2747}
 .wl-legend2 span.on i{box-shadow:0 0 0 2px #fff,0 0 0 3.5px currentColor}
 .wl-pick{font-size:12px;color:#2563eb;text-align:center;margin-top:4px}
+
+/* 能力矩阵对齐（2026-11-26） */
+.cap-tbl td{vertical-align:middle}
+.cap-tbl th{vertical-align:middle}
+.cap-days{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.cap-days input{width:42px!important;text-align:center}
