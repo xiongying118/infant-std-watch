@@ -664,8 +664,8 @@
       <div class="twrap-tip">← 左右拖动查看全部列 →</div>
       <div class="twrap"><table class="ledger-tbl cap-tbl">
         <thead><tr><th style="width:130px">检测项目</th><th style="width:260px">检验方法</th>
-          <th style="width:76px">类别</th><th style="width:80px">周期(天)</th><th style="width:110px">检测方式</th>
-          <th style="width:120px">强制性</th><th style="width:90px">主检人</th><th>依赖资源</th><th style="width:40px"></th></tr></thead>
+          <th style="width:76px">类别</th><th style="width:80px">周期(天)</th><th style="width:96px">检测方式</th>
+          <th style="width:150px">强制性</th><th style="width:90px">主检人</th><th>依赖资源</th><th style="width:40px"></th></tr></thead>
         <tbody>
         ${cap.map(function(c, ci){
           var q = (global.LAB_Q||"").trim().toLowerCase();
