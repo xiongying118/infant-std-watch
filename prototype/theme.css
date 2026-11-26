@@ -1505,3 +1505,12 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .cost-tbl th{text-align:center}
 .cost-tbl td.num{text-align:center;font-variant-numeric:tabular-nums}
 .cost-tbl td{vertical-align:middle}
+
+/* 台账内输入框：统一居中、去掉数字微调箭头（2026-11-26）
+   根因：number input 自带 spinner + 默认右对齐，导致表头居中、数据偏右，看起来永远对不齐 */
+.ledger-tbl input[type=number]{-moz-appearance:textfield;appearance:textfield}
+.ledger-tbl input[type=number]::-webkit-outer-spin-button,
+.ledger-tbl input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.ledger-tbl td input[type=number],.ledger-tbl td input[type=text]{text-align:center}
+.ledger-tbl td.num input{text-align:center!important}
+.ledger-tbl td input[type=date]{text-align:center}
