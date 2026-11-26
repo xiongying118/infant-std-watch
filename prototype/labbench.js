@@ -251,7 +251,7 @@
     var glist = Object.keys(G).map(function(k){ return G[k]; }).sort(function(a,b){ return b.items-a.items; });
     h += '<div class="card" style="padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
        + '<h3>按组统计</h3><span class="muted">理化组 · 色谱组 · 原子组 · 微生物组</span></div>'
-       + '<div class="twrap"><table class="ledger-tbl wl-matrix"><thead><tr><th>组别</th><th>样品数</th><th>项次</th>';
+       + '<div class="twrap"><table class="ledger-tbl wl-matrix wl-wide"><thead><tr><th>组别</th><th>样品数</th><th>项次</th>';
     items.forEach(function(it){ h += '<th>'+esc(it)+'</th>'; });
     h += '</tr></thead><tbody>';
     glist.forEach(function(g){
@@ -346,7 +346,7 @@
     /* ① 人员 × 项目矩阵 */
     h += '<div class="card" style="padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
        + '<h3>人员 × 检测项目（样品数）</h3><span class="muted">只统计此人实际承担的项目</span></div>'
-       + '<div class="twrap"><table class="ledger-tbl wl-matrix"><thead><tr><th>人员</th><th>组</th>';
+       + '<div class="twrap"><table class="ledger-tbl wl-matrix wl-wide"><thead><tr><th>人员</th><th>组</th>';
     items.forEach(function(it){ h += '<th>'+esc(it)+'</th>'; });
     h += '<th>项次合计</th></tr></thead><tbody>';
     list.forEach(function(p){
