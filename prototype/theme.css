@@ -1487,3 +1487,9 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .twrap table.wl-matrix.wl-wide{table-layout:auto;width:max-content;min-width:100%}
 .twrap table.wl-matrix.wl-wide th,.twrap table.wl-matrix.wl-wide td{min-width:58px;white-space:nowrap}
 .twrap table.wl-matrix.wl-wide th:first-child,.twrap table.wl-matrix.wl-wide td:first-child{min-width:96px}
+
+/* 能力矩阵：所有单元格垂直居中、输入框水平居中（2026-11-26 高特异性覆盖 top） */
+.twrap table.cap-tbl td,.twrap table.cap-tbl th{vertical-align:middle!important}
+.twrap table.cap-tbl td input,.twrap table.cap-tbl td textarea{display:block;margin:0 auto;width:100%!important;box-sizing:border-box}
+.twrap table.cap-tbl td input{text-align:center}
+.twrap table.cap-tbl td textarea{text-align:left;word-break:normal;overflow-wrap:anywhere}
