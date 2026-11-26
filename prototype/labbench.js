@@ -171,10 +171,14 @@
   function costData(){
     var base = global.LABCOST || { MATS:{}, ITEMS:[] };
     var ov = (global.Store && global.Store.get("lab.cost.v1", null));
-    if(ov && ov.items && ov.mats) return ov;
-    return JSON.parse(JSON.stringify({ items: base.ITEMS||[], mats: base.MATS||{} }));
+    /* 版本变了（新增项目/物料）就换新种子，旧的本机覆盖作废 */
+    if(ov && ov.items && ov.mats && ov.ver===base.ver) return ov;
+    return JSON.parse(JSON.stringify({ items: base.ITEMS||[], mats: base.MATS||{}, ver: base.ver }));
   }
-  function costSave(d){ if(global.Store) global.Store.set("lab.cost.v1", d); }
+  function costSave(d){
+    d.ver = (global.LABCOST||{}).ver;
+    if(global.Store) global.Store.set("lab.cost.v1", d);
+  }
   function viewCost(){
     var D = costData(), items = D.items||[], mats = D.mats||{};
     /* 检测次数直接取「工作量统计」里该项目的检测项次，两边同一口径 */
@@ -197,7 +201,13 @@
       });
       return n;
     }
-    function tOf(it){ return (it.keys&&it.keys.length)? autoTimes(it.keys) : (+it.times||0); }
+    function tOf(it){
+      if(it.keys && it.keys.length){
+        var n = autoTimes(it.keys);
+        if(n > 0) return n;
+      }
+      return (+it.times||0);
+    }
 
     var sum={}, total=0, projCost=[], groupCost={};
     items.forEach(function(it){
