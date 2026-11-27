@@ -309,7 +309,7 @@
     h += '<div class="card" style="margin-top:14px;padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
        + '<h3>项目 × 试剂耗材明细</h3><span class="muted">改用量或单价 → 汇总与图表即时变；次数按工作量自动</span></div>'
        + '<div class="twrap"><table class="ledger-tbl cost-tbl"><thead><tr>'
-       + '<th style="width:190px">检测项目 / 检验方法</th><th style="width:170px">试剂 / 耗材</th><th style="width:92px">单样用量</th>'
+       + '<th style="width:190px">检测项目 / 检验方法</th><th style="width:170px">试剂 / 耗材</th><th style="width:96px">单样用量<br><span style="font-weight:400;font-size:10px">（双样）</span></th>'
        + '<th style="width:56px">单位</th><th style="width:96px">单价(元)</th><th style="width:96px">单样成本</th>'
        + '<th style="width:80px">次数</th><th style="width:104px">小计(元)</th>'
        + '</tr></thead><tbody>';
@@ -320,7 +320,7 @@
         pc += per*t*price;
       });
       h += '<tr class="cost-grp"><td colspan="6"><b>'+esc(it.item)+'</b>'
-         + ' <span class="muted">'+esc(it.bench||"")+(it.method?' · '+esc(it.method):'')+'</span>'
+         + ' <span class="muted">'+esc(it.bench||"")+(it.method?' · '+esc(it.method):'')+(it.tech?' ｜ '+esc(it.tech):'')+'</span>'
          + ' <span class="muted">· 检测 '+t+' 次'+(it.keys&&it.keys.length?'（按工作量）':'')+'</span></td>'
          + '<td class="num muted">'+(pc>0?'':'—')+'</td>'
          + '<td class="num"><b>'+pc.toFixed(0)+'</b></td></tr>';
@@ -355,7 +355,7 @@
     });
     h += '<tr class="cost-total"><td><b>合计</b></td><td colspan="3"></td><td class="num"><b>'+total.toFixed(2)+'</b></td><td class="num">100%</td></tr>';
     h += '</tbody></table></div></div>';
-    h += '<div class="muted" style="font-size:12px;margin-top:8px">单价按采购合同价改，用量按实际移取/称量改；次数来自工作量统计（'+({month:"本月",quarter:"本季",year:"本年",all:"全部"}[COST_PERIOD]||"本年")+'）。数据只存本机。</div>';
+    h += '<div class="muted" style="font-size:12px;margin-top:8px">每个样品按双样（平行样）计；标准品 / 标液按批次配一次，不随平行样翻倍。单价取实验室物料目录（包装价 ÷ 包装量）。单价按采购合同价改，用量按实际移取/称量改；次数来自工作量统计（'+({month:"本月",quarter:"本季",year:"本年",all:"全部"}[COST_PERIOD]||"本年")+'）。数据只存本机。</div>';
     return h;
   }
 
