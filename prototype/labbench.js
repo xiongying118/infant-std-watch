@@ -211,7 +211,7 @@
       return (+it.times||0);
     }
 
-    var sum={}, total=0, projCost=[], groupCost={}, perAll=0;
+    var sum={}, total=0, projCost=[], groupCost={}, perAll=0, catCost={};
     items.forEach(function(it){
       var t=tOf(it), pc=0, ps=0;
       (it.rows||[]).forEach(function(r){
@@ -220,6 +220,8 @@
         sum[m].qty += per*t;
         pc += per*t*sum[m].price;
         ps += per*sum[m].price;
+        var cg = (mats[m]||{}).cat || "试剂";
+        catCost[cg] = (catCost[cg]||0) + per*t*sum[m].price;
       });
       perAll += ps;
       projCost.push({name:it.item, cost:pc, per:ps});
@@ -302,6 +304,94 @@
       h += '<div class="wl-row"><span class="nm" style="flex-basis:96px">'+esc(x.name)+'</span>'
          + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:'+COL[(i+2)%COL.length]+'"></i></div>'
          + '<b>'+x.cost.toFixed(0)+'</b></div>';
+    });
+    h += '</div></div></div>';
+
+    /* ===== 分析图：成本构成 / 帕累托 / 单样成本分布 ===== */
+    var CATC = {"标准品":"#8B5CF6","试剂":"#3B82F6","耗材":"#22C55E","气体":"#F59E0B"};
+    var ck = Object.keys(catCost).filter(function(k){ return catCost[k] > 0; })
+      .sort(function(a,b){ return catCost[b]-catCost[a]; });
+    var ctot = ck.reduce(function(a,k){ return a + catCost[k]; }, 0) || 1;
+    var accC = 0, cRing = "", RDC = 62, CXC = 80, CYC = 80, SWC = 26, CC = 2*Math.PI*RDC;
+    ck.forEach(function(k){
+      var len = catCost[k]/ctot*CC;
+      cRing += '<circle cx="'+CXC+'" cy="'+CYC+'" r="'+RDC+'" fill="none" stroke="'+(CATC[k]||"#94a3b8")+'" stroke-width="'+SWC+'" '
+        + 'stroke-dasharray="'+len.toFixed(2)+' '+(CC-len).toFixed(2)+'" stroke-dashoffset="'+(-accC).toFixed(2)+'" '
+        + 'transform="rotate(-90 '+CXC+' '+CYC+')"><title>'+esc(k)+' '+catCost[k].toFixed(0)+' 元</title></circle>';
+      accC += len;
+    });
+    h += '<div class="wl-grid" style="margin-top:14px">';
+    h += '<div class="card"><div class="card-h"><h3>成本构成</h3><span class="muted">试剂 / 耗材 / 标准品 / 气体</span></div>'
+       + '<svg class="wl-donut2" viewBox="0 0 160 160">'+cRing
+       + '<text x="80" y="79" text-anchor="middle" style="font-size:20px;font-weight:700;fill:#0f2747">'+(total).toFixed(0)+'</text>'
+       + '<text x="80" y="96" text-anchor="middle" style="font-size:10px;fill:#64748b">元</text></svg>'
+       + '<div class="wl-legend2" style="justify-content:center">';
+    ck.forEach(function(k){
+      h += '<span><i style="background:'+(CATC[k]||"#94a3b8")+'"></i>'+esc(k)+' '+(catCost[k]/ctot*100).toFixed(1)+'%</span>';
+    });
+    h += '</div></div>';
+
+    /* 帕累托：物料成本累计 */
+    var par = ml.slice(0,12);
+    var PW=640, PH=250, PL=44, PR=44, PT=14, PB=46, iw=PW-PL-PR, ih=PH-PT-PB;
+    var bw = iw/Math.max(par.length,1);
+    var bmax = Math.max.apply(null, par.map(function(x){return x.cost;}).concat([1]));
+    var accP = 0, pts = [], barSvg = "";
+    par.forEach(function(x,i){
+      var bh = ih*x.cost/bmax, x0 = PL+bw*i;
+      accP += x.cost;
+      var cy = PT+ih-ih*(accP/(total||1));
+      pts.push((x0+bw/2).toFixed(1)+','+cy.toFixed(1));
+      barSvg += '<rect x="'+(x0+bw*0.18).toFixed(1)+'" y="'+(PT+ih-bh).toFixed(1)+'" width="'+(bw*0.64).toFixed(1)
+        + '" height="'+bh.toFixed(1)+'" rx="2" fill="#3B82F6"><title>'+esc(x.name)+'：'+x.cost.toFixed(0)+' 元</title></rect>'
+        + '<text x="'+(x0+bw/2).toFixed(1)+'" y="'+(PT+ih+13).toFixed(1)+'" text-anchor="middle" style="font-size:9.5px;fill:#64748b">'+(i+1)+'</text>';
+    });
+    h += '<div class="card"><div class="card-h"><h3>物料成本帕累托</h3><span class="muted">柱=单项成本，折线=累计占比</span></div>'
+       + '<svg class="qwsvg" viewBox="0 0 '+PW+' '+PH+'" style="width:100%;height:auto">'
+       + '<line x1="'+PL+'" y1="'+(PT+ih)+'" x2="'+(PW-PR)+'" y2="'+(PT+ih)+'" stroke="#cbd5e1"/>'
+       + '<line x1="'+PL+'" y1="'+PT+'" x2="'+PL+'" y2="'+(PT+ih)+'" stroke="#cbd5e1"/>'
+       + barSvg
+       + '<polyline points="'+pts.join(" ")+'" fill="none" stroke="#EF4444" stroke-width="2"/>'
+       + pts.map(function(p2){ var c=p2.split(","); return '<circle cx="'+c[0]+'" cy="'+c[1]+'" r="2.6" fill="#EF4444"/>'; }).join("")
+       + '<line x1="'+PL+'" y1="'+(PT+ih-ih*0.8)+'" x2="'+(PW-PR)+'" y2="'+(PT+ih-ih*0.8)+'" stroke="#94a3b8" stroke-dasharray="4 3"/>'
+       + '<text x="'+(PW-PR+4)+'" y="'+(PT+ih-ih*0.8+3)+'" style="font-size:10px;fill:#64748b">80%</text>'
+       + '</svg><div class="muted" style="font-size:11px;line-height:1.7">'
+       + par.map(function(x,i){ return (i+1)+' '+esc(x.name); }).join('　') + '</div></div>';
+    h += '</div>';
+
+    /* 单样成本分布 */
+    var bins = [0,10,30,60,100,200,1e9];
+    var blab = ["<10","10~30","30~60","60~100","100~200",">200"];
+    var bcnt = [0,0,0,0,0,0];
+    projCost.forEach(function(x){
+      for(var i2=0;i2<bins.length-1;i2++){ if(x.per>=bins[i2] && x.per<bins[i2+1]){ bcnt[i2]++; break; } }
+    });
+    var bm = Math.max.apply(null, bcnt.concat([1]));
+    h += '<div class="wl-grid" style="margin-top:14px"><div class="card"><div class="card-h"><h3>单样成本分布</h3>'
+       + '<span class="muted">67 个项目按单样物料成本分档（元）</span></div><div class="wl-trend" style="height:170px">';
+    bcnt.forEach(function(v,i2){
+      var hh = v ? Math.max(6, v/bm*100) : 2;
+      h += '<div class="b"><i style="height:'+hh.toFixed(1)+'%;'+(v?'':'background:#e2e8f0')+'"></i>'
+         + '<b style="font-size:11px;color:'+(v?'#0f2747':'#94a3b8')+'">'+v+'</b>'
+         + '<span>'+blab[i2]+'</span></div>';
+    });
+    h += '</div></div>';
+    /* 组内平均单样成本 */
+    var gAvg = {};
+    projCost.forEach(function(x){
+      var it = items.filter(function(y){ return y.item === x.name; })[0] || {};
+      var g = it.bench || "其他";
+      if(!gAvg[g]) gAvg[g] = {n:0, sum:0};
+      gAvg[g].n++; gAvg[g].sum += x.per;
+    });
+    var gk = Object.keys(gAvg).sort(function(a,b){ return gAvg[b].sum/gAvg[b].n - gAvg[a].sum/gAvg[a].n; });
+    var gmax2 = Math.max.apply(null, gk.map(function(k){ return gAvg[k].sum/gAvg[k].n; }).concat([1]));
+    h += '<div class="card"><div class="card-h"><h3>各组平均单样成本</h3><span class="muted">组内全部项目的均值</span></div><div class="wl-bars">';
+    gk.forEach(function(k,i2){
+      var avg = gAvg[k].sum/gAvg[k].n;
+      h += '<div class="wl-row"><span class="nm" style="flex-basis:82px">'+esc(k)+'</span>'
+         + '<div class="wl-track"><i style="width:'+Math.max(2,avg/gmax2*100).toFixed(1)+'%;background:'+COL[i2%COL.length]+'"></i></div>'
+         + '<b>'+avg.toFixed(0)+'</b></div>';
     });
     h += '</div></div></div>';
 
