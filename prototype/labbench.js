@@ -169,11 +169,13 @@
      用量/次数/单价都能改，改完即时重算并落本机。
      ================================================================ */
   function costData(){
-    var base = global.LABCOST || { MATS:{}, ITEMS:[] };
+    var base = global.LABCOST || {};
+    var baseItems = base.items || base.ITEMS || [];
+    var baseMats  = base.mats  || base.MATS  || {};
     var ov = (global.Store && global.Store.get("lab.cost.v1", null));
     /* 版本变了（新增项目/物料）就换新种子，旧的本机覆盖作废 */
     if(ov && ov.items && ov.mats && ov.ver===base.ver) return ov;
-    return JSON.parse(JSON.stringify({ items: base.ITEMS||[], mats: base.MATS||{}, ver: base.ver }));
+    return JSON.parse(JSON.stringify({ items: baseItems, mats: baseMats, ver: base.ver }));
   }
   function costSave(d){
     d.ver = (global.LABCOST||{}).ver;
@@ -209,16 +211,18 @@
       return (+it.times||0);
     }
 
-    var sum={}, total=0, projCost=[], groupCost={};
+    var sum={}, total=0, projCost=[], groupCost={}, perAll=0;
     items.forEach(function(it){
-      var t=tOf(it), pc=0;
+      var t=tOf(it), pc=0, ps=0;
       (it.rows||[]).forEach(function(r){
         var m=r[0], per=+r[1]||0;
         if(!sum[m]) sum[m]={qty:0, price:+((mats[m]||{}).price)||0, unit:(mats[m]||{}).unit||""};
         sum[m].qty += per*t;
         pc += per*t*sum[m].price;
+        ps += per*sum[m].price;
       });
-      projCost.push({name:it.item, cost:pc});
+      perAll += ps;
+      projCost.push({name:it.item, cost:pc, per:ps});
       groupCost[it.bench||"未分组"] = (groupCost[it.bench||"未分组"]||0) + pc;
       total += pc;
     });
@@ -239,7 +243,7 @@
     h += '<div class="grid g4" style="margin-bottom:14px">'
       + '<div class="kpi"><div class="k">检测项目</div><div class="v">'+items.length+'</div><div class="d">参与核算的项目数</div></div>'
       + '<div class="kpi"><div class="k">试剂耗材</div><div class="v">'+ml.length+'</div><div class="d">去重后的物料种类</div></div>'
-      + '<div class="kpi"><div class="k">检测次数</div><div class="v">'+items.reduce(function(a,x){return a+tOf(x);},0)+'</div><div class="d">与工作量统计同口径</div></div>'
+      + '<div class="kpi"><div class="k">单样全项物料成本</div><div class="v">'+perAll.toFixed(0)+'<span style="font-size:14px"> 元</span></div><div class="d">67 个项目各做 1 次</div></div>'
       + '<div class="kpi hi"><div class="k">总成本</div><div class="v">'+total.toFixed(0)+'<span style="font-size:14px"> 元</span></div><div class="d">∑ 用量×次数×单价</div></div>'
       + '</div>';
 
@@ -284,8 +288,8 @@
     h += '</div></div></div>';
 
     h += '<div class="wl-grid" style="margin-top:14px">';
-    h += '<div class="card"><div class="card-h"><h3>各检测项目成本</h3><span class="muted">元</span></div><div class="wl-bars">';
-    projCost.forEach(function(x,i){
+    h += '<div class="card"><div class="card-h"><h3>各检测项目成本 Top 15</h3><span class="muted">元 · 其余 '+(projCost.length>15?projCost.length-15:0)+' 项见明细</span></div><div class="wl-bars">';
+    projCost.slice(0,15).forEach(function(x,i){
       var w=Math.max(2, x.cost/maxP*100);
       h += '<div class="wl-row"><span class="nm" style="flex-basis:118px">'+esc(x.name)+'</span>'
          + '<div class="wl-track"><i style="width:'+w.toFixed(1)+'%;background:'+COL[i%COL.length]+'"></i></div>'
@@ -305,8 +309,9 @@
     h += '<div class="card" style="margin-top:14px;padding:0;overflow:hidden"><div class="card-h" style="padding:12px 14px 6px">'
        + '<h3>项目 × 试剂耗材明细</h3><span class="muted">改用量或单价 → 汇总与图表即时变；次数按工作量自动</span></div>'
        + '<div class="twrap"><table class="ledger-tbl cost-tbl"><thead><tr>'
-       + '<th style="width:180px">检测项目</th><th style="width:160px">试剂 / 耗材</th><th style="width:96px">单次用量</th>'
-       + '<th style="width:60px">单位</th><th style="width:104px">单价(元)</th><th style="width:96px">次数</th><th style="width:104px">小计(元)</th>'
+       + '<th style="width:190px">检测项目 / 检验方法</th><th style="width:170px">试剂 / 耗材</th><th style="width:92px">单样用量</th>'
+       + '<th style="width:56px">单位</th><th style="width:96px">单价(元)</th><th style="width:96px">单样成本</th>'
+       + '<th style="width:80px">次数</th><th style="width:104px">小计(元)</th>'
        + '</tr></thead><tbody>';
     items.forEach(function(it, i){
       var t=tOf(it), pc=0;
@@ -314,8 +319,10 @@
         var m=r[0], per=+r[1]||0, price=+((mats[m]||{}).price)||0;
         pc += per*t*price;
       });
-      h += '<tr class="cost-grp"><td colspan="6"><b>'+esc(it.item)+'</b> <span class="muted">'+esc(it.bench||"")+'</span>'
+      h += '<tr class="cost-grp"><td colspan="6"><b>'+esc(it.item)+'</b>'
+         + ' <span class="muted">'+esc(it.bench||"")+(it.method?' · '+esc(it.method):'')+'</span>'
          + ' <span class="muted">· 检测 '+t+' 次'+(it.keys&&it.keys.length?'（按工作量）':'')+'</span></td>'
+         + '<td class="num muted">'+(pc>0?'':'—')+'</td>'
          + '<td class="num"><b>'+pc.toFixed(0)+'</b></td></tr>';
       (it.rows||[]).forEach(function(r, j){
         var m=r[0], per=+r[1]||0, price=+((mats[m]||{}).price)||0;
@@ -324,6 +331,7 @@
            + '<td class="num"><input type="number" step="any" value="'+per+'" onchange="LAB.costSet('+i+','+j+',this.value)"></td>'
            + '<td style="text-align:center">'+esc((mats[m]||{}).unit||"")+'</td>'
            + '<td class="num"><input type="number" step="any" value="'+price+'" onchange="LAB.costPrice(\''+esc(m)+'\',this.value)"></td>'
+           + '<td class="num">'+(per*price).toFixed(2)+'</td>'
            + '<td class="num">'+(it.keys&&it.keys.length
                ? '<b>'+t+'</b>'
                : '<input type="number" value="'+(+it.times||0)+'" onchange="LAB.costTimes('+i+',this.value)">')+'</td>'
