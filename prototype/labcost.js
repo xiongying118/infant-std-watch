@@ -1806,7 +1806,7 @@ window.LABCOST = {
   {
    "item": "黄曲霉毒素M1",
    "method": "GB 5009.24-2016 第三法",
-   "bench": "其他",
+   "bench": "理化",
    "keys": [
     "黄曲霉毒素M1",
     "黄曲霉"
