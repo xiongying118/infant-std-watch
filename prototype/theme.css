@@ -1514,3 +1514,19 @@ span.lr-dyn:empty{display:inline-block;min-width:90px;min-height:14px;
 .ledger-tbl td input[type=number],.ledger-tbl td input[type=text]{text-align:center}
 .ledger-tbl td.num input{text-align:center!important}
 .ledger-tbl td input[type=date]{text-align:center}
+
+/* 成本核算表：8 列固定比例，一屏放完，不横向滚动（2026-11-27） */
+.twrap table.cost-tbl{table-layout:fixed;width:100%;min-width:0}
+.twrap table.cost-tbl th:first-child,.twrap table.cost-tbl td:first-child,
+.twrap table.cost-tbl th:last-child,.twrap table.cost-tbl td:last-child{position:static;background:transparent}
+.twrap table.cost-tbl th:nth-child(1){width:21%}
+.twrap table.cost-tbl th:nth-child(2){width:20%}
+.twrap table.cost-tbl th:nth-child(3){width:9%}
+.twrap table.cost-tbl th:nth-child(4){width:6%}
+.twrap table.cost-tbl th:nth-child(5){width:10%}
+.twrap table.cost-tbl th:nth-child(6){width:10%}
+.twrap table.cost-tbl th:nth-child(7){width:8%}
+.twrap table.cost-tbl th:nth-child(8){width:12%}
+.twrap table.cost-tbl td{white-space:normal;word-break:normal;overflow-wrap:anywhere}
+.twrap table.cost-tbl td input{width:100%!important;box-sizing:border-box}
+.cost-tbl th{font-size:11.5px;line-height:1.3}
