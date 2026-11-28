@@ -30,6 +30,7 @@
 import base64
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -206,11 +207,17 @@ def main():
                    "if(!e.length||!s.length){console.error('FAIL 数据不完整');process.exit(1);}",
                    "console.log('  ERATA='+e.length+' 范围='+s.length);"]
     if "METHODS" in keys:
-        checks += ["if(!d.METHODS||d.METHODS.length!==56)"
-                   "{console.error('FAIL METHODS='+(d.METHODS||[]).length);process.exit(1);}",
-                   "const bd=(d.METHODS||[]).filter(m=>!m.principle||!m.reagents||!m.reagents.length);",
-                   "if(bd.length){console.error('FAIL 缺字段:'+bd.map(m=>m.stdNo).join(','));process.exit(1);}",
-                   "console.log('  METHODS='+d.METHODS.length+' 条，字段完整');"]
+        # ★ 期望条数从本地 data/_methodjs.txt 现数，别写死（写死 56 后删一条就卡死）
+        _mt = open(os.path.join(ROOT, "data", "_methodjs.txt"), encoding="utf-8").read()
+        _mexp = len(re.findall(r'"?stdNo"?\s*:', _mt))
+        print("  本地 _methodjs.txt 期望 %d 条" % _mexp)
+        checks += [
+            "if(!d.METHODS||d.METHODS.length!==%d)"
+            "{console.error('FAIL METHODS 条数='+(d.METHODS||[]).length+'，期望 %d');process.exit(1);}"
+            % (_mexp, _mexp),
+            "const bd=(d.METHODS||[]).filter(m=>!m.principle||!m.reagents||!m.reagents.length);",
+            "if(bd.length){console.error('FAIL 缺字段:'+bd.map(m=>m.stdNo).join(','));process.exit(1);}",
+            "console.log('  METHODS='+d.METHODS.length+' 条，字段完整');"]
     check = "".join(checks)
     r = os.system('node -e "%s"' % check.replace('"', '\\"'))
     if r != 0:
