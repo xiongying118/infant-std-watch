@@ -108,6 +108,36 @@ def esc(s) -> str:
 
 
 # ---------------------------------------------------------------- 语义切分
+_SHORT_ROLE_RE = re.compile(r"(剂|溶剂|溶液|介质|催化剂|指示剂|萃取剂|脱水剂)$")
+
+
+def _is_short_role(p: str) -> bool:
+    """「反应溶剂」「干燥剂」「萃取溶剂」这类极短的作用说明。
+
+    它们不含冒号、长度很短，旧判据会误当成试剂名，导致下一对直接丢失
+    （肌醇 7 条试剂只剩 4 条就是这么来的）。
+    """
+    p = p.strip()
+    return 0 < len(p) <= 10 and bool(_SHORT_ROLE_RE.search(p))
+
+
+def _next_is_role(paras: list[str], i: int) -> bool:
+    """i 之后的下一个有效段落是不是「作用」（含冒号或长句）。
+
+    用于区分「短试剂名」与「短作用句」：试剂名后面一定跟着作用，
+    而短作用句后面跟的是下一个试剂名。
+    """
+    j = i + 1
+    while j < len(paras) and (paras[j] in HEADERS or not paras[j].strip()):
+        j += 1
+    if j >= len(paras):
+        return False
+    q = paras[j]
+    if is_section_head(q):
+        return False
+    return ("：" in q) or (len(q) >= 30) or _is_short_role(q)
+
+
 def parse_doc(name: str, paras: list[str]) -> dict:
     """把段落序列切成 {stdNo, title, method, principle, reagents, sections}。"""
     d = {
@@ -195,9 +225,14 @@ def parse_doc(name: str, paras: list[str]) -> dict:
         #   没有才跳过。这个顺序不能颠倒 —— 实测两种写法的差别就是氨水在不在。
 
         is_role = ("：" in p) or (len(p) >= 30)
-        is_name = ("：" not in p) and len(p) <= 24
+        # ★ 2026-11-28 修：短「作用」被误判成试剂名，导致后面几条试剂整组丢失 ★
+        #   肌醇 docx：… TMCS / role / HMDS / role / DMF / "反应溶剂" / 无水硫酸钠 / "干燥剂" / 正己烷 / "萃取溶剂"
+        #   旧判据只看到「反应溶剂」不含冒号且长度 4 → 当成试剂名，
+        #   下一条「无水硫酸钠」又是名字 → 上一条被 flush 丢弃，实测 7 条只剩 4 条。
+        #   新判据：只有当**下一条是作用**（含冒号或长句）时，本条才算试剂名。
+        is_name = (not is_role) and _next_is_role(paras, i)
 
-        if is_role:
+        if is_role or _is_short_role(p):
             if cur_name is None:
                 # 没有配对的试剂名 —— 当成散段，跳过
                 i += 1
