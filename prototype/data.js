@@ -40,9 +40,9 @@ window.STDWATCH_DATA = {
   {no:"T/DGCX 002-2023",title:"婴幼儿用消毒餐（饮）具安全要求",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2023-10-26",imp:"2023-11-01",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/1gxwutws1tq7i6sjbr7k4j2itt2z982",dl:false,chg:"",why:"",acts:[]},
   {no:"T/GBC 161-2026",title:"婴幼儿体重管理指南",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2026-08-03",imp:"2026-09-03",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/5259d59f41554b74a9e2d37e43b81cf8",dl:false,chg:"",why:"",acts:[]},
   {no:"T/GBMA 008-2024",title:"婴幼儿房装饰用内墙涂料",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2024-11-29",imp:"2024-12-01",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/rrafq6xq99x6b25on67p6139xfi95bq",dl:false,chg:"",why:"",acts:[]},
-  {no:"T/GDEEA 001-2021",title:"婴幼儿托育服务规范",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2021-10-28",imp:"2021-11-01",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/uhbwji54ubabddct07dkcxfxrjvwmbo",dl:false,chg:"",why:"",acts:[]},
   {no:"T/HBFPIA 002-2026",title:"《婴幼儿配方乳粉基粉》",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2026-02-09",imp:"2026-02-09",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/afgcjwpi1xq936wv7f3fkod2434ffho",dl:false,chg:"",why:"",acts:[]},
   {no:"T/HGMIF 024-2023",title:"绿色设计产品评价技术规范  调制乳粉",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2023-10-26",imp:"2023-10-26",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/0vbtdbgq16e05lsbhd43me8j98pwwae",dl:false,chg:"",why:"",acts:[]},
+  {no:"T/HHPA 005-2022",title:"婴幼儿肠造口护理技术标准",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2022-12-22",imp:"2022-12-31",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/28gpkcn6ghawe0qpzoq12lwsf87rpld",dl:false,chg:"",why:"",acts:[]},
   {no:"T/HJX 020-2025",title:"“龙江品质”特色产品技术规范 调制乳粉",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2025-04-07",imp:"2025-04-07",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/9ur930awjxbruxyaf55qy7csaffw25o",dl:false,chg:"",why:"",acts:[]},
   {no:"T/HJX 022-2025",title:"乳制品生产车间在线热电阻现场测试方法",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2025-08-01",imp:"2025-08-01",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/p3pg58wabbbuenocuydhzrij8sjijzk",dl:false,chg:"",why:"",acts:[]},
   {no:"T/HLBENX 0009-2024",title:"呼伦贝尔乳粉",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2024-09-29",imp:"2024-10-29",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/ik0qal87rcc0r8pe5ijj8rm9s1fmp37",dl:false,chg:"",why:"",acts:[]},
@@ -72,7 +72,6 @@ window.STDWATCH_DATA = {
   {no:"T/WSJD 005-2024",title:"饮用天然矿泉水（适合婴幼儿）",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2024-03-11",imp:"2024-03-26",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/v9lx5a19yryvplnuu4uitiv9potjiet",dl:false,chg:"",why:"",acts:[]},
   {no:"T/ZZB 3129-2023",title:"婴幼儿全棉纱布毛巾",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2023-08-10",imp:"2023-09-10",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/wajznusb8hh41tr7g1kfs3ab26nynmy",dl:false,chg:"",why:"",acts:[]},
   {no:"T/ZZB 3145-2023",title:"婴幼儿及儿童用针织拼接床上套件",cat:"assoc",sub:"关联 · 团体标准（参考）",status:"现行有效",impState:"已实施",newer:"",pub:"2023-08-10",imp:"2023-09-10",dead:"",replace:"",by:"",url:"https://www.ttbz.org.cn/#/standardDetail/wz7ysunnunmh6hb0yo8kmlchbyl7vk4",dl:false,chg:"",why:"",acts:[]},
-  {no:"工信部公告 2026-11-16",title:"两部门关于印发《以标准提升引领轻工业优化升级实施方案》的通知",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-11-16",imp:"2026-11-16",dead:"",replace:"",by:"",url:"https://www.miit.gov.cn/zwgk/zcwj/wjfb/tz/art/2026/art_bd11a0d16a61477883db13ac4d6cc889.html",dl:false,chg:"",why:"",acts:[]},
   {no:"总局公告 2025-02-24",title:"市场监管总局办公厅关于发布食品中含嘧啶酮苯基类磷酸二酯酶 5抑制剂的有毒有害认定意见的通知",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2025-02-24",imp:"2025-02-24",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/zfjcs/art/2025/art_71dbea09aa5f446c9dd72a0f9a4c7d4c.html",dl:false,chg:"",why:"",acts:[]},
   {no:"总局公告 2025-04-07",title:"市场监管总局关于发布第一批食品安全行政执法指导性案例的通知",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2025-04-07",imp:"2025-04-07",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/zfjcs/art/2025/art_4f4eb590e4dc44c3b3d1a7426b39e706.html",dl:false,chg:"",why:"",acts:[]},
   {no:"总局公告 2025-07-24",title:"市场监管总局关于发布《特殊医学用途流质 配方食品注册指南》等文件的公告",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2025-07-24",imp:"2025-07-24",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/tssps/art/2025/art_b5952462a6f44861ae55cb67cebc7d28.html",dl:false,chg:"",why:"",acts:[]},
@@ -90,7 +89,6 @@ window.STDWATCH_DATA = {
   {no:"总局公告 2026-09-28",title:"市场监管总局关于发布《蔬菜水果中三唑磷的快速检测  胶体金免疫层析法》等13项食品快速检测方法的公告",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-09-28",imp:"2026-09-28",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/spcjs/art/2026/art_721205f6c1a247ffbff1daa4c7a5eb98.html",dl:false,chg:"",why:"",acts:[]},
   {no:"总局公告 2026-11-07",title:"市场监管总局关于发布《食品中双己酚丁等5种化合物的测定》等2项食品补充检验方法的公告",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-11-07",imp:"2026-11-07",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/spcjs/art/2026/art_35f170019c184b60a8c8cad152f08a20.html",dl:false,chg:"",why:"",acts:[]},
   {no:"总局公告 2026年第34号",title:"市场监管总局关于发布《特定全营养配方食品临床试验技术指导原则  肌肉衰减症》等3个文件的公告",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-09-30",imp:"2026-09-30",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/tssps/art/2026/art_e02ccddfeb194573a6f082770992628c.html",dl:false,chg:"",why:"",acts:[]},
-  {no:"总局公告 2026年第39号",title:"市场监管总局关于发布《婴幼儿辅助食品生产许可审查细则（2026版）》的公告",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-11-23",imp:"2026-11-23",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/tssps/art/2026/art_8a245e527fda49819cb9483c0a627981.html",dl:false,chg:"",why:"",acts:[]},
   {no:"总局公告 市监稽发〔2026〕117 号",title:"市场监管总局办公厅关于发布食品中非法添加沃诺雷生及其系列衍生物、托拉塞米及其系列衍生物有毒有害认定意见及相关执法检验方法的通知",cat:"assoc",sub:"关联 · 官方公告",status:"现行有效",impState:"已实施",newer:"",pub:"2026-09-29",imp:"2026-09-29",dead:"",replace:"",by:"",url:"https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/zfjcs/art/2026/art_7d69b8f296dc415994925182be87d8c5.html",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 13432-2013",title:"食品安全国家标准 预包装特殊膳食用食品标签",cat:"assoc",sub:"关联 · 标签与标识",status:"现行有效",impState:"已实施",newer:"",pub:"2013-12-26",imp:"2015-07-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/staticPages/4D374A4F-B924-46A7-A930-A5AB7644A4CA.html",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 28050-2011",title:"食品安全国家标准 预包装食品营养标签通则",cat:"assoc",sub:"关联 · 标签与标识",status:"现行有效",impState:"已实施",newer:"",pub:"2011-10-12",imp:"2013-01-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/staticPages/C89C7E02-42FF-4D74-BE85-EB4E764EE210.html",dl:false,chg:"",why:"",acts:[]},
@@ -321,7 +319,7 @@ window.STDWATCH_DATA = {
   {no:"GB 5413.36-2026",title:"食品安全国家标准 特殊膳食用食品中脂肪酸和反式脂肪酸的测定",cat:"test",sub:"营养成分 · 脂肪与脂肪酸",status:"现行有效",impState:"即将实施",newer:"",pub:"2026-08-18",imp:"2027-08-18",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=indexSearch&isLength=9999&num_tn=99&standard_type=&keyword=GB5413.36-2026",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.255-2016",title:"食品安全国家标准 食品中果聚糖的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2016-08-31",imp:"2017-03-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/staticPages/56733408-C73E-4865-9D8F-9A70AA9313D5.html",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.289-2023",title:"食品安全国家标准 食品中低聚半乳糖的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2023-09-06",imp:"2024-03-06",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/staticPages/59AA2EB3-60D9-4095-924C-CA6790CBF87A.html",dl:false,chg:"",why:"",acts:[]},
-  {no:"GB 5009.303-2025",title:"食品安全国家标准 食品中酵母贝塔-葡聚糖的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2025-03-16",imp:"2025-09-16",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/staticPages/8E21DFB8-6424-45D9-BC7E-66F4252B5291.html",dl:false,chg:"",why:"",acts:[]},
+  {no:"GB 5009.303-2025",title:"食品安全国家标准 食品中酵母β-葡聚糖的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2025-03-16",imp:"2025-09-16",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/staticPages/8E21DFB8-6424-45D9-BC7E-66F4252B5291.html",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.88-2023",title:"食品安全国家标准 食品中膳食纤维的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2023-09-06",imp:"2024-03-06",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/staticPages/A12DD16D-95FF-4023-B981-43AC6162A15F.html",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5413.6-2010",title:"食品安全国家标准 婴幼儿食品和乳品中不溶性膳食纤维的测定",cat:"test",sub:"营养成分 · 膳食纤维与多糖",status:"现行有效",impState:"已实施",newer:"",pub:"2010-03-26",imp:"2010-06-01",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/db?task=indexSearch&isLength=9999&num_tn=99&standard_type=&keyword=GB5413.6-2010",dl:false,chg:"",why:"",acts:[]},
   {no:"GB 5009.5-2025",title:"食品安全国家标准 食品中蛋白质的测定",cat:"test",sub:"营养成分 · 蛋白质",status:"现行有效",impState:"已实施",newer:"",pub:"2025-03-16",imp:"2025-09-16",dead:"",replace:"",by:"",url:"https://sppt.cfsa.net.cn:8086/staticPages/C25BD1F3-AC52-4788-8D31-71E9EE800241.html",dl:false,chg:"",why:"",acts:[]},
@@ -835,26 +833,25 @@ window.STDWATCH_DATA = {
   /* ---- RUNSTATE ---- */
   RUNSTATE: {
   schedule:"每日 09:07",
-  lastRun:"2026-11-28 15:02",
-  lastRunDetail:"0.1 小时前",
+  lastRun:"2026-11-28 16:45",
+  lastRunDetail:"0.5 小时前",
   nextRun:"2026-11-29 09:07",
   everRan:true,
   healthy:true,
-  failedSources:[],
   sources:[
-  {code:"SRC-01", file:"SRC-01_latest.json", count:3, mtime:"2026-11-28 14:59"},
-  {code:"SRC-02", file:"SRC-02_latest.json", count:7, mtime:"2026-11-28 15:02"},
-  {code:"SRC-05", file:"SRC-05_latest.json", count:373, mtime:"2026-11-28 15:02"},
-  {code:"SRC-06", file:"SRC-06_latest.json", count:19, mtime:"2026-11-28 15:00"},
-  {code:"SRC-07", file:"SRC-07_latest.json", count:1, mtime:"2026-11-28 15:00"},
-  {code:"SRC-08", file:"SRC-08_latest.json", count:58, mtime:"2026-11-22 11:42"},
-  {code:"SRC-11", file:"SRC-11_latest.json", count:98, mtime:"2026-11-28 15:01"}
+  {code:"SRC-01", file:"SRC-01_latest.json", count:3, mtime:"2026-11-28 16:45"},
+  {code:"SRC-02", file:"SRC-02_latest.json", count:7, mtime:"2026-11-28 16:45"},
+  {code:"SRC-05", file:"SRC-05_latest.json", count:373, mtime:"2026-11-28 16:45"},
+  {code:"SRC-06", file:"SRC-06_latest.json", count:18, mtime:"2026-11-28 16:45"},
+  {code:"SRC-07", file:"SRC-07_latest.json", count:0, mtime:"2026-11-28 16:45"},
+  {code:"SRC-08", file:"SRC-08_latest.json", count:57, mtime:"2026-11-28 16:45"},
+  {code:"SRC-11", file:"SRC-11_latest.json", count:98, mtime:"2026-11-28 16:45"}
   ],
   extras:[
-  {label:"公告", file:"notice_latest.json", count:56, mtime:"2026-11-28 15:01"},
-  {label:"勘误与修改单", file:"erata_latest.json", count:187, mtime:"2026-11-28 15:01"}
+  {label:"公告", file:"notice_latest.json", count:56, mtime:"2026-11-28 16:45"},
+  {label:"勘误与修改单", file:"erata_latest.json", count:187, mtime:"2026-11-28 16:45"}
   ],
-  logs:[["2026-11-28 15:02:12","ok","[SRC-05] 食品安全国家标准数据检索平台 抓取 373 条"],["2026-11-28 15:02:12","ok","[SRC-02] 国家标准全文公开系统 openstd 抓取 7 条"],["2026-11-28 15:01:38","ok","[勘误] 收录 187 条标准勘误 / 修改单"],["2026-11-28 15:01:11","ok","[公告] 收录 56 条发布公告"],["2026-11-28 15:01:08","ok","[SRC-11] CNAS 实验室认可规范 抓取 98 条（非国标，标准委不收录）"],["2026-11-28 15:00:14","ok","[SRC-07] 工信部行业公告 抓取 1 条（该源常为 0，属正常）"],["2026-11-28 15:00:07","ok","[SRC-06] 市场监管总局公告 抓取 19 条（BJS 补充检验方法等）"],["2026-11-28 14:59:57","ok","[SRC-01] 全国标准信息公共服务平台 gbQueryPage 抓取 3 条"],["2026-11-22 11:42:53","ok","[SRC-08] 全国团体标准 抓取 58 条（仅作参考）"]]
+  logs:[["2026-11-28 16:45:59","ok","[勘误] 收录 187 条标准勘误 / 修改单"],["2026-11-28 16:45:59","ok","[公告] 收录 56 条发布公告"],["2026-11-28 16:45:59","ok","[SRC-11] CNAS 实验室认可规范 抓取 98 条（非国标，标准委不收录）"],["2026-11-28 16:45:59","ok","[SRC-08] 全国团体标准 抓取 57 条（仅作参考）"],["2026-11-28 16:45:59","ok","[SRC-07] 工信部行业公告 抓取 0 条（该源常为 0，属正常）"],["2026-11-28 16:45:59","ok","[SRC-06] 市场监管总局公告 抓取 18 条（BJS 补充检验方法等）"],["2026-11-28 16:45:59","ok","[SRC-05] 食品安全国家标准数据检索平台 抓取 373 条"],["2026-11-28 16:45:59","ok","[SRC-02] 国家标准全文公开系统 openstd 抓取 7 条"],["2026-11-28 16:45:59","ok","[SRC-01] 全国标准信息公共服务平台 gbQueryPage 抓取 3 条"]]
 },
   /* ---- CNASDOCS ---- */
   CNASDOCS: [
