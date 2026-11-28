@@ -2171,7 +2171,8 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
           <b>不能替代标准原文</b>。试剂配比、仪器条件、判定阈值一律以
           <b>GB 标准正文</b>为准；出报告、判合格必须翻标准。
           <br><br>
-          <b>覆盖范围</b>：当前收录 <b>18 个 GB 标准</b>的方法原理（用户 2026-10-10 提供），
+          <b>覆盖范围</b>：当前收录 <b>56 个 GB 标准</b>、覆盖 <b>「检测项目 -GB」清单里的 64 项检验项目</b>
+          （原 18 份 docx + 2026-11-28 按国标清单补齐），
           按<b>检测项目</b>归类，与「通则引用标准」的分组口径一致。
           页面不抓取、不自动更新 —— 标准换版了这里不会自动跟着变，
           <b>换版提醒请看「标准清单」</b>。
@@ -2308,7 +2309,7 @@ body.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg
   </div>
 </div>
 
-<script src="data.js"></script>
+<script src="data.js?v=20261128c"></script>
 <!-- ★ 全站输入防抖（2026-11-02）★ 必须排在所有组件之前：
      oninput 触发的整块重绘会把正在编辑的输入框销毁 → 焦点丢失、
      光标回开头、页面高度变 → 抖动。这个脚本全局兜底。 -->
@@ -2531,8 +2532,8 @@ const _methodOpen = {};   // 记录展开状态，返回列表时不丢
 let curMethodCat = null;  // 当前选中的检测项目分类
 /* 分类展示顺序。与通则引用标准（build_refgroups.py）的分组口径一致，
    两个页面能对得上：那边看到「维生素」组，点进这边也是维生素。*/
-const METHOD_CATS = ["蛋白质与基础成分","脂肪酸与反式脂肪酸","矿物质",
-                     "维生素","婴配特殊成分","其它"];
+const METHOD_CATS = ["蛋白质与基础成分","糖类与膳食纤维","脂肪酸与反式脂肪酸","矿物质",
+                     "维生素","婴配特殊成分","污染物与毒素","微生物","其它"];
 
 function escHtml(s){
   return String(s==null?"":s)

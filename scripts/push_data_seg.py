@@ -191,18 +191,27 @@ def main():
     print("合并后：%d 字节" % len(merged.encode("utf-8")))
 
     # ---- 3. 校验：语法正确 + 目标段内容与本地一致 ----
-    check = (
-        "global.window={};"
-        "require(%r);"
-        "const d=global.window.STDWATCH_DATA;"
-        "if(!d){console.error('FAIL 数据缺失');process.exit(1);}"
-        "const e=d.ERATA||[];"
-        "const s=d.ERATASCOPE||[];"
-        "const mods=e.filter(x=>x.kind==='MOD').length;"
-        "console.log('OK ERATA='+e.length+' 修改单='+mods+' 范围='+s.length"
-        "+' 段数='+Object.keys(d).length+' RUNSTATE='+(d.RUNSTATE?d.RUNSTATE.lastRun:'-'));"
-        "if(!e.length||!s.length){console.error('FAIL 数据不完整');process.exit(1);}"
-    ) % MERGED
+    # ★ 2026-11-28：改成按 keys 动态校验。原来只认 ERATA/ERATASCOPE，
+    #   推 METHODS 时会因为「ERATA 段不完整」直接失败 —— 与本次改动无关的段把路堵死。
+    checks = [
+        "global.window={};",
+        "require(%r);" % MERGED,
+        "const d=global.window.STDWATCH_DATA;",
+        "if(!d){console.error('FAIL 数据缺失');process.exit(1);}",
+        "console.log('OK 段数='+Object.keys(d).length"
+        "+' RUNSTATE='+(d.RUNSTATE?d.RUNSTATE.lastRun:'-'));",
+    ]
+    if "ERATA" in keys or "ERATASCOPE" in keys:
+        checks += ["const e=d.ERATA||[];", "const s=d.ERATASCOPE||[];",
+                   "if(!e.length||!s.length){console.error('FAIL 数据不完整');process.exit(1);}",
+                   "console.log('  ERATA='+e.length+' 范围='+s.length);"]
+    if "METHODS" in keys:
+        checks += ["if(!d.METHODS||d.METHODS.length!==56)"
+                   "{console.error('FAIL METHODS='+(d.METHODS||[]).length);process.exit(1);}",
+                   "const bd=(d.METHODS||[]).filter(m=>!m.principle||!m.reagents||!m.reagents.length);",
+                   "if(bd.length){console.error('FAIL 缺字段:'+bd.map(m=>m.stdNo).join(','));process.exit(1);}",
+                   "console.log('  METHODS='+d.METHODS.length+' 条，字段完整');"]
+    check = "".join(checks)
     r = os.system('node -e "%s"' % check.replace('"', '\\"'))
     if r != 0:
         print("[x] 合并后的 data.js 校验失败")
@@ -212,8 +221,12 @@ def main():
     content = open(MERGED, "rb").read()
     sha = call("GET", BASE + "/contents/prototype/data.js")
     cur = sha.get("sha") if sha else None
+    if "METHODS" in keys:
+        msg = "data: 检测方法原理 18 → 56 个标准（按检测项目清单补齐，2026-11-28）"
+    else:
+        msg = "data: 勘误列表按通则范围收紧 + 新增范围表（2026-11-05）"
     body = {
-        "message": "data: 勘误列表按通则范围收紧 + 新增范围表（2026-11-05）",
+        "message": msg,
         "content": base64.b64encode(content).decode("ascii"),
         "branch": "main",
     }

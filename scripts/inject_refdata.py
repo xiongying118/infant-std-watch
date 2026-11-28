@@ -318,8 +318,8 @@ def _node_check(js_text: str):
                             #   混进去会让检测员误以为它是强制检测方法。
                             "if(d.REFGROUPS.some(g=>/CNAS/.test(g.g)))"
                             "  throw new Error('CNAS 不应出现在 REFGROUPS');"
-                            "if(d.METHODS&&d.METHODS.length!==18)"
-                            "  throw new Error('METHODS 应为 18 份，实际'+d.METHODS.length);",
+                            "if(d.METHODS&&d.METHODS.length!==56)"
+                            "  throw new Error('METHODS 应为 56 份，实际'+d.METHODS.length);",
                             tmp],
                            capture_output=True, text=True, encoding="utf-8")
         return (True, "") if r.returncode == 0 else (False, (r.stdout or "") + (r.stderr or ""))
